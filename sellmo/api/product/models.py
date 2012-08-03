@@ -37,10 +37,10 @@ class Product(apps.product.Product):
 	
 	class Meta:
 		abstract = True
-		app_label = 'store'
+		app_label = 'product'
 		
 class Variant(apps.product.Variant):
 	
 	class Meta:
 		abstract = True
-		app_label = 'store'
+		app_label = 'product'

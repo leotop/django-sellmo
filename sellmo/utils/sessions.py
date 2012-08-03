@@ -24,55 +24,46 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo import apps
-from sellmo.api.pricing import Price
+import types
 
 #
 
-_session_key = 'sellmo_cart'
+from django.db import models
 
-class Cart(object):
-		
-	@staticmethod
-	def exists(request):
-		return request.session.get(_session_key, False) != False
-		
-	def __init__(self, request):
-		if Cart.exists(request):
-			self._existing(request)
-		else:
-			self._new(request)
+#
+
+def make_trackable(obj, session_key):
+	def track(self, request):
+		assert self.pk != None
+		request.session[session_key] = self.pk
+	obj.track = track.__get__(obj, obj.__class__)
+	return obj
+
+#
+
+class TrackingManager(models.Manager):
+	
+	def __init__(self, session_key, *args, **kwargs):
+		self._session_key = session_key
+		super(TrackingManager, self).__init__(*args, **kwargs)
+	
+	def _exists(self, request):
+		return request.session.get(self._session_key, False) != False
 			
 	def _new(self, request):
-		self.cart = apps.cart.Cart()
-		self.cart.save()
-		request.session[_session_key] = self.cart.id
-		
+		obj = self.model()
+		return make_trackable(obj, self._session_key)
+
 	def _existing(self, request):
 		try:
-			self.cart = apps.cart.Cart.objects.get(id=request.session.get(_session_key))
-		except apps.cart.Cart.DoesNotExist:
-			self._new(request)
-			
-	def add(self, purchase):
-		purchase.save()
-		item = apps.cart.CartItem(cart=self.cart, purchase=purchase)
-		item.save()
-		
-	def remove(self, purchase):
-		pass
-		
-	def clear(self):
-		pass
+			obj = self.get(pk=request.session.get(self._session_key))
+			obj.is_tracked = True
+		except self.model.DoesNotExist:
+			obj = self._new(request)
+		return make_trackable(obj, self._session_key)
 	
-	def __iter__(self):
-		for item in self.cart.items.all():
-			yield item
-			
-	# Pricing
-	@property
-	def total(self):
-		price = Price()
-		for item in self:
-			price += item.total
-		return price
+	def from_request(self, request):
+		if self._exists(request):
+			return self._existing(request)
+		else:
+			return self._new(request)

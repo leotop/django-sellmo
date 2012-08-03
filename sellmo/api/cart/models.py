@@ -29,15 +29,49 @@ from django.db import models
 #
 
 from sellmo import apps
+from sellmo.api.pricing import Price
+from sellmo.utils.sessions import TrackingManager
 
 #
 
 class Cart(apps.cart.Cart):
 	
-	class Meta:
-		app_label = 'store'
+	objects = TrackingManager('sellmo_cart')
+	
+	#
 		
-class CartItem(models.Model):
+	def add(self, purchase):
+		if self.pk == None:
+			self.save()
+		purchase.save()
+		item = apps.cart.CartItem(cart=self, purchase=purchase)
+		item.save()
+		
+	def remove(self, purchase):
+		pass
+		
+	def clear(self):
+		pass
+	
+	def __iter__(self):
+		if hasattr(self, 'items'):
+			for item in self.items.all():
+				yield item
+			
+	# Pricing
+	@property
+	def total(self):
+		price = Price()
+		for item in self:
+			price += item.total
+		return price
+		
+	#
+	
+	class Meta:
+		app_label = 'cart'
+		
+class CartItem(apps.cart.CartItem):
 	
 	@property
 	def total(self):
@@ -45,7 +79,7 @@ class CartItem(models.Model):
 	
 	cart = models.ForeignKey(
 		Cart,
-		related_name = 'items'
+		related_name = 'cart'
 	)
 	
 	purchase = models.OneToOneField(
@@ -53,4 +87,4 @@ class CartItem(models.Model):
 	)
 	
 	class Meta:
-		app_label = 'store'
+		app_label = 'cart'

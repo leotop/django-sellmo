@@ -75,7 +75,7 @@ class PricingApp(sellmo.App):
 			self.Stampable.add_to_class(meta.field_name, meta.field)
 		
 	@get()
-	def item_pricing(self, chain, item, context=None, **kwargs):
+	def get_item_pricing(self, chain, item, context=None, **kwargs):
 		if context == None:
 			context = {
 				'price': self.get_qty_price(item=item, qty=0)

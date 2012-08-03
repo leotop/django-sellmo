@@ -59,6 +59,5 @@ class ProductApp(sellmo.App):
 		except self.Product.DoesNotExist:
 			raise Http404("""Product '%s' not found.""" % product_slug)
 		
-		apps.store.on_view(request, context=context, **kwargs)
 		if chain:
 			return chain.execute(request, product=product, context=context, **kwargs)

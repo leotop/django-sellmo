@@ -42,19 +42,6 @@ class StoreApp(sellmo.App):
 	def __init__(self, *args, **kwargs):
 		from sellmo.api.store import Purchase
 		self.Purchase = Purchase
-		
-	@view()
-	def on_view(self, chain, request, context=None, **kwargs):
-		if context == None:
-			context = {}
-	
-		if chain:
-			chain.execute(request, context=context, **kwargs)
-			
-	@view()
-	def on_purchase(self, chain, request, purchase, **kwargs):
-		if chain:
-			chain.execute(request, purchase=purchase, **kwargs)
 			
 	@get()
 	def get_price(self, chain, purchase, item=None, **kwargs):

@@ -42,7 +42,7 @@ class CustomerApp(sellmo.App):
 	prefix = 'customer'
 	enabled = True
 	
-	Person = models.Model
+	Addressee = models.Model
 	Address = models.Model
 	Customer = models.Model
 	
@@ -50,8 +50,8 @@ class CustomerApp(sellmo.App):
 	_AddressForm = None
 	
 	def __init__(self, *args, **kwargs):
-		from sellmo.api.customer.models import Person, Customer, Address
-		self.Person = Person
+		from sellmo.api.customer.models import Addressee, Customer, Address
+		self.Addressee = Addressee
 		self.Address = Address
 		self.Customer = Customer
 		
@@ -61,53 +61,61 @@ class CustomerApp(sellmo.App):
 		self._AddressForm = AddressForm
 	
 	@get()
-	def customer_form(self, chain, user=None, context=None, **kwargs):
-		if context == None:
-			context = {
-				'form': self._CustomerForm({})
-			}
+	def get_customer_form(self, chain, data=None, customer=None, form=None, **kwargs):
+		if form == None:
+			form = self._CustomerForm(data, prefix='customer', instance=customer)
 		if chain:
-			return chain.execute(user=user, context=context, **kwargs)
-		return context
+			return chain.execute(data=data, customer=customer, form=form, **kwargs)
+		return form
 		
 	@get()
-	def address_form(self, chain, type=None, user=None, context=None, **kwargs):
-		if context == None:
-			context = {
-				'form': self._AddressForm(prefix=type)
-			}
+	def get_address_form(self, chain, prefix, data=None, address=None, form=None, **kwargs):
+		if form == None:
+			form = self._AddressForm(data, prefix='address' if not prefix else 'address_%s' % prefix, instance=address)
 		if chain:
-			return chain.execute(user=user, context=context, **kwargs)
-		return context
+			return chain.execute(prefix=prefix, data=data, address=address, form=form, **kwargs)
+		return form
 		
 	@view()
-	def on_address_form(self, chain, request, type=None, user=None, context=None, **kwargs):
+	def address_form(self, chain, request, prefix, user=None, context=None, **kwargs):
 		if context == None:
 			context = {}
 	
+		customer = self.Customer.objects.from_request(request)
+		try:
+			address = customer.addresses.get(type=prefix)
+		except self.Address.DoesNotExist:
+			address = None
+		
 		if request.method == 'POST':
-			form = self._AddressForm(request.POST, prefix=prefix)
+			form = self.get_address_form(prefix=prefix, data=request.POST, address=address)
+			if form.is_valid():
+				address = form.save(commit=False)
+				address.type = prefix
+				address.customer = customer
+				address.save()
 		else:
-			form = self.address_form(type=type, user=user, **kwargs)['form']
+			form = self.get_address_form(prefix=prefix, address=address)
 			
 		# Append to context
-		if type:
-			context['%s_address_form' % type] = form
-		else:
-			context['address_form'] = form
+		context['%s_address_form' % prefix] = form
 		
 		if chain:
-			chain.execute(request, form=form, context=context, **kwargs)
+			chain.execute(request, context=context, **kwargs)
 			
 	@view()
-	def on_customer_form(self, chain, request, context=None, **kwargs):
+	def customer_form(self, chain, request, context=None, **kwargs):
 		if context == None:
 			context = {}
-	
+			
+		customer = self.Customer.objects.from_request(request)
 		if request.method == 'POST':
-			form = self._CustomerForm(request.POST)
+			form = self.get_customer_form(data=request.POST, customer=customer)
+			if form.is_valid():
+				customer = form.save()
+				customer.track(request)
 		else:
-			form = self.customer_form(**kwargs)['form']
+			form = self.get_customer_form(customer=customer)
 			
 		# Append to context
 		context['customer_form'] = form

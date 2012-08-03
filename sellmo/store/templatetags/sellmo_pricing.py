@@ -38,4 +38,4 @@ register = template.Library()
 
 @register.inclusion_tag('pricing/item_pricing.html')
 def item_pricing(item):
-	return apps.pricing.item_pricing(item=item)
+	return apps.pricing.get_item_pricing(item=item)

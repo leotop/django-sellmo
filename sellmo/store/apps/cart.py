@@ -37,7 +37,6 @@ from sellmo.store.decorators import view, get
 #
 
 from sellmo.api.cart.forms import AddToCartForm
-from sellmo.api.cart import Cart
 
 #
 
@@ -68,28 +67,15 @@ class CartApp(sellmo.App):
 		if chain:
 			return chain.execute(product=product, context=context, **kwargs)
 		return context
-	
-	@view()
-	def on_view(self, chain, request, cart=None, context=None, **kwargs):
-		if context == None:
-			context = {}
-			
-		if not cart and Cart.exists(request):
-			# get cart from request
-			cart = Cart(request)
-		if chain:
-			return chain.execute(request, cart=cart, context=context, **kwargs)
 			
 	@view(r'$')
 	def cart(self, chain, request, cart=None, context=None, **kwargs):
 		if context == None:
 			context = {}
 			
-		if not cart and Cart.exists(request):
-			# get cart from request
-			cart = Cart(request)
-		
-		self.on_view(request, cart=cart, context=context, **kwargs)
+		if not cart:
+			cart = self.Cart.objects.from_request(request)
+			context['cart'] = cart
 		
 		if chain:
 			return chain.execute(request, cart=cart, context=context, **kwargs)
@@ -122,14 +108,11 @@ class CartApp(sellmo.App):
 					raise Exception("""Purchase could not be created""")
 		
 		if not cart:
-			# get cart from request
-			cart = Cart(request)
-			
-		# Notify store app
-		apps.store.on_purchase(request, purchase=purchase, **kwargs)
+			cart = self.Cart.objects.from_request(request)
 		
 		# Add purchase to cart
 		cart.add(purchase)
+		cart.track(request)
 		
 		#
 		if chain:

@@ -30,10 +30,11 @@ from django.contrib.auth.models import User
 #
 
 from sellmo import apps
+from sellmo.utils.sessions import TrackingManager
 
 #
 
-class Person(apps.customer.Person):
+class Addressee(apps.customer.Addressee):
 
 	first_name = models.CharField(
 		max_length = 30,
@@ -45,9 +46,11 @@ class Person(apps.customer.Person):
 	
 	class Meta:
 		abstract = True
-		app_label = 'store'
+		app_label = 'customer'
 
-class Customer(Person, apps.customer.Customer):
+class Customer(Addressee, apps.customer.Customer):
+	
+	objects = TrackingManager('sellmo_customer')
 	
 	user = models.OneToOneField(
 		User,
@@ -56,14 +59,18 @@ class Customer(Person, apps.customer.Customer):
 	)
 	
 	class Meta:
-		app_label = 'store'
+		app_label = 'customer'
 	
-class Address(Person, apps.customer.Address):
-
+class Address(Addressee, apps.customer.Address):
+	
 	customer = models.ForeignKey(
 		Customer,
 		related_name = 'addresses'
 	)
 	
+	type = models.CharField(
+		max_length = 30,
+	)
+	
 	class Meta:
-		app_label = 'store'
+		app_label = 'customer'

@@ -31,8 +31,7 @@ from django import dispatch
 
 import sellmo
 from sellmo import apps
-from sellmo.store.decorators import view
-from sellmo.api.cart import Cart
+from sellmo.store.decorators import view, get
 
 #
 
@@ -46,6 +45,7 @@ class CheckoutApp(sellmo.App):
 	OrderLine = models.Model
 	
 	collect_shipping_methods = dispatch.Signal(providing_args=['methods'])
+	collect_payment_methods = dispatch.Signal(providing_args=['methods'])
 	
 	def __init__(self, *args, **kwargs):
 		from sellmo.api.checkout.models import Order, OrderLine
@@ -57,41 +57,45 @@ class CheckoutApp(sellmo.App):
 		if context == None:
 			context = {}
 		
-		# 
-		self.customer(request, context=context, **kwargs)
+		#
+		apps.customer.customer_form(request, context=context)
+		apps.customer.address_form(request, prefix='billing', context=context)
 		
 		#
-		self.shipping_method(request, context=context, **kwargs)
+		#self.on_shipping_method_form(request, context=context, **kwargs)
+		#self.on_payment_method_form(request, context=context, **kwargs)
 		
 		#
 		if chain:
 			return chain.execute(request, cart=cart, context=context, **kwargs)
 		
-	@view()
-	def customer(self, chain, request, context=None, **kwargs):
-		if context == None:
-			context = {}
-			
-		#
-		apps.customer.on_customer_form(request, context=context)
-		apps.customer.on_address_form(request, type='billing', context=context)
+	@get()
+	def get_shipping_method_form(self, chain, data=None, methods=None, **kwargs):
 		
 		#
-		if chain:
-			return chain.execute(request, context=context, **kwargs)
-			
-	@view()
-	def shipping_method(self, chain, request, methods=None, context=None, **kwargs):
-		if context == None:
-			context = {}
 		if methods == None:
 			methods = []
+			self.collect_shipping_methods.send(sender=self, methods=methods)
 		
 		#
-		self.collect_shipping_methods.send(sender=self, methods=methods)
-		
-		#
-		context['shipping_methods'] = methods
+		if data == None:
+			form = self._ShippingMethodForm(methods=methods, **kwargs)
+		else:
+			form = _ShippingMethodForm(data, methods=methods)
 		
 		if chain:
-			return chain.execute(request, context=context, **kwargs)
+			return chain.execute(form=form, post=post, methods=methods, context=context, **kwargs)
+		
+		return form
+			
+	@view()
+	def shipping_method_form(self, chain, request, methods=None, context=None, **kwargs):
+		if context == None:
+			context = {}
+		
+		#
+		context['shipping_method'] = self.get_shipping_method_form(post=request.POST)
+			
+		#
+		if chain:
+			chain.execute(request, context=context, **kwargs)

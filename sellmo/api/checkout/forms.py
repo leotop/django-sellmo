@@ -24,34 +24,11 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.db import models
+
+from django import forms
 
 #
 
-from sellmo import apps
-
-#
-
-class Order(apps.checkout.Order):
-	shipping_amount = apps.pricing.construct_stamped_decimal_field()
-	
-	class Meta:
-		app_label = 'checkout'
-	
-class OrderLine(apps.pricing.Stampable, apps.checkout.OrderLine):
-	
-	@property
-	def total(self):
-		return self.purchase.price
-	
-	order = models.ForeignKey(
-		Order,
-		related_name = 'lines'
-	)
-	
-	purchase = models.OneToOneField(
-		apps.store.Purchase
-	)
-	
-	class Meta:
-		app_label = 'checkout'
+class ShippingMethodForm(forms.Form):
+	product = forms.IntegerField(widget = forms.HiddenInput)
+	variant = forms.IntegerField(required = False, widget= forms.HiddenInput)

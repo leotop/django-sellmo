@@ -31,8 +31,8 @@ namespace = apps.checkout.namespace
 
 from . models import *
 
-def _on_collect(sender, methods, **kwargs):
+def on_collect(sender, methods, **kwargs):
 	for method in TieredMethod.objects.all():
 		methods.append(method.to_sellmo_method())
 
-apps.checkout.collect_shipping_methods.connect(_on_collect)
+apps.checkout.collect_shipping_methods.connect(on_collect)

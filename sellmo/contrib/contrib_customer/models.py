@@ -46,5 +46,5 @@ class Address(models.Model):
 	)
 	
 	class Meta:
-		app_label = 'store'
+		app_label = 'customer'
 		abstract = True
