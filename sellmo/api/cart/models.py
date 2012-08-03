@@ -79,7 +79,7 @@ class CartItem(apps.cart.CartItem):
 	
 	cart = models.ForeignKey(
 		Cart,
-		related_name = 'cart'
+		related_name = 'items'
 	)
 	
 	purchase = models.OneToOneField(
