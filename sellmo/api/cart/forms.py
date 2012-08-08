@@ -24,11 +24,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-
 from django import forms
 
 #
 
-class AddToCartForm(forms.Form):
+from sellmo import apps
+
+#
+
+class AddToCartForm(apps.cart.AddToCartForm):
 	product = forms.IntegerField(widget = forms.HiddenInput)
-	variant = forms.IntegerField(required = False, widget= forms.HiddenInput)

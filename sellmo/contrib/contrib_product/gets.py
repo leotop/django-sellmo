@@ -24,66 +24,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.db import models
+from sellmo.api.decorators import link
 
 #
 
-from sellmo import apps
-from sellmo.api.pricing import Price
-from sellmo.utils.sessions import TrackingManager
-
-#
-
-class Cart(apps.cart.Cart):
-	
-	objects = TrackingManager('sellmo_cart')
-	
-	#
-		
-	def add(self, purchase):
-		if self.pk == None:
-			self.save()
-		item = apps.cart.CartItem(cart=self, purchase=purchase)
-		item.save()
-		
-	def remove(self, purchase):
-		pass
-		
-	def clear(self):
-		pass
-	
-	def __iter__(self):
-		if hasattr(self, 'items'):
-			for item in self.items.all():
-				yield item
-			
-	# Pricing
-	@property
-	def total(self):
-		price = Price()
-		for item in self:
-			price += item.total
-		return price
-		
-	#
-	
-	class Meta:
-		app_label = 'cart'
-		
-class CartItem(apps.cart.CartItem):
-	
-	@property
-	def total(self):
-		return self.purchase.price
-	
-	cart = models.ForeignKey(
-		Cart,
-		related_name = 'items'
-	)
-	
-	purchase = models.OneToOneField(
-		apps.store.Purchase
-	)
-	
-	class Meta:
-		app_label = 'cart'
+@link(namespace='store')
+def get_purchase(purchase, product, **kwargs):
+	pass

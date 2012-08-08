@@ -38,4 +38,4 @@ register = template.Library()
 
 @register.inclusion_tag('cart/add_to_cart_form.html')
 def add_to_cart_form(product):
-	return apps.cart.add_to_cart_form(product=product)
+	return apps.cart.get_add_to_cart_form(product=product)

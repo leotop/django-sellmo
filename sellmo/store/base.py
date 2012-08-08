@@ -35,7 +35,14 @@ from . import chaining
 
 #
 
-class Store(magic.Singleton):
+from collections import deque
+from copy import copy
+
+#
+
+class Store(object):
+	
+	__metaclass__ = magic.SingletonMeta
 	
 	def __init__(self):
 	
@@ -55,6 +62,7 @@ class Store(magic.Singleton):
 		self.checkout = apps.CheckoutApp()
 		
 		#
+		self._load_apps(mounted)
 		self._link_apps(mounted)
 		self._link_apps(mounted, '.gets', chaining.Chain)
 	
@@ -72,6 +80,98 @@ class Store(magic.Singleton):
 				continue
 			
 			yield app
+			
+	def _load_apps(self, apps):
+		loadables = deque()
+		for app in apps:
+			for name in dir(app):
+				attr = getattr(app, name)
+				if hasattr(attr, '_im_loadable'):
+					loadables.append(attr)
+			
+		
+		# note: loadabels is already partially sorted due to the app order
+		# 		make sure to keep this order
+		
+		actions = {}
+		delays = {}
+		
+		executions = deque()
+		delayed = deque()
+		
+		# Seperate non delayed loadables from delayed loadables
+		while loadables:
+			loadable = loadables.popleft()
+			
+			# Map actions to this loadable
+			for action in loadable._actions:
+				if not actions.has_key(action):
+					actions[action] = []
+				
+				actions[action].append(loadable)
+				
+			# Map delays to this loadable
+			for delay in loadable._delays:
+				if not delays.has_key(delay):
+					delays[delay] = []
+				
+				delays[delay].append(loadable)
+			
+			if not loadable._delays:
+				# loadable has no delays, append to execution queue
+				executions.append(loadable)
+			else:
+				delayed.append(loadable)
+			
+			
+		# Seperate unnecessarily delayed loadables from valid delayed loadables
+		loadables = delayed
+		delayed = deque()
+		while loadables:
+			loadable = loadables.popleft()
+			for delay in loadable._delays:
+				if actions.has_key(delay):
+					delayed.append(loadable)
+					break
+			else:
+				executions.append(loadable)
+			
+		# Begin execution
+		while executions:
+			execution = executions.popleft()
+			
+			# Execute
+			execution()
+			
+			# Remove from actions
+			for action in execution._actions:
+				actions[action].remove(execution)
+				if not actions[action]:
+					del actions[action]
+					
+			# Find loadables for (re)evaluation
+			evaluations = deque()
+			for action in execution._actions:
+				if delays.has_key(action):
+					for loadable in delays[action]:
+						if loadable in delayed and not loadable in evaluations:
+							evaluations.append(loadable)
+						
+			# (Re-)evaluate loadables
+			while evaluations:
+				loadable = evaluations.popleft()				
+				for delay in loadable._delays:
+					if actions.has_key(delay):
+						# Still another delay
+						break
+				else:
+					# No more valid delays
+					delayed.remove(loadable)
+					executions.append(loadable)
+		
+		# Verify for remaining delays
+		if delayed:
+			raise Exception("""Failed to load""")
 						
 	def _link_apps(self, apps, module='.views', chain_type=chaining.ViewChain):
 		for app in apps:

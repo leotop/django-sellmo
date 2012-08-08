@@ -24,9 +24,9 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def view(regex=None, name=None):
+def view(regex=None, name=None, namespace=None):
 	
-	def wrap(func):
+	def decorator(func):
 	
 		def view(self, request, **kwargs):
 			chain = getattr(self, '_%s_chain' % func.func_name, None)
@@ -41,14 +41,15 @@ def view(regex=None, name=None):
 		view._im_view = True
 		view._regex = regex
 		view._name = name if name else func.func_name
+		view._namespace = namespace
 		
 		return view
 		
-	return wrap
+	return decorator
 	
-def get():
+def get(name=None, namespace=None):
 	
-	def wrap(func):
+	def decorator(func):
 		
 		def get(self, **kwargs):
 			chain = getattr(self, '_%s_chain' % func.func_name, None)
@@ -61,7 +62,9 @@ def get():
 			return result
 			
 		get._im_get = True
+		get._name = name if name else func.func_name
+		get._namespace = namespace
 		
 		return get
 		
-	return wrap
+	return decorator

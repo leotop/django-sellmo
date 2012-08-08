@@ -36,6 +36,6 @@ register = template.Library()
 
 #
 
-@register.inclusion_tag('pricing/item_pricing.html')
-def item_pricing(item):
-	return apps.pricing.get_item_pricing(item=item)
+@register.simple_tag
+def price(item, qty=1):
+	return apps.pricing.get_qty_price(item=item, qty=qty)

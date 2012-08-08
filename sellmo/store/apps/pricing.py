@@ -73,23 +73,15 @@ class PricingApp(sellmo.App):
 			
 		for meta in self.pricing_meta:
 			self.Stampable.add_to_class(meta.field_name, meta.field)
-		
+			
 	@get()
-	def get_item_pricing(self, chain, item, context=None, **kwargs):
-		if context == None:
-			context = {
-				'price': self.get_qty_price(item=item, qty=0)
-			}
-		if chain:
-			return chain.execute(item=item, context=context, **kwargs)
-		return context
-		
-	@get()
-	def get_qty_price(self, chain, item, qty, price=None, **kwargs):	
+	def get_qty_price(self, chain, item, qty=1, price=None, **kwargs):	
 		if not price:
+			assert hasattr(item, 'get_qty_price')
+			assert callable(item.get_qty_price)
 			price = item.get_qty_price(qty)
 		if chain:
-			out = chain.execute(item=item, price=price, qty=qty, **kwargs)
+			out = chain.execute(item=item, qty=qty, price=price, **kwargs)
 			assert out.has_key('price'), """Price not returned"""
 			return out['price']
 		else:

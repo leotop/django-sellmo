@@ -23,38 +23,3 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-
-from sellmo import apps
-
-#
-
-from django.db import models
-from django.utils.translation import ugettext_lazy as _
-
-#
-
-class QtyPrice(models.Model):
-	
-	product = models.ForeignKey(
-		apps.product.Product
-	)
-	
-	amount = apps.pricing.construct_decimal_field()
-	
-	qty = models.PositiveIntegerField(
-		default = 0,
-	)
-	
-	def __unicode__(self):
-		return _("%s qty or lower") % unicode(self.qty)
-	
-	class Meta:
-		app_label = 'pricing'
-	
-class VariantPriceMixin(models.Model):
-	
-	amount_offset = apps.pricing.construct_decimal_field()
-	
-	class Meta:
-		abstract = True
-		app_label = 'pricing'

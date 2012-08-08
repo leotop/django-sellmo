@@ -44,13 +44,28 @@ class StoreApp(sellmo.App):
 		self.Purchase = Purchase
 			
 	@get()
-	def get_price(self, chain, purchase, item=None, **kwargs):
-		if not item:
-			item = purchase.variant if purchase.variant else purchase.product
-		price = apps.pricing.get_qty_price(item=item, qty=purchase.qty, **kwargs)
+	def get_purchase_price(self, chain, purchase, **kwargs):
+		price = apps.pricing.get_qty_price(item=purchase.product, qty=purchase.qty, **kwargs)
 		if chain:
 			out = chain.execute(price=price, purchase=purchase, **kwargs)
 			assert out.has_key('price'), """Price not returned"""
 			return out['price']
 		else:
 			return price
+			
+	@get(name='get_purchase')
+	def make_purchase(self, chain, product, purchase=None, **kwargs):
+		"""
+		Creates a new store.Purchase, and saves it.
+		"""
+		if not purchase:
+			purchase = self.Purchase(product=product)
+			
+		if chain:
+			out = chain.execute(product=product, purchase=purchase, **kwargs)
+			assert out.has_key('purchase'), """Purchase not returned"""
+			purchase = out['purchase']
+		
+		purchase.save()
+		return purchase
+			

@@ -24,13 +24,31 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def link(name=None, namespace=None, capture=False, **kwargs):
+def link(name=None, namespace=None, capture=False):
 	
-	def wrap(func):
+	def decorator(func):
 		func._name = name if name else func.func_name
 		func._namespace = namespace
 		func._capture = capture
 		func._im_linked = True
 		return func
 	
-	return wrap
+	return decorator
+
+def load(action=None, after=None):
+	
+	def decorator(func):
+		if not hasattr(func, '_im_loadable'):
+			func._actions = []
+			func._delays = []
+		
+		if action:
+			func._actions.append(action)
+			
+		if after:
+			func._delays.append(after)
+			
+		func._im_loadable = True
+		return func
+		
+	return decorator

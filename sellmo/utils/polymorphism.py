@@ -24,66 +24,48 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import types
+
+#
+
 from django.db import models
+from django.db.models.query import QuerySet
+from django.contrib.contenttypes.models import ContentType
 
 #
 
-from sellmo import apps
-from sellmo.api.pricing import Price
-from sellmo.utils.sessions import TrackingManager
-
-#
-
-class Cart(apps.cart.Cart):
-	
-	objects = TrackingManager('sellmo_cart')
-	
-	#
-		
-	def add(self, purchase):
-		if self.pk == None:
-			self.save()
-		item = apps.cart.CartItem(cart=self, purchase=purchase)
-		item.save()
-		
-	def remove(self, purchase):
-		pass
-		
-	def clear(self):
-		pass
+class PolymorphicQuerySet(QuerySet):
+	def __getitem__(self, k):
+		result = super(PolymorphicQuerySet, self).__getitem__(k)
+		if isinstance(result, models.Model) :
+			return result.cast()
+		else :
+			return result
 	
 	def __iter__(self):
-		if hasattr(self, 'items'):
-			for item in self.items.all():
-				yield item
-			
-	# Pricing
-	@property
-	def total(self):
-		price = Price()
-		for item in self:
-			price += item.total
-		return price
+		for item in super(PolymorphicQuerySet, self).__iter__():
+			yield item.cast()
+	
+class PolymorphicManager(models.Manager):
+	def get_query_set(self):
+		return QuerySet(self.model, using=self._db)
+
+class PolymorphicModel(models.Model):
+	
+	content_type = models.ForeignKey(ContentType, editable=False, null=True)
+	objects = PolymorphicManager()
+	
+	def save(self):
+		if not self.content_type:
+			self.content_type = ContentType.objects.get_for_model(self.__class__)
+		self.save_base()
 		
-	#
-	
-	class Meta:
-		app_label = 'cart'
+	def cast(self):
+		content_type = self.content_type
+		model = content_type.model_class()
+		if(model == self.__class__):
+			return self
+		return model.objects.get(id=self.id)
 		
-class CartItem(apps.cart.CartItem):
-	
-	@property
-	def total(self):
-		return self.purchase.price
-	
-	cart = models.ForeignKey(
-		Cart,
-		related_name = 'items'
-	)
-	
-	purchase = models.OneToOneField(
-		apps.store.Purchase
-	)
-	
 	class Meta:
-		app_label = 'cart'
+		abstract = True

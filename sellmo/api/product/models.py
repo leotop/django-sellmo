@@ -24,8 +24,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from django.utils.translation import ugettext_lazy as _
 from django.db import models
-from django.contrib.auth.models import User
 
 #
 
@@ -35,12 +35,26 @@ from sellmo import apps
 
 class Product(apps.product.Product):
 	
-	class Meta:
-		abstract = True
-		app_label = 'product'
+	slug = models.SlugField(
+		max_length = 80,
+		db_index = True,
+		unique = True,
+		verbose_name = _("slug"),
+		help_text = _(
+			"Slug will be used in the address of"
+			" the product page. It should be"
+			" URL-friendly (letters, numbers,"
+			" hyphens and underscores only) and"
+			" descriptive for the SEO needs."
+		)
+	)
+	
+	def __unicode__(self):
+		return self.slug
 		
-class Variant(apps.product.Variant):
+	@models.permalink
+	def get_absolute_url(self):
+		return 'product.details', (str(self.pk), self.slug)
 	
 	class Meta:
-		abstract = True
 		app_label = 'product'

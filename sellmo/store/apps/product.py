@@ -33,6 +33,7 @@ from django.conf.urls.defaults import *
 import sellmo
 from sellmo import apps
 from sellmo.store.decorators import view
+from sellmo.utils.polymorphism import PolymorphicModel
 
 #
 
@@ -41,19 +42,16 @@ class ProductApp(sellmo.App):
 	namespace = 'product'
 	prefix = 'products'
 	
-	Product = models.Model
-	Variant = models.Model
+	Product = PolymorphicModel
 	
 	def __init__(self, *args, **kwargs):
-		assert self.Product != models.Model, """Product not defined"""
-		assert self.Variant != models.Model, """Variant not defined"""
-		
+		from sellmo.api.product import Product
+		self.Product = Product
 	
 	@view(r'(?P<product_slug>[a-z0-9_-]+)$')
 	def details(self, chain, request, product_slug, context=None, **kwargs):
 		if context == None:
 			context = {}
-			
 		try:
 			product = self.Product.objects.get(slug=product_slug)
 		except self.Product.DoesNotExist:
@@ -61,3 +59,6 @@ class ProductApp(sellmo.App):
 		
 		if chain:
 			return chain.execute(request, product=product, context=context, **kwargs)
+		else:
+			# We don't render anything
+			raise Http404

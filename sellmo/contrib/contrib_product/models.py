@@ -25,7 +25,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from sellmo import apps
-from sellmo.api.product import models as api
 
 #
 
@@ -73,47 +72,27 @@ class InvalidationMetaBase(reaktor.InvalidationMeta):
 	def provide_instructions(self, type_id, instance, *args, **kwargs):
 		
 		if isinstance(instance, ProductType):
+			
 			try:
 				product_type = ProductType.objects.get(id=type_id)
 			except ProductType.DoesNotExist:
+				print 'REMOVED A'
 				yield reaktor.InvalidationInstruction(remove_model=True)
 				return
 			
 			if kwargs.has_key('created') and not kwargs['created']:
-				if instance.id == type_id and instance.identifier != reaktor.manager.get_model(apps.product.Product, type_id)._meta.object_name.lower():
+				if instance.id == type_id and instance.identifier.lower() != reaktor.manager.get_model(apps.product.Product, type_id)._meta.object_name.lower():
+					print 'REMOVED B'
 					yield reaktor.InvalidationInstruction(remove_model=True)
 			
 		# in case of attribute deletion or no deletion at all
 		yield reaktor.InvalidationInstruction()
 
-class Product(api.Product):
-	
-	#
-	
-	slug = models.SlugField(
-		max_length = 80,
-		db_index = True,
-		unique = True,
-		verbose_name = _("slug"),
-		help_text = _(
-			"Slug will be used in the address of"
-			" the product page. It should be"
-			" URL-friendly (letters, numbers,"
-			" hyphens and underscores only) and"
-			" descriptive for the SEO needs."
-		)
-	)
-	
-	def __unicode__(self):
-		return self.slug
-	
-	@models.permalink
-	def get_absolute_url(self):
-		return 'product.details', (str(self.pk), self.slug)
+class Product(apps.product.Product):
 		
 	class Meta:
-		abstract = True
 		app_label = 'product'
+		abstract = True
 		
 	class ReflectionMeta(reaktor.ReflectionMeta):
 		
@@ -134,39 +113,7 @@ class Product(api.Product):
 			post_delete.connect(invalidation_callback, sender=ProductType)
 			post_save.connect(invalidation_callback, sender=Attribute)
 			post_delete.connect(invalidation_callback, sender=Attribute)
-			
-		
-class Variant(api.Variant):
 
-	#
-	
-	product = models.ForeignKey(
-		'Product',
-		related_name = 'variants'
-	)
-	
-	class Meta:
-		abstract = True
-		app_label = 'product'
-	
-	class ReflectionMeta(reaktor.ReflectionMeta):
-		
-		def get_reflector(self, type_id):
-			return ProductType.objects.get(id=type_id).variant_reflector()
-			
-		def provide_type_ids(self):
-			for type in ProductType.objects.all():
-				yield type.id
-				
-	class InvalidationMeta(InvalidationMetaBase):
-		
-		def hookup(self, invalidation_callback):
-			post_save.connect(invalidation_callback, sender=ProductType)
-			post_delete.connect(invalidation_callback, sender=ProductType)
-			post_save.connect(invalidation_callback, sender=Attribute)
-			post_delete.connect(invalidation_callback, sender=Attribute)
-	
-#
 
 class ProductType(models.Model):
 	
@@ -212,6 +159,7 @@ class ProductType(models.Model):
 			product_type = ProductType.objects.get(id=self.type_id)
 			
 			class Meta:
+				app_label = 'product'
 				verbose_name = product_type.identifier
 				
 			yield reaktor.ModelAttribute('Meta', Meta)
@@ -240,6 +188,7 @@ class ProductType(models.Model):
 			product_type = ProductType.objects.get(id=self.type_id)
 			
 			class Meta:
+				app_label = 'product'
 				verbose_name = product_type.identifier
 				
 			yield reaktor.ModelAttribute('Meta', Meta)
@@ -256,8 +205,9 @@ class ProductType(models.Model):
 			product_type = ProductType.objects.get(identifier=model._meta.object_name.lower())
 			variant = reaktor.manager.get_model(apps.product.Variant, product_type.id)
 			
-			class VariantInline(admin.TabularInline):
+			class VariantInline(admin.StackedInline):
 				model = variant
+				fk_name = 'product'
 				extra = 3
 		
 			yield reaktor.AdminAttribute('inlines', apps.product.inlines + [VariantInline])
@@ -342,7 +292,6 @@ class Attribute(models.Model):
 	identifier = models.SlugField(
 		max_length = 80,
 		db_index = True,
-		unique = True,
 		verbose_name = _("identifier"),
 		help_text = _(
 			"Identifier will be used as a means to"
@@ -387,4 +336,3 @@ class Attribute(models.Model):
 #
 
 apps.product.Product = Product
-apps.product.Variant = Variant

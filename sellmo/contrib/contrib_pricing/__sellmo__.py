@@ -26,24 +26,50 @@
 
 from sellmo import apps
 from sellmo.api.pricing import Price
+from sellmo.api.decorators import load
 
 #
 
-from . models import QtyPrice
+from django.db import models
+from django.utils.translation import ugettext_lazy as _
 
+#
 namespace = apps.pricing.namespace
 
-class ProductMixin(object):
-	def get_qty_price(self, qty):
-		q = QtyPrice.objects.filter(product=self, qty__lte=qty).order_by('-qty')
-		if not q:
-			raise Exception("""No price found""")
+#
+@load(action='alter_product_Product')
+def mixin_price_support():
+	
+	class ProductMixin(object):
+		def get_qty_price(self, qty):
+			q = QtyPrice.objects.filter(product=self, qty__lte=qty).order_by('qty')
+			if not q:
+				raise Exception("""No price found""")
+			
+			return Price(q[0].amount)
+	
+	apps.product.Product.__bases__ += (ProductMixin,)
+	
+#
+@load(action='load_pricing_QtyPrice', after='alter_product_Product')
+def load_models():
+	
+	class QtyPrice(models.Model):
 		
-		return Price(q[0].amount)
+		product = models.ForeignKey(
+			apps.product.Product
+		)
 		
-class VariantMixin(object):
-	def get_qty_price(self, qty):
-		return Price()
-
-apps.product.Product.__bases__ += (ProductMixin,)
-apps.product.Variant.__bases__ += (VariantMixin,)
+		amount = apps.pricing.construct_decimal_field()
+		
+		qty = models.PositiveIntegerField(
+			default = 0,
+		)
+		
+		def __unicode__(self):
+			return _("%s qty or more") % unicode(self.qty)
+		
+		class Meta:
+			app_label = 'pricing'
+			
+	apps.pricing.QtyPrice = QtyPrice

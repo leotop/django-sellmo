@@ -36,32 +36,15 @@ class Purchase(apps.store.Purchase):
 
 	@property
 	def price(self):
-		return apps.store.get_price(purchase=self)
+		return apps.store.get_purchase_price(purchase=self)
 		
 	# Purchase multiplier
-	# Multiplies the amount of times the described product, variant, or whatever has been purchased.
-	# !! Does not multiply the amount of times any related purchases have been made.
 	qty = models.PositiveIntegerField(
 		default = 1
 	)
-		
-	# Description of the purchase
-	# Could simply be the name of the product or variant.
-	# But could be something else entirely.
-	description = models.CharField(
-		max_length = 255
-	)
 	
 	product = models.ForeignKey(
-		apps.product.Product,
-		blank = True,
-		null = True
-	)
-	
-	variant = models.ForeignKey(
-		apps.product.Variant,
-		blank = True,
-		null = True
+		apps.product.Product
 	)
 	
 	class Meta:

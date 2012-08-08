@@ -24,6 +24,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from django import forms
 from django.db import models
 from django.http import Http404
 from django.shortcuts import redirect
@@ -46,8 +47,8 @@ class CustomerApp(sellmo.App):
 	Address = models.Model
 	Customer = models.Model
 	
-	_CustomerForm = None
-	_AddressForm = None
+	CustomerForm = forms.ModelForm
+	AddressForm = forms.ModelForm
 	
 	def __init__(self, *args, **kwargs):
 		from sellmo.api.customer.models import Addressee, Customer, Address
@@ -57,13 +58,13 @@ class CustomerApp(sellmo.App):
 		
 		# Init forms
 		from sellmo.api.customer.forms import CustomerForm, AddressForm
-		self._CustomerForm = CustomerForm
-		self._AddressForm = AddressForm
+		self.CustomerForm = CustomerForm
+		self.AddressForm = AddressForm
 	
 	@get()
 	def get_customer_form(self, chain, data=None, customer=None, form=None, **kwargs):
 		if form == None:
-			form = self._CustomerForm(data, prefix='customer', instance=customer)
+			form = self.CustomerForm(data, prefix='customer', instance=customer)
 		if chain:
 			return chain.execute(data=data, customer=customer, form=form, **kwargs)
 		return form
@@ -71,7 +72,7 @@ class CustomerApp(sellmo.App):
 	@get()
 	def get_address_form(self, chain, prefix, data=None, address=None, form=None, **kwargs):
 		if form == None:
-			form = self._AddressForm(data, prefix='address' if not prefix else 'address_%s' % prefix, instance=address)
+			form = self.AddressForm(data, prefix='address' if not prefix else 'address_%s' % prefix, instance=address)
 		if chain:
 			return chain.execute(prefix=prefix, data=data, address=address, form=form, **kwargs)
 		return form

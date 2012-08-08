@@ -32,12 +32,12 @@ from sellmo import apps
 
 #
 
-class AddressForm(forms.ModelForm):
+class AddressForm(apps.customer.AddressForm):
 	class Meta:
 		model = apps.customer.Address
 		exclude = ('customer', 'type')
 
-class CustomerForm(forms.ModelForm):
+class CustomerForm(apps.customer.CustomerForm):
 	class Meta:
 		model = apps.customer.Customer
 		exclude = ('user',)

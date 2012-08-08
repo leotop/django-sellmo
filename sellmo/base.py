@@ -25,28 +25,23 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import magic
-	
-class MountPoint(magic.Singleton):
-	
-	def register(self, app):
-		setattr(self, app.namespace, app)
-		
-	def unregister(self, app):
-		setattr(self, app.namespace, None)
+
+class MountPoint(object):
+	__metaclass__ = magic.SingletonMeta
 	
 apps = MountPoint()
 
 #
 
-class _AppMeta(type):
+class _AppMeta(magic.SingletonMeta):
 	
 	def __new__(meta, name, bases, dict):
 		# create the app class
 		cls = super(_AppMeta, meta).__new__(meta, name, bases, dict)
 		
-		# register the app at the mount point
-		if cls.namespace:
-			apps.register(cls)
+		# register the app type to the mount point
+		if cls.enabled and cls.namespace:
+			setattr(apps, cls.namespace, cls)
 		
 		return cls
 
@@ -60,12 +55,16 @@ class App(object):
 	
 	def __new__(cls, *args, **kwargs):
 		if cls.enabled:
-			app = object.__new__(cls)
-			# Replace the class object with the actual app object
-			apps.register(app)
-			return app
-		
-		if cls.namespace:
-			apps.unregister(cls)
 			
-		return None
+			# Create the actual app
+			app = object.__new__(cls)
+			
+			# Replace the class object with the actual app object
+			setattr(apps, app.namespace, app)
+			
+			#
+			return app
+		else:
+			# App is disabled, remove from mountpoint
+			setattr(apps, cls.namespace, None)
+			return None

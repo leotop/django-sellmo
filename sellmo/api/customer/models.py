@@ -45,8 +45,8 @@ class Addressee(apps.customer.Addressee):
 	)
 	
 	class Meta:
-		abstract = True
 		app_label = 'customer'
+		abstract = True
 
 class Customer(Addressee, apps.customer.Customer):
 	

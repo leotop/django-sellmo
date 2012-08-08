@@ -24,6 +24,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from django import forms
 from django.db import models
 from django.http import Http404
 from django.shortcuts import redirect
@@ -36,10 +37,6 @@ from sellmo.store.decorators import view, get
 
 #
 
-from sellmo.api.cart.forms import AddToCartForm
-
-#
-
 class CartApp(sellmo.App):
 
 	namespace = 'cart'
@@ -48,42 +45,49 @@ class CartApp(sellmo.App):
 	
 	Cart = models.Model
 	CartItem = models.Model
+	AddToCartForm = forms.Form
 	
-	def __init__(self, *args, **kwargs):		
+	def __init__(self, *args, **kwargs):	
 		from sellmo.api.cart.models import Cart
 		self.Cart = Cart
 		
 		from sellmo.api.cart.models import CartItem
 		self.CartItem = CartItem
+		
+		from sellmo.api.cart.forms import AddToCartForm
+		self.AddToCartForm = AddToCartForm
 	
 	@get()
-	def add_to_cart_form(self, chain, product, context=None, **kwargs):
-		if context == None:
-			context = {
-				'form': AddToCartForm({
-					'product' : product.id
-				})
-			}
+	def get_add_to_cart_form(self, chain, data=None, product=None, form=None, **kwargs):
+		if form == None:
+			if not data and not product:
+				raise Exception("""Cannot create unbound form 'AddToCartForm'""")
+			form = self.AddToCartForm(data)
 		if chain:
-			return chain.execute(product=product, context=context, **kwargs)
-		return context
+			out = chain.execute(data=data, product=product, form=form, **kwargs)
+			assert out.has_key('form'), """Form not returned"""
+			return out['form']
+		return form
 			
 	@view(r'$')
 	def cart(self, chain, request, cart=None, context=None, **kwargs):
 		if context == None:
 			context = {}
 			
-		if not cart:
-			cart = self.Cart.objects.from_request(request)
-			context['cart'] = cart
+		cart = self.Cart.objects.from_request(request)
+		context['cart'] = cart
 		
 		if chain:
 			return chain.execute(request, cart=cart, context=context, **kwargs)
 		else:
+			# We don't render anything
 			raise Http404
 		
 	@view(r'add$')
-	def add_to_cart(self, chain, request, purchase=None, cart=None, context=None, **kwargs):
+	def add_to_cart(self, chain, request, purchase=None, context=None, **kwargs):
+		"""
+		view /cart/add/ (POST only)
+		"""
 		if context == None:
 			context = {}
 	
@@ -92,25 +96,20 @@ class CartApp(sellmo.App):
 		if not purchase:
 			# get purchase from request
 			if request.method == 'POST':
-				form = AddToCartForm(request.POST)
+				form = self.get_add_to_cart_form(data=request.POST)
 				if form.is_valid():
 					
 					# Process the form
 					product = apps.product.Product.objects.get(id=form.cleaned_data['product'])
-					variant = None
-					if form.cleaned_data['variant'] != None:
-						variant = apps.product.Variant.objects.get(id=form.cleaned_data['variant'])
 					
 					# Create the purchase
-					purchase = apps.store.Purchase(product=product, variant=variant)
+					purchase = apps.store.make_purchase(product=product)
 					
 				if not purchase:
-					raise Exception("""Purchase could not be created""")
-		
-		if not cart:
-			cart = self.Cart.objects.from_request(request)
+					raise Exception("""Purchase was not created""")
 		
 		# Add purchase to cart
+		cart = self.Cart.objects.from_request(request)
 		cart.add(purchase)
 		cart.track(request)
 		
