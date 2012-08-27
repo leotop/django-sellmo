@@ -37,23 +37,13 @@ from sellmo.store.decorators import view, get
 class StoreApp(sellmo.App):
 
 	namespace = 'store'
-	Purchase = models.Model
+	Purchase = apps.pricing.Stampable
 
 	def __init__(self, *args, **kwargs):
 		from sellmo.api.store import Purchase
 		self.Purchase = Purchase
 			
 	@get()
-	def get_purchase_price(self, chain, purchase, **kwargs):
-		price = apps.pricing.get_qty_price(item=purchase.product, qty=purchase.qty, **kwargs)
-		if chain:
-			out = chain.execute(price=price, purchase=purchase, **kwargs)
-			assert out.has_key('price'), """Price not returned"""
-			return out['price']
-		else:
-			return price
-			
-	@get(name='get_purchase')
 	def make_purchase(self, chain, product, purchase=None, **kwargs):
 		"""
 		Creates a new store.Purchase, and saves it.
@@ -63,9 +53,8 @@ class StoreApp(sellmo.App):
 			
 		if chain:
 			out = chain.execute(product=product, purchase=purchase, **kwargs)
-			assert out.has_key('purchase'), """Purchase not returned"""
-			purchase = out['purchase']
+			if out.has_key('purchase'):
+				purchase = out['purchase']
 		
 		purchase.save()
 		return purchase
-			

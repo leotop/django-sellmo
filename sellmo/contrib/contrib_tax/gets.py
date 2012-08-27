@@ -35,9 +35,12 @@ from sellmo.api.pricing import Price
 #
 
 @link()
-def get_qty_price(price, item, **kwargs):
-	if isinstance(item, apps.product.Product):
-		if item.tax:
-			return {
-				'price' : price * Price(item.tax.rate, type='tax')
-			}
+def get_qty_price(price, product, **kwargs):
+	
+	if not price:
+		return
+	
+	if product.tax:
+		return {
+			'price' : price * Price(product.tax.rate, type='tax')
+		}

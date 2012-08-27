@@ -39,7 +39,6 @@ class PricingApp(sellmo.App):
 	namespace = 'pricing'
 	currency = 'EUR'
 	types = []
-	pricing_meta = []
 	
 	# Decimal field construction
 	decimal_max_digits = 9
@@ -48,53 +47,34 @@ class PricingApp(sellmo.App):
 	stamped_decimal_places = 8
 	
 	#
+	
 	class Stampable(models.Model):
 		class Meta:
 			abstract = True
 	
 	@staticmethod
-	def construct_decimal_field():
+	def construct_decimal_field(**kwargs):
 		return models.DecimalField(
 			max_digits = apps.pricing.decimal_max_digits,
-			decimal_places = apps.pricing.decimal_places
+			decimal_places = apps.pricing.decimal_places,
+			**kwargs
 		)
 		
-	@staticmethod
-	def construct_stamped_decimal_field():
-		return models.DecimalField(
-			max_digits = apps.pricing.stamped_decimal_max_digits,
-			decimal_places = apps.pricing.stamped_decimal_places
-		)
-		
-	def __init__(self, *args, **kwargs):
-		self.Stampable.add_to_class('amount', apps.pricing.construct_stamped_decimal_field())
-		for type in self.types:
-			self.Stampable.add_to_class('%s_amount' % type, self.construct_stamped_decimal_field())
-			
-		for meta in self.pricing_meta:
-			self.Stampable.add_to_class(meta.field_name, meta.field)
-			
-	@get()
-	def get_qty_price(self, chain, item, qty=1, price=None, **kwargs):	
-		if not price:
-			assert hasattr(item, 'get_qty_price')
-			assert callable(item.get_qty_price)
-			price = item.get_qty_price(qty)
-		if chain:
-			out = chain.execute(item=item, qty=qty, price=price, **kwargs)
-			assert out.has_key('price'), """Price not returned"""
-			return out['price']
-		else:
-			return price
-			
-	@get()
-	def get_price_types(self, chain, types=None, **kwargs):
-		if types == None:
-			types = []
+	#
 	
+	def __init__(self, *args, **kwargs):
+		self.Stampable.add_to_class('amount', apps.pricing.construct_decimal_field())
+		for type in self.types:
+			self.Stampable.add_to_class('%s_amount' % type, self.construct_decimal_field())
+			
+	@get()
+	def get_qty_price(self, chain, product, qty=1, price=None, **kwargs):
 		if chain:
-			out = chain.execute(types=types, **kwargs)
-			assert out.has_key('types'), """Types not returned"""
-			return out['types']
-		else:
-			return types
+			out = chain.execute(product=product, qty=qty, price=price, **kwargs)
+			assert out.has_key('price'), """Price not returned"""
+			price = out['price']
+		
+		assert price
+		return price
+			
+	

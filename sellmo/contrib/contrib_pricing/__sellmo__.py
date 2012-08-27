@@ -34,23 +34,11 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 #
-namespace = apps.pricing.namespace
 
-#
-@load(action='alter_product_Product')
-def mixin_price_support():
+# Set default namespace
+namespace = apps.pricing.namespace
 	
-	class ProductMixin(object):
-		def get_qty_price(self, qty):
-			q = QtyPrice.objects.filter(product=self, qty__lte=qty).order_by('qty')
-			if not q:
-				raise Exception("""No price found""")
-			
-			return Price(q[0].amount)
-	
-	apps.product.Product.__bases__ += (ProductMixin,)
-	
-#
+# Load the QtyPrice model
 @load(action='load_pricing_QtyPrice', after='alter_product_Product')
 def load_models():
 	

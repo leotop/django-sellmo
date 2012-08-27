@@ -55,6 +55,9 @@ class Product(apps.product.Product):
 	@models.permalink
 	def get_absolute_url(self):
 		return 'product.details', (str(self.pk), self.slug)
+		
+	def get_qty_price(self, qty=1):
+		return apps.pricing.get_qty_price(product=self, qty=qty)
 	
 	class Meta:
 		app_label = 'product'

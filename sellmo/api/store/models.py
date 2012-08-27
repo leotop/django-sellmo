@@ -47,5 +47,8 @@ class Purchase(apps.store.Purchase):
 		apps.product.Product
 	)
 	
+	def __unicode__(self):
+		return "%s x %s" % (self.qty, self.product)
+	
 	class Meta:
 		app_label = 'store'

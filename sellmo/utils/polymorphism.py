@@ -35,20 +35,14 @@ from django.contrib.contenttypes.models import ContentType
 #
 
 class PolymorphicQuerySet(QuerySet):
-	def __getitem__(self, k):
-		result = super(PolymorphicQuerySet, self).__getitem__(k)
-		if isinstance(result, models.Model) :
-			return result.cast()
-		else :
-			return result
-	
-	def __iter__(self):
-		for item in super(PolymorphicQuerySet, self).__iter__():
+			
+	def iterator(self):
+		for item in super(PolymorphicQuerySet, self).iterator():
 			yield item.cast()
-	
+			
 class PolymorphicManager(models.Manager):
 	def get_query_set(self):
-		return QuerySet(self.model, using=self._db)
+		return PolymorphicQuerySet(self.model, using=self._db)
 
 class PolymorphicModel(models.Model):
 	

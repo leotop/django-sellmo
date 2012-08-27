@@ -25,6 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from django.contrib import admin
+from django.utils.translation import ugettext_lazy as _
 
 #
 
@@ -37,6 +38,19 @@ class AttributeInline(admin.TabularInline):
 
 class ProductTypeAdmin(admin.ModelAdmin):
 	inlines = [AttributeInline]
+	
+	fieldsets = (
+		(_("Identification"), {
+			'fields': ('display', 'display_plural', 'identifier')
+		}),
+		(_("Advanced"), {
+			'fields': ('intermediary', 'extends',)
+		}),
+	)
+	
+	prepopulated_fields = {
+		'identifier' : ('display',),
+	}
 	
 class AttributeOptionInline(admin.TabularInline):
 	model = AttributeOption

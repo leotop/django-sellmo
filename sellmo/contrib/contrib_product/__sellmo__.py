@@ -37,6 +37,7 @@ from . models import InvalidationMetaBase, ProductType, Attribute
 
 #
 
+from django import forms
 from django.db import models
 from django.db.models.signals import post_save, post_delete
 
@@ -47,7 +48,7 @@ apps.product.inlines = []
 
 #
 
-@load(after='alter_product_Product')
+@load(action='load_contrib_product', after='alter_product_Product')
 def load_models():
 	
 	class Variant(apps.product.Product):
@@ -79,5 +80,17 @@ def load_models():
 		
 	
 	apps.product.Variant = Variant
+	
+@load(action='hookup_contrib_product', after='load_contrib_product')
+def hookup():
+	
+	apps.product.ProductType = ProductType
 	reaktor.manager.hookup_base(apps.product.Variant)
 	reaktor.manager.hookup_base(apps.product.Product)
+	
+	# Extend add to cart form
+	class AddToCartForm(apps.cart.AddToCartForm):
+		variant = forms.IntegerField(widget = forms.HiddenInput, required=False)
+	
+	apps.cart.AddToCartForm = AddToCartForm
+	

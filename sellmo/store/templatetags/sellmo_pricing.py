@@ -37,5 +37,5 @@ register = template.Library()
 #
 
 @register.simple_tag
-def price(item, qty=1):
-	return apps.pricing.get_qty_price(item=item, qty=qty)
+def price(product, qty=1):
+	return product.get_qty_price(qty=qty)

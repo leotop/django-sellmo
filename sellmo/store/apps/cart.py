@@ -62,12 +62,26 @@ class CartApp(sellmo.App):
 		if form == None:
 			if not data and not product:
 				raise Exception("""Cannot create unbound form 'AddToCartForm'""")
+			
+			if product:
+				data = {
+					'product' : product.pk
+				}
+			
 			form = self.AddToCartForm(data)
+				
 		if chain:
 			out = chain.execute(data=data, product=product, form=form, **kwargs)
 			assert out.has_key('form'), """Form not returned"""
 			return out['form']
 		return form
+		
+	@get()
+	def get_purchase_args(self, chain, form, **kwargs):
+		out = {}
+		if chain:
+			out = chain.execute(form=form, **kwargs)
+		return out
 			
 	@view(r'$')
 	def cart(self, chain, request, cart=None, context=None, **kwargs):
@@ -90,28 +104,41 @@ class CartApp(sellmo.App):
 		"""
 		if context == None:
 			context = {}
+			
+		if request.method == 'POST':
+			form = self.get_add_to_cart_form(data=request.POST)
 	
 		# Purchase will in most cases not yet be assigned, it could be assigned however
 		# during the capture fase.
 		if not purchase:
-			# get purchase from request
-			if request.method == 'POST':
-				form = self.get_add_to_cart_form(data=request.POST)
-				if form.is_valid():
-					
-					# Process the form
-					product = apps.product.Product.objects.get(id=form.cleaned_data['product'])
-					
-					# Create the purchase
-					purchase = apps.store.make_purchase(product=product)
-					
+			
+			# We require a post/form
+			if not request.method == 'POST':
+				raise Exception("""Not a POST request""")
+			
+			# We require a valid form
+			if form.is_valid():
+				
+				# get data from form
+				product = apps.product.Product.objects.get(id=form.cleaned_data['product'])
+				make_purchase_kwargs = self.get_purchase_args(form=form)
+				
+				# Try create the purchase
+				purchase = apps.store.make_purchase(product=product, **make_purchase_kwargs)
+						
+				#
 				if not purchase:
 					raise Exception("""Purchase was not created""")
 		
-		# Add purchase to cart
-		cart = self.Cart.objects.from_request(request)
-		cart.add(purchase)
-		cart.track(request)
+		# If all went well we should have a purchase, unless an invalid form was submitted
+		if purchase:
+			# Add purchase to cart
+			cart = self.Cart.objects.from_request(request)
+			cart.add(purchase)
+			cart.track(request)
+		else:
+			# Contingency for invalid form, todo
+			pass
 		
 		#
 		if chain:

@@ -34,7 +34,7 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
-class _Method(models.Model):
+class Method(models.Model):
 
 	carrier = models.CharField(
 		max_length = 30,
@@ -54,7 +54,7 @@ class _Method(models.Model):
 
 #
 
-class BasicMethod(_Method):
+class BasicMethod(Method):
 
 	def to_sellmo_method(self):
 		return ShippingMethod(self.carrier, description=self.description)
@@ -65,7 +65,7 @@ class BasicMethod(_Method):
 
 #
 
-class TieredMethod(_Method):
+class TieredMethod(Method):
 
 	def to_sellmo_method(self):
 		return ShippingMethod(self.carrier, description=self.description)

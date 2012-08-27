@@ -85,5 +85,8 @@ class CartItem(apps.cart.CartItem):
 		apps.store.Purchase
 	)
 	
+	def __unicode__(self):
+		return unicode(self.purchase)
+	
 	class Meta:
 		app_label = 'cart'

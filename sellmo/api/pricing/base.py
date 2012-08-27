@@ -27,14 +27,6 @@
 from django.db import models
 from decimal import Decimal
 
-#
-
-class PricingMeta(object):
-
-	def __init__(self, field_name, field):
-		self.field_name = field_name
-		self.field = field
-
 class Price(object):
 
 	@staticmethod

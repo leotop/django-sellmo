@@ -33,7 +33,7 @@ from sellmo import apps
 #
 
 class Order(apps.checkout.Order):
-	shipping_amount = apps.pricing.construct_stamped_decimal_field()
+	shipping_amount = apps.pricing.construct_decimal_field()
 	
 	class Meta:
 		app_label = 'checkout'

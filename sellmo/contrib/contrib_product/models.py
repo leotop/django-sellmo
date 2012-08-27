@@ -76,13 +76,11 @@ class InvalidationMetaBase(reaktor.InvalidationMeta):
 			try:
 				product_type = ProductType.objects.get(id=type_id)
 			except ProductType.DoesNotExist:
-				print 'REMOVED A'
 				yield reaktor.InvalidationInstruction(remove_model=True)
 				return
 			
 			if kwargs.has_key('created') and not kwargs['created']:
 				if instance.id == type_id and instance.identifier.lower() != reaktor.manager.get_model(apps.product.Product, type_id)._meta.object_name.lower():
-					print 'REMOVED B'
 					yield reaktor.InvalidationInstruction(remove_model=True)
 			
 		# in case of attribute deletion or no deletion at all
@@ -117,6 +115,24 @@ class Product(apps.product.Product):
 
 class ProductType(models.Model):
 	
+	display = models.CharField(
+		max_length = 255,
+		verbose_name = _("display name"),
+		help_text = _(
+			"User friendly name for this product type."
+		)
+	)
+	
+	display_plural = models.CharField(
+		max_length = 255,
+		blank = True,
+		null = True,
+		verbose_name = _("display name plural"),
+		help_text = _(
+			"User friendly plural name for this product type."
+		)
+	)
+	
 	identifier = models.SlugField(
 		max_length = 80,
 		db_index = True,
@@ -142,9 +158,6 @@ class ProductType(models.Model):
 		)
 	)
 	
-	class Meta:
-		app_label = 'product'
-	
 	def __unicode__(self):
 		return self.identifier
 	
@@ -161,6 +174,7 @@ class ProductType(models.Model):
 			class Meta:
 				app_label = 'product'
 				verbose_name = product_type.identifier
+				verbose_name_plural = product_type.display if not product_type.display_plural else product_type.display_plural
 				
 			yield reaktor.ModelAttribute('Meta', Meta)
 				
@@ -189,9 +203,11 @@ class ProductType(models.Model):
 			
 			class Meta:
 				app_label = 'product'
-				verbose_name = product_type.identifier
+				verbose_name = product_type.display
+				verbose_name_plural = product_type.display if not product_type.display_plural else product_type.display_plural
 				
 			yield reaktor.ModelAttribute('Meta', Meta)
+			yield reaktor.ModelAttribute('product_type', product_type)
 			
 			current_type = product_type
 			while current_type:
@@ -232,9 +248,6 @@ class AttributeType(models.Model):
 		verbose_name = _("sort order")
 	)
 	
-	class Meta:
-		app_label = 'product'
-	
 	@property
 	def field(self):
 		if self.type == 'select':
@@ -273,9 +286,6 @@ class AttributeOption(models.Model):
 		)
 	)
 	
-	class Meta:
-		app_label = 'product'
-	
 	def __unicode__(self):
 		return self.display
 	
@@ -289,6 +299,14 @@ class Attribute(models.Model):
 		'AttributeType'
 	)
 	
+	display = models.CharField(
+		max_length = 255,
+		verbose_name = _("display name"),
+		help_text = _(
+			"User friendly name for this attribute."
+		)
+	)
+	
 	identifier = models.SlugField(
 		max_length = 80,
 		db_index = True,
@@ -296,14 +314,6 @@ class Attribute(models.Model):
 		help_text = _(
 			"Identifier will be used as a means to"
 			" access this attribute."
-		)
-	)
-	
-	display = models.CharField(
-		max_length = 255,
-		verbose_name = _("display name"),
-		help_text = _(
-			"User friendly name for this attribute."
 		)
 	)
 	
@@ -317,6 +327,8 @@ class Attribute(models.Model):
 	role = models.CharField(
 		max_length = 20,
 		db_index = True,
+		blank = True,
+		null = True,
 		verbose_name = _("role"),
 		help_text = _(
 			"The role which this attribute will fulfil."
@@ -326,9 +338,6 @@ class Attribute(models.Model):
 	@property
 	def field(self):
 		return self.attribute_type.field
-		
-	class Meta:
-		app_label = 'product'
 	
 	def __unicode__(self):
 		return self.identifier

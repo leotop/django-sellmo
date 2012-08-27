@@ -29,7 +29,6 @@ from django.db import models
 #
 
 from sellmo import apps
-from sellmo.api.pricing import PricingMeta
 from sellmo.api.decorators import load
 
 #
@@ -43,11 +42,9 @@ from . models import Tax
 namespace = apps.pricing.namespace
 
 apps.pricing.types += ['tax']
-apps.pricing.pricing_meta += [PricingMeta('tax_rate', models.ForeignKey(Tax, blank=True, null=True))]
 
-@load(action='alter_product_Product')
+@load()
 def mixin_tax_support():
-	
 	class ProductMixin(ModelMixin):
 		model = apps.product.Product
 		tax = models.OneToOneField(
