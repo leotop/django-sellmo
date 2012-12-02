@@ -24,28 +24,5 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from .base import sellmo
-
-#
-
-from django.conf.urls.defaults import *
-
-#
-
-urlpatterns = patterns('sellmo')
-for app in sellmo.apps:
-	
-	urls = []
-	for name in dir(app):
-		attr = getattr(app, name)
-		if hasattr(attr, '_im_view') and attr._regex:
-			urls.append(url(attr._regex, attr, name='%s.%s' % (app.namespace, attr._name)))
-			
-	if urls:
-		prefix = app.prefix
-		if not prefix:
-			prefix = app.namespace
-	
-		urlpatterns += patterns('apps', 
-			('^%s/' % prefix, include(patterns(app.namespace, *urls))),
-		)
+from singleton import SingletonMeta, singleton
+from mixin import ModelMixin

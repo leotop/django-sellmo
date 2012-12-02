@@ -24,4 +24,28 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from apps import *
+from sellmo import apps
+from sellmo.api.decorators import load
+
+#
+
+from django.db import models
+from django.utils.translation import ugettext_lazy as _
+from django.contrib.contenttypes.models import ContentType
+
+#
+
+namespace = apps.product.namespace
+
+#
+
+@load(action='load_subtypes', after='alter_product_Product')
+def load_subtypes():
+	
+	class SimpleProduct(apps.product.Product):
+		class Meta:
+			app_label = 'product'
+			verbose_name = _("product")
+			verbose_name_plural = _("products")
+	
+	apps.product.register_subtype(SimpleProduct)

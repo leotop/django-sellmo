@@ -33,7 +33,7 @@ from django.shortcuts import redirect
 
 import sellmo
 from sellmo import apps
-from sellmo.store.decorators import view, get
+from sellmo.core.decorators import view, get
 
 #
 

@@ -25,10 +25,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from sellmo import apps
+from sellmo.contrib.contrib_customer.models import Address
 
 #
 
-from . models import Address
+from django.utils.translation import ugettext_lazy as _
 
 #
 

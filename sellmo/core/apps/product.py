@@ -25,77 +25,47 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from django.db import models
-from django import dispatch
+from django.http import Http404
+from django.conf.urls.defaults import *
 
 #
 
 import sellmo
 from sellmo import apps
-from sellmo.store.decorators import view, get
+from sellmo.core.decorators import view
+from sellmo.utils.polymorphism import PolymorphicModel
 
 #
 
-class CheckoutApp(sellmo.App):
+class ProductApp(sellmo.App):
 
-	namespace = 'checkout'
-	prefix = 'checkout'
-	enabled = True
+	namespace = 'product'
+	prefix = 'products'
 	
-	Order = models.Model
-	OrderLine = models.Model
-	
-	collect_shipping_methods = dispatch.Signal(providing_args=['methods'])
-	collect_payment_methods = dispatch.Signal(providing_args=['methods'])
+	Product = PolymorphicModel
 	
 	def __init__(self, *args, **kwargs):
-		from sellmo.api.checkout.models import Order, OrderLine
-		self.Order = Order
-		self.OrderLine = OrderLine
+		from sellmo.api.product import Product
+		self.Product = Product
+		self.subtypes = []
 		
-	@view(r'$')
-	def checkout(self, chain, request, cart=None, context=None, **kwargs):
+	def register_subtype(self, subtype):
+		self.subtypes.append(subtype)
+		
+		# Shouldn't be a problem if Capital cased classnames are used.
+		setattr(self, subtype.__name__, subtype)
+	
+	@view(r'(?P<product_slug>[a-z0-9_-]+)$')
+	def details(self, chain, request, product_slug, context=None, **kwargs):
 		if context == None:
 			context = {}
+		try:
+			product = self.Product.objects.get(slug=product_slug)
+		except self.Product.DoesNotExist:
+			raise Http404("""Product '%s' not found.""" % product_slug)
 		
-		#
-		apps.customer.customer_form(request, context=context)
-		apps.customer.address_form(request, prefix='billing', context=context)
-		
-		#
-		#self.on_shipping_method_form(request, context=context, **kwargs)
-		#self.on_payment_method_form(request, context=context, **kwargs)
-		
-		#
 		if chain:
-			return chain.execute(request, cart=cart, context=context, **kwargs)
-		
-	@get()
-	def get_shipping_method_form(self, chain, data=None, methods=None, **kwargs):
-		
-		#
-		if methods == None:
-			methods = []
-			self.collect_shipping_methods.send(sender=self, methods=methods)
-		
-		#
-		if data == None:
-			form = self._ShippingMethodForm(methods=methods, **kwargs)
+			return chain.execute(request, product=product, context=context, **kwargs)
 		else:
-			form = _ShippingMethodForm(data, methods=methods)
-		
-		if chain:
-			return chain.execute(form=form, post=post, methods=methods, context=context, **kwargs)
-		
-		return form
-			
-	@view()
-	def shipping_method_form(self, chain, request, methods=None, context=None, **kwargs):
-		if context == None:
-			context = {}
-		
-		#
-		context['shipping_method'] = self.get_shipping_method_form(post=request.POST)
-			
-		#
-		if chain:
-			chain.execute(request, context=context, **kwargs)
+			# We don't render anything
+			raise Http404

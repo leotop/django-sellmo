@@ -24,73 +24,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import reaktor
-
-#
-
 from sellmo import apps
 from sellmo.api.decorators import load
 
 #
 
-from . models import InvalidationMetaBase, ProductType, Attribute
-
-#
-
-from django import forms
-from django.db import models
-from django.db.models.signals import post_save, post_delete
-
-#
-
 namespace = apps.product.namespace
-apps.product.inlines = []
 
-#
-
-@load(action='load_contrib_product', after='alter_product_Product')
-def load_models():
-	
-	class Variant(apps.product.Product):
-		
-		product = models.ForeignKey(
-			apps.product.Product,
-			related_name = 'variants'
-		)
-		
-		class Meta:
-			app_label = 'product'
-		
-		class ReflectionMeta(reaktor.ReflectionMeta):
-			
-			def get_reflector(self, type_id):
-				return ProductType.objects.get(id=type_id).variant_reflector()
-				
-			def provide_type_ids(self):
-				for type in ProductType.objects.all():
-					yield type.id
-					
-		class InvalidationMeta(InvalidationMetaBase):
-			
-			def hookup(self, invalidation_callback):
-				post_save.connect(invalidation_callback, sender=ProductType)
-				post_delete.connect(invalidation_callback, sender=ProductType)
-				post_save.connect(invalidation_callback, sender=Attribute)
-				post_delete.connect(invalidation_callback, sender=Attribute)
-		
-	
-	apps.product.Variant = Variant
-	
-@load(action='hookup_contrib_product', after='load_contrib_product')
-def hookup():
-	
-	apps.product.ProductType = ProductType
-	reaktor.manager.hookup_base(apps.product.Variant)
-	reaktor.manager.hookup_base(apps.product.Product)
-	
-	# Extend add to cart form
-	class AddToCartForm(apps.cart.AddToCartForm):
-		variant = forms.IntegerField(widget = forms.HiddenInput, required=False)
-	
-	apps.cart.AddToCartForm = AddToCartForm
-	
+@load(action='setup_variants', after='load_subtypes')
+def setup_variants():
+	pass

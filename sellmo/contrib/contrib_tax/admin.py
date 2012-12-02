@@ -24,15 +24,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.contrib import admin
-
-#
 
 from sellmo import apps
+from sellmo.contrib.contrib_tax.models import Tax
 
 #
 
-from . models import *
+from django.contrib import admin
 
 #
 	

@@ -24,8 +24,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo import apps
-from sellmo.api.checkout import ShippingMethod
+from sellmo import apps, App
+from sellmo.utils.polymorphism import PolymorphicModel
 
 #
 
@@ -34,58 +34,79 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
-class Method(models.Model):
+class VariationApp(App):
+	namespace = 'variation'
+	
+	def __init__(self):
+		self.product_subtypes = []
+		self.subtypes = []
+		
+	def register_product_subtype(self, subtype):
+		self.product_subtypes.append(subtype)
+	
 
-	carrier = models.CharField(
-		max_length = 30,
+class Attribute(PolymorphicModel):
+	
+	value = models.SlugField(
+		max_length = 80,
+		db_index = True,
+		unique = True,
+		verbose_name = _("value"),
 	)
 	
-	description = models.TextField(
-		blank = True,
-		null = True
+	def __unicode__(self):
+		return self.value
+	
+	class Meta:
+		app_label = 'product'
+		ordering = ['content_type', 'value']
+		verbose_name = _("attribute")
+		verbose_name_plural = _("attributes")
+		
+class Variable(models.Model):
+	
+	name = models.CharField(
+		max_length = 80,
+		verbose_name = _("name")
 	)
 	
-	def to_sellmo_method(self):
-		raise NotImplementedError()
-
-	class Meta:
-		abstract = True
-
-#
-
-class BasicMethod(Method):
-
-	def to_sellmo_method(self):
-		return ShippingMethod(self.carrier, description=self.description)
-
-	class Meta:
-		app_label = 'shipping'
-		verbose_name = _("basic shipping method")
-		verbose_name_plural = _("basic shipping methods")
-
-#
-
-class TieredMethod(Method):
-
-	def to_sellmo_method(self):
-		return ShippingMethod(self.carrier, description=self.description)
-
-	class Meta:
-		app_label = 'shipping'
-		verbose_name = _("tiered shipping method")
-		verbose_name_plural = _("tiered shipping methods")
-
-class TieredMethodTier(models.Model):
-	
-	method = models.ForeignKey(
-		TieredMethod
+	attributes = models.ManyToManyField(
+		Attribute,
+		through = 'Option',
+		verbose_name = _("attributes"),
 	)
 	
-	#
-	amount = apps.pricing.construct_decimal_field()
-	tier = apps.pricing.construct_decimal_field()
+	def __unicode__(self):
+		return self.name
 	
 	class Meta:
-		app_label = 'shipping'
-		verbose_name = _("shipping tier")
-		verbose_name_plural = _("shipping tiers")
+		app_label = 'product'
+		ordering = ['name']
+		verbose_name = _("variable")
+		verbose_name_plural = _("variables")
+		
+class Option(models.Model):
+	
+	sort_order = models.PositiveSmallIntegerField(
+		verbose_name = _("sort order"),
+	)
+	
+	variable = models.ForeignKey(
+		Variable,
+		verbose_name = _("variable"),
+	)
+	
+	attribute = models.ForeignKey(
+		Attribute,
+		verbose_name = _("attribute"),
+	)
+	
+	def __unicode__(self):
+		return u"%s: %s" % (self.variable.name, unicode(self.attribute))
+	
+	class Meta:
+		app_label = 'product'
+		unique_together = ['variable', 'attribute']
+		ordering = ['variable', 'sort_order']
+		verbose_name = _("option")
+		verbose_name_plural = _("options")

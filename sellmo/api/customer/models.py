@@ -26,6 +26,7 @@
 
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils.translation import ugettext_lazy as _
 
 #
 
@@ -38,10 +39,12 @@ class Addressee(apps.customer.Addressee):
 
 	first_name = models.CharField(
 		max_length = 30,
+		verbose_name = _("first name")
 	)
 	
 	last_name = models.CharField(
-		max_length = 30
+		max_length = 30,
+		verbose_name = _("last name")
 	)
 	
 	class Meta:
@@ -55,22 +58,31 @@ class Customer(Addressee, apps.customer.Customer):
 	user = models.OneToOneField(
 		User,
 		blank = True,
-		null = True
+		null = True,
+		verbose_name = _("user")
 	)
 	
 	class Meta:
 		app_label = 'customer'
+		verbose_name = _("customer")
+		verbose_name_plural = _("customers")
+		ordering = ['last_name', 'first_name']
 	
 class Address(Addressee, apps.customer.Address):
 	
 	customer = models.ForeignKey(
 		Customer,
-		related_name = 'addresses'
+		related_name = 'addresses',
+		verbose_name = _("customer")
 	)
 	
 	type = models.CharField(
 		max_length = 30,
+		verbose_name = _("type")
 	)
 	
 	class Meta:
 		app_label = 'customer'
+		verbose_name = _("address")
+		verbose_name_plural = _("addresses")
+		ordering = ['last_name', 'first_name']

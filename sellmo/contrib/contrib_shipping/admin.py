@@ -24,15 +24,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.contrib import admin
-
-#
-
 from sellmo import apps
+from sellmo.contrib.contrib_shipping.models import TieredMethod, TieredMethodTier
 
 #
 
-from . models import *
+from django.contrib import admin
 
 #
 	
@@ -42,6 +39,5 @@ class TieredMethodTierInline(admin.TabularInline):
 class TieredMethodAdmin(admin.ModelAdmin):
 	inlines = [TieredMethodTierInline]
 	
-#
 
 admin.site.register(TieredMethod, TieredMethodAdmin)

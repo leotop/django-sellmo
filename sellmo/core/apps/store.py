@@ -24,23 +24,37 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.http import HttpResponse
+from django.db import models
 
 #
 
-from sellmo.api.decorators import link
-from sellmo.api.pricing import Price
+import sellmo
 from sellmo import apps
+from sellmo.core.decorators import view, get
 
 #
 
-@link()
-def get_qty_price(product, qty, price, **kwargs):
-	if not price:
-		q = apps.pricing.ProductQtyPrice.objects.filter(product=product, qty__lte=qty).order_by('-qty')
-		if q:
-			price = Price(q[0].amount)
+class StoreApp(sellmo.App):
+
+	namespace = 'store'
+	Purchase = apps.pricing.Stampable
+
+	def __init__(self, *args, **kwargs):
+		from sellmo.api.store import Purchase
+		self.Purchase = Purchase
+			
+	@get()
+	def make_purchase(self, chain, product, purchase=None, **kwargs):
+		"""
+		Creates a new store.Purchase, and saves it.
+		"""
+		if not purchase:
+			purchase = self.Purchase(product=product)
+			
+		if chain:
+			out = chain.execute(product=product, purchase=purchase, **kwargs)
+			if out.has_key('purchase'):
+				purchase = out['purchase']
 		
-	return {
-		'price' : price
-	}
+		purchase.save()
+		return purchase

@@ -35,29 +35,27 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
-# Set default namespace
+from sellmo.contrib.contrib_pricing.models import QtyPrice
+
+#
+
 namespace = apps.pricing.namespace
+
+#
 	
-# Load the QtyPrice model
-@load(action='load_pricing_QtyPrice', after='alter_product_Product')
-def load_models():
+@load(action='alter_product_Product')
+def load_qty_price():
 	
-	class QtyPrice(models.Model):
-		
+	class ProductQtyPrice(QtyPrice):
 		product = models.ForeignKey(
-			apps.product.Product
+			apps.product.Product,
+			related_name = 'qty_prices',
+			verbose_name = _("product"),
 		)
-		
-		amount = apps.pricing.construct_decimal_field()
-		
-		qty = models.PositiveIntegerField(
-			default = 0,
-		)
-		
-		def __unicode__(self):
-			return _("%s qty or more") % unicode(self.qty)
 		
 		class Meta:
 			app_label = 'pricing'
-			
-	apps.pricing.QtyPrice = QtyPrice
+			verbose_name = _("qty price")
+			verbose_name_plural = _("qty prices")
+		
+	apps.pricing.ProductQtyPrice = ProductQtyPrice

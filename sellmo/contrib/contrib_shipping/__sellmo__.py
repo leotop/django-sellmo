@@ -24,12 +24,18 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo import apps
-namespace = apps.checkout.namespace
+from django.utils.translation import ugettext_lazy as _
 
 #
 
-from . models import *
+from sellmo import apps
+from sellmo.contrib.contrib_shipping.models import TieredMethod
+
+#
+
+namespace = apps.checkout.namespace
+
+#
 
 def on_collect(sender, methods, **kwargs):
 	for method in TieredMethod.objects.all():

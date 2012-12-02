@@ -35,14 +35,34 @@ from django.contrib.contenttypes.models import ContentType
 #
 
 class PolymorphicQuerySet(QuerySet):
-			
+	
+	def __init__(self, *args, **kwargs):
+		self._downcast = True
+		if kwargs.has_key('downcast'):
+			self._downcast = kwargs.pop('downcast')
+		super(PolymorphicQuerySet, self).__init__(*args, **kwargs)
+	
 	def iterator(self):
 		for item in super(PolymorphicQuerySet, self).iterator():
-			yield item.cast()
+			if self._downcast:
+				yield item.downcast()
+			else:
+				yield item
+			
+	def non_polymorphic(self):
+		self._downcast = False
+		return self
 			
 class PolymorphicManager(models.Manager):
+
+	_downcast = True
+
 	def get_query_set(self):
-		return PolymorphicQuerySet(self.model, using=self._db)
+		return PolymorphicQuerySet(self.model, using=self._db, downcast=self._downcast)
+		
+	def non_polymorphic(self):
+		self._downcast = False
+		return self
 
 class PolymorphicModel(models.Model):
 	
@@ -54,12 +74,13 @@ class PolymorphicModel(models.Model):
 			self.content_type = ContentType.objects.get_for_model(self.__class__)
 		self.save_base()
 		
-	def cast(self):
-		content_type = self.content_type
-		model = content_type.model_class()
-		if(model == self.__class__):
-			return self
-		return model.objects.get(id=self.id)
+	def downcast(self):
+		if self.content_type:
+			model = self.content_type.model_class()
+			if(model == self.__class__):
+				return self
+			return model.objects.get(id=self.id)
+		return self
 		
 	class Meta:
 		abstract = True

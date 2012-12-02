@@ -24,37 +24,24 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.db import models
+from django.db.models import fields
 
 #
 
-import sellmo
-from sellmo import apps
-from sellmo.store.decorators import view, get
-
-#
-
-class StoreApp(sellmo.App):
-
-	namespace = 'store'
-	Purchase = apps.pricing.Stampable
-
-	def __init__(self, *args, **kwargs):
-		from sellmo.api.store import Purchase
-		self.Purchase = Purchase
-			
-	@get()
-	def make_purchase(self, chain, product, purchase=None, **kwargs):
-		"""
-		Creates a new store.Purchase, and saves it.
-		"""
-		if not purchase:
-			purchase = self.Purchase(product=product)
-			
-		if chain:
-			out = chain.execute(product=product, purchase=purchase, **kwargs)
-			if out.has_key('purchase'):
-				purchase = out['purchase']
+class _ModelMixin(type):
+	def __new__(meta, name, bases, dict):
+		cls = type.__new__(meta, name, bases, dict)
 		
-		purchase.save()
-		return purchase
+		if name != 'ModelMixin':
+			assert 'model' in dict
+			model = dict.pop('model')
+
+			for name, member in dict.iteritems():
+				if name not in ModelMixin.__dict__:					
+					model.add_to_class(name, member)
+		
+		return cls
+
+
+class ModelMixin(object):
+    __metaclass__ = _ModelMixin

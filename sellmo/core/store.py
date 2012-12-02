@@ -24,25 +24,27 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.db.models import get_apps
+from django.conf import settings
 from django.utils.importlib import import_module
+from django.utils.module_loading import module_has_submodule
 
 #
 
-import magic
-from . import apps
-from . import chaining
+from sellmo import apps
+from sellmo.core.apps import *
+from sellmo.core import chaining
+from sellmo.magic import singleton
 
 #
 
+import sys
 from collections import deque
 from copy import copy
 
 #
 
+@singleton
 class Store(object):
-	
-	__metaclass__ = magic.SingletonMeta
 	
 	def __init__(self):
 	
@@ -50,36 +52,37 @@ class Store(object):
 		mounted = list(self._mount_apps())
 		
 		# Core apps (order matters)
-		self.product = apps.ProductApp()
-		self.pricing = apps.PricingApp()
-		self.store = apps.StoreApp()
+		self.product = ProductApp()
+		self.pricing = PricingApp()
+		self.store = StoreApp()
 		
 		# 
-		self.cart = apps.CartApp()
-		self.customer = apps.CustomerApp()
+		self.cart = CartApp()
+		self.customer = CustomerApp()
 		
 		#
-		self.checkout = apps.CheckoutApp()
+		self.checkout = CheckoutApp()
 		
+		# External apps
+		apps.init_pending_apps()
+				
 		#
 		self._load_apps(mounted)
 		self._link_apps(mounted)
 		self._link_apps(mounted, '.gets', chaining.Chain)
 	
 	def _mount_apps(self):
-		for app in get_apps():
-			path = app.__name__
-			assert path.endswith('.models'), """Invalid app module"""
-			app_name = path[:-len('.models')]
-			
-			# Try to mount __sellmo__.py
+	
+		for app in settings.INSTALLED_APPS:
+			mod = import_module(app)
 			try:
-				app = import_module('.__sellmo__', app_name)
-				app.path = app_name
-			except ImportError:
-				continue
-			
-			yield app
+				sellmo = import_module('%s.__sellmo__' % app)
+			except Exception as exception:
+				if module_has_submodule(mod, '__sellmo__'):
+					raise Exception(str(exception)), None, sys.exc_info()[2]
+			else:
+				sellmo.path = app
+				yield sellmo
 			
 	def _load_apps(self, apps):
 		loadables = deque()
@@ -215,6 +218,3 @@ class Store(object):
 			
 		return apps
 		
-#
-		
-sellmo = Store()

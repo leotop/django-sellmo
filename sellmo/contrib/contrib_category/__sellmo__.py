@@ -24,41 +24,46 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.contrib import admin
+from sellmo import apps
+from sellmo.api.decorators import load
+from sellmo.magic import ModelMixin
+
+#
+
+from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 #
-
-from . models import *
+	
+namespace = apps.category.namespace
 
 #
 
-class AttributeInline(admin.TabularInline):
-	model = Attribute
+@load(action='load_category_Category')
+def load_category():
+	
+	class Category(apps.category.Category):
+		class Meta:
+			app_label = 'category'
+			verbose_name = _("category")
+			verbose_name_plural = _("categories")
+			ordering = ['order']
+			
+	apps.category.Category = Category
 
-class ProductTypeAdmin(admin.ModelAdmin):
-	inlines = [AttributeInline]
-	
-	fieldsets = (
-		(_("Identification"), {
-			'fields': ('display', 'display_plural', 'identifier')
-		}),
-		(_("Advanced"), {
-			'fields': ('intermediary', 'extends',)
-		}),
-	)
-	
-	prepopulated_fields = {
-		'identifier' : ('display',),
-	}
-	
-class AttributeOptionInline(admin.TabularInline):
-	model = AttributeOption
-	
-class AttributeTypeAdmin(admin.ModelAdmin):
-	inlines = [AttributeOptionInline]
-	
-#
 
-admin.site.register(ProductType, ProductTypeAdmin)
-admin.site.register(AttributeType, AttributeTypeAdmin)
+@load(action='alter_product_Product', after='load_category_Category')
+def mixin_category_support():
+
+	class ProductMixin(ModelMixin):
+		model = apps.product.Product
+		category = models.ManyToManyField(
+			apps.category.Category,
+			blank = True,
+			null = True,
+			related_name = 'products',
+			verbose_name = _("category"),
+		)
+		
+		
+		

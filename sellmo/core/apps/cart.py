@@ -33,7 +33,7 @@ from django.shortcuts import redirect
 
 import sellmo
 from sellmo import apps
-from sellmo.store.decorators import view, get
+from sellmo.core.decorators import view, get
 
 #
 
@@ -121,10 +121,10 @@ class CartApp(sellmo.App):
 				
 				# get data from form
 				product = apps.product.Product.objects.get(id=form.cleaned_data['product'])
-				make_purchase_kwargs = self.get_purchase_args(form=form)
+				purchase_kwargs = self.get_purchase_args(form=form)
 				
 				# Try create the purchase
-				purchase = apps.store.make_purchase(product=product, **make_purchase_kwargs)
+				purchase = apps.store.make_purchase(product=product, **purchase_kwargs)
 						
 				#
 				if not purchase:

@@ -24,23 +24,60 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.http import HttpResponse
-
-#
-
-from sellmo.api.decorators import link
-from sellmo.api.pricing import Price
 from sellmo import apps
+from sellmo.api.decorators import load
+from sellmo.magic import ModelMixin
+from sellmo.contrib.contrib_variation.models import Option
 
 #
 
-@link()
-def get_qty_price(product, qty, price, **kwargs):
-	if not price:
-		q = apps.pricing.ProductQtyPrice.objects.filter(product=product, qty__lte=qty).order_by('-qty')
-		if q:
-			price = Price(q[0].amount)
+from django.db import models
+from django.contrib.contenttypes.models import ContentType
+from django.utils.translation import ugettext_lazy as _
+
+#
+
+namespace = apps.variation.namespace
+
+#
+
+@load(action='setup_variants', after='load_subtypes')
+def setup_variants():
+	pass
+
+
+@load(action='load_variants', after='setup_variants')
+def load_variants():
+	
+	from sellmo.contrib.contrib_variation.variant import VariantFieldDescriptor, Variant
+	apps.variation.Variant = Variant
+	for subtype in apps.variation.product_subtypes:
 		
-	return {
-		'price' : price
-	}
+		class Meta:
+			app_label = 'product'
+			verbose_name = _("variant")
+			verbose_name_plural = _("variants")
+	
+		name = '%sVariant' % subtype.__name__
+		attr_dict = {
+			'product' : models.ForeignKey(
+				subtype,
+				related_name = 'variants',
+				editable = False
+			),
+			'options' : models.ManyToManyField(
+				Option,
+				verbose_name = _("options"),
+			),
+			'Meta' : Meta,
+			'__module__' : subtype.__module__
+		}
+		
+		model = type(name, (apps.variation.Variant, apps.product.Product,), attr_dict)
+		for field in model.get_variable_fields():
+			descriptor = field.model.__dict__.get(field.name, None)
+			setattr(model, field.name, VariantFieldDescriptor(field, descriptor=descriptor))
+		
+		apps.variation.subtypes.append(model)
+		setattr(apps.variation, name, model)
+	

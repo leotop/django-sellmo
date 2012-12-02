@@ -24,18 +24,57 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django import template
+from django.db import models
 
 #
 
+import sellmo
 from sellmo import apps
+from sellmo.core.decorators import view, get
 
 #
 
-register = template.Library()
+class PricingApp(sellmo.App):
 
-#
-
-@register.simple_tag
-def price(product, qty=1):
-	return product.get_qty_price(qty=qty)
+	namespace = 'pricing'
+	currency = 'EUR'
+	types = []
+	
+	# Decimal field construction
+	decimal_max_digits = 9
+	decimal_places = 2
+	stamped_decimal_max_digits = 15
+	stamped_decimal_places = 8
+	
+	#
+	
+	class Stampable(models.Model):
+		class Meta:
+			abstract = True
+	
+	@staticmethod
+	def construct_decimal_field(**kwargs):
+		return models.DecimalField(
+			max_digits = apps.pricing.decimal_max_digits,
+			decimal_places = apps.pricing.decimal_places,
+			**kwargs
+		)
+		
+	#
+	
+	def __init__(self, *args, **kwargs):
+		self.Stampable.add_to_class('amount', apps.pricing.construct_decimal_field())
+		for type in self.types:
+			self.Stampable.add_to_class('%s_amount' % type, self.construct_decimal_field())
+			
+	@get()
+	def get_qty_price(self, chain, product, qty=1, price=None, **kwargs):
+		if chain:
+			out = chain.execute(product=product, qty=qty, price=price, **kwargs)
+			if not out.has_key('price'):
+				raise Exception("""Price not returned""")
+			price = out['price']
+		
+		return price
+			
+	

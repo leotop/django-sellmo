@@ -24,47 +24,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import magic
-
-class MountPoint(object):
-	__metaclass__ = magic.SingletonMeta
-	
-apps = MountPoint()
-
-#
-
-class _AppMeta(magic.SingletonMeta):
-	
-	def __new__(meta, name, bases, dict):
-		# create the app class
-		cls = super(_AppMeta, meta).__new__(meta, name, bases, dict)
-		
-		# register the app type to the mount point
-		if cls.enabled and cls.namespace:
-			setattr(apps, cls.namespace, cls)
-		
-		return cls
-
-class App(object):
-	
-	__metaclass__ = _AppMeta
-	enabled = True
-	
-	namespace = None
-	prefix = None
-	
-	def __new__(cls, *args, **kwargs):
-		if cls.enabled:
-			
-			# Create the actual app
-			app = object.__new__(cls)
-			
-			# Replace the class object with the actual app object
-			setattr(apps, app.namespace, app)
-			
-			#
-			return app
-		else:
-			# App is disabled, remove from mountpoint
-			setattr(apps, cls.namespace, None)
-			return None
+# !! THIS INITS SELLMO
+from sellmo.core.store import Store
+sellmo = Store()

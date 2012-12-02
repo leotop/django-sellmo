@@ -24,43 +24,106 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.utils.translation import ugettext_lazy as _
+from sellmo import apps, App
+
+#
+
 from django.db import models
+from django.utils.translation import ugettext_lazy as _
 
 #
 
-from sellmo import apps
-
-#
-
-class Product(apps.product.Product):
+class Category(models.Model):
+	
+	order = models.PositiveSmallIntegerField(
+		default = 0,
+		editable = False
+	)
+	
+	parent = models.ForeignKey(
+		'self',
+		blank = True,
+		null = True,
+		verbose_name = _("parent"),
+		related_name = 'children'
+	)
+	
+	name = models.CharField(
+		max_length = 255,
+		verbose_name = _("name"),
+	)
 	
 	slug = models.SlugField(
 		max_length = 80,
 		db_index = True,
-		unique = True,
 		verbose_name = _("slug"),
 		help_text = _(
 			"Slug will be used in the address of"
-			" the product page. It should be"
+			" the category page. It should be"
 			" URL-friendly (letters, numbers,"
 			" hyphens and underscores only) and"
 			" descriptive for the SEO needs."
 		)
 	)
 	
+	active = models.BooleanField(
+		default = True,
+		verbose_name = _("active"),
+		help_text = (
+			"Inactive categories will be hidden from the site."
+		)
+	)
+	
+	@property
+	def parents(self):
+		parents = []
+		parent = self.parent
+		while parent:
+			parents.append(parent)
+			parent = parent.parent
+			
+		parents.reverse()
+		return parents
+		
+	@property
+	def descendants(self):
+		descendants = []
+		for child in self.children.all():
+			descendants.append(child)
+			descendants.extend(child.descendants)
+		return descendants
+		
+	@property
+	def full_name(self):
+		categories = self.parents + [self]
+		return " | ".join(category.name for category in categories)
+		
+	@classmethod
+	def reorder(cls):
+		categories = sorted([ (unicode(x), x) for x in cls.objects.all() ])
+		for i in range(len(categories)):
+			full_description, category = categories[i]
+			category.order = i
+			super(Category, category).save()
+	
+	def save(self, *args, **kwargs):
+		super(Category, self).save(*args, **kwargs)
+		self.reorder()
+	
+	def clean(self):
+		parent = self.parent
+		while parent:
+			if parent.id == self.id:
+				raise ValidationError(_("Parent assignment causes a loop."))
+			parent = parent.parent
+	
 	def __unicode__(self):
-		return self.slug
-		
-	@models.permalink
-	def get_absolute_url(self):
-		return 'product.details', (self.slug,)
-		
-	def get_qty_price(self, qty=1):
-		return apps.pricing.get_qty_price(product=self, qty=qty)
+		return self.full_name
 	
 	class Meta:
-		ordering = ['slug']
-		app_label = 'product'
-		verbose_name = _("product")
-		verbose_name_plural = _("products")
+		abstract = True
+		
+class CategoryApp(App):
+	namespace = 'category'
+		
+apps.category.Category = Category

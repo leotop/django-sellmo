@@ -24,4 +24,54 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from base import App, apps
+from sellmo.magic import singleton
+
+#
+
+@singleton
+class MountPoint(object):
+	
+	def __init__(self):
+		self._pending = []
+	
+	def on_app_creation(self, app):
+		if app.enabled and app.namespace:
+			setattr(self, app.namespace, app)
+			self._pending.append(app)
+			
+	def on_app_init(self, app, instance):
+		setattr(self, app.namespace, instance)
+		
+		# Remove from pending
+		self._pending.remove(app)
+			
+	def init_pending_apps(self):
+		while self._pending:
+			app = self._pending[0]
+			app()
+		
+apps = MountPoint()
+
+#
+
+class _AppMeta(magic.SingletonMeta):
+	
+	def __new__(meta, name, bases, dict):
+		cls = super(_AppMeta, meta).__new__(meta, name, bases, dict)
+		apps.on_app_creation(cls)
+		return cls
+
+class App(object):
+	
+	__metaclass__ = _AppMeta
+	enabled = True
+	
+	namespace = None
+	prefix = None
+	
+	def __new__(cls, *args, **kwargs):
+		app = None
+		if cls.enabled:
+			app = object.__new__(cls)
+		apps.on_app_init(cls, app)
+		return app

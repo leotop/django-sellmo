@@ -39,9 +39,12 @@ class Tax(models.Model):
 	
 	name = models.CharField(
 		max_length = 20,
+		verbose_name = _("name"),
 	)
 	
-	rate = apps.pricing.construct_decimal_field()
+	rate = apps.pricing.construct_decimal_field(
+		verbose_name = _("rate"),
+	)
 	
 	def __unicode__(self):
 		return self.name

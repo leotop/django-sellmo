@@ -25,30 +25,30 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from django.db import models
+from django.utils.translation import ugettext_lazy as _
 
 #
 
 from sellmo import apps
 from sellmo.api.decorators import load
+from sellmo.magic import ModelMixin
+from sellmo.contrib.contrib_tax.models import Tax
 
 #
-
-from magic.mixin import ModelMixin
-
-#
-
-from . models import Tax
 
 namespace = apps.pricing.namespace
-
 apps.pricing.types += ['tax']
 
-@load()
+#
+
+@load(action='alter_product_Product')
 def mixin_tax_support():
+	
 	class ProductMixin(ModelMixin):
 		model = apps.product.Product
-		tax = models.OneToOneField(
+		tax = models.ForeignKey(
 			Tax,
 			blank = True,
-			null = True
+			null = True,
+			verbose_name = _("tax"),
 		)

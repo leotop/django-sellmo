@@ -28,11 +28,11 @@
 # Internal representation of apps
 
 # Core apps (order matters)
-from product import ProductApp
-from pricing import PricingApp
-from store import StoreApp
+from sellmo.core.apps.product import ProductApp
+from sellmo.core.apps.pricing import PricingApp
+from sellmo.core.apps.store import StoreApp
 
 #
-from cart import CartApp
-from customer import CustomerApp
-from checkout import CheckoutApp
+from sellmo.core.apps.cart import CartApp
+from sellmo.core.apps.customer import CustomerApp
+from sellmo.core.apps.checkout import CheckoutApp

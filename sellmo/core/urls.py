@@ -24,23 +24,29 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.http import HttpResponse
+from sellmo.core.store import Store
+sellmo = Store()
 
 #
 
-from sellmo.api.decorators import link
-from sellmo.api.pricing import Price
-from sellmo import apps
+from django.conf.urls.defaults import *
 
 #
 
-@link()
-def get_qty_price(product, qty, price, **kwargs):
-	if not price:
-		q = apps.pricing.ProductQtyPrice.objects.filter(product=product, qty__lte=qty).order_by('-qty')
-		if q:
-			price = Price(q[0].amount)
-		
-	return {
-		'price' : price
-	}
+urlpatterns = patterns('sellmo')
+for app in sellmo.apps:
+	
+	urls = []
+	for name in dir(app):
+		attr = getattr(app, name)
+		if hasattr(attr, '_im_view') and attr._regex:
+			urls.append(url(attr._regex, attr, name='%s.%s' % (app.namespace, attr._name)))
+			
+	if urls:
+		prefix = app.prefix
+		if not prefix:
+			prefix = app.namespace
+	
+		urlpatterns += patterns('apps', 
+			('^%s/' % prefix, include(patterns(app.namespace, *urls))),
+		)

@@ -24,41 +24,47 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.db import models
-from django.http import Http404
-from django.conf.urls.defaults import *
-
 #
 
-import sellmo
 from sellmo import apps
-from sellmo.store.decorators import view
-from sellmo.utils.polymorphism import PolymorphicModel
+from sellmo.contrib.contrib_category.models import Category
 
 #
 
-class ProductApp(sellmo.App):
+from django.contrib import admin
+from django.utils.translation import ugettext_lazy as _
+from django.contrib.admin.sites import NotRegistered
 
-	namespace = 'product'
-	prefix = 'products'
+#
+
+class ProductCategoryListFilter(admin.SimpleListFilter):
+	title = _("category")
+	parameter_name = 'category'
 	
-	Product = PolymorphicModel
-	
-	def __init__(self, *args, **kwargs):
-		from sellmo.api.product import Product
-		self.Product = Product
-	
-	@view(r'(?P<product_slug>[a-z0-9_-]+)$')
-	def details(self, chain, request, product_slug, context=None, **kwargs):
-		if context == None:
-			context = {}
-		try:
-			product = self.Product.objects.get(slug=product_slug)
-		except self.Product.DoesNotExist:
-			raise Http404("""Product '%s' not found.""" % product_slug)
+	def lookups(self, request, model_admin):
+		return [(str(category.pk), unicode(category)) for category in apps.category.Category.objects.all()]
 		
-		if chain:
-			return chain.execute(request, product=product, context=context, **kwargs)
+	def queryset(self, request, queryset):
+		pk = self.value()
+		if pk != None:
+			category = apps.category.Category.objects.get(pk=pk)
+			categories = [category] + category.descendants
+			return queryset.filter(category__in=categories)
 		else:
-			# We don't render anything
-			raise Http404
+			return queryset.all()
+			
+class CategoryParentListFilter(admin.SimpleListFilter):
+	title = _("parent category")
+	parameter_name = 'parent'
+	
+	def lookups(self, request, model_admin):
+		return [(str(category.pk), unicode(category)) for category in apps.category.Category.objects.all()]
+		
+	def queryset(self, request, queryset):
+		pk = self.value()
+		if pk != None:
+			category = apps.category.Category.objects.get(pk=pk)
+			categories = [category] + category.descendants
+			return queryset.filter(parent__in=categories)
+		else:
+			return queryset.all()
