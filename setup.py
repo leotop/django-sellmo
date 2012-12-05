@@ -29,7 +29,7 @@
 from setuptools import setup, find_packages
 setup(
 	name='Sellmo',
-	version='0.1'
+	version='0.1',
 	description='',
 	long_description='',
 	author='Raymond Reggers',
