@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
 # 
@@ -24,67 +26,15 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-# Singleton test
-from singleton import SingletonMeta
-
-#
-class TheCar(object):
-	
-	__metaclass__ = SingletonMeta
-	
-	wheels = 0
-	
-	def __init__(self, wheels=0):
-		self.wheels = wheels
-		
-	def __new__(cls, *args, **kwargs):
-		obj = super(TheCar, cls).__new__(cls, *args, **kwargs)
-		obj.tires = args[0]
-		return obj
-		
-x = TheCar(4)
-y = TheCar()
-
-# 1
-assert x.wheels == 4
-assert x == y and x.wheels == y.wheels
-assert x.tires == x.wheels
-assert x.tires == y.tires
-
-# 2
-x.wheels = 2
-assert y.wheels == 2
-
-class ThePimpedCar(TheCar):
-	
-	is_pimped = True
-	
-	def __init__(self, wheels=0):
-		super(ThePimpedCar, self).__init__(wheels=wheels)
-		
-	def __new__(cls, *args, **kwargs):
-		obj = super(ThePimpedCar, cls).__new__(cls, *args, **kwargs)
-		obj.color = 'purple'
-		return obj
-		
-x1 = ThePimpedCar(6)
-y1 = ThePimpedCar()
-
-#1
-assert x1 != x and y1 != y
-
-#2
-assert x.wheels == 2
-assert x1.wheels == 6
-assert x1 == y1 and x1.wheels == y1.wheels
-
-#3
-assert x1.is_pimped
-assert not hasattr(x, 'is_pimped')
-assert x1.tires == x1.wheels
-assert x1.tires == y1.tires
-assert x1.tires == 6
-assert x.tires == 4
-
-assert x1.color == 'purple'
-
+from setuptools import setup, find_packages
+setup(
+	name='Sellmo',
+	version='0.1'
+	description='',
+	long_description='',
+	author='Raymond Reggers',
+	author_email='raymond@adaptiv.nl',
+	url='http://www.adaptiv.nl',
+	packages=find_packages(),
+	install_requires=[],
+)
