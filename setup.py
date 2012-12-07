@@ -63,7 +63,7 @@ for dirpath, dirnames, filenames in os.walk(sellmo_dir):
 
 setup(
 	name='Sellmo',
-	version='0.1',
+	version='0.1.1',
 	description='',
 	long_description='',
 	author='Raymond Reggers',
