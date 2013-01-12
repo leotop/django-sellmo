@@ -30,12 +30,12 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
-from sellmo import apps
+from sellmo import modules
 from sellmo.utils.sessions import TrackingManager
 
 #
 
-class Addressee(apps.customer.Addressee):
+class Addressee(modules.customer.Addressee):
 
 	first_name = models.CharField(
 		max_length = 30,
@@ -51,7 +51,7 @@ class Addressee(apps.customer.Addressee):
 		app_label = 'customer'
 		abstract = True
 
-class Customer(Addressee, apps.customer.Customer):
+class Customer(Addressee, modules.customer.Customer):
 	
 	objects = TrackingManager('sellmo_customer')
 	
@@ -68,7 +68,7 @@ class Customer(Addressee, apps.customer.Customer):
 		verbose_name_plural = _("customers")
 		ordering = ['last_name', 'first_name']
 	
-class Address(Addressee, apps.customer.Address):
+class Address(Addressee, modules.customer.Address):
 	
 	customer = models.ForeignKey(
 		Customer,

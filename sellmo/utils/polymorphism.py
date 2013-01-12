@@ -79,7 +79,12 @@ class PolymorphicModel(models.Model):
 			model = self.content_type.model_class()
 			if(model == self.__class__):
 				return self
-			return model.objects.get(id=self.id)
+			try:
+				downcasted = model.objects.get(id=self.id)
+			except model.DoesNotExist:
+				return self
+			else:
+				return downcasted 
 		return self
 		
 	class Meta:

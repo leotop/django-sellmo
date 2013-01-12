@@ -24,7 +24,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo import apps
+from sellmo import modules
 from sellmo.api.checkout import ShippingMethod
 
 #
@@ -82,8 +82,8 @@ class TieredMethodTier(models.Model):
 	)
 	
 	#
-	amount = apps.pricing.construct_decimal_field()
-	tier = apps.pricing.construct_decimal_field()
+	amount = modules.pricing.construct_decimal_field()
+	tier = modules.pricing.construct_decimal_field()
 	
 	class Meta:
 		app_label = 'shipping'

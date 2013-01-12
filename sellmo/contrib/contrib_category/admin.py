@@ -26,7 +26,7 @@
 
 #
 
-from sellmo import apps
+from sellmo import modules
 from sellmo.contrib.contrib_category.models import Category
 
 #
@@ -42,12 +42,12 @@ class ProductCategoryListFilter(admin.SimpleListFilter):
 	parameter_name = 'category'
 	
 	def lookups(self, request, model_admin):
-		return [(str(category.pk), unicode(category)) for category in apps.category.Category.objects.all()]
+		return [(str(category.pk), unicode(category)) for category in modules.category.Category.objects.all()]
 		
 	def queryset(self, request, queryset):
 		pk = self.value()
 		if pk != None:
-			category = apps.category.Category.objects.get(pk=pk)
+			category = modules.category.Category.objects.get(pk=pk)
 			categories = [category] + category.descendants
 			return queryset.filter(category__in=categories)
 		else:
@@ -58,12 +58,12 @@ class CategoryParentListFilter(admin.SimpleListFilter):
 	parameter_name = 'parent'
 	
 	def lookups(self, request, model_admin):
-		return [(str(category.pk), unicode(category)) for category in apps.category.Category.objects.all()]
+		return [(str(category.pk), unicode(category)) for category in modules.category.Category.objects.all()]
 		
 	def queryset(self, request, queryset):
 		pk = self.value()
 		if pk != None:
-			category = apps.category.Category.objects.get(pk=pk)
+			category = modules.category.Category.objects.get(pk=pk)
 			categories = [category] + category.descendants
 			return queryset.filter(parent__in=categories)
 		else:

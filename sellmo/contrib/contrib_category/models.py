@@ -24,7 +24,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo import apps, App
+from sellmo import modules
+
+# Init modules
+from sellmo.contrib.contrib_category.modules import *
 
 #
 
@@ -122,8 +125,6 @@ class Category(models.Model):
 	
 	class Meta:
 		abstract = True
-		
-class CategoryApp(App):
-	namespace = 'category'
-		
-apps.category.Category = Category
+
+# Assign model
+modules.category.Category = Category

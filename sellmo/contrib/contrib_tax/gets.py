@@ -24,18 +24,16 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.http import HttpResponse
-
 #
 
-from sellmo import apps
+from sellmo import modules
 from sellmo.api.decorators import link
 from sellmo.api.pricing import Price
 
 #
 
 @link()
-def get_qty_price(price, product, **kwargs):
+def get_price(product, price, **kwargs):
 	
 	if not price:
 		return

@@ -28,15 +28,15 @@ from django.db import models
 
 #
 
-from sellmo import apps
+from sellmo import modules
 
 #
 
-class Purchase(apps.store.Purchase):
+class Purchase(modules.store.Purchase):
 
 	@property
 	def price(self):
-		return apps.store.get_purchase_price(purchase=self)
+		return modules.store.get_purchase_price(purchase=self)
 		
 	# Purchase multiplier
 	qty = models.PositiveIntegerField(
@@ -44,7 +44,7 @@ class Purchase(apps.store.Purchase):
 	)
 	
 	product = models.ForeignKey(
-		apps.product.Product
+		modules.product.Product
 	)
 	
 	def __unicode__(self):

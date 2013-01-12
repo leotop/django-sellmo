@@ -24,19 +24,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def link(name=None, namespace=None, capture=False):
-	
-	def decorator(func):
-		func._name = name if name else func.func_name
-		func._namespace = namespace
-		func._capture = capture
-		func._im_linked = True
-		return func
-	
-	return decorator
-
 def load(action=None, after=None):
-	
 	def decorator(func):
 		if not hasattr(func, '_im_loadable'):
 			func._actions = []
@@ -50,5 +38,62 @@ def load(action=None, after=None):
 			
 		func._im_loadable = True
 		return func
+		
+	return decorator
+	
+def link(name=None, namespace=None, capture=False):
+	def decorator(func):
+		func._name = name if name else func.func_name
+		func._namespace = namespace
+		func._capture = capture
+		func._im_linked = True
+		return func
+	
+	return decorator
+	
+def view(regex=None, name=None, namespace=None):
+	
+	def decorator(func):
+	
+		def view(self, request, **kwargs):
+			chain = getattr(self, '_%s_chain' % func.func_name, None)
+			if chain:
+				# Capture
+				captured = chain.capture(request, **kwargs)
+				kwargs.update(captured)
+			
+			response = func(self, chain, request, **kwargs)
+			return response
+		
+		view._im_chainable = True
+		view._im_view = True
+		view._regex = regex
+		view._name = name if name else func.func_name
+		view._namespace = namespace
+		
+		return view
+		
+	return decorator
+	
+def get(name=None, namespace=None):
+	
+	def decorator(func):
+		
+		def get(self, **kwargs):
+			chain = getattr(self, '_%s_chain' % func.func_name, None)
+			if chain:
+				# Capture
+				captured = chain.capture(**kwargs)
+				kwargs.update(captured)
+			
+			result = func(self, chain, **kwargs)
+			return result
+			
+		get._im_chainable = True
+		get._im_get = True
+		get._name = name if name else func.func_name
+		get._namespace = namespace
+		
+		return get
 		
 	return decorator

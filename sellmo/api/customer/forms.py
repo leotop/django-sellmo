@@ -28,16 +28,16 @@ from django import forms
 
 #
 
-from sellmo import apps
+from sellmo import modules
 
 #
 
-class AddressForm(apps.customer.AddressForm):
+class AddressForm(modules.customer.AddressForm):
 	class Meta:
-		model = apps.customer.Address
+		model = modules.customer.Address
 		exclude = ('customer', 'type')
 
-class CustomerForm(apps.customer.CustomerForm):
+class CustomerForm(modules.customer.CustomerForm):
 	class Meta:
-		model = apps.customer.Customer
+		model = modules.customer.Customer
 		exclude = ('user',)

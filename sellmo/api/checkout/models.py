@@ -28,17 +28,17 @@ from django.db import models
 
 #
 
-from sellmo import apps
+from sellmo import modules
 
 #
 
-class Order(apps.checkout.Order):
-	shipping_amount = apps.pricing.construct_decimal_field()
+class Order(modules.checkout.Order):
+	shipping_amount = modules.pricing.construct_decimal_field()
 	
 	class Meta:
 		app_label = 'checkout'
 	
-class OrderLine(apps.pricing.Stampable, apps.checkout.OrderLine):
+class OrderLine(modules.pricing.Stampable, modules.checkout.OrderLine):
 	
 	@property
 	def total(self):
@@ -50,7 +50,7 @@ class OrderLine(apps.pricing.Stampable, apps.checkout.OrderLine):
 	)
 	
 	purchase = models.OneToOneField(
-		apps.store.Purchase
+		modules.store.Purchase
 	)
 	
 	class Meta:

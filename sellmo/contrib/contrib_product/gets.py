@@ -24,7 +24,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo import apps
+from sellmo import modules
 from sellmo.api.decorators import link
 
 #
@@ -33,13 +33,3 @@ from sellmo.api.decorators import link
 @link(namespace='store')
 def make_purchase(purchase, product, **kwargs):
 	pass
-	
-@link(namespace='cart')
-def get_purchase_args(form, **kwargs):
-	variant = form.cleaned_data['variant']
-	if variant != None:
-		variant = apps.product.Variant.get(pk=variant)
-		
-	return {
-		'variant' : variant
-	}

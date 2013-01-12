@@ -28,7 +28,7 @@ from django.contrib import admin
 
 #
 
-from sellmo import apps
+from sellmo import modules
 
 #
 
@@ -37,11 +37,11 @@ from . models import *
 #
 	
 class AddressInline(admin.StackedInline):
-	model = apps.customer.Address
+	model = modules.customer.Address
 	
 class CustomerAdmin(admin.ModelAdmin):
 	inlines = [AddressInline]
 	
 #
 
-admin.site.register(apps.customer.Customer, CustomerAdmin)
+admin.site.register(modules.customer.Customer, CustomerAdmin)

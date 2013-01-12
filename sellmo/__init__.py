@@ -33,45 +33,53 @@ class MountPoint(object):
 	
 	def __init__(self):
 		self._pending = []
+		self._modules = []
 	
-	def on_app_creation(self, app):
-		if app.enabled and app.namespace:
-			setattr(self, app.namespace, app)
-			self._pending.append(app)
+	def on_module_creation(self, module):
+		if module.enabled and module.namespace:
+			setattr(self, module.namespace, module)
+			self._pending.append(module)
+			self._modules.append(module)
 			
-	def on_app_init(self, app, instance):
-		setattr(self, app.namespace, instance)
+	def on_module_init(self, module, instance):
+		setattr(self, module.namespace, instance)
 		
-		# Remove from pending
-		self._pending.remove(app)
+		# Remove class based module and add instance based module
+		self._pending.remove(module)
+		self._modules.remove(module)
+		self._modules.append(instance)
 			
-	def init_pending_apps(self):
+	def init_pending_modules(self):
 		while self._pending:
-			app = self._pending[0]
-			app()
+			module = self._pending[0]
+			module()
+			
+	def __iter__(self):
+		for module in self._modules:
+			yield module
 		
-apps = MountPoint()
+modules = MountPoint()
 
 #
 
-class _AppMeta(magic.SingletonMeta):
+class _ModuleMeta(magic.SingletonMeta):
 	
 	def __new__(meta, name, bases, dict):
-		cls = super(_AppMeta, meta).__new__(meta, name, bases, dict)
-		apps.on_app_creation(cls)
+		cls = super(_ModuleMeta, meta).__new__(meta, name, bases, dict)
+		modules.on_module_creation(cls)
 		return cls
 
-class App(object):
+class Module(object):
 	
-	__metaclass__ = _AppMeta
+	__metaclass__ = _ModuleMeta
 	enabled = True
 	
 	namespace = None
 	prefix = None
 	
 	def __new__(cls, *args, **kwargs):
-		app = None
+		module = None
 		if cls.enabled:
-			app = object.__new__(cls)
-		apps.on_app_init(cls, app)
-		return app
+			module = object.__new__(cls)
+		modules.on_module_init(cls, module)
+		return module

@@ -24,7 +24,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo import apps
+from sellmo import modules
 from sellmo.utils.polymorphism import PolymorphicModel
 
 #
@@ -34,7 +34,7 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
-class Product(apps.product.Product):
+class Product(modules.product.Product):
 	
 	active = models.BooleanField(
 		default = True,
@@ -54,4 +54,4 @@ class Product(apps.product.Product):
 	class Meta:
 		abstract = True
 
-apps.product.Product = Product
+modules.product.Product = Product

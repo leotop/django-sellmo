@@ -24,7 +24,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo import apps
+from sellmo import modules
 from sellmo.api.decorators import load
 from sellmo.magic import ModelMixin
 from sellmo.contrib.contrib_variation.models import Option
@@ -37,7 +37,7 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
-namespace = apps.variation.namespace
+namespace = modules.variation.namespace
 
 #
 
@@ -45,13 +45,24 @@ namespace = apps.variation.namespace
 def setup_variants():
 	pass
 
+@load(after='setup_variants')
+def mixin_custom_options():
+	if modules.variation.custom_options_enabled:
+		for subtype in modules.variation.product_subtypes:
+			class ProductMixin(ModelMixin):
+				model = subtype
+				custom_options = models.ManyToManyField(
+					Option,
+					verbose_name = _("custom options"),
+					blank = True
+				)
 
 @load(action='load_variants', after='setup_variants')
 def load_variants():
-	
 	from sellmo.contrib.contrib_variation.variant import VariantFieldDescriptor, Variant
-	apps.variation.Variant = Variant
-	for subtype in apps.variation.product_subtypes:
+	modules.variation.Variant = Variant
+	
+	for subtype in modules.variation.product_subtypes:
 		
 		class Meta:
 			app_label = 'product'
@@ -73,11 +84,11 @@ def load_variants():
 			'__module__' : subtype.__module__
 		}
 		
-		model = type(name, (apps.variation.Variant, apps.product.Product,), attr_dict)
+		model = type(name, (modules.variation.Variant, subtype,), attr_dict)
 		for field in model.get_variable_fields():
 			descriptor = field.model.__dict__.get(field.name, None)
 			setattr(model, field.name, VariantFieldDescriptor(field, descriptor=descriptor))
 		
-		apps.variation.subtypes.append(model)
-		setattr(apps.variation, name, model)
+		modules.variation.subtypes.append(model)
+		setattr(modules.variation, name, model)
 	

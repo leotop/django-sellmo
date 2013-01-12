@@ -30,17 +30,16 @@ from django.http import HttpResponse
 
 from sellmo.api.decorators import link
 from sellmo.api.pricing import Price
-from sellmo import apps
+from sellmo import modules
 
 #
 
 @link()
-def get_qty_price(product, qty, price, **kwargs):
+def get_price(product, price, qty=1, **kwargs):
 	if not price:
-		q = apps.pricing.ProductQtyPrice.objects.filter(product=product, qty__lte=qty).order_by('-qty')
+		q = modules.qty_pricing.ProductQtyPrice.objects.filter(product=product, qty__lte=qty).order_by('-qty')
 		if q:
 			price = Price(q[0].amount)
-		
 	return {
 		'price' : price
 	}

@@ -25,7 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sellmo import apps
+from sellmo import modules
 from sellmo.contrib.contrib_tax.models import Tax
 
 #

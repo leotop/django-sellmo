@@ -28,9 +28,10 @@ from django import forms
 
 #
 
-from sellmo import apps
+from sellmo import modules
 
 #
 
-class AddToCartForm(apps.cart.AddToCartForm):
+class AddToCartForm(modules.cart.AddToCartForm):
 	product = forms.IntegerField(widget = forms.HiddenInput)
+	qty = forms.IntegerField()

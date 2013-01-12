@@ -24,8 +24,9 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo import apps
+from sellmo import modules
 from sellmo.api.decorators import load
+from sellmo.api.product.manager import ProductSubTypeManager
 
 #
 
@@ -35,17 +36,18 @@ from django.contrib.contenttypes.models import ContentType
 
 #
 
-namespace = apps.product.namespace
+namespace = modules.product.namespace
 
 #
 
 @load(action='load_subtypes', after='alter_product_Product')
 def load_subtypes():
 	
-	class SimpleProduct(apps.product.Product):
+	class SimpleProduct(modules.product.Product):
+		objects = ProductSubTypeManager()
 		class Meta:
 			app_label = 'product'
 			verbose_name = _("product")
 			verbose_name_plural = _("products")
 	
-	apps.product.register_subtype(SimpleProduct)
+	modules.product.register_subtype(SimpleProduct)

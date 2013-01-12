@@ -24,7 +24,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo import apps
+from sellmo import modules
 from sellmo.api.decorators import load
 from sellmo.magic import ModelMixin
 
@@ -35,30 +35,30 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 	
-namespace = apps.category.namespace
+namespace = modules.category.namespace
 
 #
 
 @load(action='load_category_Category')
 def load_category():
 	
-	class Category(apps.category.Category):
+	class Category(modules.category.Category):
 		class Meta:
 			app_label = 'category'
 			verbose_name = _("category")
 			verbose_name_plural = _("categories")
 			ordering = ['order']
 			
-	apps.category.Category = Category
+	modules.category.Category = Category
 
 
 @load(action='alter_product_Product', after='load_category_Category')
 def mixin_category_support():
 
 	class ProductMixin(ModelMixin):
-		model = apps.product.Product
+		model = modules.product.Product
 		category = models.ManyToManyField(
-			apps.category.Category,
+			modules.category.Category,
 			blank = True,
 			null = True,
 			related_name = 'products',

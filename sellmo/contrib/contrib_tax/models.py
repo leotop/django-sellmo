@@ -26,7 +26,7 @@
 
 #
 
-from sellmo import apps
+from sellmo import modules
 
 #
 
@@ -42,7 +42,7 @@ class Tax(models.Model):
 		verbose_name = _("name"),
 	)
 	
-	rate = apps.pricing.construct_decimal_field(
+	rate = modules.pricing.construct_decimal_field(
 		verbose_name = _("rate"),
 	)
 	

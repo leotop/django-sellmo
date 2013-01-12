@@ -24,8 +24,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.core.store import Store
-sellmo = Store()
+from sellmo import modules
 
 #
 
@@ -34,19 +33,19 @@ from django.conf.urls.defaults import *
 #
 
 urlpatterns = patterns('sellmo')
-for app in sellmo.apps:
+for module in modules:
 	
 	urls = []
-	for name in dir(app):
-		attr = getattr(app, name)
+	for name in dir(module):
+		attr = getattr(module, name)
 		if hasattr(attr, '_im_view') and attr._regex:
-			urls.append(url(attr._regex, attr, name='%s.%s' % (app.namespace, attr._name)))
+			urls.append(url(attr._regex, attr, name='%s.%s' % (module.namespace, attr._name)))
 			
 	if urls:
-		prefix = app.prefix
+		prefix = module.prefix
 		if not prefix:
-			prefix = app.namespace
+			prefix = module.namespace
 	
-		urlpatterns += patterns('apps', 
-			('^%s/' % prefix, include(patterns(app.namespace, *urls))),
+		urlpatterns += patterns('modules', 
+			('^%s/' % prefix, include(patterns(module.namespace, *urls))),
 		)

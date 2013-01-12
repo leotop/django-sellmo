@@ -29,15 +29,15 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
-from sellmo import apps
+from sellmo import modules
 from sellmo.api.decorators import load
 from sellmo.magic import ModelMixin
 from sellmo.contrib.contrib_tax.models import Tax
 
 #
 
-namespace = apps.pricing.namespace
-apps.pricing.types += ['tax']
+namespace = modules.pricing.namespace
+modules.pricing.types += ['tax']
 
 #
 
@@ -45,7 +45,7 @@ apps.pricing.types += ['tax']
 def mixin_tax_support():
 	
 	class ProductMixin(ModelMixin):
-		model = apps.product.Product
+		model = modules.product.Product
 		tax = models.ForeignKey(
 			Tax,
 			blank = True,

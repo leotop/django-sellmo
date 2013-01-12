@@ -29,11 +29,11 @@ from django.db import models
 
 #
 
-from sellmo import apps
+from sellmo import modules
 
 #
 
-class Product(apps.product.Product):
+class Product(modules.product.Product):
 	
 	slug = models.SlugField(
 		max_length = 80,
@@ -52,12 +52,15 @@ class Product(apps.product.Product):
 	def __unicode__(self):
 		return self.slug
 		
+	def natural_key(self):
+		return (self.slug,)
+		
 	@models.permalink
 	def get_absolute_url(self):
 		return 'product.details', (self.slug,)
 		
-	def get_qty_price(self, qty=1):
-		return apps.pricing.get_qty_price(product=self, qty=qty)
+	def get_price(self, **kwargs):
+		return modules.pricing.get_price(product=self, **kwargs)
 	
 	class Meta:
 		ordering = ['slug']

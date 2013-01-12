@@ -32,6 +32,9 @@ class Chain(object):
 	
 	def __init__(self):
 		self._queue = []
+		
+	def __nonzero__(self):
+		return len(self._queue) > 0
 	
 	def append(self, func):
 		self._queue.append(func)
@@ -47,7 +50,7 @@ class Chain(object):
 				elif response == False:
 					break
 				elif response != None:
-					raise Exception("""Func '%s' gave an unexpected response during capture fase.""" % func)
+					raise Exception("Func '%s' gave an unexpected response during capture fase." % func)
 					
 		return out
 		
@@ -63,7 +66,7 @@ class Chain(object):
 			elif response == False:
 				break
 			elif response != None:
-				raise Exception("""Func '%s' gave an unexpected response during bubble fase.""" % func)
+				raise Exception("Func '%s' gave an unexpected response during bubble fase." % func)
 				
 		return out
 		

@@ -28,13 +28,13 @@ from django.db import models
 
 #
 
-from sellmo import apps
+from sellmo import modules
 from sellmo.api.pricing import Price
 from sellmo.utils.sessions import TrackingManager
 
 #
 
-class Cart(apps.cart.Cart):
+class Cart(modules.cart.Cart):
 	
 	objects = TrackingManager('sellmo_cart')
 	
@@ -43,7 +43,7 @@ class Cart(apps.cart.Cart):
 	def add(self, purchase):
 		if self.pk == None:
 			self.save()
-		item = apps.cart.CartItem(cart=self, purchase=purchase)
+		item = modules.cart.CartItem(cart=self, purchase=purchase)
 		item.save()
 		
 	def remove(self, purchase):
@@ -70,7 +70,7 @@ class Cart(apps.cart.Cart):
 	class Meta:
 		app_label = 'cart'
 		
-class CartItem(apps.cart.CartItem):
+class CartItem(modules.cart.CartItem):
 	
 	@property
 	def total(self):
@@ -82,7 +82,7 @@ class CartItem(apps.cart.CartItem):
 	)
 	
 	purchase = models.OneToOneField(
-		apps.store.Purchase
+		modules.store.Purchase
 	)
 	
 	def __unicode__(self):

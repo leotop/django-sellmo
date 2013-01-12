@@ -28,7 +28,10 @@ from decimal import Decimal
 
 #
 
-from sellmo import apps
+from sellmo import modules
+
+# Init modules
+from sellmo.contrib.contrib_pricing.modules import *
 
 #
 
@@ -53,7 +56,7 @@ class QtyPriceBase(models.Model):
 
 class QtyPrice(QtyPriceBase):
 	
-	amount = apps.pricing.construct_decimal_field(
+	amount = modules.pricing.construct_decimal_field(
 		verbose_name = _("amount"),
 	)
 	
@@ -63,7 +66,7 @@ class QtyPrice(QtyPriceBase):
 		
 class QtyPriceRatio(QtyPriceBase):
 	
-	ratio = apps.pricing.construct_decimal_field(
+	ratio = modules.pricing.construct_decimal_field(
 		default = Decimal('1.00'),
 		verbose_name = _("ratio"),
 	)

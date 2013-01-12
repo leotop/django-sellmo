@@ -24,7 +24,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo import apps
+from sellmo import modules
 from sellmo.contrib.contrib_customer.models import Address
 
 #
@@ -33,5 +33,5 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
-namespace = apps.customer.namespace
-apps.customer.Address = Address
+namespace = modules.customer.namespace
+modules.customer.Address = Address

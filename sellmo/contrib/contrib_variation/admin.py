@@ -26,7 +26,7 @@
 
 #
 
-from sellmo import apps
+from sellmo import modules
 from sellmo.contrib.contrib_variation.models import Attribute
 
 #
@@ -96,5 +96,17 @@ class VariantForm(ModelForm):
 		return cleaned_data
 
 
+class VariationAdminMixin(object):
+	def save_related(self, request, form, formsets, change):
+		form.save_m2m()
+		for formset in formsets:
+			if isinstance(formset, VariantFormSet):
+				for variant_form in formset.forms:
+					if variant_form.cleaned_data.has_key('options'):
+						instance = variant_form.save(commit=False)
+						instance.product = variant_form.cleaned_data['product']
+						instance.generate_slug(variant_form.cleaned_data['options'])
+			
+			self.save_formset(request, form, formset, change=change)
 
 

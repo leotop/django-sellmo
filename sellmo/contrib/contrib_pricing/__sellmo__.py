@@ -24,7 +24,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo import apps
+from sellmo import modules
 from sellmo.api.pricing import Price
 from sellmo.api.decorators import load
 
@@ -39,7 +39,7 @@ from sellmo.contrib.contrib_pricing.models import QtyPrice
 
 #
 
-namespace = apps.pricing.namespace
+namespace = modules.pricing.namespace
 
 #
 	
@@ -48,7 +48,7 @@ def load_qty_price():
 	
 	class ProductQtyPrice(QtyPrice):
 		product = models.ForeignKey(
-			apps.product.Product,
+			modules.product.Product,
 			related_name = 'qty_prices',
 			verbose_name = _("product"),
 		)
@@ -58,4 +58,4 @@ def load_qty_price():
 			verbose_name = _("qty price")
 			verbose_name_plural = _("qty prices")
 		
-	apps.pricing.ProductQtyPrice = ProductQtyPrice
+	modules.qty_pricing.ProductQtyPrice = ProductQtyPrice

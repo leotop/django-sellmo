@@ -1,0 +1,21 @@
+{% extends "store/base.html" %}
+{% load sellmo_pricing qty_pricing sellmo_cart %}
+
+{% block body %}
+	<h1>{{ product }}</h1>
+	<h3>{{ product|price }}</h3>
+	<div>
+		<h4>Prices</h4>
+		<table>
+			<tbody>
+				{% for tier in product|tiers %}
+					<tr>
+						<th>{{ tier.qty }}</th>
+						<td>{{ product|price:tier.qty }}</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+		{% add_to_cart_formset product %}
+	</div>
+{% endblock %}
