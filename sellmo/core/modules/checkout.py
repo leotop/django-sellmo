@@ -31,7 +31,7 @@ from django import dispatch
 
 import sellmo
 from sellmo import modules
-from sellmo.api.decorators import view, get
+from sellmo.api.decorators import view, chainable
 
 #
 
@@ -69,7 +69,7 @@ class CheckoutModule(sellmo.Module):
 		if chain:
 			return chain.execute(request, cart=cart, context=context, **kwargs)
 		
-	@get()
+	@chainable()
 	def get_shipping_method_form(self, chain, data=None, methods=None, **kwargs):
 		
 		#

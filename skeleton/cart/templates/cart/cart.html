@@ -1,0 +1,12 @@
+{% extends "store/base.html" %}
+
+{% block body %}
+	<h1>Cart</h1>
+	<ul>
+		{% for purchase in cart %}
+		<li>
+			{{ purchase }}
+		</li>
+		{% endfor %}
+	</ul>
+{% endblock %}

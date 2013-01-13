@@ -75,11 +75,11 @@ def view(regex=None, name=None, namespace=None):
 		
 	return decorator
 	
-def get(name=None, namespace=None):
+def chainable(name=None, namespace=None):
 	
 	def decorator(func):
 		
-		def get(self, **kwargs):
+		def chainable(self, **kwargs):
 			chain = getattr(self, '_%s_chain' % func.func_name, None)
 			if chain:
 				# Capture
@@ -89,11 +89,11 @@ def get(name=None, namespace=None):
 			result = func(self, chain, **kwargs)
 			return result
 			
-		get._im_chainable = True
-		get._im_get = True
-		get._name = name if name else func.func_name
-		get._namespace = namespace
+		chainable._im_chainable = True
+		chainable._im_get = True
+		chainable._name = name if name else func.func_name
+		chainable._namespace = namespace
 		
-		return get
+		return chainable
 		
 	return decorator

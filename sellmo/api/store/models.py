@@ -33,12 +33,7 @@ from sellmo import modules
 #
 
 class Purchase(modules.store.Purchase):
-
-	@property
-	def price(self):
-		return modules.store.get_purchase_price(purchase=self)
-		
-	# Purchase multiplier
+	
 	qty = models.PositiveIntegerField(
 		default = 1
 	)

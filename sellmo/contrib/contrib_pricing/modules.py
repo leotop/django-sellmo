@@ -25,14 +25,14 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from sellmo import modules, Module
-from sellmo.api.decorators import get
+from sellmo.api.decorators import chainable
 
 #
 
 class QtyPricingModule(Module):
 	namespace = 'qty_pricing'
 	
-	@get()
+	@chainable()
 	def get_qty_tiers(self, chain, product, tiers=None, **kwargs):
 		if not tiers:
 			tiers =  product.qty_prices.all()

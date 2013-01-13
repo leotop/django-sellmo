@@ -33,7 +33,7 @@ from django.shortcuts import redirect
 
 import sellmo
 from sellmo import modules
-from sellmo.api.decorators import view, get
+from sellmo.api.decorators import view, chainable
 
 #
 
@@ -61,7 +61,7 @@ class CustomerModule(sellmo.Module):
 		self.CustomerForm = CustomerForm
 		self.AddressForm = AddressForm
 	
-	@get()
+	@chainable()
 	def get_customer_form(self, chain, data=None, customer=None, form=None, **kwargs):
 		if form == None:
 			form = self.CustomerForm(data, prefix='customer', instance=customer)
@@ -69,7 +69,7 @@ class CustomerModule(sellmo.Module):
 			return chain.execute(data=data, customer=customer, form=form, **kwargs)
 		return form
 		
-	@get()
+	@chainable()
 	def get_address_form(self, chain, prefix, data=None, address=None, form=None, **kwargs):
 		if form == None:
 			form = self.AddressForm(data, prefix='address' if not prefix else 'address_%s' % prefix, instance=address)

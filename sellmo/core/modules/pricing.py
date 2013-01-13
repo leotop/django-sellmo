@@ -30,8 +30,9 @@ from django.db import models
 
 import sellmo
 from sellmo import modules
-from sellmo.api.decorators import view, get
+from sellmo.api.decorators import view, chainable
 from sellmo.api.pricing import Price
+from sellmo.api.pricing.models import Stampable
 
 #
 
@@ -45,17 +46,12 @@ class PricingModule(sellmo.Module):
 	currency = 'EUR'
 	types = []
 	
+	Stampable = Stampable
+	
 	#: Configures the max digits for a pricing (decimal) field
 	decimal_max_digits = 9
 	#: Configures the amount of decimal places for a pricing (decimal) field
 	decimal_places = 2
-	
-	class Stampable(models.Model):
-		"""
-		Provides subtypes with pricing fields
-		"""
-		class Meta:
-			abstract = True
 	
 	@staticmethod
 	def construct_decimal_field(**kwargs):
@@ -73,7 +69,14 @@ class PricingModule(sellmo.Module):
 		for type in self.types:
 			self.Stampable.add_to_class('%s_amount' % type, self.construct_decimal_field())
 			
-	@get()
+	@chainable()
+	def stamp(self, chain, stampable, price, **kwargs):
+		stampable.amount = price.amount
+		for type in self.types:
+			attr = '%s_amount' % type
+			setattr(stampable, attr, price[type].amount)
+			
+	@chainable()
 	def get_price(self, chain, product, price=None, **kwargs):
 		if chain:
 			out = chain.execute(product=product, price=price, **kwargs)
@@ -82,7 +85,7 @@ class PricingModule(sellmo.Module):
 		
 		# Ensure we're dealing with a number
 		if not isinstance(price, Price):
-			raise Exception("An invalid 'price' was provided")			
+			raise Exception("An invalid 'price' was provided")
 		
 		return price
 	

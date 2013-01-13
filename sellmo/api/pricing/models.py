@@ -24,7 +24,21 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from sellmo import modules
+
+#
+
 from django.db import models
 
 #
 
+class Stampable(models.Model):
+	"""
+	Provides subtypes with pricing fields
+	"""
+	
+	def stamp(self, price, **kwargs):
+		modules.pricing.stamp(stampable=self, price=price, **kwargs)
+	
+	class Meta:
+		abstract = True

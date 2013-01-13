@@ -34,7 +34,7 @@ from django.shortcuts import redirect
 
 import sellmo
 from sellmo import modules
-from sellmo.api.decorators import view, get
+from sellmo.api.decorators import view, chainable
 
 #
 
@@ -58,7 +58,7 @@ class CartModule(sellmo.Module):
 		from sellmo.api.cart.forms import AddToCartForm
 		self.AddToCartForm = AddToCartForm
 	
-	@get()
+	@chainable()
 	def get_add_to_cart_formset(self, chain, formset=None, cls=None, product=None, initial=None, data=None, **kwargs):
 		
 		if product is None:
@@ -87,11 +87,26 @@ class CartModule(sellmo.Module):
 		
 		return formset
 		
-	@get()
-	def get_purchase_args(self, chain, form, **kwargs):
-		out = {}
+	@chainable()
+	def get_purchase_args(self, chain, product, form, **kwargs):
+		
+		out = {
+			'product' : product,
+		}
+		
+		if isinstance(form, self.AddToCartForm):
+			out['qty'] = form.cleaned_data['qty']
+		
 		if chain:
 			out = chain.execute(form=form, **kwargs)
+		
+		# Purchase args should always contain
+		# 'product', 'qty'
+		if not out.has_key('product'):
+			raise Exception("Purchase arg 'product' was not given")
+		if not out.has_key('qty'):
+			raise Exception("Purchase arg 'qty' was not given")
+			
 		return out
 			
 	@view(r'$')
@@ -124,10 +139,15 @@ class CartModule(sellmo.Module):
 			formset = self.get_add_to_cart_formset(product=product, data=request.POST)
 		else:
 			formset = self.get_add_to_cart_formset(product=product, data=request.GET)
+			
+		# Get the cart
+		cart = self.Cart.objects.from_request(request)
 	
 		# Purchase will in most cases not yet be assigned, it could be assigned however
 		# during the capture fase.
 		if not purchases:
+			
+			purchases = []
 			
 			# We require a formset
 			if not formset:
@@ -138,29 +158,25 @@ class CartModule(sellmo.Module):
 				
 				# get data from form
 				for form in formset:
-					product = modules.product.Product.objects.get(p k=form.cleaned_data['product'])
-					purchase_args = self.get_purchase_args(form=form)
+					
+					# 
+					purchase_args = self.get_purchase_args(product=product, form=form)
 				
 					# Try create the purchase
-					purchase = modules.store.make_purchase(product=product, **purchase_args)
-						
-					#
-					if not purchase:
-						raise Exception("err")
-		
-		# If all went well we should have a purchase, unless an invalid form was submitted
-		if purchase:
-			# Add purchase to cart
-			cart = self.Cart.objects.from_request(request)
+					purchase = modules.store.make_purchase(**purchase_args)
+					if purchase:
+						purchases.append(purchase)
+				
+		# Add purchases to cart
+		for purchase in purchases:
 			cart.add(purchase)
-			cart.track(request)
-		else:
-			# Contingency for invalid form, todo
-			pass
+		
+		# Keep track of our cart 
+		cart.track(request)
 		
 		#
 		if chain:
-			return chain.execute(request, purchase=purchase, context=context, **kwargs)
+			return chain.execute(request, purchases=purchases, formset=formset, context=context, **kwargs)
 		else:
 			return redirect('cart.cart')
 			

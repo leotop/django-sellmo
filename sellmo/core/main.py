@@ -62,7 +62,7 @@ class Sellmo(object):
 		
 		self._load_apps(apps)
 		self._link_apps(apps)
-		self._link_apps(apps, '.gets')
+		self._link_apps(apps, '.links')
 	
 	def _init_apps(self):
 	

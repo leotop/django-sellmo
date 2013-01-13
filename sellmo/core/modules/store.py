@@ -30,7 +30,7 @@ from django.db import models
 
 import sellmo
 from sellmo import modules
-from sellmo.api.decorators import view, get
+from sellmo.api.decorators import view, chainable
 
 #
 
@@ -43,13 +43,12 @@ class StoreModule(sellmo.Module):
 		from sellmo.api.store import Purchase
 		self.Purchase = Purchase
 			
-	@get()
-	def make_purchase(self, chain, product, purchase=None, **kwargs):
-		"""
-		Creates a new store.Purchase, and saves it.
-		"""
+	@chainable()
+	def make_purchase(self, chain, product, qty, purchase=None, **kwargs):
+		
 		if not purchase:
 			purchase = self.Purchase(product=product)
+			purchase.stamp(product.get_price())
 			
 		if chain:
 			out = chain.execute(product=product, purchase=purchase, **kwargs)
