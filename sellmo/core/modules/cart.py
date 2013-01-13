@@ -138,7 +138,7 @@ class CartModule(sellmo.Module):
 				
 				# get data from form
 				for form in formset:
-					product = modules.product.Product.objects.get(pk=form.cleaned_data['product'])
+					product = modules.product.Product.objects.get(p k=form.cleaned_data['product'])
 					purchase_args = self.get_purchase_args(form=form)
 				
 					# Try create the purchase
