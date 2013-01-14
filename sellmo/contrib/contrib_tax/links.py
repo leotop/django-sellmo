@@ -34,11 +34,7 @@ from sellmo.api.pricing import Price
 
 @link()
 def get_price(product, price, **kwargs):
-	
-	if not price:
-		return
-	
-	if product.tax:
+	if price and product.tax:
 		return {
 			'price' : price * Price(product.tax.rate, type='tax')
 		}
