@@ -55,17 +55,17 @@ class PolymorphicQuerySet(QuerySet):
 		clone._downcast = self._downcast
 		return clone
 			
-	def non_polymorphic(self):
-		self._downcast = False
+	def polymorphic(self):
+		self._downcast = True
 		return self
 			
 class PolymorphicManager(models.Manager):
 	
-	def get_query_set(self, downcast=True):
+	def get_query_set(self, downcast=False):
 		return PolymorphicQuerySet(self.model, using=self._db, downcast=downcast)
 		
-	def non_polymorphic(self):
-		return self.get_query_set(downcast=False)
+	def polymorphic(self):
+		return self.get_query_set(downcast=True)
 
 class PolymorphicModel(models.Model):
 	

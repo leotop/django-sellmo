@@ -60,7 +60,7 @@ class ProductModule(sellmo.Module):
 		if context == None:
 			context = {}
 		try:
-			product = self.Product.objects.get(slug=product_slug)
+			product = self.Product.objects.polymorphic().get(slug=product_slug)
 		except self.Product.DoesNotExist:
 			raise Http404("""Product '%s' not found.""" % product_slug)
 		

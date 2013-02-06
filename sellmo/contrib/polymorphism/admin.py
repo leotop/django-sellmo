@@ -144,7 +144,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
 
 
     def _get_real_admin(self, object_id):
-        obj = self.model.objects.non_polymorphic().values('content_type').get(pk=object_id)
+        obj = self.model.objects.values('content_type').get(pk=object_id)
         return self._get_real_admin_by_ct(obj['content_type'])
 
 
@@ -178,8 +178,8 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
     def queryset(self, request):
         # optimize the list display.
         qs = super(PolymorphicParentModelAdmin, self).queryset(request)
-        if not self.polymorphic_list:
-            qs = qs.non_polymorphic()
+        if self.polymorphic_list:
+            qs = qs.polymorphic()
         return qs
 
 
