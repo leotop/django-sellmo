@@ -28,6 +28,7 @@ from sellmo import modules
 from sellmo.api.decorators import load
 from sellmo.magic import ModelMixin
 from sellmo.contrib.contrib_variation.models import Option
+from sellmo.contrib.contrib_variation.variation import Variation
 
 #
 
@@ -44,6 +45,15 @@ namespace = modules.variation.namespace
 @load(action='setup_variants', after='load_subtypes')
 def setup_variants():
 	pass
+
+@load(after='setup_variants')
+def mixin_variation_support():
+	for subtype in modules.variation.product_subtypes:
+		class ProductMixin(ModelMixin):
+			model = subtype
+			@property
+			def variations(self):
+				return get_variations(self)
 
 @load(after='setup_variants')
 def mixin_custom_options():

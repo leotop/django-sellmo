@@ -29,12 +29,17 @@ from sellmo import modules
 #
 
 from django.db import models
+from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from django.utils.encoding import smart_text
+from django.utils.text import capfirst
 
 # Exceptions
 
 class ProductUnassignedException(Exception):
+	pass
+	
+class DuplicateSlugException(Exception):
 	pass
 	
 #
@@ -50,11 +55,44 @@ class Variant(object):
 		for field in cls._meta.fields:
 			if not field.auto_created and field.null and not field.name in cls.non_variable_fields and not field.__class__ in cls.non_variable_field_types:
 				yield field
+				
+	def generate_slug(self, options=None):
+		if not options:
+			options = self.options
+		short = '-'.join([option.attribute.value for option in options])
+		full = '_'.join([u'%s-%s' % (option.variable.name, option.attribute.value) for option in options])
+		for attributes in [short, full]:
+			slug = u'%(prefix)s-%(attributes)s' % {
+				'attributes' : attributes,
+				'prefix' : self.product.slug
+			}
+			if self._is_unique_slug(slug):
+				return slug
+		return slug
+	
+	def _is_unique_slug(self, slug):
+		try:
+			existing = modules.product.Product.objects.get(slug=slug)
+		except modules.product.Product.DoesNotExist:
+			return True
+		return getattr(existing, 'product', None) == self.product
 	
 	def get_product(self):
 		if hasattr(self, 'product_id') and self.product_id != None:
 			return self.product		
 		return None
+		
+		
+		
+	def validate_unique(self, exclude=None):
+		super(self.__class__.__base__, self).validate_unique(exclude)
+		if 'slug' not in exclude:
+			if not self._is_unique_slug(self.slug):
+				message = _("%(model_name)s with this %(field_label)s already exists.") % {
+					'model_name': capfirst(modules.product.Product._meta.verbose_name),
+					'field_label': 'slug'
+				}
+				raise ValidationError({'slug' : [message]})		
 
 	def save(self, *args, **kwargs):
 		product = self.get_product()
@@ -70,9 +108,6 @@ class Variant(object):
 		self._variable_fields_enabled = False
 		super(Variant, self).save(*args, **kwargs)
 		self._variable_fields_enabled = True
-
-	def generate_slug(self, options):
-		self.slug = '%s-%s' % (self.product.slug, '_'.join(['%s-%s' % (option.variable.name, option.attribute.value) for option in options]))
 
 	class Meta:
 		app_label = 'product'

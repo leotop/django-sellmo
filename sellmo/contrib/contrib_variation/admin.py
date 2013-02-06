@@ -28,6 +28,7 @@
 
 from sellmo import modules
 from sellmo.contrib.contrib_variation.models import Attribute
+from sellmo.contrib.contrib_variation.variant import Variant
 
 #
 
@@ -35,6 +36,8 @@ from django.forms import ValidationError
 from django.forms.models import ModelForm, BaseInlineFormSet
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
+from django.utils.text import capfirst
+from django.utils import six
 from django.contrib.admin.sites import NotRegistered
 from django.contrib.contenttypes.models import ContentType
 
@@ -56,21 +59,19 @@ class AttributeTypeListFilterBase(admin.SimpleListFilter):
 			return queryset.all()
 			
 class VariantFormSet(BaseInlineFormSet):
-	
 	def clean(self):
 		if any(self.errors):
 		 	return
 		variants = []
 		for form in self.forms:
 			if form.cleaned_data.has_key('options'):
-			
-				options = form.cleaned_data['options']
 				
-				# Generate slug to check for uniqueness
-				options = '_'.join(['%s-%s' % (option.variable.name, option.attribute.value) for option in options])
+				# Enforce unique variants
+				options = u'_'.join([u'%s-%s' % (option.variable.name, option.attribute.value) for option in form.cleaned_data['options']])
 				if options in variants:
 					raise ValidationError(_("Duplicate variants"))
 				variants.append(options)
+				
 			
 class VariantForm(ModelForm):
 	
@@ -82,7 +83,7 @@ class VariantForm(ModelForm):
 	def clean(self):
 		cleaned_data = super(VariantForm, self).clean()
 		
-		#
+		# Enforce options
 		options = cleaned_data['options']
 		if not options:
 			raise ValidationError(_("A variant requires options"))
@@ -92,21 +93,17 @@ class VariantForm(ModelForm):
 		for option in options:
 			if option.variable.name in variables:
 				raise ValidationError(_("Select one option"))
-			variables.append(option.variable.name)	
+			variables.append(option.variable.name)
+		
+		# Enforce slug
+		if cleaned_data.has_key('slug'):
+			if not cleaned_data['slug']:
+				cleaned_data['slug'] = self.instance.generate_slug(cleaned_data['options'])
+				self.data[self.add_prefix('slug')] = cleaned_data['slug']
+		
 		return cleaned_data
-
-
-class VariationAdminMixin(object):
-	def save_related(self, request, form, formsets, change):
-		form.save_m2m()
-		for formset in formsets:
-			if isinstance(formset, VariantFormSet):
-				for variant_form in formset.forms:
-					if variant_form.cleaned_data.has_key('options'):
-						instance = variant_form.save(commit=False)
-						instance.product = variant_form.cleaned_data['product']
-						instance.generate_slug(variant_form.cleaned_data['options'])
-			
-			self.save_formset(request, form, formset, change=change)
-
+		
+class VariantInlineMixin(object):
+	form = VariantForm
+	formset = VariantFormSet
 

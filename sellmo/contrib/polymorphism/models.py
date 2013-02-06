@@ -24,74 +24,23 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import types
+from sellmo import modules
+from sellmo.magic.mixin import ModelMixin
 
 #
 
 from django.db import models
-from django.db.models.query import QuerySet
-from django.contrib.contenttypes.models import ContentType
+from django.utils.translation import ugettext_lazy as _
 from django.contrib.admin.util import quote
+from django.contrib.admin.models import LogEntry
+from django.contrib.contenttypes.models import ContentType
 
-#
-
-class PolymorphicQuerySet(QuerySet):
-	
-	def __init__(self, *args, **kwargs):
-		self._downcast = True
-		if kwargs.has_key('downcast'):
-			self._downcast = kwargs.pop('downcast')
-		super(PolymorphicQuerySet, self).__init__(*args, **kwargs)
-	
-	def iterator(self):
-		for item in super(PolymorphicQuerySet, self).iterator():
-			if self._downcast:
-				yield item.downcast()
-			else:
-				yield item
-			
-	def non_polymorphic(self):
-		self._downcast = False
-		return self
-			
-class PolymorphicManager(models.Manager):
-
-	_downcast = True
-
-	def get_query_set(self):
-		return PolymorphicQuerySet(self.model, using=self._db, downcast=self._downcast)
-		
-	def non_polymorphic(self):
-		self._downcast = False
-		return self
-
-class PolymorphicModel(models.Model):
-	
-	content_type = models.ForeignKey(ContentType, editable=False, null=True)
-	objects = PolymorphicManager()
-	
-	@classmethod
-	def get_admin_url(cls, content_type, object_id):
-		parent = ContentType.objects.get_for_model(cls._meta.parents.keys()[-1])
-		return "%s/%s/%s/" % (parent.app_label, parent.model, quote(object_id))
-	
-	def save(self):
-		if not self.content_type:
-			self.content_type = ContentType.objects.get_for_model(self.__class__)
-		self.save_base()
-		
-	def downcast(self):
-		if self.content_type:
+class LogEntryMixin(ModelMixin):
+	model = LogEntry
+	def get_admin_url(self):
+		if self.content_type and self.object_id:
 			model = self.content_type.model_class()
-			if(model == self.__class__):
-				return self
-			try:
-				downcasted = model.objects.get(id=self.id)
-			except model.DoesNotExist:
-				return self
-			else:
-				return downcasted 
-		return self
-		
-	class Meta:
-		abstract = True
+			if hasattr(model, 'get_admin_url'):
+				return model.get_admin_url(content_type=self.content_type, object_id=self.object_id)
+			return "%s/%s/%s/" % (self.content_type.app_label, self.content_type.model, quote(self.object_id))
+		return None
