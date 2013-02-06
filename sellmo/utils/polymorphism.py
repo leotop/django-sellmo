@@ -49,6 +49,11 @@ class PolymorphicQuerySet(QuerySet):
 				yield item.downcast()
 			else:
 				yield item
+				
+	def _clone(self, *args, **kwargs):
+		clone = super(PolymorphicQuerySet, self)._clone(*args, **kwargs)
+		clone._downcast = self._downcast
+		return clone
 			
 	def non_polymorphic(self):
 		self._downcast = False
