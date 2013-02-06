@@ -56,15 +56,18 @@ class Variant(object):
 			if not field.auto_created and field.null and not field.name in cls.non_variable_fields and not field.__class__ in cls.non_variable_field_types:
 				yield field
 				
-	def generate_slug(self, options=None):
+	def generate_slug(self, options=None, product=None):
 		if not options:
 			options = self.options
+		if not product:
+			product = self.product
+			
 		short = '-'.join([option.attribute.value for option in options])
 		full = '_'.join([u'%s-%s' % (option.variable.name, option.attribute.value) for option in options])
 		for attributes in [short, full]:
 			slug = u'%(prefix)s-%(attributes)s' % {
 				'attributes' : attributes,
-				'prefix' : self.product.slug
+				'prefix' : product.slug
 			}
 			if self._is_unique_slug(slug):
 				return slug

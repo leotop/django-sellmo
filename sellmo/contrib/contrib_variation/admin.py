@@ -98,7 +98,7 @@ class VariantForm(ModelForm):
 		# Enforce slug
 		if cleaned_data.has_key('slug'):
 			if not cleaned_data['slug']:
-				cleaned_data['slug'] = self.instance.generate_slug(cleaned_data['options'])
+				cleaned_data['slug'] = self.instance.generate_slug(options=cleaned_data['options'], product=cleaned_data['product'])
 				self.data[self.add_prefix('slug')] = cleaned_data['slug']
 		
 		return cleaned_data
