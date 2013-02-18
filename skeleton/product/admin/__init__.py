@@ -3,7 +3,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy as _
 
 from sellmo import modules
-from sellmo.contrib.contrib_variation.admin import VariationAdminMixin, VariantForm, VariantFormSet
+from sellmo.contrib.contrib_variation.admin import VariantInlineMixin
 from sellmo.contrib.contrib_variation.models import Variable, Attribute
 from sellmo.contrib.polymorphism.admin import PolymorphicParentModelAdmin
 
@@ -11,7 +11,7 @@ from product.admin.variation import VariableAdmin, AttributeAdmin
 from pricing.admin import ProductQtyPriceInline
 
 # Base admin for every product subtype
-class ProductAdminBase(VariationAdminMixin, admin.ModelAdmin):
+class ProductAdminBase(admin.ModelAdmin):
 	
 	inlines = [ProductQtyPriceInline]
 	fieldsets = (
@@ -36,7 +36,7 @@ class ProductAdminBase(VariationAdminMixin, admin.ModelAdmin):
 	
 	
 # Base inline admin for every variant subtype
-class VariantInlineBase(admin.StackedInline):
+class VariantInlineBase(VariantInlineMixin, admin.StackedInline):
 	fieldsets = (
 		(_("Product information"), {
 			'fields': ('name', 'sku',)
@@ -47,8 +47,6 @@ class VariantInlineBase(admin.StackedInline):
 	)
 	
 	filter_horizontal = ['options']
-	form = VariantForm
-	formset = VariantFormSet
 
 # Inline for simple product variant
 class SimpleVariantInline(VariantInlineBase):

@@ -28,7 +28,7 @@ from sellmo import modules
 from sellmo.api.decorators import load
 from sellmo.magic import ModelMixin
 from sellmo.contrib.contrib_variation.models import Option
-from sellmo.contrib.contrib_variation.variation import Variation
+from sellmo.contrib.contrib_variation.variation import get_variations
 
 #
 

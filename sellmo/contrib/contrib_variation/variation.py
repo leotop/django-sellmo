@@ -29,6 +29,10 @@ from sellmo import modules
 #
 
 def get_variations(product):
+	variables = []
+	variations = []
+	
+	# Collect variables
 	pass
 
 class Variation(object):

@@ -63,6 +63,8 @@ class CartModule(sellmo.Module):
 		
 		if product is None:
 			raise Exception()
+		else:
+			product = product.downcast()
 	
 		if cls is None:
 			cls = self.AddToCartForm
