@@ -36,7 +36,6 @@ from django.forms.formsets import formset_factory
 
 @link(namespace=modules.cart.namespace)
 def get_add_to_cart_formset(formset, cls, product, initial=None, data=None, **kwargs):
-	
 	# Before proceeding to custom form creation, check if we're dealing with a variation product
 	if not product.variations and (not modules.variation.custom_options_enabled or not product.custom_options):
 		return
@@ -44,19 +43,19 @@ def get_add_to_cart_formset(formset, cls, product, initial=None, data=None, **kw
 	class AddToCartForm(cls):
 		if product.variations and not modules.variation.batch_buy_enabled:
 			variation = forms.ChoiceField(
-				choices = [(variation.hash, unicode(variation)) for variation in product.variations]
+				choices = [(variation.key, unicode(variation)) for variation in product.variations]
 			)
-	
+		
 	AddToCartFormSet = formset_factory(AddToCartForm, extra=0)
 	
 	if not data:
 		if product.variations:
 			if not modules.variation.batch_buy_enabled:
 				for el in initial:
-					el['variation'] = product.variations[:1][0].hash
+					el['variation'] = product.variations[:1][0].key
 			else:
 				initial = [{
-					'variation' : variation.hash,
+					'variation' : variation.key,
 					'qty' : 1
 				} for variation in product.variations]
 				

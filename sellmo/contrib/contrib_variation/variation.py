@@ -28,12 +28,94 @@ from sellmo import modules
 
 #
 
-def get_variations(product):
-	variables = []
-	variations = []
-	
-	# Collect variables
-	pass
+class _VariableMeta(object):
+	def __init__(self, variable):
+		self.variable = variable
+		self.attributes = {}
+		
+class _AttributeMeta(object):
+	def __init__(self, attribute):
+		self.attribute = attribute
+		self.variants = []
+		self.custom = False
 
+def get_variations(product):
+	variables = {}
+	
+	# Collect variables from variants
+	for variant in product.variants.all():
+		for option in variant.options.all():
+			if not variables.has_key(option.variable):
+				variables[option.variable] = _VariableMeta(option.variable)
+			
+			variable = variables[option.variable]
+			if not variable.attributes.has_key(option.attribute):
+				variable.attributes[option.attribute] = _AttributeMeta(option.attribute)
+			variable.attributes[option.attribute].variants.append(variant)
+	
+	# Collect variables from custom variables
+	if modules.variation.custom_options_enabled:
+		for option in product.custom_options.all():
+			if not variables.has_key(option.variable):
+				variables[option.variable] = _VariableMeta(option.variable)
+			
+			variable = variables[option.variable]
+			if not variable.attributes.has_key(option.attribute):
+				variable.attributes[option.attribute] = _AttributeMeta(option.attribute)
+			variable.attributes[option.attribute].custom = True
+			
+	def _construct(*options):
+		variants = None
+		for variable, attribute in options:
+			if variants is None:
+				variants = list(attribute.variants)
+				
+			for variant in list(variants):
+				if (variant.variables.count(variable.variable) and not variant.attributes.count(attribute.attribute)) \
+				or (not attribute.custom and not variant.variables.count(variable.variable)):
+					variants.remove(variant)
+		
+		variant = product if not variants else variants[0] 
+		return Variation(variant, [Option(option[0].variable, option[1].attribute) for option in options])
+			
+	def _variate(variables, *options):
+		variations = []
+		if not variables:
+			# Construct variation at this point
+			variations.append(_construct(*options))
+		else:
+			# Recurse iterate through all possible combinations
+			variable = variables[0]
+			for attribute in variable.attributes.values():
+				variations.extend(
+					_variate(variables[1:], *(list(options) + [(variable, attribute)]))
+				)
+		
+		return variations
+	return _variate(variables.values())
+	
+class Option(object):
+	def __init__(self, variable, attribute):
+		self.variable = variable
+		self.attribute = attribute
+		
+	@property
+	def key(self):
+		return '%s-%s' % (self.variable.name, self.attribute.value)
+	
 class Variation(object):
-	pass
+	def __init__(self, product, options):
+		self.product = product
+		self.options = options
+		
+	@property
+	def key(self):
+		return '%s___%s' % (self.product.slug, '_'.join([option.key for option in self.options]))
+		
+	@property
+	def json(self):
+		pass
+		
+	def __unicode__(self):
+		return self.key
+	

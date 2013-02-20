@@ -50,6 +50,14 @@ class Variant(object):
 	non_variable_field_types = [models.BooleanField]
 	_variable_fields_enabled = True
 	
+	@property
+	def attributes(self):
+		return [option.attribute for option in self.options.all()]
+		
+	@property
+	def variables(self):
+		return [option.variable for option in self.options.all()]
+	
 	@classmethod
 	def get_variable_fields(cls):
 		for field in cls._meta.fields:
@@ -84,8 +92,6 @@ class Variant(object):
 		if hasattr(self, 'product_id') and self.product_id != None:
 			return self.product		
 		return None
-		
-		
 		
 	def validate_unique(self, exclude=None):
 		super(self.__class__.__base__, self).validate_unique(exclude)
