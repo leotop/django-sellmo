@@ -88,6 +88,7 @@ TEMPLATE_LOADERS = (
 )
 
 MIDDLEWARE_CLASSES = (
+	'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -116,6 +117,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.admin',
+    'debug_toolbar',
 
     # --- Recommended apps
     
@@ -170,6 +172,8 @@ INSTALLED_APPS = (
 	# --- Sellmo END ---
 	
 )
+
+INTERNAL_IPS = ('192.168.187.1',)
 
 LOGGING = {
     'version': 1,

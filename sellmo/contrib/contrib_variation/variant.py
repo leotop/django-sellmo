@@ -50,14 +50,6 @@ class Variant(object):
 	non_variable_field_types = [models.BooleanField]
 	_variable_fields_enabled = True
 	
-	@property
-	def attributes(self):
-		return [option.attribute for option in self.options.all()]
-		
-	@property
-	def variables(self):
-		return [option.variable for option in self.options.all()]
-	
 	@classmethod
 	def get_variable_fields(cls):
 		for field in cls._meta.fields:

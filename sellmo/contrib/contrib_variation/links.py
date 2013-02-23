@@ -35,7 +35,7 @@ from django import forms
 from django.forms.formsets import formset_factory
 
 @link(namespace=modules.cart.namespace)
-def get_add_to_cart_formset(formset, cls, product, initial=None, data=None, **kwargs):
+def get_add_to_cart_formset(formset, cls, product, variation=None, initial=None, data=None, **kwargs):
 	# Before proceeding to custom form creation, check if we're dealing with a variation product
 	if not product.variations and (not modules.variation.custom_options_enabled or not product.custom_options):
 		return

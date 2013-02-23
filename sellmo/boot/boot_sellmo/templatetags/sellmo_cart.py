@@ -37,8 +37,8 @@ register = template.Library()
 #
 
 @register.inclusion_tag('cart/add_to_cart_formset.html')
-def add_to_cart_formset(product):
+def add_to_cart_formset(product, **kwargs):
 	return {
-		'formset' : modules.cart.get_add_to_cart_formset(product=product),
+		'formset' : modules.cart.get_add_to_cart_formset(product=product, **kwargs),
 		'product' : product
 	}

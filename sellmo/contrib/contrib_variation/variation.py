@@ -43,7 +43,7 @@ def get_variations(product):
 	variables = {}
 	
 	# Collect variables from variants
-	for variant in product.variants.all():
+	for variant in product.variants.all().prefetch_related('options__variable', 'options__attribute'):
 		for option in variant.options.all():
 			if not variables.has_key(option.variable):
 				variables[option.variable] = _VariableMeta(option.variable)
@@ -55,7 +55,7 @@ def get_variations(product):
 	
 	# Collect variables from custom variables
 	if modules.variation.custom_options_enabled:
-		for option in product.custom_options.all():
+		for option in product.custom_options.all().prefetch_related('variable', 'attribute'):
 			if not variables.has_key(option.variable):
 				variables[option.variable] = _VariableMeta(option.variable)
 			
@@ -63,16 +63,22 @@ def get_variations(product):
 			if not variable.attributes.has_key(option.attribute):
 				variable.attributes[option.attribute] = _AttributeMeta(option.attribute)
 			variable.attributes[option.attribute].custom = True
-			
+	
 	def _construct(*options):
+	
+		def _has_variable(variant, variable):
+			return [option.variable for option in variant.options.all()].count(variable.variable) == 1
+			
+		def _has_attribute(variant, attribute):
+			return [option.attribute for option in variant.options.all()].count(attribute.attribute) == 1
+	
 		variants = None
 		for variable, attribute in options:
 			if variants is None:
 				variants = list(attribute.variants)
 				
-			for variant in list(variants):
-				if (variant.variables.count(variable.variable) and not variant.attributes.count(attribute.attribute)) \
-				or (not attribute.custom and not variant.variables.count(variable.variable)):
+			for variant in list(variants):			
+				if (_has_variable(variant, variable) and not _has_attribute(variant, attribute)) or (not attribute.custom and not _has_variable(variant, variable)):
 					variants.remove(variant)
 		
 		variant = product if not variants else variants[0] 
