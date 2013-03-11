@@ -32,6 +32,7 @@ class _VariableMeta(object):
 	def __init__(self, variable):
 		self.variable = variable
 		self.attributes = {}
+		self.custom = False
 		
 class _AttributeMeta(object):
 	def __init__(self, attribute):
@@ -39,7 +40,7 @@ class _AttributeMeta(object):
 		self.variants = []
 		self.custom = False
 
-def get_variations(product):
+def get_variations(product, all=False):
 	variables = {}
 	
 	# Collect variables from variants
@@ -63,9 +64,10 @@ def get_variations(product):
 			if not variable.attributes.has_key(option.attribute):
 				variable.attributes[option.attribute] = _AttributeMeta(option.attribute)
 			variable.attributes[option.attribute].custom = True
+			variable.custom = True
 	
-	def _construct(*options):
-	
+	def _construct(options, custom_variables):
+		
 		def _has_variable(variant, variable):
 			return [option.variable for option in variant.options.all()].count(variable.variable) == 1
 			
@@ -81,47 +83,62 @@ def get_variations(product):
 				if (_has_variable(variant, variable) and not _has_attribute(variant, attribute)) or (not attribute.custom and not _has_variable(variant, variable)):
 					variants.remove(variant)
 		
-		variant = product if not variants else variants[0] 
-		return Variation(variant, [Option(option[0].variable, option[1].attribute) for option in options])
+		variant = product if not variants else variants[0]
+		children = []
+		if custom_variables:
+			children = _variate(custom_variables, [], [], all=True)
+		
+		return Variation(variant, [Option(option[0].variable, option[1].attribute, option[1].custom) for option in options], children)
 			
-	def _variate(variables, *options):
+	def _variate(variables, options, custom_variables, all=False):
 		variations = []
 		if not variables:
 			# Construct variation at this point
-			variations.append(_construct(*options))
+			variations.append(_construct(options, custom_variables))
 		else:
 			# Recurse iterate through all possible combinations
 			variable = variables[0]
-			for attribute in variable.attributes.values():
+			if not variable.custom or all:
+				for attribute in variable.attributes.values():
+					variations.extend(
+						_variate(variables[1:], options + [(variable, attribute)], custom_variables, all=all)
+					)
+			else:
 				variations.extend(
-					_variate(variables[1:], *(list(options) + [(variable, attribute)]))
+					_variate(variables[1:], options, custom_variables + [variable], all=all)
 				)
 		
 		return variations
-	return _variate(variables.values())
+	
+	return _variate(variables.values(), [], [], all=all)
 	
 class Option(object):
-	def __init__(self, variable, attribute):
+	def __init__(self, variable, attribute, custom):
 		self.variable = variable
 		self.attribute = attribute
+		self.custom = custom
 		
 	@property
 	def key(self):
 		return '%s-%s' % (self.variable.name, self.attribute.value)
 	
 class Variation(object):
-	def __init__(self, product, options):
+	parent = None
+	def __init__(self, product, options, children):
 		self.product = product
 		self.options = options
+		self.children = children if not children is None else []
+		for variation in self.children:
+			variation.parent = self
 		
 	@property
 	def key(self):
-		return '%s___%s' % (self.product.slug, '_'.join([option.key for option in self.options]))
+		return modules.variation.get_variation_key(variation=self)
 		
 	@property
-	def json(self):
-		pass
+	def name(self):
+		return modules.variation.get_variation_name(variation=self)
 		
 	def __unicode__(self):
-		return self.key
+		return self.name
 	

@@ -39,7 +39,7 @@ class ProductAdminBase(admin.ModelAdmin):
 class VariantInlineBase(VariantInlineMixin, admin.StackedInline):
 	fieldsets = (
 		(_("Product information"), {
-			'fields': ('name', 'sku',)
+			'fields': ('name', 'sku', 'slug')
 		}),
 		(_("Variant options"), {
 			'fields': ('options',)

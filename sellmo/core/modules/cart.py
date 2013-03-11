@@ -126,28 +126,29 @@ class CartModule(sellmo.Module):
 			raise Http404
 		
 	@view(r'add/(?P<product_slug>[a-z0-9_-]+)$')
-	def add_to_cart(self, chain, request, product_slug, purchases=None, context=None, **kwargs):
+	def add_to_cart(self, chain, request, product_slug, product=None, formset=None, purchases=None, context=None, **kwargs):
 		
-		try:
-			product = modules.product.Product.objects.get(slug=product_slug)
-		except modules.product.Product.DoesNotExist:
-			raise Http404
+		if product is None:
+			try:
+				product = modules.product.Product.objects.get(slug=product_slug)
+			except modules.product.Product.DoesNotExist:
+				raise Http404
 		
-		if context == None:
+		if context is None:
 			context = {}
 			
-		formset = None
-		if request.method == 'POST':
-			formset = self.get_add_to_cart_formset(product=product, data=request.POST)
-		else:
-			formset = self.get_add_to_cart_formset(product=product, data=request.GET)
+		if formset is None:
+			if request.method == 'POST':
+				formset = self.get_add_to_cart_formset(product=product, data=request.POST)
+			else:
+				formset = self.get_add_to_cart_formset(product=product, data=request.GET)
 			
 		# Get the cart
 		cart = self.Cart.objects.from_request(request)
 	
 		# Purchase will in most cases not yet be assigned, it could be assigned however
 		# during the capture fase.
-		if not purchases:
+		if purchases is None:
 			
 			purchases = []
 			

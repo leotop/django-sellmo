@@ -75,7 +75,7 @@ class Variant(object):
 	
 	def _is_unique_slug(self, slug):
 		try:
-			existing = modules.product.Product.objects.get(slug=slug)
+			existing = modules.product.Product.objects.polymorphic().get(slug=slug)
 		except modules.product.Product.DoesNotExist:
 			return True
 		return getattr(existing, 'product', None) == self.product

@@ -16,8 +16,13 @@
 				{% endfor %}
 			</tbody>
 		</table>
+		<ul>
 		{% for variation in product.variations %}
-			{% add_to_cart_formset product=product variation=variation %}
+			<li>
+				<h4>{{ variation }}</h4>
+				{% add_to_cart_formset product=product variation=variation %}
+			</li>
 		{% endfor %}
+		</ul>
 	</div>
 {% endblock %}

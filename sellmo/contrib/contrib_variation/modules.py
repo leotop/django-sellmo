@@ -25,10 +25,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from sellmo import modules, Module
+from sellmo.api.decorators import view, chainable
+from django.utils.translation import ugettext_lazy as _
 
 #
 
-class VariationModule(Module):
+class VariationModule(Module):	
+
 	namespace = 'variation'
 	custom_options_enabled = False
 	batch_buy_enabled = False
@@ -39,3 +42,42 @@ class VariationModule(Module):
 		
 	def register_product_subtype(self, subtype):
 		self.product_subtypes.append(subtype)
+		
+	@chainable()
+	def get_sub_variation_label(self, chain, variation=None, **kwargs):
+		# Get first child
+		if not variation.children:
+			raise Exception()
+			
+		sub = variation.children[0]
+		if len(sub.options) == 1:
+			return sub.options[0].variable.name
+		return _("variation")
+		
+	@chainable()
+	def get_variation_name(self, chain, variation=None, **kwargs):
+		options = u' '.join([unicode(option.attribute) for option in variation.options])
+		product = variation.product
+		
+		if hasattr(product, 'product'):
+			product = product.product
+		prefix = unicode(product)
+		
+		if not options:
+			return prefix
+		elif variation.parent:
+			return options
+			
+		return '%s %s' % (prefix, options)
+		
+	@chainable()
+	def get_variation_key(self, chain, variation=None, **kwargs):
+		options = '_'.join([option.key for option in variation.options if option.custom])
+		prefix = variation.product.slug
+		
+		if variation.parent:
+			prefix = variation.parent.key
+		if not options:
+			return prefix
+		
+		return '%s_%s' % (prefix, options)

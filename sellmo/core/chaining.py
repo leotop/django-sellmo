@@ -43,7 +43,7 @@ class Chain(object):
 		out = dict()
 		for func in reversed(self._queue):
 			if func._capture:
-				response = func._capture(**kwargs)
+				response = func(**kwargs)
 				if isinstance(response, dict):
 					out.update(response)
 					kwargs.update(response)

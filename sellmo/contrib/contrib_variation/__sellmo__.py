@@ -52,6 +52,10 @@ def mixin_variation_support():
 		class ProductMixin(ModelMixin):
 			model = subtype
 			@property
+			def all_variations(self):
+				return get_variations(self, all=True)
+				
+			@property
 			def variations(self):
 				return get_variations(self)
 
