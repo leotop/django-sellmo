@@ -57,7 +57,7 @@ def view(regex=None, name=None, namespace=None):
 	
 		def view(self, request, **kwargs):
 			chain = getattr(self, '_%s_chain' % func.func_name, None)
-			if chain:
+			if chain.can_capture:
 				# Capture
 				captured = chain.capture(request, **kwargs)
 				kwargs.update(captured)

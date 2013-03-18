@@ -34,7 +34,8 @@ from django.db import models
 
 def make_trackable(obj, session_key):
 	def track(self, request):
-		assert self.pk != None
+		if self.pk is None:
+			raise Exception("Cannot track not persistent object")
 		request.session[session_key] = self.pk
 	obj.track = track.__get__(obj, obj.__class__)
 	return obj

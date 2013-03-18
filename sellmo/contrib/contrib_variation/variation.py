@@ -39,6 +39,29 @@ class _AttributeMeta(object):
 		self.attribute = attribute
 		self.variants = []
 		self.custom = False
+		
+def find_variation(product, key):
+
+	def _find(variations, key):
+		for variation in variations:
+			if variation.key == key:
+				return variation
+		return None
+
+	# First we try primary variations
+	variations = get_variations(product)
+	variation = _find(variations, key)
+	if variation:
+		return variation
+	
+	# No luck, lets try all variations
+	variations = get_variations(product, all=True)
+	variation = _find(variations, key)
+	if variation:
+		return variation
+		
+	return None
+	
 
 def get_variations(product, all=False):
 	variables = {}

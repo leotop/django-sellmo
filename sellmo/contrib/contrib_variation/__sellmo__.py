@@ -28,7 +28,7 @@ from sellmo import modules
 from sellmo.api.decorators import load
 from sellmo.magic import ModelMixin
 from sellmo.contrib.contrib_variation.models import Option
-from sellmo.contrib.contrib_variation.variation import get_variations
+from sellmo.contrib.contrib_variation.variation import get_variations, find_variation
 
 #
 
@@ -58,6 +58,9 @@ def mixin_variation_support():
 			@property
 			def variations(self):
 				return get_variations(self)
+				
+			def find_variation(self, key):
+				return find_variation(self, key)
 
 @load(after='setup_variants')
 def mixin_custom_options():

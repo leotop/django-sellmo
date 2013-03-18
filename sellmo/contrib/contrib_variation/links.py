@@ -28,28 +28,23 @@
 
 from sellmo import modules
 from sellmo.api.decorators import link
+from sellmo.contrib.contrib_variation.variation import find_variation
 
 #
 
 from django import forms
 from django.forms.formsets import formset_factory
 
-@link(namespace=modules.cart.namespace, capture=True)
-def add_to_cart(request, product_slug, **kwargs):
-	try:
-		product = modules.product.Product.objects.get(slug=product_slug)
-	except modules.product.Product.DoesNotExist:
-		raise Http404
+@link(namespace=modules.cart.namespace)
+def get_purchase_args(form, product, args, **kwargs):
+	if form.__class__.__name__ == 'AddToCartVariationForm':
+		# Dealing with a varation form
+		variation = find_variation(product, form.cleaned_data['variation'])
+		if not variation:
+			raise Exception()
+		args['product'] = variation.product
 		
-	if request.method == 'POST':
-		formset = modules.cart.get_add_to_cart_formset(product=product, data=request.POST)
-	else:
-		formset = modules.cart.get_add_to_cart_formset(product=product, data=request.GET)
-		
-	return {
-		'product' : product,
-		'formset' : formset
-	}
+	return args
 
 @link(namespace=modules.cart.namespace)
 def get_add_to_cart_formset(formset, cls, product, variation=None, initial=None, data=None, **kwargs):
@@ -67,7 +62,7 @@ def get_add_to_cart_formset(formset, cls, product, variation=None, initial=None,
 	# Add variation field as either a choice or as a hidden integer
 	if not variation and not modules.variation.batch_buy_enabled and variations:
 		dict['variation'] = forms.ChoiceField(
-			choices = [(variation.key, unicode(variation)) for variation in variations]
+			choices = [(el.key, unicode(el)) for el in variations]
 		)
 	else:
 		dict['variation'] = forms.CharField(widget = forms.HiddenInput)
@@ -79,7 +74,7 @@ def get_add_to_cart_formset(formset, cls, product, variation=None, initial=None,
 			label = modules.variation.get_sub_variation_label(variation=variation)
 		)
 			
-	AddToCartForm = type('AddToCartForm', (cls,), dict)
+	AddToCartForm = type('AddToCartVariationForm', (cls,), dict)
 		
 	# Create the formset based upon the custom form
 	AddToCartFormSet = formset_factory(AddToCartForm, extra=0)
@@ -87,23 +82,30 @@ def get_add_to_cart_formset(formset, cls, product, variation=None, initial=None,
 	# Fill in initial data
 	if not data:
 		if variation or variations:
-			if not variation and not modules.variation.batch_buy_enabled:
-				for el in initial:
-					el['variation'] = variation.key if variation else variations[:1][0].key
-			elif not variation:
+			if variation:
 				initial = [{
+					'product' : product.pk,
+					'variation' : variation.key,
+					'qty' : 1
+				}]
+			elif modules.variation.batch_buy_enabled:
+				initial = [{
+					'product' : product.pk,
 					'variation' : variation.key,
 					'qty' : 1
 				} for variation in variations]
 			else:
 				initial = [{
-					'variation' : variation.key,
+					'product' : product.pk,
+					'variation' : variation.key if variation else variations[:1][0].key,
 					'qty' : 1
 				}]
+				
 		formset = AddToCartFormSet(initial=initial)
 	else:
 		formset = AddToCartFormSet(data)
 		
 	return {
-		'formset' : formset
+		'formset' : formset,
+		'variation' : variation
 	}

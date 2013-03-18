@@ -43,6 +43,24 @@ class VariationModule(Module):
 	def register_product_subtype(self, subtype):
 		self.product_subtypes.append(subtype)
 		
+	@view(r'add/(?P<product_slug>[a-z0-9_-]+)/(?P<variation_key>[a-z0-9_-]+)$')
+	def add_to_cart(self, chain, request, product_slug, variation_key, **kwargs):
+		try:
+			product = modules.product.Product.objects.polymorphic().get(slug=product_slug)
+		except modules.product.Product.DoesNotExist:
+			raise Http404
+			
+		variation = product.find_variation(variation_key)
+		if not variation:
+			raise Http404
+			
+		if request.method == 'POST':
+			formset = modules.cart.get_add_to_cart_formset(product=product, variation=variation, data=request.POST)
+		else:
+			formset = modules.cart.get_add_to_cart_formset(product=product, variation=variation, data=request.GET)
+			
+		return modules.cart.add_to_cart(request, product_slug=product_slug, product=product, formset=formset)
+		
 	@chainable()
 	def get_sub_variation_label(self, chain, variation=None, **kwargs):
 		# Get first child

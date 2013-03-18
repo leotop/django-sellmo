@@ -1,6 +1,0 @@
-<form action="{% url cart.add_to_cart product.slug %}">
-	{% for form in formset %}
-		{{ form }}
-	{% endfor %}
-	<input type="submit" value="Add to cart"/>
-</form>

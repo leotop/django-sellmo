@@ -92,24 +92,24 @@ class CartModule(sellmo.Module):
 	@chainable()
 	def get_purchase_args(self, chain, product, form, **kwargs):
 		
-		out = {
+		args = {
 			'product' : product,
 		}
 		
 		if isinstance(form, self.AddToCartForm):
-			out['qty'] = form.cleaned_data['qty']
+			args['qty'] = form.cleaned_data['qty']
 		
 		if chain:
-			out = chain.execute(form=form, **kwargs)
+			args = chain.execute(product=product, form=form, args=args, **kwargs)
 		
 		# Purchase args should always contain
 		# 'product', 'qty'
-		if not out.has_key('product'):
+		if not args.has_key('product'):
 			raise Exception("Purchase arg 'product' was not given")
-		if not out.has_key('qty'):
+		if not args.has_key('qty'):
 			raise Exception("Purchase arg 'qty' was not given")
 			
-		return out
+		return args
 			
 	@view(r'$')
 	def cart(self, chain, request, cart=None, context=None, **kwargs):

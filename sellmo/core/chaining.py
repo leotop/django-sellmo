@@ -30,27 +30,31 @@ from django.http import HttpResponse
 
 class Chain(object):
 	
-	def __init__(self):
+	def __init__(self, func):
 		self._queue = []
+		self._capture_queue = []
+		self._func = func
 		
 	def __nonzero__(self):
-		return len(self._queue) > 0
+		return self.can_execute
 	
-	def append(self, func):
-		self._queue.append(func)
+	def link(self, func):
+		if func._capture:
+			self._capture_queue.append(func)
+		else:
+			self._queue.append(func)
 		
 	def capture(self, **kwargs):
 		out = dict()
-		for func in reversed(self._queue):
-			if func._capture:
-				response = func(**kwargs)
-				if isinstance(response, dict):
-					out.update(response)
-					kwargs.update(response)
-				elif response == False:
-					break
-				elif response != None:
-					raise Exception("Func '%s' gave an unexpected response during capture fase." % func)
+		for func in reversed(self._capture_queue):
+			response = func(**kwargs)
+			if isinstance(response, dict):
+				out.update(response)
+				kwargs.update(response)
+			elif response == False:
+				break
+			elif response != None:
+				raise Exception("Func '%s' gave an unexpected response during capture fase." % func)
 					
 		return out
 		
@@ -70,11 +74,19 @@ class Chain(object):
 				
 		return out
 		
+	@property
+	def can_execute(self):
+		return len(self._queue) > 0
+	
+	@property
+	def can_capture(self):
+		return len(self._capture_queue) > 0
+		
 	def should_return(self, response):
 		return False
 		
 class ViewChain(Chain):
-
+	
 	def capture(self, request, **kwargs):
 		return super(ViewChain, self).capture(request=request, **kwargs)
 		

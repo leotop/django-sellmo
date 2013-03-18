@@ -40,7 +40,7 @@ for module in modules:
 		attr = getattr(module, name)
 		if hasattr(attr, '_im_view') and attr._regex:
 			urls.append(url(attr._regex, attr, name='%s.%s' % (module.namespace, attr._name)))
-			
+	
 	if urls:
 		prefix = module.prefix
 		if not prefix:

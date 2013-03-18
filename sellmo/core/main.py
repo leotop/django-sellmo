@@ -93,7 +93,7 @@ class Sellmo(object):
 		chain = chaining.Chain
 		if getattr(func, '_im_view', False):
 			chain = chaining.ViewChain
-		chain = chain()
+		chain = chain(func)
 		setattr(module, name, chain)		
 			
 	def _load_apps(self, apps):
@@ -217,13 +217,13 @@ class Sellmo(object):
 			return False
 		
 		module = getattr(modules, namespace)
-		name = '_%s_chain' % link._name	
+		name = '_%s_chain' % link._name
 		
 		if not hasattr(module, name):
 			logger.warning("Module '%s' has no chainable method '%s'"  % (namespace, link._name))
 			return False
 		
 		links = getattr(module, name)
-		links.append(link)
+		links.link(link)
 		return True
 		
