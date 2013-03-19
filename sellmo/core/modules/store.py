@@ -51,7 +51,7 @@ class StoreModule(sellmo.Module):
 			purchase.stamp(product.get_price())
 			
 		if chain:
-			out = chain.execute(product=product, purchase=purchase, **kwargs)
+			out = chain.execute(product=product, qty=qty, purchase=purchase, **kwargs)
 			if out.has_key('purchase'):
 				purchase = out['purchase']
 		
