@@ -49,6 +49,7 @@ class Variant(object):
 	non_variable_fields = ['content_type', 'slug', 'product', 'options']
 	non_variable_field_types = [models.BooleanField]
 	_variable_fields_enabled = True
+	_is_variant = True
 	
 	@classmethod
 	def get_variable_fields(cls):

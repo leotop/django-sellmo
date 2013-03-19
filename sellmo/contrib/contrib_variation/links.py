@@ -28,12 +28,29 @@
 
 from sellmo import modules
 from sellmo.api.decorators import link
+from sellmo.api.pricing import Price
 from sellmo.contrib.contrib_variation.variation import find_variation
 
 #
 
 from django import forms
 from django.forms.formsets import formset_factory
+
+
+from sellmo import modules
+
+#
+
+@link(namespace=modules.pricing.namespace, name='get_price', capture=True)
+def capture_get_price(product=None, **kwargs):
+	out = {}
+	
+	if getattr(product, '_is_variant', False):
+		out['variant'] = product
+		product = product.product
+	
+	out['product'] = product
+	return out
 
 @link(namespace=modules.cart.namespace)
 def get_purchase_args(form, product, args, **kwargs):
