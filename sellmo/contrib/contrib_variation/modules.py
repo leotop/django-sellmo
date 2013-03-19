@@ -26,6 +26,8 @@
 
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable
+
+from django.http import Http404
 from django.utils.translation import ugettext_lazy as _
 
 #

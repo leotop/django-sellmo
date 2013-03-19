@@ -130,7 +130,7 @@ class CartModule(sellmo.Module):
 		
 		if product is None:
 			try:
-				product = modules.product.Product.objects.get(slug=product_slug)
+				product = modules.product.Product.objects.polymorphic().get(slug=product_slug)
 			except modules.product.Product.DoesNotExist:
 				raise Http404
 		
@@ -142,9 +142,6 @@ class CartModule(sellmo.Module):
 				formset = self.get_add_to_cart_formset(product=product, data=request.POST)
 			else:
 				formset = self.get_add_to_cart_formset(product=product, data=request.GET)
-			
-		# Get the cart
-		cart = self.Cart.objects.from_request(request)
 	
 		# Purchase will in most cases not yet be assigned, it could be assigned however
 		# during the capture fase.
@@ -169,13 +166,17 @@ class CartModule(sellmo.Module):
 					purchase = modules.store.make_purchase(**purchase_args)
 					if purchase:
 						purchases.append(purchase)
-				
-		# Add purchases to cart
-		for purchase in purchases:
-			cart.add(purchase)
 		
-		# Keep track of our cart 
-		cart.track(request)
+		# Get the cart
+		cart = self.Cart.objects.from_request(request)
+		
+		if purchases:	
+			# Add purchases to cart
+			for purchase in purchases:
+				cart.add(purchase)
+		
+			# Keep track of our cart 
+			cart.track(request)
 		
 		#
 		if chain:
