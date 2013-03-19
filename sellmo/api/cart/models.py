@@ -39,6 +39,18 @@ class Cart(modules.cart.Cart):
 	objects = TrackingManager('sellmo_cart')
 	
 	#
+	
+	created = models.DateTimeField(
+		auto_now_add = True,
+		editable = False
+	)
+	
+	modified = models.DateTimeField(
+		auto_now = True,
+		editable = False
+	)
+	
+	#
 		
 	def add(self, purchase):
 		if self.pk == None:
@@ -67,6 +79,9 @@ class Cart(modules.cart.Cart):
 		
 	#
 	
+	def __unicode__(self):
+		return unicode(self.modified)
+	
 	class Meta:
 		app_label = 'cart'
 		
@@ -82,7 +97,8 @@ class CartItem(modules.cart.CartItem):
 	)
 	
 	purchase = models.OneToOneField(
-		modules.store.Purchase
+		modules.store.Purchase,
+		editable = False
 	)
 	
 	def __unicode__(self):
