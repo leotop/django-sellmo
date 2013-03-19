@@ -1,3 +1,15 @@
+# Django South generated files #
+######################
+skeleton/cart/migrations
+skeleton/category/migrations
+skeleton/checkout/migrations
+skeleton/customer/migrations
+skeleton/pricing/migrations
+skeleton/product/migrations
+skeleton/shipping/migrations
+skeleton/store/migrations
+skeleton/tax/migrations
+
 # Python generated files #
 ######################
 *.pyc
