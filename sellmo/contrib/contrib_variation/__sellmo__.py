@@ -61,6 +61,21 @@ def mixin_variation_support():
 				
 			def find_variation(self, key):
 				return find_variation(self, key)
+			
+	class PurchaseMixin(ModelMixin):
+		model = modules.store.Purchase
+		
+		variation_key = models.CharField(
+			max_length = 255,
+			null = True,
+			blank = True,
+		)
+		
+		variation_name = models.CharField(
+			max_length = 255,
+			null = True,
+			blank = True,
+		)
 
 @load(after='setup_variants')
 def mixin_custom_options():

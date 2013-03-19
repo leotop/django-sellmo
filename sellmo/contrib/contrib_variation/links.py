@@ -51,6 +51,16 @@ def capture_get_price(product=None, **kwargs):
 	
 	out['product'] = product
 	return out
+	
+@link(namespace=modules.store.namespace)
+def make_purchase(purchase, variation=None, **kwargs):
+	if variation:
+		purchase.variation_key = variation.key
+		purchase.variation_name = variation.name
+		
+	return {
+		'purchase' : purchase
+	}
 
 @link(namespace=modules.cart.namespace)
 def get_purchase_args(form, product, args, **kwargs):
@@ -60,6 +70,7 @@ def get_purchase_args(form, product, args, **kwargs):
 		if not variation:
 			raise Exception()
 		args['product'] = variation.product
+		args['variation'] = variation
 		
 	return args
 
