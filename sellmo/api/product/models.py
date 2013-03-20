@@ -30,10 +30,11 @@ from django.db import models
 #
 
 from sellmo import modules
+from sellmo.utils.polymorphism import PolymorphicModel
 
 #
 
-class Product(modules.product.Product):
+class Product(modules.product.Product, PolymorphicModel):
 	
 	slug = models.SlugField(
 		max_length = 80,

@@ -33,7 +33,6 @@ from django.conf.urls.defaults import *
 import sellmo
 from sellmo import modules
 from sellmo.api.decorators import view
-from sellmo.utils.polymorphism import PolymorphicModel
 
 #
 
@@ -42,10 +41,10 @@ class ProductModule(sellmo.Module):
 	namespace = 'product'
 	prefix = 'products'
 	
-	Product = PolymorphicModel
+	Product = models.Model
 	
 	def __init__(self, *args, **kwargs):
-		from sellmo.api.product import Product
+		from sellmo.api.product.models import Product
 		self.Product = Product
 		self.subtypes = []
 		

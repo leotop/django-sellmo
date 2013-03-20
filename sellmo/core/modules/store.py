@@ -40,7 +40,7 @@ class StoreModule(sellmo.Module):
 	Purchase = modules.pricing.Stampable
 
 	def __init__(self, *args, **kwargs):
-		from sellmo.api.store import Purchase
+		from sellmo.api.store.models import Purchase
 		self.Purchase = Purchase
 			
 	@chainable()
