@@ -24,21 +24,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def load(action=None, after=None):
+from sellmo.core.loading import loader
+
+def load(action=None, after=None, before=None):
 	def decorator(func):
-		if not hasattr(func, '_im_loadable'):
-			func._actions = []
-			func._delays = []
-		
-		if action:
-			func._actions.append(action)
-			
-		if after:
-			func._delays.append(after)
-			
-		func._im_loadable = True
+		loader.register(func, action=action, after=after, before=before)
 		return func
-		
+	
 	return decorator
 	
 def link(name=None, namespace=None, capture=False):
@@ -52,9 +44,7 @@ def link(name=None, namespace=None, capture=False):
 	return decorator
 	
 def view(regex=None, name=None, namespace=None):
-	
 	def decorator(func):
-	
 		def view(self, request, **kwargs):
 			chain = getattr(self, '_%s_chain' % func.func_name, None)
 			if chain.can_capture:
@@ -70,15 +60,12 @@ def view(regex=None, name=None, namespace=None):
 		view._regex = regex
 		view._name = name if name else func.func_name
 		view._namespace = namespace
-		
 		return view
 		
 	return decorator
 	
 def chainable(name=None, namespace=None):
-	
 	def decorator(func):
-		
 		def chainable(self, **kwargs):
 			chain = getattr(self, '_%s_chain' % func.func_name, None)
 			if chain:
@@ -93,7 +80,6 @@ def chainable(name=None, namespace=None):
 		chainable._im_get = True
 		chainable._name = name if name else func.func_name
 		chainable._namespace = namespace
-		
 		return chainable
 		
 	return decorator

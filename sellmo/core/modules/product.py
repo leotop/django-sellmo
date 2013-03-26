@@ -24,7 +24,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.db import models
 from django.http import Http404
 from django.conf.urls.defaults import *
 
@@ -33,6 +32,7 @@ from django.conf.urls.defaults import *
 import sellmo
 from sellmo import modules
 from sellmo.api.decorators import view
+from sellmo.api.product.models import Product
 
 #
 
@@ -40,8 +40,7 @@ class ProductModule(sellmo.Module):
 
 	namespace = 'product'
 	prefix = 'products'
-	
-	Product = models.Model
+	Product = Product
 	
 	def __init__(self, *args, **kwargs):
 		from sellmo.api.product.models import Product

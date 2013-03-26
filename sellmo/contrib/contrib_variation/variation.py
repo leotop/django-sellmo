@@ -89,6 +89,10 @@ def get_variations(product, all=False):
 			variable.attributes[option.attribute].custom = True
 			variable.custom = True
 	
+	if not variables:
+		# Can't have variations without variables
+		return None
+	
 	def _construct(options, custom_variables):
 		
 		def _has_variable(variant, variable):

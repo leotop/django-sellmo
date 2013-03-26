@@ -32,6 +32,7 @@ from django import dispatch
 import sellmo
 from sellmo import modules
 from sellmo.api.decorators import view, chainable
+from sellmo.api.checkout.models import Order, OrderLine
 
 #
 
@@ -40,17 +41,14 @@ class CheckoutModule(sellmo.Module):
 	namespace = 'checkout'
 	prefix = 'checkout'
 	enabled = True
-	
-	Order = models.Model
-	OrderLine = models.Model
+	Order = Order
+	OrderLine = OrderLine
 	
 	collect_shipping_methods = dispatch.Signal(providing_args=['methods'])
 	collect_payment_methods = dispatch.Signal(providing_args=['methods'])
 	
 	def __init__(self, *args, **kwargs):
-		from sellmo.api.checkout.models import Order, OrderLine
-		self.Order = Order
-		self.OrderLine = OrderLine
+		pass
 		
 	@view(r'$')
 	def checkout(self, chain, request, cart=None, context=None, **kwargs):

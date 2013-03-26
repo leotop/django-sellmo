@@ -29,17 +29,29 @@ from django.db import models
 #
 
 from sellmo import modules
+from sellmo.api.decorators import load
+from sellmo.utils.polymorphism import PolymorphicModel
 
 #
 
-class Purchase(modules.store.Purchase):
+@load(after='finalize_product_Product', before='finalize_store_Purchase')
+def load_model():
+	class Purchase(modules.store.Purchase):
+		product = models.ForeignKey(
+			modules.product.Product
+		)
+	modules.store.Purchase = Purchase
+		
+@load(action='finalize_store_Purchase')
+def finalize_model():
+	class Purchase(modules.store.Purchase):
+		pass
+	modules.store.Purchase = Purchase
+
+class Purchase(PolymorphicModel, modules.pricing.Stampable):
 	
 	qty = models.PositiveIntegerField(
 		default = 1
-	)
-	
-	product = models.ForeignKey(
-		modules.product.Product
 	)
 	
 	def __unicode__(self):
@@ -47,3 +59,4 @@ class Purchase(modules.store.Purchase):
 	
 	class Meta:
 		app_label = 'store'
+		abstract = True

@@ -31,11 +31,54 @@ from django.utils.translation import ugettext_lazy as _
 #
 
 from sellmo import modules
+from sellmo.api.decorators import load
 from sellmo.utils.sessions import TrackingManager
 
 #
 
-class Addressee(modules.customer.Addressee):
+@load(after='finalize_customer_Customer')
+def load_model():
+	class Address(modules.customer.Address):
+		customer = models.ForeignKey(
+			modules.customer.Customer,
+			related_name = 'addresses',
+			verbose_name = _("customer")
+		)
+		
+		class Meta:
+			abstract = True
+		
+	modules.customer.Address = Address
+
+@load(after='finalize_customer_Addressee', before='finalize_customer_Customer')
+def load_model():
+	class Customer(modules.customer.Customer, modules.customer.Addressee):
+		class Meta:
+			abstract = True
+		
+	modules.customer.Customer = Customer
+	
+@load(after='finalize_customer_Addressee', before='finalize_customer_Address')
+def load_model():
+	class Address(modules.customer.Address, modules.customer.Addressee):
+		class Meta:
+			abstract = True
+		
+	modules.customer.Address = Address
+		
+@load(action='finalize_customer_Customer')
+def finalize_model():
+	class Customer(modules.customer.Customer):
+		pass
+	modules.customer.Customer = Customer
+	
+@load(action='finalize_customer_Address')
+def finalize_model():
+	class Address(modules.customer.Address):
+		pass
+	modules.customer.Address = Address
+
+class Addressee(models.Model):
 
 	first_name = models.CharField(
 		max_length = 30,
@@ -51,7 +94,7 @@ class Addressee(modules.customer.Addressee):
 		app_label = 'customer'
 		abstract = True
 
-class Customer(Addressee, modules.customer.Customer):
+class Customer(models.Model):
 	
 	objects = TrackingManager('sellmo_customer')
 	
@@ -67,14 +110,9 @@ class Customer(Addressee, modules.customer.Customer):
 		verbose_name = _("customer")
 		verbose_name_plural = _("customers")
 		ordering = ['last_name', 'first_name']
+		abstract = True
 	
-class Address(Addressee, modules.customer.Address):
-	
-	customer = models.ForeignKey(
-		Customer,
-		related_name = 'addresses',
-		verbose_name = _("customer")
-	)
+class Address(models.Model):
 	
 	type = models.CharField(
 		max_length = 30,
@@ -86,3 +124,4 @@ class Address(Addressee, modules.customer.Address):
 		verbose_name = _("address")
 		verbose_name_plural = _("addresses")
 		ordering = ['last_name', 'first_name']
+		abstract = True

@@ -36,7 +36,6 @@ class Stampable(models.Model):
 	"""
 	Provides subtypes with pricing fields
 	"""
-	
 	def stamp(self, price, **kwargs):
 		modules.pricing.stamp(stampable=self, price=price, **kwargs)
 	

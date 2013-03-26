@@ -30,11 +30,18 @@ from django.db import models
 #
 
 from sellmo import modules
+from sellmo.api.decorators import load
 from sellmo.utils.polymorphism import PolymorphicModel
 
 #
 
-class Product(modules.product.Product, PolymorphicModel):
+@load(action='finalize_product_Product')
+def finalize_model():
+	class Product(modules.product.Product):
+		pass
+	modules.product.Product = Product
+
+class Product(PolymorphicModel):
 	
 	slug = models.SlugField(
 		max_length = 80,
@@ -68,3 +75,4 @@ class Product(modules.product.Product, PolymorphicModel):
 		app_label = 'product'
 		verbose_name = _("product")
 		verbose_name_plural = _("products")
+		abstract = True

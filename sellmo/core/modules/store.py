@@ -31,17 +31,19 @@ from django.db import models
 import sellmo
 from sellmo import modules
 from sellmo.api.decorators import view, chainable
+from sellmo.modularization import Module
+from sellmo.api.store.models import Purchase
+
 
 #
 
 class StoreModule(sellmo.Module):
 
 	namespace = 'store'
-	Purchase = modules.pricing.Stampable
+	Purchase = Purchase
 
 	def __init__(self, *args, **kwargs):
-		from sellmo.api.store.models import Purchase
-		self.Purchase = Purchase
+		pass
 			
 	@chainable()
 	def make_purchase(self, chain, product, qty, purchase=None, **kwargs):

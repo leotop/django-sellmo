@@ -34,6 +34,7 @@ from django.shortcuts import redirect
 import sellmo
 from sellmo import modules
 from sellmo.api.decorators import view, chainable
+from sellmo.api.customer.models import Addressee, Address, Customer
 
 #
 
@@ -42,24 +43,15 @@ class CustomerModule(sellmo.Module):
 	namespace = 'customer'
 	prefix = 'customer'
 	enabled = True
-	
-	Addressee = models.Model
-	Address = models.Model
-	Customer = models.Model
+	Addressee = Addressee
+	Address = Address
+	Customer = Customer
 	
 	CustomerForm = forms.ModelForm
 	AddressForm = forms.ModelForm
 	
-	def __init__(self, *args, **kwargs):
-		from sellmo.api.customer.models import Addressee, Customer, Address
-		self.Addressee = Addressee
-		self.Address = Address
-		self.Customer = Customer
-		
-		# Init forms
-		from sellmo.api.customer.forms import CustomerForm, AddressForm
-		self.CustomerForm = CustomerForm
-		self.AddressForm = AddressForm
+	def __init__(self, *args, **kwargs):		
+		pass
 	
 	@chainable()
 	def get_customer_form(self, chain, data=None, customer=None, form=None, **kwargs):

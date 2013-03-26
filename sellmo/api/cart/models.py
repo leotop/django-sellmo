@@ -29,12 +29,51 @@ from django.db import models
 #
 
 from sellmo import modules
+from sellmo.api.decorators import load
 from sellmo.api.pricing import Price
 from sellmo.utils.sessions import TrackingManager
 
 #
 
-class Cart(modules.cart.Cart):
+@load(after='finalize_cart_Cart', before='finalize_cart_CartItem')
+def load_model():
+	class CartItem(modules.cart.CartItem):
+		cart = models.ForeignKey(
+			modules.cart.Cart,
+			related_name = 'items'
+		)
+		
+		class Meta:
+			abstract = True
+		
+	modules.cart.CartItem = CartItem
+		
+@load(after='finalize_store_Purchase', before='finalize_cart_CartItem')
+def load_model():
+	class CartItem(modules.cart.CartItem):
+		purchase = models.OneToOneField(
+			modules.store.Purchase,
+			editable = False
+		)
+		
+		class Meta:
+			abstract = True
+		
+	modules.cart.CartItem = CartItem
+		
+@load(action='finalize_cart_Cart')
+def finalize_model():
+	class Cart(modules.cart.Cart):
+		pass
+	modules.cart.Cart = Cart
+	
+@load(action='finalize_cart_CartItem')
+def finalize_model():
+	class CartItem(modules.cart.CartItem):
+		pass
+	modules.cart.CartItem = CartItem
+
+class Cart(models.Model):
 	
 	objects = TrackingManager('sellmo_cart')
 	
@@ -84,25 +123,17 @@ class Cart(modules.cart.Cart):
 	
 	class Meta:
 		app_label = 'cart'
+		abstract = True
 		
-class CartItem(modules.cart.CartItem):
+class CartItem(models.Model):
 	
 	@property
 	def total(self):
 		return self.purchase.price
-	
-	cart = models.ForeignKey(
-		Cart,
-		related_name = 'items'
-	)
-	
-	purchase = models.OneToOneField(
-		modules.store.Purchase,
-		editable = False
-	)
 	
 	def __unicode__(self):
 		return unicode(self.purchase)
 	
 	class Meta:
 		app_label = 'cart'
+		abstract = True

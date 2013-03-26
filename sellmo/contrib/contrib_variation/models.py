@@ -35,7 +35,8 @@ from sellmo.contrib.contrib_variation.modules import *
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-	
+#
+
 class AttributeManager(PolymorphicManager):
 	def get_by_natural_key(self, value):
 		return self.get(value=value)

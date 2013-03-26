@@ -42,6 +42,5 @@ class _ModelMixin(type):
 		
 		return cls
 
-
 class ModelMixin(object):
     __metaclass__ = _ModelMixin

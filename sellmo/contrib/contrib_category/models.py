@@ -25,9 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from sellmo import modules
-
-# Init modules
-from sellmo.contrib.contrib_category.modules import *
+from sellmo.api.decorators import load
 
 #
 
@@ -35,6 +33,28 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 #
+
+@load(action='finalize_category_Category')
+def finalize_model():
+	class Category(modules.category.Category):
+		pass
+	modules.category.Category = Category
+	
+@load(before='finalize_product_Product', after='finalize_category_Category')
+def load_model():
+	class Product(modules.product.Product):
+		category = models.ManyToManyField(
+			modules.category.Category,
+			blank = True,
+			null = True,
+			related_name = 'products',
+			verbose_name = _("category"),
+		)
+		
+		class Meta:
+			abstract = True
+		
+	modules.product.Product = Product
 
 class Category(models.Model):
 	
@@ -124,7 +144,11 @@ class Category(models.Model):
 		return self.full_name
 	
 	class Meta:
+		app_label = 'category'
+		verbose_name = _("category")
+		verbose_name_plural = _("categories")
+		ordering = ['order']
 		abstract = True
-
-# Assign model
-modules.category.Category = Category
+		
+# Init modules
+from sellmo.contrib.contrib_category.modules import *

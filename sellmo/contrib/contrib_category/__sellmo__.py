@@ -37,33 +37,7 @@ from django.utils.translation import ugettext_lazy as _
 	
 namespace = modules.category.namespace
 
-#
 
-@load(action='load_category_Category')
-def load_category():
-	
-	class Category(modules.category.Category):
-		class Meta:
-			app_label = 'category'
-			verbose_name = _("category")
-			verbose_name_plural = _("categories")
-			ordering = ['order']
-			
-	modules.category.Category = Category
-
-
-@load(action='alter_product_Product', after='load_category_Category')
-def mixin_category_support():
-
-	class ProductMixin(ModelMixin):
-		model = modules.product.Product
-		category = models.ManyToManyField(
-			modules.category.Category,
-			blank = True,
-			null = True,
-			related_name = 'products',
-			verbose_name = _("category"),
-		)
 		
 		
 		

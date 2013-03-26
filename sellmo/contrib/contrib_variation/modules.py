@@ -49,7 +49,7 @@ class VariationModule(Module):
 	def add_to_cart(self, chain, request, product_slug, variation_key, **kwargs):
 		try:
 			product = modules.product.Product.objects.polymorphic().get(slug=product_slug)
-		except modules.product.Product.DoesNotExist:
+		except modules.product.models.Product.DoesNotExist:
 			raise Http404
 			
 		variation = product.find_variation(variation_key)

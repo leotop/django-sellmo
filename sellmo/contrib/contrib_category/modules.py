@@ -25,8 +25,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from sellmo import modules, Module
+from sellmo.contrib.contrib_category.models import Category
 
 #
 
 class CategoryModule(Module):
 	namespace = 'category'
+	Category = Category

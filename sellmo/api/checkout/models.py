@@ -29,29 +29,68 @@ from django.db import models
 #
 
 from sellmo import modules
+from sellmo.api.decorators import load
 
 #
 
-class Order(modules.checkout.Order):
+@load(after='finalize_checkout_Order')
+def load_model():
+	class OrderLine(modules.checkout.OrderLine):
+		order = models.ForeignKey(
+			modules.checkout.Order,
+			related_name = 'lines'
+		)
+		
+		class Meta:
+			abstract = True
+		
+	modules.checkout.OrderLine = OrderLine
+		
+@load(after='finalize_pricing_Stampable')
+def load_model():
+	class Order(modules.checkout.Order, modules.pricing.Stampable):
+		class Meta:
+			abstract = True
+		
+	modules.checkout.Order = Order
+		
+@load(after='finalize_store_Purchase')
+def load_model():
+	class OrderLine(modules.checkout.OrderLine):
+		purchase = models.OneToOneField(
+			modules.store.Purchase
+		)
+		
+		class Meta:
+			abstract = True
+		
+	modules.checkout.OrderLine = OrderLine
+		
+@load(action='finalize_checkout_Order')
+def finalize_model():
+	class Order(modules.checkout.Order):
+		pass
+	modules.checkout.Order = Order
+	
+@load(action='finalize_checkout_OrderLine')
+def finalize_model():
+	class OrderLine(modules.checkout.OrderLine):
+		pass
+	modules.checkout.OrderLine = OrderLine
+
+class Order(models.Model):
 	shipping_amount = modules.pricing.construct_decimal_field()
 	
 	class Meta:
 		app_label = 'checkout'
+		abstract = True
 	
-class OrderLine(modules.pricing.Stampable, modules.checkout.OrderLine):
+class OrderLine(models.Model):
 	
 	@property
 	def total(self):
 		return self.purchase.price
 	
-	order = models.ForeignKey(
-		Order,
-		related_name = 'lines'
-	)
-	
-	purchase = models.OneToOneField(
-		modules.store.Purchase
-	)
-	
 	class Meta:
 		app_label = 'checkout'
+		abstract = True

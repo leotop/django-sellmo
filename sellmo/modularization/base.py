@@ -24,48 +24,74 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#
-
-from sellmo import modules
-from sellmo.api.decorators import load
+from sellmo.magic import singleton, SingletonMeta
 
 #
 
-from django.db import models
-from django.utils.translation import ugettext_lazy as _
-
-#
-
-@load(after='load_product_Product', before='finalize_product_Product')
-def load_model():
-	class Product(modules.product.Product):
-		tax = models.ForeignKey(
-			Tax,
-			blank = True,
-			null = True,
-			verbose_name = _("tax"),
-		)
+@singleton
+class MountPoint(object):
+	
+	def __init__(self):
+		self._pending = []
+		self._modules = []
+	
+	def on_module_creation(self, module):
+		if module.enabled:
+			setattr(self, module.namespace, module)
+			self._pending.append(module)
+			self._modules.append(module)
+			
+	def on_module_init(self, module, instance):
+		setattr(self, module.namespace, instance)
 		
-		class Meta:
-			abstract = True
-		
-	modules.product.Product = Product
+		# Remove class based module and add instance based module
+		self._pending.remove(module)
+		self._modules.remove(module)
+		self._modules.append(instance)
+			
+	def init_pending_modules(self):
+		while self._pending:
+			module = self._pending[0]
+			module()
+			
+	def __iter__(self):
+		for module in self._modules:
+			yield module
+			
+modules = MountPoint()
 
-class Tax(models.Model):
+class _ModuleMeta(SingletonMeta):
 	
-	name = models.CharField(
-		max_length = 20,
-		verbose_name = _("name"),
-	)
+	def __new__(meta, name, bases, dict):
+		cls = super(_ModuleMeta, meta).__new__(meta, name, bases, dict)
+		
+		# Threat the actual 'Module' class not as a module
+		if cls.__ignore__:
+			cls.__ignore__ = False
+			return cls
+		
+		# Validate the module
+		if not cls.namespace:
+			raise Exception("No namespace defined for module '%s'" % cls)
+		
+		# Signal mountpoint
+		modules.on_module_creation(cls)
+		
+		return cls
+
+class Module(object):
 	
-	rate = modules.pricing.construct_decimal_field(
-		verbose_name = _("rate"),
-	)
+	__metaclass__ = _ModuleMeta
+	__ignore__ = True
 	
-	def __unicode__(self):
-		return self.name
+	enabled = True
+	namespace = None
+	prefix = None
 	
-	class Meta:
-		app_label = 'tax'
-		verbose_name = _("tax")
-		verbose_name_plural = _("taxes")
+	def __new__(cls, *args, **kwargs):
+		module = None
+		if cls.enabled:
+			module = object.__new__(cls)
+			
+		modules.on_module_init(cls, module)
+		return module

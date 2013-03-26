@@ -43,8 +43,8 @@ namespace = modules.pricing.namespace
 
 #
 	
-@load(action='alter_product_Product')
-def load_qty_price():
+@load(after='finalize_product_Product')
+def load_model():
 	
 	class ProductQtyPrice(QtyPrice):
 		product = models.ForeignKey(

@@ -30,11 +30,17 @@ from django.db import models
 
 import sellmo
 from sellmo import modules
-from sellmo.api.decorators import view, chainable
+from sellmo.api.decorators import view, chainable, load
 from sellmo.api.pricing import Price
 from sellmo.api.pricing.models import Stampable
 
 #
+
+@load(after='load_pricing_Stampable', before='finalize_pricing_Stampable')
+def load_model():
+	modules.pricing.Stampable.add_to_class('amount', modules.pricing.construct_decimal_field())
+	for type in modules.pricing.types:
+		modules.pricing.Stampable.add_to_class('%s_amount' % type, modules.pricing.construct_decimal_field())
 
 class PricingModule(sellmo.Module):
 	"""
@@ -45,7 +51,6 @@ class PricingModule(sellmo.Module):
 	namespace = 'pricing'
 	currency = 'EUR'
 	types = []
-	
 	Stampable = Stampable
 	
 	#: Configures the max digits for a pricing (decimal) field
@@ -65,9 +70,7 @@ class PricingModule(sellmo.Module):
 		)
 	
 	def __init__(self, *args, **kwargs):
-		self.Stampable.add_to_class('amount', modules.pricing.construct_decimal_field())
-		for type in self.types:
-			self.Stampable.add_to_class('%s_amount' % type, self.construct_decimal_field())
+		pass
 			
 	@chainable()
 	def stamp(self, chain, stampable, price, **kwargs):

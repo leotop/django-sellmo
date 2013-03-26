@@ -35,6 +35,7 @@ from django.shortcuts import redirect
 import sellmo
 from sellmo import modules
 from sellmo.api.decorators import view, chainable
+from sellmo.api.cart.models import Cart, CartItem
 
 #
 
@@ -44,17 +45,12 @@ class CartModule(sellmo.Module):
 	prefix = 'cart'
 	enabled = True
 	
-	Cart = models.Model
-	CartItem = models.Model
+	Cart = Cart
+	CartItem = CartItem
+	
 	AddToCartForm = forms.Form
 	
-	def __init__(self, *args, **kwargs):	
-		from sellmo.api.cart.models import Cart
-		self.Cart = Cart
-		
-		from sellmo.api.cart.models import CartItem
-		self.CartItem = CartItem
-		
+	def __init__(self, *args, **kwargs):		
 		from sellmo.api.cart.forms import AddToCartForm
 		self.AddToCartForm = AddToCartForm
 	

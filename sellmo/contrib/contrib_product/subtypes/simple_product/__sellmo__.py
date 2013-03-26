@@ -40,7 +40,7 @@ namespace = modules.product.namespace
 
 #
 
-@load(action='load_subtypes', after='alter_product_Product')
+@load(action='load_subtypes', after='finalize_product_Product')
 def load_subtypes():
 	
 	class SimpleProduct(modules.product.Product):

@@ -47,7 +47,7 @@ def setup_variants():
 	pass
 
 @load(after='setup_variants')
-def mixin_variation_support():
+def load_model():
 	for subtype in modules.variation.product_subtypes:
 		class ProductMixin(ModelMixin):
 			model = subtype
@@ -61,24 +61,9 @@ def mixin_variation_support():
 				
 			def find_variation(self, key):
 				return find_variation(self, key)
-			
-	class PurchaseMixin(ModelMixin):
-		model = modules.store.Purchase
-		
-		variation_key = models.CharField(
-			max_length = 255,
-			null = True,
-			blank = True,
-		)
-		
-		variation_name = models.CharField(
-			max_length = 255,
-			null = True,
-			blank = True,
-		)
 
 @load(after='setup_variants')
-def mixin_custom_options():
+def load_model():
 	if modules.variation.custom_options_enabled:
 		for subtype in modules.variation.product_subtypes:
 			class ProductMixin(ModelMixin):
