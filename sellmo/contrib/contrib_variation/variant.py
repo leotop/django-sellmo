@@ -76,8 +76,8 @@ class Variant(object):
 	
 	def _is_unique_slug(self, slug):
 		try:
-			existing = modules.product.models.Product.objects.polymorphic().get(slug=slug)
-		except modules.product.models.Product.DoesNotExist:
+			existing = modules.product.Product.objects.polymorphic().get(slug=slug)
+		except modules.product.Product.DoesNotExist:
 			return True
 		return getattr(existing, 'product', None) == self.product
 	
@@ -91,7 +91,7 @@ class Variant(object):
 		if 'slug' not in exclude:
 			if not self._is_unique_slug(self.slug):
 				message = _("%(model_name)s with this %(field_label)s already exists.") % {
-					'model_name': capfirst(modules.product.models.Product._meta.verbose_name),
+					'model_name': capfirst(modules.product.Product._meta.verbose_name),
 					'field_label': 'slug'
 				}
 				raise ValidationError({'slug' : [message]})		
