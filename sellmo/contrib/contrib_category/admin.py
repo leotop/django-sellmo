@@ -37,6 +37,12 @@ from django.contrib.admin.sites import NotRegistered
 
 #
 
+class CategoryMixin(object):
+	def formfield_for_manytomany(self, db_field, request, **kwargs):
+		if db_field.name == 'category':
+			kwargs['queryset'] = modules.category.Category.objects.all().prefetch_related('parent')
+		return super(CategoryMixin, self).formfield_for_manytomany(db_field, request, **kwargs)
+
 class ProductCategoryListFilter(admin.SimpleListFilter):
 	title = _("category")
 	parameter_name = 'category'

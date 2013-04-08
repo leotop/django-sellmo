@@ -57,17 +57,26 @@ want to build some losely coupled django apps, requiring us to tie everything to
 Still we want it to bend to every requirement ranging from a plain simple webshop to a fully tailored
 webshop solution for our clients.</p>
 </div>
-<div class="section" id="fundementals">
-<h2>Fundementals<a class="headerlink" href="#fundementals" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="fundamentals">
+<h2>Fundamentals<a class="headerlink" href="#fundamentals" title="Permalink to this headline">¶</a></h2>
 <p>Sellmo isn&#8217;t a typical django project, it extends django with some core concepts of it&#8217;s own:</p>
 <ul class="simple">
 <li><strong>View &amp; Function chaining</strong></li>
 </ul>
 <p>Sellmo&#8217;s predefined views do a all the heavy lifting, yet &#8216;by design&#8217; they don&#8217;t render anything. You
-write your own views and hook them up to Sellmo&#8217;s views. Upon initialization Sellmo builds an execution
-chain for all known views and api functions.
-* <strong>Plugable initialization process</strong>
-* <strong>Sellmo modules</strong></p>
+write your own views and hook them up to Sellmo&#8217;s views. Upon initialisation Sellmo builds an execution
+chain for all known views and api functions.</p>
+<ul class="simple">
+<li><strong>Delayed model loading</strong></li>
+</ul>
+<p>In order to extend Sellmo&#8217;s logic through function chaining, the need for extended models also arrives.
+Sellmo&#8217;s core modules trie to keep every required model as simple as possible, only defining those fields
+and relations that are absolutely necessary for Sellmo&#8217;s &#8216;shopping cart&#8217; functionality to work. However
+due to Sellmo&#8217;s delayed model loading process, every custom Sellmo module and every Django app can tie in
+to this process and inject the needed fields, relations and logic into Sellmo&#8217;s core models.</p>
+<ul class="simple">
+<li><strong>Sellmo modules</strong></li>
+</ul>
 </div>
 </div>
 
@@ -81,7 +90,7 @@ chain for all known views and api functions.
   <ul>
 <li><a class="reference internal" href="#">Documentation</a><ul>
 <li><a class="reference internal" href="#intro">Intro</a></li>
-<li><a class="reference internal" href="#fundementals">Fundementals</a></li>
+<li><a class="reference internal" href="#fundamentals">Fundamentals</a></li>
 </ul>
 </li>
 </ul>
