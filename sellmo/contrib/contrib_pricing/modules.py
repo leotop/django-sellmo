@@ -35,7 +35,9 @@ class QtyPricingModule(Module):
 	@chainable()
 	def get_qty_tiers(self, chain, product, tiers=None, **kwargs):
 		if not tiers:
-			tiers =  product.qty_prices.all()
+			q = product.qty_prices.all()
+			if q:
+				tiers =  q
 	
 		if chain:
 			out = chain.execute(product=product, tiers=tiers, **kwargs)
