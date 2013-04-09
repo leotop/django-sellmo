@@ -25,10 +25,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from sellmo import modules
+from sellmo.api.decorators import load
+from sellmo.magic import ModelMixin
 from sellmo.utils.polymorphism import PolymorphicModel, PolymorphicManager
-
-# Init modules
-from sellmo.contrib.contrib_variation.modules import *
+from sellmo.contrib.contrib_variation.variation import get_variations, find_variation
 
 #
 
@@ -36,6 +36,75 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 #
+
+@load(after='setup_variants')
+def load_model():
+	for subtype in modules.variation.product_subtypes:
+		class ProductMixin(ModelMixin):
+			model = subtype
+			@property
+			def all_variations(self):
+				return get_variations(self, all=True)
+				
+			@property
+			def variations(self):
+				return get_variations(self)
+				
+			def find_variation(self, key):
+				return find_variation(self, key)
+
+@load(after='setup_variants')
+def load_model():
+	if modules.variation.custom_options_enabled:
+		for subtype in modules.variation.product_subtypes:
+			class ProductMixin(ModelMixin):
+				model = subtype
+				custom_options = models.ManyToManyField(
+					Option,
+					verbose_name = _("custom options"),
+					blank = True
+				)
+				
+@load(action='load_variants', after='setup_variants')
+def load_variants():
+	from sellmo.contrib.contrib_variation.variant import VariantFieldDescriptor, Variant
+	modules.variation.Variant = Variant
+	
+	for subtype in modules.variation.product_subtypes:
+		
+		class Meta:
+			app_label = 'product'
+			verbose_name = _("variant")
+			verbose_name_plural = _("variants")
+	
+		name = '%sVariant' % subtype.__name__
+		attr_dict = {
+			'product' : models.ForeignKey(
+				subtype,
+				related_name = 'variants',
+				editable = False
+			),
+			'options' : models.ManyToManyField(
+				Option,
+				verbose_name = _("options"),
+			),
+			'Meta' : Meta,
+			'__module__' : subtype.__module__
+		}
+		
+		model = type(name, (modules.variation.Variant, subtype,), attr_dict)
+		for field in model.get_variable_fields():
+			descriptor = field.model.__dict__.get(field.name, None)
+			setattr(model, field.name, VariantFieldDescriptor(field, descriptor=descriptor))
+		
+		modules.variation.subtypes.append(model)
+		setattr(modules.variation, name, model)
+		
+@load(action='finalize_variation_Attribute')
+def finalize_model():
+	class Attribute(modules.variation.Attribute):
+		pass
+	modules.variation.Attribute = Attribute
 
 class AttributeManager(PolymorphicManager):
 	def get_by_natural_key(self, value):
@@ -63,6 +132,12 @@ class Attribute(PolymorphicModel):
 		ordering = ['content_type', 'value']
 		verbose_name = _("attribute")
 		verbose_name_plural = _("attributes")
+		
+@load(action='finalize_variation_Variable')
+def finalize_model():
+	class Variable(modules.variation.Variable):
+		pass
+	modules.variation.Variable = Variable
 	
 class VariableManager(models.Manager):
 	def get_by_natural_key(self, name):
@@ -95,6 +170,12 @@ class Variable(models.Model):
 		ordering = ['name']
 		verbose_name = _("variable")
 		verbose_name_plural = _("variables")
+		
+@load(action='finalize_variation_Option')
+def finalize_model():
+	class Option(modules.variation.Option):
+		pass
+	modules.variation.Option = Option
 		
 class OptionManager(models.Manager):
 	def get_by_natural_key(self, variable, attribute):
@@ -130,3 +211,6 @@ class Option(models.Model):
 		ordering = ['variable', 'sort_order']
 		verbose_name = _("option")
 		verbose_name_plural = _("options")
+		
+# Init modules
+from sellmo.contrib.contrib_variation.modules import *

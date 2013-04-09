@@ -26,15 +26,6 @@
 
 from sellmo import modules
 from sellmo.api.decorators import load
-from sellmo.magic import ModelMixin
-from sellmo.contrib.contrib_variation.models import Option
-from sellmo.contrib.contrib_variation.variation import get_variations, find_variation
-
-#
-
-from django.db import models
-from django.contrib.contenttypes.models import ContentType
-from django.utils.translation import ugettext_lazy as _
 
 #
 
@@ -45,67 +36,4 @@ namespace = modules.variation.namespace
 @load(action='setup_variants', after='load_subtypes')
 def setup_variants():
 	pass
-
-@load(after='setup_variants')
-def load_model():
-	for subtype in modules.variation.product_subtypes:
-		class ProductMixin(ModelMixin):
-			model = subtype
-			@property
-			def all_variations(self):
-				return get_variations(self, all=True)
-				
-			@property
-			def variations(self):
-				return get_variations(self)
-				
-			def find_variation(self, key):
-				return find_variation(self, key)
-
-@load(after='setup_variants')
-def load_model():
-	if modules.variation.custom_options_enabled:
-		for subtype in modules.variation.product_subtypes:
-			class ProductMixin(ModelMixin):
-				model = subtype
-				custom_options = models.ManyToManyField(
-					Option,
-					verbose_name = _("custom options"),
-					blank = True
-				)
-
-@load(action='load_variants', after='setup_variants')
-def load_variants():
-	from sellmo.contrib.contrib_variation.variant import VariantFieldDescriptor, Variant
-	modules.variation.Variant = Variant
-	
-	for subtype in modules.variation.product_subtypes:
-		
-		class Meta:
-			app_label = 'product'
-			verbose_name = _("variant")
-			verbose_name_plural = _("variants")
-	
-		name = '%sVariant' % subtype.__name__
-		attr_dict = {
-			'product' : models.ForeignKey(
-				subtype,
-				related_name = 'variants',
-				editable = False
-			),
-			'options' : models.ManyToManyField(
-				Option,
-				verbose_name = _("options"),
-			),
-			'Meta' : Meta,
-			'__module__' : subtype.__module__
-		}
-		
-		model = type(name, (modules.variation.Variant, subtype,), attr_dict)
-		for field in model.get_variable_fields():
-			descriptor = field.model.__dict__.get(field.name, None)
-			setattr(model, field.name, VariantFieldDescriptor(field, descriptor=descriptor))
-		
-		modules.variation.subtypes.append(model)
-		setattr(modules.variation, name, model)
 	
