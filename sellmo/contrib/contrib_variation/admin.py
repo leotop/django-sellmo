@@ -28,7 +28,6 @@
 
 from sellmo import modules
 from sellmo.contrib.contrib_variation.models import Attribute, Option
-from sellmo.contrib.contrib_variation.variant import Variant
 
 #
 

@@ -44,7 +44,7 @@ class DuplicateSlugException(Exception):
 	
 #
 
-class Variant(object):
+class VariantMixin(object):
 	
 	non_variable_fields = ['content_type', 'slug', 'product', 'options']
 	non_variable_field_types = [models.BooleanField]
@@ -121,8 +121,7 @@ class Variant(object):
 		if not self.pk is None:
 			return u"%s %s" % (product, ", ".join([str(option) for option in self.options.all()]))
 		return product
-
-
+	
 class VariantFieldDescriptor(object):
 	
 	def __init__(self, field, descriptor=None):

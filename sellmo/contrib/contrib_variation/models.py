@@ -29,6 +29,7 @@ from sellmo.api.decorators import load
 from sellmo.magic import ModelMixin
 from sellmo.utils.polymorphism import PolymorphicModel, PolymorphicManager
 from sellmo.contrib.contrib_variation.variation import get_variations, find_variation
+from sellmo.contrib.contrib_variation.variant import VariantFieldDescriptor, VariantMixin
 
 #
 
@@ -67,9 +68,6 @@ def load_model():
 				
 @load(action='load_variants', after='setup_variants')
 def load_variants():
-	from sellmo.contrib.contrib_variation.variant import VariantFieldDescriptor, Variant
-	modules.variation.Variant = Variant
-	
 	for subtype in modules.variation.product_subtypes:
 		
 		class Meta:
@@ -92,7 +90,7 @@ def load_variants():
 			'__module__' : subtype.__module__
 		}
 		
-		model = type(name, (modules.variation.Variant, subtype,), attr_dict)
+		model = type(name, (VariantMixin, subtype,), attr_dict)
 		for field in model.get_variable_fields():
 			descriptor = field.model.__dict__.get(field.name, None)
 			setattr(model, field.name, VariantFieldDescriptor(field, descriptor=descriptor))
