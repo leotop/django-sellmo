@@ -55,7 +55,11 @@ def capture_get_price(product=None, **kwargs):
 @link(namespace=modules.store.namespace)
 def make_purchase(purchase, variation=None, **kwargs):
 	if variation:
-		purchase = VariationPurchase()
+		purchase = modules.variation.VariationPurchase(
+			product = purchase.product,
+			variation_key = variation.key,
+			variation_name = variation.name
+		)
 		
 	return {
 		'purchase' : purchase

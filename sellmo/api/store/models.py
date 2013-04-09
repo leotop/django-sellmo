@@ -40,6 +40,9 @@ def load_model():
 		product = models.ForeignKey(
 			modules.product.Product
 		)
+		class Meta:
+			abstract = True
+	
 	modules.store.Purchase = Purchase
 		
 @load(action='finalize_store_Purchase')

@@ -210,5 +210,20 @@ class Option(models.Model):
 		verbose_name = _("option")
 		verbose_name_plural = _("options")
 		
+@load(after='finalize_store_Purchase')
+def load_model():
+	class VariationPurchase(modules.store.Purchase):
+		variation_key = models.CharField(
+			max_length = 255
+		)
+		variation_name = models.CharField(
+			max_length = 255
+		)
+		
+		class Meta:
+			app_label = 'store'
+		
+	modules.variation.VariationPurchase = VariationPurchase
+		
 # Init modules
 from sellmo.contrib.contrib_variation.modules import *
