@@ -57,6 +57,7 @@ def make_purchase(purchase, variation=None, **kwargs):
 	if variation:
 		purchase = modules.variation.VariationPurchase(
 			product = purchase.product,
+			qty = purchase.qty,
 			variation_key = variation.key,
 			variation_name = variation.name
 		)

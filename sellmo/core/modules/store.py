@@ -49,7 +49,7 @@ class StoreModule(sellmo.Module):
 	def make_purchase(self, chain, product, qty, purchase=None, **kwargs):
 		
 		if not purchase:
-			purchase = self.Purchase(product=product)
+			purchase = self.Purchase(product=product, qty=qty)
 			purchase.stamp(product.get_price())
 			
 		if chain:

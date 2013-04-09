@@ -2,11 +2,15 @@
 
 {% block body %}
 	<h1>Cart</h1>
-	<ul>
+	<table>
+		<tbody>
 		{% for item in cart %}
-		<li>
-			<b>{{ item.qty }}</b> {{ item.description }}
-		</li>
+			<tr>
+				<th>{{ item.description }}</th>
+				<td>{{ item.qty }}</td>
+				<td>{{ item.total }}</td>
+			</tr>
 		{% endfor %}
-	</ul>
+		</tbody>
+	</table>
 {% endblock %}
