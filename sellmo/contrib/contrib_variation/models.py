@@ -213,12 +213,16 @@ class Option(models.Model):
 @load(after='finalize_store_Purchase')
 def load_model():
 	class VariationPurchase(modules.store.Purchase):
+		
 		variation_key = models.CharField(
 			max_length = 255
 		)
 		variation_name = models.CharField(
 			max_length = 255
 		)
+		
+		def describe(self):
+			return self.variation_name
 		
 		class Meta:
 			app_label = 'store'

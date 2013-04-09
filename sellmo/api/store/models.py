@@ -57,8 +57,15 @@ class Purchase(PolymorphicModel, modules.pricing.Stampable):
 		default = 1
 	)
 	
+	@property
+	def description(self):
+		return self.describe()
+	
+	def describe(self):
+		return unicode(self.product)
+	
 	def __unicode__(self):
-		return "%s x %s" % (self.qty, self.product)
+		return u"%s x %s" % (self.qty, self.description)
 	
 	class Meta:
 		app_label = 'store'

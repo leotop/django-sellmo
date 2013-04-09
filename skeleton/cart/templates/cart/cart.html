@@ -3,9 +3,9 @@
 {% block body %}
 	<h1>Cart</h1>
 	<ul>
-		{% for purchase in cart %}
+		{% for item in cart %}
 		<li>
-			{{ purchase }}
+			<b>{{ item.qty }}</b> {{ item.description }}
 		</li>
 		{% endfor %}
 	</ul>

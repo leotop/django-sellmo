@@ -127,12 +127,31 @@ class Cart(models.Model):
 		
 class CartItem(models.Model):
 	
+	__purchase = None
+	@property
+	def _purchase(self):
+		if self.__purchase is None:
+			self.__purchase = self.purchase.downcast()
+		return self.__purchase
+		
+	@property
+	def qty(self):
+		return self._purchase.qty
+		
+	@property
+	def description(self):
+		return self._purchase.description
+		
+	@property
+	def product(self):
+		return self._purchase.product
+	
 	@property
 	def total(self):
-		return self.purchase.price
+		return self._purchase.price
 	
 	def __unicode__(self):
-		return unicode(self.purchase)
+		return unicode(self._purchase)
 	
 	class Meta:
 		app_label = 'cart'
