@@ -108,7 +108,7 @@ class VariantMixin(object):
 				setattr(self, field.name, None)
 		
 		self._variable_fields_enabled = False
-		super(Variant, self).save(*args, **kwargs)
+		super(VariantMixin, self).save(*args, **kwargs)
 		self._variable_fields_enabled = True
 
 	class Meta:
@@ -117,7 +117,7 @@ class VariantMixin(object):
 		verbose_name_plural = _("variants")
 		
 	def __unicode__(self):
-		product = super(Variant, self).__unicode__()
+		product = super(VariantMixin, self).__unicode__()
 		if not self.pk is None:
 			return u"%s %s" % (product, ", ".join([str(option) for option in self.options.all()]))
 		return product
