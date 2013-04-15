@@ -36,12 +36,6 @@ from sellmo.api.pricing.models import Stampable
 
 #
 
-@load(after='load_pricing_Stampable', before='finalize_pricing_Stampable')
-def load_model():
-	modules.pricing.Stampable.add_to_class('amount', modules.pricing.construct_decimal_field())
-	for type in modules.pricing.types:
-		modules.pricing.Stampable.add_to_class('%s_amount' % type, modules.pricing.construct_decimal_field())
-
 class PricingModule(sellmo.Module):
 	"""
 	Routes product pricing logic to higher level modules and acts as a container for pricing

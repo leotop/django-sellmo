@@ -25,6 +25,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from sellmo import modules
+from sellmo.api.decorators import load
+from sellmo.api.pricing import Price
 
 #
 
@@ -32,10 +34,26 @@ from django.db import models
 
 #
 
+@load(after='load_pricing_Stampable', before='finalize_pricing_Stampable')
+def load_model():
+	modules.pricing.Stampable.add_to_class('amount', modules.pricing.construct_decimal_field())
+	for type in modules.pricing.types:
+		modules.pricing.Stampable.add_to_class('%s_amount' % type, modules.pricing.construct_decimal_field())
+
 class Stampable(models.Model):
 	"""
-	Provides subtypes with pricing fields
+	Enabled suptypes to store(stamp) a price and retrieve this exact same price
 	"""
+	@property
+	def price(self):
+		"""
+		Reconstructs the stamped price 
+		"""
+		price = Price(self.amount)
+		for type in modules.pricing.types:
+			pass
+		return price
+	
 	def stamp(self, price, **kwargs):
 		modules.pricing.stamp(stampable=self, price=price, **kwargs)
 	
