@@ -5,6 +5,7 @@ from django.utils.translation import ugettext_lazy as _
 from sellmo import modules
 from sellmo.contrib.contrib_variation.admin import VariantInlineMixin
 from sellmo.contrib.contrib_variation.models import Variable, Attribute
+from sellmo.contrib.contrib_category.admin import ProductCategoryListFilter
 from sellmo.contrib.polymorphism.admin import PolymorphicParentModelAdmin
 
 from product.admin.variation import VariableAdmin, AttributeAdmin
@@ -68,7 +69,7 @@ class ProductAdmin(PolymorphicParentModelAdmin):
 	list_display = ['name', 'active', 'featured', 'slug', 'sku', 'categories']
 	list_display_links = ['name', 'slug']
 	
-	list_filter = ['active', 'featured']
+	list_filter = [ProductCategoryListFilter, 'active', 'featured']
 	search_fields = ['name', 'slug', 'sku']
 	
 	def queryset(self, queryset):

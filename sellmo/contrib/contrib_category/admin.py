@@ -54,7 +54,7 @@ class ProductCategoryListFilter(admin.SimpleListFilter):
 		pk = self.value()
 		if pk != None:
 			category = modules.category.Category.objects.get(pk=pk)
-			return queryset.in_parent(category)
+			return queryset.in_category(category)
 		else:
 			return queryset.all()
 			
