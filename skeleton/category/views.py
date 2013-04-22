@@ -8,6 +8,6 @@ from sellmo.api.decorators import link
 @link()
 def category(request, category, context, **kwargs):
 	context['category'] = category
-	context['products'] = modules.product.Product.objects.in_category(category)
+	context['products'] = modules.product.Product.objects.polymorphic().in_category(category)
 	context = RequestContext(request, context)
 	return render_to_response('category/category.html', context)

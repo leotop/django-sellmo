@@ -4,7 +4,16 @@
 	<h1>{{ category.name }}</h1>
 	<ul>
 		{% for product in products %}
-			<li>{{ product }}</li>
+			<li>
+				<h3>{{ product }}</h3>
+				<div>
+					<ul>
+						{% for variation in product.variations %}
+							<li>{{ variation }}</li>
+						{% endfor %}
+					</ul>
+				</div>
+			</li>
 		{% endfor %} 
 	</ul>
 {% endblock %}
