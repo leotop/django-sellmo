@@ -25,7 +25,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from django.http import Http404
-from django.conf.urls.defaults import *
 
 #
 

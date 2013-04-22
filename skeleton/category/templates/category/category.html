@@ -1,0 +1,10 @@
+{% extends "store/base.html" %}
+
+{% block body %}
+	<h1>{{ category.name }}</h1>
+	<ul>
+		{% for product in products %}
+			{{ product }}
+		{% endfor %} 
+	</ul>
+{% endblock %}

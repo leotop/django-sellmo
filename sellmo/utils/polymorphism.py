@@ -61,11 +61,11 @@ class PolymorphicQuerySet(QuerySet):
 			
 class PolymorphicManager(models.Manager):
 	
-	def get_query_set(self, downcast=False):
-		return PolymorphicQuerySet(self.model, using=self._db, downcast=downcast)
+	def get_query_set(self):
+		return PolymorphicQuerySet(self.model, using=self._db, downcast=False)
 		
 	def polymorphic(self):
-		return self.get_query_set(downcast=True)
+		return self.get_query_set().polymorphic()
 
 class PolymorphicModel(models.Model):
 	

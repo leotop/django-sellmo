@@ -30,6 +30,7 @@ from sellmo.api.decorators import load
 #
 
 from django.db import models
+from django.db.models.query import QuerySet
 from django.utils.translation import ugettext_lazy as _
 
 #
@@ -39,6 +40,29 @@ def finalize_model():
 	class Category(modules.category.Category):
 		pass
 	modules.category.Category = Category
+	
+@load(after='finalize_product_Product')
+def load_manager():
+	
+	qs = modules.product.Product.objects.get_query_set()
+	
+	class ProductQuerySet(qs.__class__):
+		def in_category(self, category, recurse=True):
+			if recurse:
+				descendants = [category] + category.descendants
+				return self.filter(category__in=descendants)
+			else:
+				return self.filter(category__in=[category])
+			
+	class ProductManager(modules.product.Product.objects.__class__):
+	
+		def in_category(self, *args, **kwargs):
+			return self.get_query_set().in_category(*args, **kwargs)
+	
+		def get_query_set(self):
+			return ProductQuerySet(self.model)
+	
+	modules.product.Product.add_to_class('objects', ProductManager())
 	
 @load(before='finalize_product_Product', after='finalize_category_Category')
 def load_model():
@@ -55,8 +79,25 @@ def load_model():
 			abstract = True
 		
 	modules.product.Product = Product
+	
+class CategoryQuerySet(QuerySet):
+	def in_parent(self, category, recurse=True):
+		if recurse:
+			descendants = [category] + category.descendants
+			return self.filter(parent__in=descendants)
+		else:
+			return self.filter(parent__in=[category])
+	
+class CategoryManager(models.Manager):
+	def in_parent(self, *args, **kwargs):
+		return self.get_query_set().in_parent(*args, **kwargs)
+
+	def get_query_set(self):
+		return CategoryQuerySet(self.model)
 
 class Category(models.Model):
+	
+	objects = CategoryManager()
 	
 	order = models.PositiveSmallIntegerField(
 		default = 0,
@@ -104,7 +145,6 @@ class Category(models.Model):
 		while parent:
 			parents.append(parent)
 			parent = parent.parent
-			
 		parents.reverse()
 		return parents
 		
@@ -139,6 +179,10 @@ class Category(models.Model):
 			if parent.id == self.id:
 				raise ValidationError(_("Parent assignment causes a loop."))
 			parent = parent.parent
+			
+	@models.permalink
+	def get_absolute_url(self):
+		return 'category.category', (self.slug,)
 	
 	def __unicode__(self):
 		return self.full_name
