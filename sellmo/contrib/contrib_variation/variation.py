@@ -65,7 +65,7 @@ def find_variation(product, key):
 
 def get_variations(product, all=False):
 	variables = {}
-	
+		
 	# Collect variables from variants
 	for variant in product.variants.all().prefetch_related('options__variable', 'options__attribute'):
 		for option in variant.options.all():
@@ -92,6 +92,10 @@ def get_variations(product, all=False):
 	if not variables:
 		# Can't have variations without variables
 		return None
+		
+	if len(variables) == 1:
+		# Force all
+		all = True
 	
 	def _construct(options, custom_variables):
 		
@@ -116,7 +120,7 @@ def get_variations(product, all=False):
 			children = _variate(custom_variables, [], [], all=True)
 		
 		return Variation(variant, [Option(option[0].variable, option[1].attribute, option[1].custom) for option in options], children)
-			
+	
 	def _variate(variables, options, custom_variables, all=False):
 		variations = []
 		if not variables:
