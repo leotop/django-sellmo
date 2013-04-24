@@ -30,6 +30,7 @@ from sellmo import modules
 
 #
 
+from django import forms
 from django.forms import ValidationError
 from django.forms.models import ModelForm, BaseInlineFormSet
 from django.contrib import admin
@@ -112,7 +113,7 @@ class VariantInlineMixin(object):
 		
 class CustomOptionsMixin(object):
 	def formfield_for_manytomany(self, db_field, request, **kwargs):
-		if db_field.name == 'custom_options':
+		if db_field.name == 'options':
 			kwargs['queryset'] = modules.variation.Option.objects.all().prefetch_related('attribute', 'variable')
 		return super(CustomOptionsMixin, self).formfield_for_manytomany(db_field, request, **kwargs)
 

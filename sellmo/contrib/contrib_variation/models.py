@@ -49,6 +49,20 @@ def load_model():
 			app_label = 'product'
 			
 	modules.variation.ProductOption = ProductOption
+	
+@load(after='finalize_variation_Option')
+@load(before='finalize_product_Product')
+def load_model():
+	class Product(modules.product.Product):
+		options = models.ManyToManyField(
+			modules.variation.Option,
+			blank = True
+		)
+		
+		class Meta:
+			abstract = True
+			
+	modules.product.Product = Product
 
 @load(after='setup_variants')
 def load_model():
@@ -65,18 +79,6 @@ def load_model():
 				
 			def find_variation(self, key):
 				return find_variation(self, key)
-
-@load(after='setup_variants')
-def load_model():
-	if modules.variation.custom_options_enabled:
-		for subtype in modules.variation.product_subtypes:
-			class ProductMixin(ModelMixin):
-				model = subtype
-				custom_options = models.ManyToManyField(
-					modules.variation.Option,
-					verbose_name = _("custom options"),
-					blank = True
-				)
 				
 @load(action='load_variants', after='setup_variants')
 def load_variants():
@@ -93,10 +95,6 @@ def load_variants():
 				subtype,
 				related_name = 'variants',
 				editable = False
-			),
-			'options' : models.ManyToManyField(
-				modules.variation.Option,
-				verbose_name = _("options"),
 			),
 			'Meta' : Meta,
 			'__module__' : subtype.__module__
