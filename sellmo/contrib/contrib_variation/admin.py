@@ -27,7 +27,6 @@
 #
 
 from sellmo import modules
-from sellmo.contrib.contrib_variation.models import Attribute, Option
 
 #
 
@@ -108,12 +107,12 @@ class VariantInlineMixin(object):
 	
 	def formfield_for_manytomany(self, db_field, request, **kwargs):
 		if db_field.name == 'options':
-			kwargs['queryset'] = Option.objects.all().prefetch_related('attribute', 'variable')
+			kwargs['queryset'] = modules.variation.Option.objects.all().prefetch_related('attribute', 'variable')
 		return super(VariantInlineMixin, self).formfield_for_manytomany(db_field, request, **kwargs)
 		
 class CustomOptionsMixin(object):
 	def formfield_for_manytomany(self, db_field, request, **kwargs):
 		if db_field.name == 'custom_options':
-			kwargs['queryset'] = Option.objects.all().prefetch_related('attribute', 'variable')
+			kwargs['queryset'] = modules.variation.Option.objects.all().prefetch_related('attribute', 'variable')
 		return super(CustomOptionsMixin, self).formfield_for_manytomany(db_field, request, **kwargs)
 

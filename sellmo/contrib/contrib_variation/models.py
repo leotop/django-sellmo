@@ -38,6 +38,18 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
+@load(after='finalize_variation_Option')
+@load(after='finalize_product_Product')
+def load_model():
+	class ProductOption(models.Model):
+		product = models.ForeignKey(modules.product.Product)
+		option = models.ForeignKey(modules.variation.Option)
+		
+		class Meta:
+			app_label = 'product'
+			
+	modules.variation.ProductOption = ProductOption
+
 @load(after='setup_variants')
 def load_model():
 	for subtype in modules.variation.product_subtypes:
@@ -61,7 +73,7 @@ def load_model():
 			class ProductMixin(ModelMixin):
 				model = subtype
 				custom_options = models.ManyToManyField(
-					Option,
+					modules.variation.Option,
 					verbose_name = _("custom options"),
 					blank = True
 				)
@@ -83,7 +95,7 @@ def load_variants():
 				editable = False
 			),
 			'options' : models.ManyToManyField(
-				Option,
+				modules.variation.Option,
 				verbose_name = _("options"),
 			),
 			'Meta' : Meta,
@@ -205,6 +217,7 @@ class Option(models.Model):
 	
 	class Meta:
 		app_label = 'product'
+		abstract = True
 		unique_together = (('variable', 'attribute'),)
 		ordering = ['variable', 'sort_order']
 		verbose_name = _("option")
