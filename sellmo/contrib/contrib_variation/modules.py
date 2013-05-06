@@ -26,7 +26,6 @@
 
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable
-from sellmo.contrib.contrib_variation.models import Variable, Attribute, Option
 
 from django.http import Http404
 from django.utils.translation import ugettext_lazy as _
@@ -36,11 +35,7 @@ from django.utils.translation import ugettext_lazy as _
 class VariationModule(Module):	
 
 	namespace = 'variation'
-	custom_options_enabled = False
 	batch_buy_enabled = False
-	Variable = Variable
-	Attribute = Attribute
-	Option = Option
 	
 	def __init__(self):
 		self.product_subtypes = []

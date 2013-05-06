@@ -77,17 +77,17 @@ def get_variations(product, all=False):
 				variable.attributes[option.attribute] = _AttributeMeta(option.attribute)
 			variable.attributes[option.attribute].variants.append(variant)
 	
-	# Collect variables from custom variables
-	if modules.variation.custom_options_enabled:
-		for option in product.custom_options.all().prefetch_related('variable', 'attribute'):
-			if not variables.has_key(option.variable):
-				variables[option.variable] = _VariableMeta(option.variable)
-			
-			variable = variables[option.variable]
-			if not variable.attributes.has_key(option.attribute):
-				variable.attributes[option.attribute] = _AttributeMeta(option.attribute)
-			variable.attributes[option.attribute].custom = True
-			variable.custom = True
+	# Collect variables product
+	for option in product.options.all().prefetch_related('variable', 'attribute'):
+		if not variables.has_key(option.variable):
+			variables[option.variable] = _VariableMeta(option.variable)
+		
+		variable = variables[option.variable]
+		if not variable.attributes.has_key(option.attribute):
+			variable.attributes[option.attribute] = _AttributeMeta(option.attribute)
+		variable.attributes[option.attribute].custom = True
+		variable.custom = True
+		
 	
 	if not variables:
 		# Can't have variations without variables

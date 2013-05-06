@@ -87,10 +87,22 @@ class CategoryQuerySet(QuerySet):
 			return self.filter(parent__in=descendants)
 		else:
 			return self.filter(parent__in=[category])
+			
+	def active(self):
+		return self.filter(active=True)
+		
+	def root(self):
+		return self.filter(parent=None)
 	
 class CategoryManager(models.Manager):
 	def in_parent(self, *args, **kwargs):
 		return self.get_query_set().in_parent(*args, **kwargs)
+		
+	def active(self, *args, **kwargs):
+		return self.get_query_set().active(*args, **kwargs)
+		
+	def root(self, *args, **kwargs):
+		return self.get_query_set().root(*args, **kwargs)
 
 	def get_query_set(self):
 		return CategoryQuerySet(self.model)

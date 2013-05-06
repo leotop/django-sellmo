@@ -16,7 +16,6 @@ namespace = modules.product.namespace
 def setup_variants():
 	# 
 	# modules.variation.batch_buy_enabled = True
-	modules.variation.custom_options_enabled = True
 	modules.variation.register_product_subtype(modules.product.SimpleProduct)
 	
 @load(after='load_product_Product', before='finalize_product_Product')

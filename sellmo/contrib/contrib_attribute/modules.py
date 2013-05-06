@@ -24,38 +24,20 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.db import models
+from sellmo import modules, Module
+from sellmo.api.decorators import view, chainable
+from sellmo.contrib.contrib_attribute.models import Attribute, Value
+
+from django.http import Http404
 from django.utils.translation import ugettext_lazy as _
 
 #
 
-from sellmo import modules
-from sellmo.api.decorators import load
+class AttributeModule(Module):	
 
-# 
-
-@load(after='load_product_Product', before='finalize_product_Product')
-def load_model():
+	namespace = 'attribute'
+	Attribute = Attribute
+	Value = Value
 	
-	class Product(modules.product.Product):
-		
-		active = models.BooleanField(
-			default = True,
-			verbose_name = _("active"),
-			help_text = (
-				"Inactive products will be hidden from the site."
-			)
-		)
-		
-		featured = models.BooleanField(
-			verbose_name = _("featured"),
-			help_text = (
-				"Marks this product as featured allowing additional showcasing across the site."
-			)
-		)
-		
-		class Meta:
-			abstract = True
-	
-	modules.product.Product = Product
-	
+	def __init__(self):
+		pass

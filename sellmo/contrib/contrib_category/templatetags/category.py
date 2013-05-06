@@ -24,38 +24,18 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.db import models
-from django.utils.translation import ugettext_lazy as _
+from django import template
 
 #
 
 from sellmo import modules
-from sellmo.api.decorators import load
 
-# 
+#
 
-@load(after='load_product_Product', before='finalize_product_Product')
-def load_model():
-	
-	class Product(modules.product.Product):
-		
-		active = models.BooleanField(
-			default = True,
-			verbose_name = _("active"),
-			help_text = (
-				"Inactive products will be hidden from the site."
-			)
-		)
-		
-		featured = models.BooleanField(
-			verbose_name = _("featured"),
-			help_text = (
-				"Marks this product as featured allowing additional showcasing across the site."
-			)
-		)
-		
-		class Meta:
-			abstract = True
-	
-	modules.product.Product = Product
-	
+register = template.Library()
+
+#
+
+@register.assignment_tag
+def categories():
+	return modules.category.Category.objects.active().root()

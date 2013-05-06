@@ -85,7 +85,7 @@ def get_add_to_cart_formset(formset, cls, product, variation=None, initial=None,
 		variations = product.all_variations
 	
 	# Before proceeding to custom form creation, check if we're dealing with a variation product
-	if not variation and not variations and (not modules.variation.custom_options_enabled or not product.custom_options):
+	if not variation and not variations and not product.options:
 		return
 	
 	# Create the custom form

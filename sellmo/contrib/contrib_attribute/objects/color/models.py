@@ -25,37 +25,33 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
 
 #
 
-from sellmo import modules
-from sellmo.api.decorators import load
+from sellmo.contrib.contrib_attribute.models import ValueObject
 
-# 
+#
 
-@load(after='load_product_Product', before='finalize_product_Product')
-def load_model():
+class Color(ValueObject):
 	
-	class Product(modules.product.Product):
+	name = models.CharField(max_length=100)
+	value = models.CharField(max_length=6)
 		
-		active = models.BooleanField(
-			default = True,
-			verbose_name = _("active"),
-			help_text = (
-				"Inactive products will be hidden from the site."
-			)
-		)
+	def __unicode__(self):
+		return u"%s (%s)" % (self.name, self.value)
 		
-		featured = models.BooleanField(
-			verbose_name = _("featured"),
-			help_text = (
-				"Marks this product as featured allowing additional showcasing across the site."
-			)
-		)
-		
-		class Meta:
-			abstract = True
+	class Meta:
+		app_label = 'attribute'
 	
-	modules.product.Product = Product
+class MultiColor(ValueObject):
 	
+	name = models.CharField(max_length=100)
+	colors = models.ManyToManyField(
+		Color
+	)
+	
+	def __unicode__(self):
+		return self.name
+	
+	class Meta:
+		app_label = 'attribute'

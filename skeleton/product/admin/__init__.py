@@ -23,14 +23,14 @@ class ProductAdminBase(admin.ModelAdmin):
 			'fields': ('tax',)
 		}),
 		(_("Product customization"), {
-			'fields': ('custom_options',)
+			'fields': ('options',)
 		}),
 		(_("Webshop arrangement"), {
 			'fields': ('slug', 'category', 'active', 'featured')
 		})
 	)
 	
-	filter_horizontal = ['category', 'custom_options']
+	filter_horizontal = ['category', 'options']
 	prepopulated_fields = {
 		'slug' : ('name',),
 	}
@@ -47,6 +47,7 @@ class VariantInlineBase(VariantInlineMixin, admin.StackedInline):
 		}),
 	)
 	
+	inlines = []
 	filter_horizontal = ['options']
 
 # Inline for simple product variant

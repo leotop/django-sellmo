@@ -24,53 +24,70 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#
-
 from sellmo import modules
-from sellmo.contrib.contrib_variation.forms import VariantForm, VariantFormSet
 
 #
 
-from django import forms
-from django.forms import ValidationError
-from django.forms.models import ModelForm, BaseInlineFormSet
-from django.contrib import admin
+from django.db import models
+from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
+from django.utils.encoding import smart_text
 from django.utils.text import capfirst
-from django.utils import six
-from django.contrib.admin.sites import NotRegistered
-from django.contrib.contenttypes.models import ContentType
 
 #
 
-class AttributeTypeListFilterBase(admin.SimpleListFilter):
-	title = _("attribute type")
-	parameter_name = 'attribute_type'
-	attribute_types = []
+class AttributeHelper(object):
 	
-	def lookups(self, request, model_admin):
-		return [(str(content_type.pk), unicode(content_type)) for content_type in ContentType.objects.get_for_models(*self.attribute_types).values()]
+	def __init__(self, product):
+		self.__dict__['_product'] = product
+		self.__dict__['_values'] = {}
+		self.__dict__['_attributes'] = {}
 		
-	def queryset(self, request, queryset):
-		attribute_type = self.value()
-		if attribute_type != None:
-			return queryset.filter(content_type=attribute_type)
+	def get_attribute(self, key):
+		if not self._attributes.has_key(key):
+			try:
+				attribute = modules.attribute.Attribute.objects.get(key=key)
+			except modules.attribute.Attribute.DoesNotExist:
+				self._attributes[key] = None
+			else:
+				self._attributes[key] = attribute
+		
+		if self._attributes[key] is None:
+			raise AttributeError(key)
 		else:
-			return queryset.all()
+			return self._attributes[key]
+		
+	def __getattr__(self, name):
+		
+		try:
+			return super(AttributeHelper, self).__getattr__(self, name)
+		except AttributeError:
+			pass
 			
-class EntityAdmin(object):
-
-	def get_fieldsets(self, request, obj=None):
-	
-		fieldsets = ()
-		if self.declared_fieldsets:
-			fieldsets = self.declared_fieldsets
+		attribute = self.get_attribute(name)
+		if not self._values.has_key(attribute.key):
+			try:
+				value = modules.attribute.Value.objects.get(attribute=attribute, product=self._product)
+			except modules.attribute.Value.DoesNotExist:
+				self._values[attribute.key] = Value(product=product, attribute=attribute)
+			else:
+				self._values[attribute.key] = value
+		return self._values[attribute.key].get_value()
 		
-		fieldsets += ((_("Attributes"), {'fields': modules.attribute.Attribute.objects.values_list('key', flat=True)}),)
-		return fieldsets
+	def __setattr__(self, name, value):
 		
-class VariantInlineMixin(EntityAdmin):
-	form = VariantForm
-	formset = VariantFormSet
-	
-
+		try:
+			attribute = self.get_attribute(name)
+		except AttributeError:
+			super(AttributeHelper, self).__setattr__(name, value)
+		else:
+			if not self._values.has_key(attribute.key):
+				self._values[attribute.key] = Value(product=product, attribute=attribute)
+			self._values[attribute.key].set_value(value)
+		
+	def __iter__(self):
+		pass
+		
+	def save(self):
+		for value in self._values.values():
+			value.save()
