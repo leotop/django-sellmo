@@ -33,8 +33,6 @@ from sellmo.utils.polymorphism import PolymorphicModel, PolymorphicManager
 
 from sellmo.contrib.contrib_variation.variation import get_variations, find_variation
 from sellmo.contrib.contrib_variation.variant import VariantFieldDescriptor, VariantMixin
-from sellmo.contrib.contrib_variation.fields import AttributeKeyField, AttributeTypeField
-from sellmo.contrib.contrib_variation.helpers import AttributeHelper
 
 #
 
