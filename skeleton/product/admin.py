@@ -4,17 +4,20 @@ from django.utils.translation import ugettext_lazy as _
 
 from sellmo import modules
 from sellmo.contrib.contrib_variation.admin import VariantInlineMixin
-from sellmo.contrib.contrib_variation.models import Variable, Attribute
-from sellmo.contrib.contrib_category.admin import ProductCategoryListFilter
+from sellmo.contrib.contrib_category.admin import ProductCategoryListFilter, ProductCategoryMixin
+from sellmo.contrib.contrib_variation.admin import VariantInlineMixin, VariationRecipeInlineMixin
+from sellmo.contrib.contrib_attribute.admin import ProductAttributeMixin
 from sellmo.contrib.polymorphism.admin import PolymorphicParentModelAdmin
 
-from product.admin.variation import VariableAdmin, AttributeAdmin
 from pricing.admin import ProductQtyPriceInline
 
+class VariationRecipeInline(VariationRecipeInlineMixin, admin.StackedInline):
+	model = modules.variation.VariationRecipe
+
 # Base admin for every product subtype
-class ProductAdminBase(admin.ModelAdmin):
+class ProductAdminBase(ProductAttributeMixin, admin.ModelAdmin):
 	
-	inlines = [ProductQtyPriceInline]
+	inlines = [ProductQtyPriceInline, VariationRecipeInline]
 	fieldsets = (
 		(_("Product information"), {
 			'fields': ('name', 'sku',)
@@ -22,19 +25,15 @@ class ProductAdminBase(admin.ModelAdmin):
 		(_("Product pricing"), {
 			'fields': ('tax',)
 		}),
-		(_("Product customization"), {
-			'fields': ('options',)
-		}),
 		(_("Webshop arrangement"), {
 			'fields': ('slug', 'category', 'active', 'featured')
 		})
 	)
 	
-	filter_horizontal = ['category', 'options']
+	filter_horizontal = ['category']
 	prepopulated_fields = {
 		'slug' : ('name',),
 	}
-	
 	
 # Base inline admin for every variant subtype
 class VariantInlineBase(VariantInlineMixin, admin.StackedInline):
@@ -42,13 +41,7 @@ class VariantInlineBase(VariantInlineMixin, admin.StackedInline):
 		(_("Product information"), {
 			'fields': ('name', 'sku', 'slug')
 		}),
-		(_("Variant options"), {
-			'fields': ('options',)
-		}),
 	)
-	
-	inlines = []
-	filter_horizontal = ['options']
 
 # Inline for simple product variant
 class SimpleVariantInline(VariantInlineBase):
@@ -91,6 +84,4 @@ class ProductAdmin(PolymorphicParentModelAdmin):
 		
 # Register admins
 admin.site.register(modules.product.Product, ProductAdmin)
-admin.site.register(Variable, VariableAdmin)
-admin.site.register(Attribute, AttributeAdmin)
 

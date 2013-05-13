@@ -38,7 +38,7 @@ class Color(ValueObject):
 	value = models.CharField(max_length=6)
 		
 	def __unicode__(self):
-		return u"%s (%s)" % (self.name, self.value)
+		return self.name
 		
 	class Meta:
 		app_label = 'attribute'

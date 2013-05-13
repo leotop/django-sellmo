@@ -25,6 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from sellmo import modules
+from sellmo.contrib.contrib_variation.utils import is_unique_slug
 
 #
 
@@ -56,30 +57,6 @@ class VariantMixin(object):
 		for field in cls._meta.fields:
 			if not field.auto_created and field.null and not field.name in cls.non_variable_fields and not field.__class__ in cls.non_variable_field_types:
 				yield field
-				
-	def generate_slug(self, options=None, product=None):
-		if not options:
-			options = self.options
-		if not product:
-			product = self.product
-			
-		short = '-'.join([option.attribute.value for option in options])
-		full = '_'.join([u'%s-%s' % (option.variable.name, option.attribute.value) for option in options])
-		for attributes in [short, full]:
-			slug = u'%(prefix)s-%(attributes)s' % {
-				'attributes' : attributes,
-				'prefix' : product.slug
-			}
-			if self._is_unique_slug(slug):
-				return slug
-		return slug
-	
-	def _is_unique_slug(self, slug):
-		try:
-			existing = modules.product.Product.objects.polymorphic().get(slug=slug)
-		except modules.product.Product.DoesNotExist:
-			return True
-		return getattr(existing, 'product', None) == self.product
 	
 	def get_product(self):
 		if hasattr(self, 'product_id') and self.product_id != None:
@@ -89,7 +66,7 @@ class VariantMixin(object):
 	def validate_unique(self, exclude=None):
 		super(self.__class__.__base__, self).validate_unique(exclude)
 		if 'slug' not in exclude:
-			if not self._is_unique_slug(self.slug):
+			if not is_unique_slug(self.slug, ignore=self):
 				message = _("%(model_name)s with this %(field_label)s already exists.") % {
 					'model_name': capfirst(modules.product.Product._meta.verbose_name),
 					'field_label': 'slug'
@@ -115,10 +92,6 @@ class VariantMixin(object):
 		app_label = 'product'
 		verbose_name = _("variant")
 		verbose_name_plural = _("variants")
-		
-	def __unicode__(self):
-		product = super(VariantMixin, self).__unicode__()
-		return product
 	
 class VariantFieldDescriptor(object):
 	

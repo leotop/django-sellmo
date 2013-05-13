@@ -30,6 +30,7 @@ from sellmo import modules
 
 #
 
+from django.db.models import Q
 from django import forms
 from django.forms import ValidationError
 from django.forms.models import ModelForm, BaseInlineFormSet
@@ -40,43 +41,94 @@ from django.utils import six
 from django.contrib.admin.sites import NotRegistered
 from django.contrib.admin.widgets import ForeignKeyRawIdWidget
 from django.contrib.contenttypes.models import ContentType
+from django.core.validators import EMPTY_VALUES
 
 #
 
-class VariationForm(ModelForm):
-	
-	FIELD_CLASSES = {
-		'text' : forms.CharField,
-		'float' : forms.FloatField,
-		'int' : forms.IntegerField,
-		'date' : forms.DateTimeField,
-		'bool' : forms.BooleanField,
-		'enum' : forms.ChoiceField,
-		'object' : forms.ModelChoiceField,
-	}
-	
-	def __init__(self, *args, **kwargs):
-		super(VariationForm, self).__init__(*args, **kwargs)
+from sellmo.contrib.contrib_attribute.models import ValueObject
+from sellmo.contrib.contrib_attribute.forms import ProductAttributeForm
+from sellmo.contrib.contrib_variation.utils import generate_slug
+
+#
+
+class SaveFieldMixin(object):
+
+	def get_deprecated_values(self, recipe, attribute, values):
+		field = '%s__in' % (attribute.value_field, )
+		kwargs = {
+			field : values
+		}
 		
-	def build_attribute_fields(self):
-		pass
+		q = ~Q(**kwargs) 
+		
+		return modules.attribute.Value.objects.recipe(exclude=False).filter(attribute=attribute, recipe=recipe).filter(q)
+		
+	def get_existing_values(self, recipe, attribute, values):
+		field = '%s__in' % (attribute.value_field, )
+		kwargs = {
+			field : values
+		}
+		
+		q = Q(**kwargs) 
+		
+		return modules.attribute.Value.objects.recipe(exclude=False).filter(attribute=attribute, recipe=recipe).filter(q)
 
-class VariantForm(ModelForm):
+	def save(self, recipe, attribute, values):
+		deprecated = self.get_deprecated_values(recipe, attribute, values)
+		deprecated.delete()
+		
+		existing = [value.get_value() for value in self.get_existing_values(recipe, attribute, values)]
+		for value in values:
+			if not value in existing:
+				obj = modules.attribute.Value(product=recipe.product, recipe=recipe, attribute=attribute)
+				obj.set_value(value)
+				obj.save()
 
+class SeperatedInputField(forms.Field):
+	
+	def __init__(self, field, seperator=u'|', **kwargs):
+		super(SeperatedInputField, self).__init__(**kwargs)
+		self._field = field(**kwargs)
+		self._seperator = seperator
+	
+	def from_values(self, values):
+		return self._seperator.join([unicode(value.get_value()) for value in values])
+		
+	def to_python(self, value):
+		result = []
+		value = super(SeperatedInputField, self).to_python(value)
+		if value in EMPTY_VALUES:
+			return result
+		values = value.split(self._seperator)		
+		for value in values:
+			result.append(self._field.clean(value))
+			
+		return result
+	
+class SeperatedIntegerField(SeperatedInputField, SaveFieldMixin):
+	def __init__(self, **kwargs):
+		super(SeperatedIntegerField, self).__init__(field=forms.IntegerField, **kwargs)
+		
+class ObjectField(forms.ModelMultipleChoiceField, SaveFieldMixin):
+	def from_values(self, values):
+		return ValueObject.objects.filter(pk__in=[value.get_value().pk for value in values])
+
+class VariationRecipeForm(ModelForm):
+	
 	FIELD_CLASSES = {
-		'text' : forms.CharField,
+		'text' : SeperatedInputField,
 		'float' : forms.FloatField,
-		'int' : forms.IntegerField,
+		'int' : SeperatedIntegerField,
 		'date' : forms.DateTimeField,
 		'bool' : forms.BooleanField,
 		'enum' : forms.ChoiceField,
-		'object' : forms.ModelChoiceField,
+		'object' : ObjectField,
 	}
-
-	def __init__(self, *args, **kwargs):
-		super(VariantForm, self).__init__(*args, **kwargs)
-		for field in self.fields:
-			self[field].field.required = False
+	
+	def __init__(self, delay_build=False, *args, **kwargs):
+		super(VariationRecipeForm, self).__init__(*args, **kwargs)
+		if not delay_build:
+			self.build_attribute_fields()
 			
 	def build_attribute_fields(self, attributes=None):
 		
@@ -85,11 +137,15 @@ class VariantForm(ModelForm):
 			
 		# Append attribute fields
 		for attribute in attributes:
-			# Get attribute value (if any)
-			try:
-				value = modules.attribute.Value.objects.get(attribute=attribute, product=self.instance)
-			except modules.attribute.Value.DoesNotExist:
-				value = None
+			
+			if not self.instance.pk is None:
+				# Get attribute values (if any)
+				try:
+					values = modules.attribute.Value.objects.recipe(exclude=False).filter(attribute=attribute, recipe=self.instance)
+				except modules.attribute.Value.DoesNotExist:
+					values = None
+			else:
+				values = None
 				
 			defaults = {
 				'label' : attribute.name.capitalize(),
@@ -99,48 +155,65 @@ class VariantForm(ModelForm):
 			}
 			
 			field = self.FIELD_CLASSES[attribute.type]
-			if field is forms.ModelChoiceField:
+			if field is ObjectField:
 				field = field(queryset=attribute.get_object_choices(), **defaults)
 			else:
 				field = field(**defaults)
 			
 			self.fields[attribute.key] = field
-			if value:
-				self.initial[attribute.key] = getattr(self.instance.attributes, attribute.key)
-						
-	def clean(self):
-		cleaned_data = super(VariantForm, self).clean()
-		
-		# Enforce options
-		options = cleaned_data['options']
-		if not options:
-			raise ValidationError(_("A variant requires options"))
-			
-		# Enforce unique options
-		variables = []
-		for option in options:
-			if option.variable.name in variables:
-				raise ValidationError(_("Select one option"))
-			variables.append(option.variable.name)
-		
-		# Enforce slug
-		if cleaned_data.has_key('slug'):
-			if not cleaned_data['slug']:
-				cleaned_data['slug'] = self.instance.generate_slug(options=cleaned_data['options'], product=cleaned_data['product'])
-				self.data[self.add_prefix('slug')] = cleaned_data['slug']
-		
-		return cleaned_data
-				
+			if values:
+				self.initial[attribute.key] = field.from_values(values)
+					
 	def save(self, commit=True):
-		instance = super(EntityForm, self).save(commit=False)
+		instance = super(VariationRecipeForm, self).save(commit=False)
+		
+		def save_attributes():
+			for attribute in modules.attribute.Attribute.objects.all():
+				values = self.cleaned_data.get(attribute.key)
+				field = self.FIELD_CLASSES[attribute.type]
+				if field is ObjectField:
+					field = field(queryset=attribute.get_object_choices())
+				else:
+					field = field()
+				field.save(self.instance, attribute, values)
+		
+		if commit:
+			instance.save()
+			save_attributes()
+		else:
+			self.save_m2m = save_attributes
+			
+		return instance
+
+class VariantForm(ProductAttributeForm):
+	def __init__(self, *args, **kwargs):
+		super(VariantForm, self).__init__(delay_build=True, *args, **kwargs)
+		for field in self.fields:
+			self[field].field.required = False
+			
+	def clean(self):
+		cleaned_data = super(ProductAttributeForm, self).clean()
 		
 		# Assign attributes
 		for attribute in modules.attribute.Attribute.objects.all():
 			value = self.cleaned_data.get(attribute.key)
-			setattr(instance.attributes, attribute.key, value)
+			setattr(self.instance.attributes, attribute.key, value)
 		
-		if commit:
-			instance.save()
+		# Enforce options
+		if not list(self.instance.attributes):
+			raise ValidationError(_("A variant requires at least one attribute"))
+		
+		# Enforce slug
+		if cleaned_data.has_key('slug'):
+			if not cleaned_data['slug']:
+				cleaned_data['slug'] = generate_slug(
+					product=cleaned_data['product'],
+					values=list(self.instance.attributes),
+					unique=False
+				)
+				self.data[self.add_prefix('slug')] = cleaned_data['slug']
+		
+		return cleaned_data
 
 class VariantFormSet(BaseInlineFormSet):
 
@@ -153,17 +226,4 @@ class VariantFormSet(BaseInlineFormSet):
 	def add_fields(self, form, index):
 		super(VariantFormSet, self).add_fields(form, index)
 		form.build_attribute_fields(attributes=self.get_attributes())
-	
-	def clean(self):
-		if any(self.errors):
-		 	return
-		variants = []
-		for form in self.forms:
-			if form.cleaned_data.has_key('options'):
-				
-				# Enforce unique variants
-				options = u'_'.join([u'%s-%s' % (option.variable.name, option.attribute.value) for option in form.cleaned_data['options']])
-				if options in variants:
-					raise ValidationError(_("Duplicate variants"))
-				variants.append(options)
 				

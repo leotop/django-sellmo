@@ -64,7 +64,7 @@ class AttributeTypeField(models.CharField):
 		if not instance.pk:
 			return
 		
-		if value == modules.variation.Attribute.objects.get(pk=instance.pk).type:
+		if value == modules.attribute.Attribute.objects.get(pk=instance.pk).type:
 			return	
 		
 		if instance.values.count() > 0:

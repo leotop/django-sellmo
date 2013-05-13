@@ -24,51 +24,35 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#
-
 from sellmo import modules
-from sellmo.contrib.contrib_category.models import Category
 
 #
 
-from django.contrib import admin
-from django.utils.translation import ugettext_lazy as _
-from django.contrib.admin.sites import NotRegistered
+def generate_slug(product, values=None, unique=False, full=False, short=False):
 
-#
-
-class ProductCategoryMixin(object):
-	def formfield_for_manytomany(self, db_field, request, **kwargs):
-		if db_field.name == 'category':
-			kwargs['queryset'] = modules.category.Category.objects.all().prefetch_related('parent')
-		return super(ProductCategoryMixin, self).formfield_for_manytomany(db_field, request, **kwargs)
-
-class ProductCategoryListFilter(admin.SimpleListFilter):
-	title = _("category")
-	parameter_name = 'category'
-	
-	def lookups(self, request, model_admin):
-		return [(str(category.pk), unicode(category)) for category in modules.category.Category.objects.all()]
+	if not values:
+		values = list(product.attributes)
 		
-	def queryset(self, request, queryset):
-		pk = self.value()
-		if pk != None:
-			category = modules.category.Category.objects.get(pk=pk)
-			return queryset.in_category(category)
-		else:
-			return queryset.all()
-			
-class CategoryParentListFilter(admin.SimpleListFilter):
-	title = _("parent category")
-	parameter_name = 'parent'
+	sequences = []
+	if not full:
+		sequences.append('-'.join([unicode(value.get_value()) for value in values]))
+	if not short:
+		sequences.append('_'.join([u'%s-%s' % (value.attribute.key, unicode(value.get_value())) for value in values]))
 	
-	def lookups(self, request, model_admin):
-		return [(str(category.pk), unicode(category)) for category in modules.category.Category.objects.all()]
-		
-	def queryset(self, request, queryset):
-		pk = self.value()
-		if pk != None:
-			category = modules.category.Category.objects.get(pk=pk)
-			return queryset.in_parent(category)
-		else:
-			return queryset.all()
+	 
+	for attributes in sequences:
+		slug = u'%(prefix)s-%(attributes)s' % {
+			'attributes' : attributes,
+			'prefix' : product.slug
+		}
+		if not unique or VariantMixin.is_unique_slug(slug, ignore=product):
+			return slug
+	return slug
+
+def is_unique_slug(slug, ignore=None):
+	try:
+		existing = modules.product.Product.objects.polymorphic().get(slug=slug)
+	except modules.product.Product.DoesNotExist:
+		return True
+	
+	return existing == ignore

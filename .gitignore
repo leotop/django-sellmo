@@ -9,6 +9,8 @@ skeleton/product/migrations
 skeleton/shipping/migrations
 skeleton/store/migrations
 skeleton/tax/migrations
+skeleton/attribute/migrations
+skeleton/variation/migrations
 
 # Python generated files #
 ######################

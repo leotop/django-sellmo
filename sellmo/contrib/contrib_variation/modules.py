@@ -26,6 +26,7 @@
 
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable
+from sellmo.contrib.contrib_variation.models import Variation, VariationRecipe
 
 from django.http import Http404
 from django.utils.translation import ugettext_lazy as _
@@ -36,6 +37,8 @@ class VariationModule(Module):
 
 	namespace = 'variation'
 	batch_buy_enabled = False
+	Variation = Variation
+	VariationRecipe = VariationRecipe
 	
 	def __init__(self):
 		self.product_subtypes = []
@@ -90,7 +93,7 @@ class VariationModule(Module):
 		return '%s %s' % (prefix, options)
 		
 	@chainable()
-	def get_variation_key(self, chain, variation=None, **kwargs):
+	def get_variation_id(self, chain, variation=None, **kwargs):
 		options = '_'.join([option.key for option in variation.options if option.custom])
 		prefix = variation.product.slug
 		

@@ -52,6 +52,7 @@ def load_model():
 			
 		def save(self, *args, **kwargs):
 			super(Product, self).save(*args, **kwargs)
+			self.attributes.save()
 	
 		class Meta:
 			abstract = True
@@ -87,10 +88,18 @@ def finalize_model():
 			blank = True,
 			db_index = True,
 		)
+		
+		class Meta:
+			app_label = 'attribute'
 	
 	modules.attribute.Value = Value
 	
 class Value(models.Model):
+	
+	value_int = models.IntegerField(
+		null = True,
+		blank = True
+	)
 	
 	__value_object = None
 	@property
@@ -100,18 +109,34 @@ class Value(models.Model):
 		return self.__value_object
 	
 	def __unicode__(self):
-		return u"%s -> %s : %s" % (self.product, self.attribute, self._value_object)
+		return u"%s -> %s : %s" % (self.product, self.attribute, self.get_value())
 		
 	def get_value(self):
-		field = 'value_%s' % (self.attribute.type,)
+		field = self.attribute.value_field
+		if field == 'value_object':
+			return self._value_object
+		
 		return getattr(self, field)
 		
 	def set_value(self, value):
-		field = 'value_%s' % (self.attribute.type,)
+		field = self.attribute.value_field
+		if field == 'value_object':
+			self.__value_object = None
 		setattr(self, field, value)
 	
+	@property	
+	def is_assigned(self):
+		return not self.get_value() is None
+		
+	def save_value(self):
+		# Re-assign product
+		self.product = self.product
+		if self.is_assigned:
+			self.save()
+		elif not self.pk is None:
+			self.delete()
+	
 	class Meta:
-		app_label = 'attribute'
 		abstract = True
 		ordering = ['product']
 
@@ -123,18 +148,21 @@ def finalize_model():
 			ValueObject,
 			blank = True
 		)
+		
+		class Meta:
+			app_label = 'attribute'
 	
 	modules.attribute.Attribute = Attribute
 	
 class Attribute(models.Model):
 	
 	TYPE_TEXT = 'text'
-	TYPE_NUMBER = 'number'
+	TYPE_INT = 'int'
 	TYPE_OBJECT = 'object'
 	
 	TYPES = (
 		(TYPE_TEXT, _("text")),
-		(TYPE_NUMBER, _("number")),
+		(TYPE_INT, _("integer")),
 		(TYPE_OBJECT, _("object")),
 	)
 	
@@ -160,6 +188,10 @@ class Attribute(models.Model):
 	)
 	
 	@property
+	def value_field(self):
+		return 'value_%s' % (self.type,)
+	
+	@property
 	def help_text(self):
 		return ''
 		
@@ -182,7 +214,6 @@ class Attribute(models.Model):
 		return self.name
 
 	class Meta:
-		app_label = 'attribute'
 		abstract = True
 		
 # Init modules

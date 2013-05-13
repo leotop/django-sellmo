@@ -69,7 +69,7 @@ class AttributeHelper(object):
 			try:
 				value = modules.attribute.Value.objects.get(attribute=attribute, product=self._product)
 			except modules.attribute.Value.DoesNotExist:
-				self._values[attribute.key] = Value(product=product, attribute=attribute)
+				self._values[attribute.key] = modules.attribute.Value(product=product, attribute=attribute)
 			else:
 				self._values[attribute.key] = value
 		return self._values[attribute.key].get_value()
@@ -82,12 +82,17 @@ class AttributeHelper(object):
 			super(AttributeHelper, self).__setattr__(name, value)
 		else:
 			if not self._values.has_key(attribute.key):
-				self._values[attribute.key] = Value(product=product, attribute=attribute)
+				self._values[attribute.key] = modules.attribute.Value(attribute=attribute, product=self._product)
 			self._values[attribute.key].set_value(value)
 		
 	def __iter__(self):
-		pass
+		for value in self._values.values():
+			if value.is_assigned:
+				yield value
 		
 	def save(self):
-		for value in self._values.values():
-			value.save()
+		for value in self:
+			value.save_value()
+			
+		# Clean cache
+		self._values = {}

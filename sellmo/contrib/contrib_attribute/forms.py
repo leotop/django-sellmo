@@ -27,8 +27,6 @@
 #
 
 from sellmo import modules
-from sellmo.contrib.contrib_attribute.forms import ProductAttributeForm
-from sellmo.contrib.contrib_attribute.models import ValueObject
 
 #
 
@@ -40,25 +38,72 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils.text import capfirst
 from django.utils import six
 from django.contrib.admin.sites import NotRegistered
+from django.contrib.admin.widgets import ForeignKeyRawIdWidget
 from django.contrib.contenttypes.models import ContentType
 
 #
-			
-class ProductAttributeMixin(object):
+
+class ProductAttributeForm(ModelForm):
+
+	FIELD_CLASSES = {
+		'text' : forms.CharField,
+		'float' : forms.FloatField,
+		'int' : forms.IntegerField,
+		'date' : forms.DateTimeField,
+		'bool' : forms.BooleanField,
+		'enum' : forms.ChoiceField,
+		'object' : forms.ModelChoiceField,
+	}
 	
-	form = ProductAttributeForm
-	
-	def get_fieldsets(self, request, obj=None):
-	
-		fieldsets = ()
-		if self.declared_fieldsets:
-			fieldsets = self.declared_fieldsets
+	def __init__(self, *args, **kwargs):
+		delay_build = False
+		if kwargs.has_key('delay_build'):
+			delay_build = kwargs.pop('delay_build')
 		
-		fieldsets += ((_("Attributes"), {'fields': modules.attribute.Attribute.objects.values_list('key', flat=True)}),)
-		return fieldsets
-	
-class AttributeAdminMixin(object):
-	def formfield_for_manytomany(self, db_field, request, **kwargs):
-		if db_field.name == 'object_choices':
-			kwargs['queryset'] = ValueObject.objects.polymorphic().all()
-		return super(AttributeAdminMixin, self).formfield_for_manytomany(db_field, request, **kwargs)
+		super(ProductAttributeForm, self).__init__(*args, **kwargs)
+		
+		if not delay_build:
+			self.build_attribute_fields()
+			
+	def build_attribute_fields(self, attributes=None):
+		
+		if attributes is None:
+			attributes = modules.attribute.Attribute.objects.all()
+			
+		# Append attribute fields
+		for attribute in attributes:
+			# Get attribute value (if any)
+			try:
+				value = modules.attribute.Value.objects.get(attribute=attribute, product=self.instance)
+			except modules.attribute.Value.DoesNotExist:
+				value = None
+				
+			defaults = {
+				'label' : attribute.name.capitalize(),
+				'required' : attribute.required,
+				'help_text' : attribute.help_text,
+				'validators' : attribute.validators,
+			}
+			
+			field = self.FIELD_CLASSES[attribute.type]
+			if field is forms.ModelChoiceField:
+				field = field(queryset=attribute.get_object_choices(), **defaults)
+			else:
+				field = field(**defaults)
+			
+			self.fields[attribute.key] = field
+			if value:
+				self.initial[attribute.key] = getattr(self.instance.attributes, attribute.key)
+				
+	def save(self, commit=True):
+		instance = super(ProductAttributeForm, self).save(commit=False)
+		
+		# Assign attributes
+		for attribute in modules.attribute.Attribute.objects.all():
+			value = self.cleaned_data.get(attribute.key)
+			setattr(instance.attributes, attribute.key, value)
+		
+		if commit:
+			instance.save()
+			
+		return instance

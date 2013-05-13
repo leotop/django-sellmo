@@ -27,7 +27,8 @@
 #
 
 from sellmo import modules
-from sellmo.contrib.contrib_variation.forms import VariantForm, VariantFormSet
+from sellmo.contrib.contrib_variation.forms import VariantForm, VariantFormSet, VariationRecipeForm
+from sellmo.contrib.contrib_attribute.admin import ProductAttributeMixin
 
 #
 
@@ -42,24 +43,14 @@ from django.contrib.admin.sites import NotRegistered
 from django.contrib.contenttypes.models import ContentType
 
 #
-
-class AttributeTypeListFilterBase(admin.SimpleListFilter):
-	title = _("attribute type")
-	parameter_name = 'attribute_type'
-	attribute_types = []
-	
-	def lookups(self, request, model_admin):
-		return [(str(content_type.pk), unicode(content_type)) for content_type in ContentType.objects.get_for_models(*self.attribute_types).values()]
 		
-	def queryset(self, request, queryset):
-		attribute_type = self.value()
-		if attribute_type != None:
-			return queryset.filter(content_type=attribute_type)
-		else:
-			return queryset.all()
-			
-class EntityAdmin(object):
-
+class VariantInlineMixin(ProductAttributeMixin):
+	form = VariantForm
+	formset = VariantFormSet
+	
+class VariationRecipeInlineMixin(object):
+	form = VariationRecipeForm
+	
 	def get_fieldsets(self, request, obj=None):
 	
 		fieldsets = ()
@@ -68,9 +59,3 @@ class EntityAdmin(object):
 		
 		fieldsets += ((_("Attributes"), {'fields': modules.attribute.Attribute.objects.values_list('key', flat=True)}),)
 		return fieldsets
-		
-class VariantInlineMixin(EntityAdmin):
-	form = VariantForm
-	formset = VariantFormSet
-	
-

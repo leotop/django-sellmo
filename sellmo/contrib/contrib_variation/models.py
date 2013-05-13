@@ -30,32 +30,27 @@ from sellmo import modules
 from sellmo.api.decorators import load
 from sellmo.magic import ModelMixin
 from sellmo.utils.polymorphism import PolymorphicModel, PolymorphicManager
-
-from sellmo.contrib.contrib_variation.variation import get_variations, find_variation
 from sellmo.contrib.contrib_variation.variant import VariantFieldDescriptor, VariantMixin
+from sellmo.contrib.contrib_variation.utils import generate_slug
 
 #
 
 from django.db import models
-from django.db.models.signals import post_save, post_delete, m2m_changed
+from django.db.models import Q, Count
+from django.db.models.query import QuerySet
+from django.db.models.signals import pre_save, post_save, pre_delete
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
-
+				
 @load(after='setup_variants')
 def load_model():
 	for subtype in modules.variation.product_subtypes:
 		class ProductMixin(ModelMixin):
 			model = subtype
-			@property
-			def all_variations(self):
-				return get_variations(self, all=True)
-				
+			
 			@property
 			def variations(self):
-				return get_variations(self)
-				
-			def find_variation(self, key):
-				return find_variation(self, key)
+				return modules.variation.Variation.objects.for_product(self)
 				
 @load(action='load_variants', after='setup_variants')
 def load_variants():
@@ -83,6 +78,256 @@ def load_variants():
 		
 		modules.variation.subtypes.append(model)
 		setattr(modules.variation, name, model)
+				
+def on_value_pre_save(sender, instance, *args, **kwargs):
+	product = instance.product.downcast()
+	instance.base_product = product
+	if getattr(product, '_is_variant', False):
+		instance.base_product = product.product
+		
+def on_value_post_save(sender, instance, created, update_fields=None, *args, **kwargs):
+	if created or update_fields:
+		modules.variation.Variation.objects.deprecate(instance.base_product)
+	
+def on_value_pre_delete(sender, instance, *args, **kwargs):
+	modules.variation.Variation.objects.deprecate(instance.base_product)
+		
+@load(after='finalize_attribute_Value')
+def listen():
+	pre_save.connect(on_value_pre_save, sender=modules.attribute.Value)
+	post_save.connect(on_value_post_save, sender=modules.attribute.Value)
+	pre_delete.connect(on_value_pre_delete, sender=modules.attribute.Value)
+
+@load(before='finalize_attribute_Value')
+@load(after='finalize_variation_VariationRecipe')
+def load_model():
+
+	class ValueQuerySet(QuerySet):
+		def recipe(self, exclude=False):
+			if exclude:
+				return self.filter(recipe=None)
+			return self
+	
+	class ValueManager(models.Manager):
+		def get_query_set(self):
+			return ValueQuerySet(self.model).recipe(exclude=True)
+			
+		def recipe(self, **kwargs):
+			return ValueQuerySet(self.model).recipe(**kwargs)
+	
+	class Value(modules.attribute.Value):
+		
+		objects = ValueManager()
+		
+		# The attribute to which we belong
+		recipe = models.ForeignKey(
+			modules.variation.VariationRecipe,
+			db_index = True,
+			null = True,
+			blank = True,
+			editable = False,
+			related_name = 'values'
+		)
+		
+		#
+		base_product = models.ForeignKey(
+			modules.product.Product,
+			db_index = True,
+			null = True,
+			blank = True,
+			editable = False,
+			related_name = '+',
+		)
+		
+		class Meta:
+			abstract = True
+		
+	modules.attribute.Value = Value
+	
+@load(action='finalize_variation_VariationRecipe')
+@load(after='finalize_product_Product')
+def finalize_model():
+	
+	class VariationRecipe(modules.variation.VariationRecipe):
+		
+		# The product to which we apply
+		product = models.OneToOneField(
+			modules.product.Product,
+			db_index = True,
+			related_name = 'recipe',
+		)
+		
+	modules.variation.VariationRecipe = VariationRecipe
+		
+	
+class VariationRecipe(models.Model):
+	class Meta:
+		app_label = 'variation'
+		abstract = True
+		
+@load(action='finalize_variation_Variation')
+@load(after='finalize_attribute_Value')
+@load(after='finalize_product_Product')
+def finalize_model():
+	
+	class Variation(modules.variation.Variation):
+				
+		# The product we are based on
+		product = models.ForeignKey(
+			modules.product.Product,
+			db_index = True,
+			editable = False,
+			related_name = '+',
+		)
+		
+		# The variant we are based on (can be a product)
+		variant = models.ForeignKey(
+			modules.product.Product,
+			db_index = True,
+			editable = False,
+			related_name = '+',
+		)
+		
+		#
+		values = models.ManyToManyField(
+			modules.attribute.Value,
+			editable = False,
+			related_name = '+',
+		)
+				
+	modules.variation.Variation = Variation
+	
+class VariationManager(models.Manager):
+	
+	def build(self, product):
+		
+		# Delete any existing variations (always)
+		existing = self.filter(product=product)
+		existing.delete()
+		
+		# Get all values related to this product
+		values = modules.attribute.Value.objects.recipe(exclude=False).filter(base_product=product)
+		
+		if not values:
+			# No values, means no variations
+			return
+		
+		# Get all attributes related to this product
+		attributes = values.values_list('attribute', flat=True).distinct()
+		attributes = modules.attribute.Attribute.objects.filter(pk__in=attributes)
+		
+		# Narrow down values to have no duplicate values
+		# Prioritize recipe based values above explicit values
+		pks = []
+		for attribute in attributes:
+			duplicates = []
+			for value in values.filter(attribute=attribute).annotate(null_position=Count('recipe')).order_by('-recipe'):
+				if value.get_value() not in duplicates:
+					duplicates.append(value.get_value())
+					pks.append(value.pk)
+		
+		values = modules.attribute.Value.objects.recipe(exclude=False).filter(pk__in=pks)
+		
+		def _construct(variation_values):
+			
+			variant = None
+			
+			# Ensure all pk's are still available
+			for value in variation_values:
+				if not value.pk in pks:
+					return None
+			
+			# Find variant (if any)
+			for value in variation_values:
+				if value.recipe is None:
+					variant = value.product
+					break
+				
+			# 
+			if variant is None:
+				variant = product
+			else:
+				# Constructing explicit variation
+				# Find all explicit values
+				for value in list(variation_values):
+					try:
+						explicit = modules.attribute.Value.objects.recipe(exclude=True).get(product=variant, attribute=value.attribute)
+					except modules.attribute.Value.DoesNotExist:
+						continue
+					else:
+						variation_values[variation_values.index(value)] = explicit
+						if explicit.pk in pks:
+							pks.remove(explicit.pk)
+			print 'creating'
+			variation = modules.variation.Variation.objects.create(
+				id = modules.variation.Variation.generate_id(product, variation_values),
+				product = product,
+				variant = variant,
+			)
+			
+			
+			print 'adding values'
+			variation.values.add(*variation_values)
+			print 'done'
+		
+		def _variate(attribute_queue, variation_values=[]):
+			variations = []
+			if not attribute_queue:
+				# Create the variation
+				variation = _construct(variation_values)
+				if not variation is None:
+					variations.append(variation)
+			else:
+				attribute = attribute_queue[0]
+				for value in values.filter(attribute=attribute):
+					variations.extend(_variate(attribute_queue[1:], variation_values + [value]))
+				
+			return variations
+			
+		variations = _variate(attributes)
+		for x in self.filter(product=product):
+			print x.id
+			print x.values
+				
+	
+	def deprecate(self, product):
+		self.select_for_update().filter(product=product).update(deprecated=True)
+		
+	def for_product(self, product):
+		self.build(product)
+		variations = self.filter(product=product, deprecated=False)
+		if variations.count() > 0:
+			return variations
+		else:
+			self.build(product)
+		return self.filter(product=product)
+			
+		
+class Variation(models.Model):
+
+	objects = VariationManager()
+	
+	@staticmethod
+	def generate_id(product, values):
+		return generate_slug(product=product, values=values, full=True, unique=False)
+
+	id = models.CharField(
+		max_length = 255,
+		primary_key = True,
+		editable = False,
+	)
+		
+	# Flags
+	deprecated = models.BooleanField(
+		editable = False,
+	)
+	
+	def __unicode__(self):
+		return self.id
+
+	class Meta:
+		app_label = 'variation'
+		abstract = True
 	
 @load(after='finalize_store_Purchase')
 def load_model():
@@ -92,7 +337,9 @@ def load_model():
 		variation_key = models.CharField(
 			max_length = 255
 		)
-		variation_name = models.CharField(
+		
+		# Auto generated description, usefull when variation is unavailable
+		variation_description = models.CharField(
 			max_length = 255
 		)
 		
