@@ -33,6 +33,10 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
+from django.db.models import Q
+
+#
+
 class VariationModule(Module):	
 
 	namespace = 'variation'
@@ -64,6 +68,35 @@ class VariationModule(Module):
 			formset = modules.cart.get_add_to_cart_formset(product=product, variation=variation, data=request.GET)
 			
 		return modules.cart.add_to_cart(request, product_slug=product_slug, product=product, formset=formset)
+		
+	@chainable()
+	def get_attributes(self, chain, product, **kwargs):
+		return modules.attribute.Attribute.objects.for_product(product)
+		
+	@chainable()
+	def get_variations(self, chain, product, grouped=False, **kwargs):
+		variations = modules.variation.Variation.objects.for_product(product)
+		
+		if grouped:
+			try:
+				attribute = self.get_attributes(product=product).get(groups=True)
+			except modules.attribute.Attribute.DoesNotExist:
+				variations = ((None, None, variations),)
+			else:
+				result = ()
+				for value in modules.attribute.Value.objects.for_product(product).for_attribute(attribute=attribute, distinct=True):
+					qargs = {
+						'values__attribute' : attribute,
+						'values__%s' % attribute.value_field : value.get_value()
+					}
+					result += ((
+						value.attribute,
+						value.get_value(),
+						modules.variation.Variation.objects.filter(**qargs)
+					),)
+					variations = result
+		
+		return variations
 		
 	@chainable()
 	def get_sub_variation_label(self, chain, variation=None, **kwargs):

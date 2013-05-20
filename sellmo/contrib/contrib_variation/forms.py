@@ -104,6 +104,10 @@ class SeperatedInputField(forms.Field):
 			result.append(self._field.clean(value))
 			
 		return result
+		
+class SeperatedCharField(SeperatedInputField, SaveFieldMixin):
+	def __init__(self, **kwargs):
+		super(SeperatedCharField, self).__init__(field=forms.CharField, **kwargs) 
 	
 class SeperatedIntegerField(SeperatedInputField, SaveFieldMixin):
 	def __init__(self, **kwargs):
@@ -116,13 +120,9 @@ class ObjectField(forms.ModelMultipleChoiceField, SaveFieldMixin):
 class VariationRecipeForm(ModelForm):
 	
 	FIELD_CLASSES = {
-		'text' : SeperatedInputField,
-		'float' : forms.FloatField,
-		'int' : SeperatedIntegerField,
-		'date' : forms.DateTimeField,
-		'bool' : forms.BooleanField,
-		'enum' : forms.ChoiceField,
-		'object' : ObjectField,
+		modules.attribute.Attribute.TYPE_STRING : SeperatedCharField,
+		modules.attribute.Attribute.TYPE_INT : SeperatedIntegerField,
+		modules.attribute.Attribute.TYPE_OBJECT : ObjectField,
 	}
 	
 	def __init__(self, delay_build=False, *args, **kwargs):
@@ -133,7 +133,7 @@ class VariationRecipeForm(ModelForm):
 	def build_attribute_fields(self, attributes=None):
 		
 		if attributes is None:
-			attributes = modules.attribute.Attribute.objects.all()
+			attributes = modules.attribute.Attribute.objects.filter(variates=True)
 			
 		# Append attribute fields
 		for attribute in attributes:
@@ -149,7 +149,7 @@ class VariationRecipeForm(ModelForm):
 				
 			defaults = {
 				'label' : attribute.name.capitalize(),
-				'required' : attribute.required,
+				'required' : False,
 				'help_text' : attribute.help_text,
 				'validators' : attribute.validators,
 			}
@@ -168,7 +168,7 @@ class VariationRecipeForm(ModelForm):
 		instance = super(VariationRecipeForm, self).save(commit=False)
 		
 		def save_attributes():
-			for attribute in modules.attribute.Attribute.objects.all():
+			for attribute in modules.attribute.Attribute.objects.filter(variates=True):
 				values = self.cleaned_data.get(attribute.key)
 				field = self.FIELD_CLASSES[attribute.type]
 				if field is ObjectField:
@@ -195,7 +195,7 @@ class VariantForm(ProductAttributeForm):
 		cleaned_data = super(ProductAttributeForm, self).clean()
 		
 		# Assign attributes
-		for attribute in modules.attribute.Attribute.objects.all():
+		for attribute in modules.attribute.Attribute.objects.filter(variates=True):
 			value = self.cleaned_data.get(attribute.key)
 			setattr(self.instance.attributes, attribute.key, value)
 		
@@ -220,7 +220,7 @@ class VariantFormSet(BaseInlineFormSet):
 	__attributes = None
 	def get_attributes(self):
 		if self.__attributes is None:
-			self.__attributes = modules.attribute.Attribute.objects.all().prefetch_related('object_choices__content_type')
+			self.__attributes = modules.attribute.Attribute.objects.filter(variates=True)
 		return self.__attributes
 
 	def add_fields(self, form, index):

@@ -48,6 +48,15 @@ class VariantInlineMixin(ProductAttributeMixin):
 	form = VariantForm
 	formset = VariantFormSet
 	
+	def get_fieldsets(self, request, obj=None):
+	
+		fieldsets = ()
+		if self.declared_fieldsets:
+			fieldsets = self.declared_fieldsets
+		
+		fieldsets += ((_("Attributes"), {'fields': modules.attribute.Attribute.objects.filter(variates=True).values_list('key', flat=True)}),)
+		return fieldsets
+	
 class VariationRecipeInlineMixin(object):
 	form = VariationRecipeForm
 	
@@ -56,5 +65,5 @@ class VariationRecipeInlineMixin(object):
 		if self.declared_fieldsets:
 			fieldsets = self.declared_fieldsets
 		
-		fieldsets += ((_("Attributes"), {'fields': modules.attribute.Attribute.objects.values_list('key', flat=True)}),)
+		fieldsets += ((_("Attributes"), {'fields': modules.attribute.Attribute.objects.filter(variates=True).values_list('key', flat=True)}),)
 		return fieldsets

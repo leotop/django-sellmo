@@ -46,13 +46,9 @@ from django.contrib.contenttypes.models import ContentType
 class ProductAttributeForm(ModelForm):
 
 	FIELD_CLASSES = {
-		'text' : forms.CharField,
-		'float' : forms.FloatField,
-		'int' : forms.IntegerField,
-		'date' : forms.DateTimeField,
-		'bool' : forms.BooleanField,
-		'enum' : forms.ChoiceField,
-		'object' : forms.ModelChoiceField,
+		modules.attribute.Attribute.TYPE_STRING : forms.CharField,
+		modules.attribute.Attribute.TYPE_INT : forms.IntegerField,
+		modules.attribute.Attribute.TYPE_OBJECT : forms.ModelChoiceField,
 	}
 	
 	def __init__(self, *args, **kwargs):

@@ -36,7 +36,7 @@ from sellmo.contrib.contrib_variation.utils import generate_slug
 #
 
 from django.db import models
-from django.db.models import Q, Count
+from django.db.models import Q, F, Count
 from django.db.models.query import QuerySet
 from django.db.models.signals import pre_save, post_save, pre_delete
 from django.core.exceptions import ValidationError
@@ -52,7 +52,10 @@ def load_model():
 			
 			@property
 			def variations(self):
-				return modules.variation.Variation.objects.for_product(self)
+				return self.get_variations()
+			
+			def get_variations(self, grouped=False, **kwargs):
+				return modules.variation.get_variations(product=self, grouped=grouped, **kwargs)
 				
 @load(action='load_variants', after='setup_variants')
 def load_variants():
@@ -99,18 +102,70 @@ def listen():
 	pre_save.connect(on_value_pre_save, sender=modules.attribute.Value)
 	post_save.connect(on_value_post_save, sender=modules.attribute.Value)
 	pre_delete.connect(on_value_pre_delete, sender=modules.attribute.Value)
+	
 
-@load(before='finalize_attribute_Value')
-@load(after='finalize_variation_VariationRecipe')
+@load(after='finalize_attribute_Attribute')	
+def load_manager():
+	
+	class AttributeQuerySet(modules.attribute.Attribute.objects.get_query_set().__class__):
+		def for_product(self, product):
+			return self.filter(Q(values__product=product) | Q(values__base_product=product)).distinct()
+	
+	class AttributeManager(modules.attribute.Attribute.objects.__class__):
+		def get_query_set(self):
+			return AttributeQuerySet(self.model)
+	
+	class Attribute(ModelMixin):
+		model = modules.attribute.Attribute
+		objects = AttributeManager()
+	
+	
+@load(before='finalize_attribute_Attribute')
 def load_model():
 
+	class Attribute(modules.attribute.Attribute):
+		
+		variates = models.BooleanField(
+			
+		)
+		
+		groups = models.BooleanField(
+			
+		)
+		
+		class Meta:
+			abstract = True
+		
+	modules.attribute.Attribute = Attribute
+	
+@load(after='finalize_attribute_Value')	
+def load_manager():
+	
 	class ValueQuerySet(QuerySet):
 		def recipe(self, exclude=False):
 			if exclude:
 				return self.filter(recipe=None)
 			return self
+			
+		def for_product(self, product):
+			return self.filter(~Q(base_product=F('product')) | Q(recipe__isnull=False), base_product=product)
+			
+		def for_attribute(self, attribute, distinct=False):
+			q = self.filter(attribute=attribute)
+			if distinct:
+				values = q.values_list(attribute.value_field, flat=True).distinct()
+				distinct = []
+				for value in values:
+					qargs = {
+						attribute.value_field : value
+					}
+					id = q.filter(**qargs).values_list('id', flat=True)[0]
+					distinct.append(id)
+				return q.filter(id__in=distinct)
+			else:
+				return q
 	
-	class ValueManager(models.Manager):
+	class ValueManager(modules.attribute.Value.objects.__class__):
 		
 		def __init__(self, *args, **kwargs):
 			self.recipeless = False
@@ -121,12 +176,24 @@ def load_model():
 		def get_query_set(self):
 			return ValueQuerySet(self.model).recipe(exclude=self.recipeless)
 			
-		def recipe(self, **kwargs):
-			return ValueQuerySet(self.model).recipe(**kwargs)
+		def recipe(self, *args, **kwargs):
+			return ValueQuerySet(self.model).recipe(*args, **kwargs)
+			
+		def for_product(self, *args, **kwargs):
+			return ValueQuerySet(self.model).for_product(*args, **kwargs)
+			
+		def for_attribute(self, *args, **kwargs):
+			return ValueQuerySet(self.model).for_attribute(*args, **kwargs)
+			
+	class Value(ModelMixin):
+		model = modules.attribute.Value
+		objects = ValueManager(recipeless=True)
+
+@load(before='finalize_attribute_Value')
+@load(after='finalize_variation_VariationRecipe')
+def load_model():
 	
 	class Value(modules.attribute.Value):
-		
-		objects = ValueManager(recipeless=True)
 		
 		# The attribute to which we belong
 		recipe = models.ForeignKey(

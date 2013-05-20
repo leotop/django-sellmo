@@ -1,5 +1,5 @@
 {% extends "store/base.html" %}
-{% load sellmo_pricing qty_pricing sellmo_cart %}
+{% load sellmo_pricing qty_pricing sellmo_cart variation %}
 
 {% block body %}
 	<h1>{{ product }}</h1>
@@ -17,10 +17,10 @@
 			</tbody>
 		</table>
 		<ul>
-		{% for variations in product.variations %}
+		{% for variations in product|variations:True %}
 			<li>
-				<h4>{{ variation }}</h4>
-				{% add_to_cart_formset product=product variation=variation %}
+				<h4>{{ variations.0 }}: {{ variations.1 }}</h4>
+				{% add_to_cart_formset product=product variations=variations.2 %}
 			</li>
 		{% endfor %}
 		</ul>

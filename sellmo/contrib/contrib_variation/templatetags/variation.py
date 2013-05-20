@@ -37,5 +37,5 @@ register = template.Library()
 #
 
 @register.filter
-def variations(product):
-	return modules.qty_pricing.get_qty_tiers(product=product)
+def variations(product, grouped=False):
+	return product.get_variations(grouped=grouped)

@@ -25,6 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from django.db import models
+from django.db.models.query import QuerySet
 from django.utils.translation import ugettext_lazy as _
 
 #
@@ -94,11 +95,26 @@ def finalize_model():
 	
 	modules.attribute.Value = Value
 	
+class ValueQuerySet(QuerySet):
+	pass
+	
+class ValueManager(models.Manager):
+	def get_query_set(self):
+		return ValueQuerySet(self.model)
+	
 class Value(models.Model):
+
+	objects = ValueManager()
 	
 	value_int = models.IntegerField(
 		null = True,
-		blank = True
+		blank = True,
+	)
+	
+	value_string = models.CharField(
+		max_length = 255,
+		null = True,
+		blank = True,
 	)
 	
 	__value_object = None
@@ -126,7 +142,11 @@ class Value(models.Model):
 	
 	@property	
 	def is_assigned(self):
-		return not self.get_value() is None
+		value = self.get_value()
+		field = self.attribute.value_field
+		if field == 'value_string':
+			return not value is None and len(value) > 0
+		return not value is None
 		
 	def save_value(self):
 		# Re-assign product
@@ -156,14 +176,27 @@ def finalize_model():
 	
 	modules.attribute.Attribute = Attribute
 	
+class AttributeQuerySet(QuerySet):
+	def for_product(self, product):
+		return self.filter(values__product=product).distinct()
+
+class AttributeManager(models.Manager):
+	def get_query_set(self):
+		return AttributeQuerySet(self.model)
+	
+	def for_product(self, *args, **kwargs):
+		return self.get_query_set().for_product(*args, **kwargs)
+	
 class Attribute(models.Model):
 	
-	TYPE_TEXT = 'text'
+	objects = AttributeManager()
+	
+	TYPE_STRING = 'string'
 	TYPE_INT = 'int'
 	TYPE_OBJECT = 'object'
 	
 	TYPES = (
-		(TYPE_TEXT, _("text")),
+		(TYPE_STRING, _("string")),
 		(TYPE_INT, _("integer")),
 		(TYPE_OBJECT, _("object")),
 	)
@@ -182,7 +215,7 @@ class Attribute(models.Model):
 		max_length=50,
 		db_index=True,
 		choices = TYPES,
-		default = TYPE_TEXT
+		default = TYPE_STRING
 	)
 	
 	required = models.BooleanField(
