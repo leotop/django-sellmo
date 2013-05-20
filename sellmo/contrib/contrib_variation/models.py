@@ -41,8 +41,10 @@ from django.db.models.query import QuerySet
 from django.db.models.signals import pre_save, post_save, pre_delete
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
+
+#
 				
-@load(after='setup_variants')
+@load(after='load_variants')
 def load_model():
 	for subtype in modules.variation.product_subtypes:
 		class ProductMixin(ModelMixin):
@@ -109,15 +111,22 @@ def load_model():
 			return self
 	
 	class ValueManager(models.Manager):
+		
+		def __init__(self, *args, **kwargs):
+			self.recipeless = False
+			if kwargs.has_key('recipeless'):
+				self.recipeless = kwargs.pop('recipeless')
+			super(ValueManager, self).__init__(*args, **kwargs)
+	
 		def get_query_set(self):
-			return ValueQuerySet(self.model).recipe(exclude=True)
+			return ValueQuerySet(self.model).recipe(exclude=self.recipeless)
 			
 		def recipe(self, **kwargs):
 			return ValueQuerySet(self.model).recipe(**kwargs)
 	
 	class Value(modules.attribute.Value):
 		
-		objects = ValueManager()
+		objects = ValueManager(recipeless=True)
 		
 		# The attribute to which we belong
 		recipe = models.ForeignKey(
@@ -161,9 +170,15 @@ def finalize_model():
 		
 	
 class VariationRecipe(models.Model):
+
+	def __unicode__(self):
+		return unicode(self.product)
+
 	class Meta:
 		app_label = 'variation'
 		abstract = True
+		verbose_name = _("variation recipe")
+		verbose_name_plural = _("variation recipes")
 		
 @load(action='finalize_variation_Variation')
 @load(after='finalize_attribute_Value')
@@ -258,17 +273,14 @@ class VariationManager(models.Manager):
 						variation_values[variation_values.index(value)] = explicit
 						if explicit.pk in pks:
 							pks.remove(explicit.pk)
-			print 'creating'
+			
 			variation = modules.variation.Variation.objects.create(
 				id = modules.variation.Variation.generate_id(product, variation_values),
 				product = product,
 				variant = variant,
 			)
 			
-			
-			print 'adding values'
 			variation.values.add(*variation_values)
-			print 'done'
 		
 		def _variate(attribute_queue, variation_values=[]):
 			variations = []
@@ -285,16 +297,12 @@ class VariationManager(models.Manager):
 			return variations
 			
 		variations = _variate(attributes)
-		for x in self.filter(product=product):
-			print x.id
-			print x.values
-				
+		return variations
 	
 	def deprecate(self, product):
 		self.select_for_update().filter(product=product).update(deprecated=True)
 		
 	def for_product(self, product):
-		self.build(product)
 		variations = self.filter(product=product, deprecated=False)
 		if variations.count() > 0:
 			return variations
@@ -328,6 +336,8 @@ class Variation(models.Model):
 	class Meta:
 		app_label = 'variation'
 		abstract = True
+		verbose_name = _("variation")
+		verbose_name_plural = _("variations")
 	
 @load(after='finalize_store_Purchase')
 def load_model():

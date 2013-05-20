@@ -220,7 +220,7 @@ class VariantFormSet(BaseInlineFormSet):
 	__attributes = None
 	def get_attributes(self):
 		if self.__attributes is None:
-			self.__attributes = modules.attribute.Attribute.objects.all()
+			self.__attributes = modules.attribute.Attribute.objects.all().prefetch_related('object_choices__content_type')
 		return self.__attributes
 
 	def add_fields(self, form, index):

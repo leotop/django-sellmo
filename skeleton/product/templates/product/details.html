@@ -17,7 +17,7 @@
 			</tbody>
 		</table>
 		<ul>
-		{% for variation in product.variations %}
+		{% for variations in product.variations %}
 			<li>
 				<h4>{{ variation }}</h4>
 				{% add_to_cart_formset product=product variation=variation %}

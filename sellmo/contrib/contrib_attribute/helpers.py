@@ -91,7 +91,7 @@ class AttributeHelper(object):
 				yield value
 		
 	def save(self):
-		for value in self:
+		for value in self._values.values():
 			value.save_value()
 			
 		# Clean cache

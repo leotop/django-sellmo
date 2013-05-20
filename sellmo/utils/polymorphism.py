@@ -44,11 +44,43 @@ class PolymorphicQuerySet(QuerySet):
 		super(PolymorphicQuerySet, self).__init__(*args, **kwargs)
 	
 	def iterator(self):
-		for item in super(PolymorphicQuerySet, self).iterator():
+		if not self._downcast:
+			return super(PolymorphicQuerySet, self).iterator()
+		else:
+			content_types = {}
+			content_types_elements = {}
+			order = []
+			result = []
+			downcasts = {}
+			
+			for el in super(PolymorphicQuerySet, self).iterator():
+				if not content_types.has_key(el.content_type.pk):
+					content_types[el.content_type.pk] = el.content_type
+					content_types_elements[el.content_type.pk] = []
+				content_types_elements[el.content_type.pk].append(el)
+				order.append(el.pk)
+					
 			if self._downcast:
-				yield item.downcast()
-			else:
-				yield item
+				for content_type in content_types.values():
+					model = content_type.model_class()
+					elements = content_types_elements[content_type.pk]
+					pks = [element.pk for element in elements]
+					
+					for el in model.objects.filter(pk__in=pks):
+						downcasts[el.pk] = el
+						
+				for pk in order:
+					result.append(downcasts[pk])
+					
+			return result
+	
+	def __iter__(self):	
+		if self._downcast:
+			elements = self.prefetch_related('content_type')
+		else:
+			elements = self
+		return super(PolymorphicQuerySet, elements).__iter__()
+				
 				
 	def _clone(self, *args, **kwargs):
 		clone = super(PolymorphicQuerySet, self)._clone(*args, **kwargs)

@@ -1,8 +1,0 @@
-{% if variation %}
-<form action="{% url 'variation.add_to_cart' product.slug variation.key %}">
-{% else %}
-<form action="{% url 'cart.add_to_cart' product.slug %}">
-{% endif %}
-	{{ formset }}
-	<input type="submit" value="Add to cart"/>
-</form>

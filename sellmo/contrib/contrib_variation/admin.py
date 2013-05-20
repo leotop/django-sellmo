@@ -52,7 +52,6 @@ class VariationRecipeInlineMixin(object):
 	form = VariationRecipeForm
 	
 	def get_fieldsets(self, request, obj=None):
-	
 		fieldsets = ()
 		if self.declared_fieldsets:
 			fieldsets = self.declared_fieldsets

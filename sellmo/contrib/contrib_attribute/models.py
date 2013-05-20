@@ -139,6 +139,8 @@ class Value(models.Model):
 	class Meta:
 		abstract = True
 		ordering = ['product']
+		verbose_name = _("value")
+		verbose_name_plural = _("values")
 
 @load(action='finalize_attribute_Attribute')
 def finalize_model():
@@ -215,6 +217,8 @@ class Attribute(models.Model):
 
 	class Meta:
 		abstract = True
+		verbose_name = _("attribute")
+		verbose_name_plural = _("attributes")
 		
 # Init modules
 from sellmo.contrib.contrib_attribute.modules import *
