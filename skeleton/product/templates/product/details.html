@@ -16,14 +16,20 @@
 				{% endfor %}
 			</tbody>
 		</table>
-		<ul>
-		{% for variations in product|variations:True %}
-			<li>
-				<h4>{{ variations.0 }}: {{ variations.1 }}</h4>
-				{% add_to_cart_formset product=product variations=variations.2 %}
-			</li>
-		{% endfor %}
-		</ul>
-		{% add_to_cart_formset product=product %}
+		{% if product|variations:True %}
+			<ul>
+			{% for grouped in product|variations:True %}
+				<li>
+					<h4>{{ grouped.attribute }}: {{ grouped.value }}</h4>
+					<h5>{{ grouped.variant.sku }}</h5>
+					{% add_to_cart_formset product=product variations=grouped.variations %}
+				</li>
+			{% endfor %}
+			</ul>
+		{% else %}
+			<div>
+				{% add_to_cart_formset product=product %}
+			</div>
+		{% endif %}
 	</div>
 {% endblock %}

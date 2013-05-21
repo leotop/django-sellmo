@@ -39,5 +39,9 @@ class AttributeModule(Module):
 	Attribute = Attribute
 	Value = Value
 	
+	@chainable()
+	def get_attributes(self, chain, product, **kwargs):
+		return self.Attribute.objects.for_product(product)
+	
 	def __init__(self):
 		pass

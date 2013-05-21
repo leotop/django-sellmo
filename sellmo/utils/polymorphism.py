@@ -38,7 +38,7 @@ from django.contrib.admin.util import quote
 class PolymorphicQuerySet(QuerySet):
 	
 	def __init__(self, *args, **kwargs):
-		self._downcast = True
+		self._downcast = False
 		if kwargs.has_key('downcast'):
 			self._downcast = kwargs.pop('downcast')
 		super(PolymorphicQuerySet, self).__init__(*args, **kwargs)
@@ -94,7 +94,7 @@ class PolymorphicQuerySet(QuerySet):
 class PolymorphicManager(models.Manager):
 	
 	def get_query_set(self):
-		return PolymorphicQuerySet(self.model, using=self._db, downcast=False)
+		return PolymorphicQuerySet(self.model)
 		
 	def polymorphic(self):
 		return self.get_query_set().polymorphic()

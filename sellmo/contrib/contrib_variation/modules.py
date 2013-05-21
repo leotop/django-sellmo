@@ -70,31 +70,39 @@ class VariationModule(Module):
 		return modules.cart.add_to_cart(request, product_slug=product_slug, product=product, formset=formset)
 		
 	@chainable()
-	def get_attributes(self, chain, product, **kwargs):
-		return modules.attribute.Attribute.objects.for_product(product)
-		
-	@chainable()
 	def get_variations(self, chain, product, grouped=False, **kwargs):
 		variations = modules.variation.Variation.objects.for_product(product)
 		
 		if grouped:
 			try:
-				attribute = self.get_attributes(product=product).get(groups=True)
+				attribute = modules.attribute.get_attributes(product=product).get(groups=True)
 			except modules.attribute.Attribute.DoesNotExist:
-				variations = ((None, None, variations),)
+				return None
 			else:
 				result = ()
-				for value in modules.attribute.Value.objects.for_product(product).for_attribute(attribute=attribute, distinct=True):
+				for value in modules.attribute.Value.objects.recipe().for_product(product).for_attribute(attribute=attribute, distinct=True):
+					
+					# Find closest variant, defaults to product
+					variant = product
+					qargs = { attribute.value_field : value.get_value() }
+					# Find explicit values for this attribute / product / value combo
+					for explicit in modules.attribute.Value.objects.for_product(product).for_attribute(attribute=attribute).filter(**qargs):
+						# See if variant only related to one and one only attribute
+						if modules.attribute.Value.objects.filter(product=explicit.product).count() == 1:
+							variant = explicit.product
+					
+					# Build grouped result
 					qargs = {
 						'values__attribute' : attribute,
 						'values__%s' % attribute.value_field : value.get_value()
 					}
-					result += ((
-						value.attribute,
-						value.get_value(),
-						modules.variation.Variation.objects.filter(**qargs)
-					),)
-					variations = result
+					result += ({
+						'attribute' : value.attribute,
+						'value' : value.get_value(),
+						'variations' : modules.variation.Variation.objects.filter(**qargs),
+						'variant' : variant.downcast()
+					},)
+				variations = result
 		
 		return variations
 		

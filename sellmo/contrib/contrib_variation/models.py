@@ -106,8 +106,10 @@ def listen():
 
 @load(after='finalize_attribute_Attribute')	
 def load_manager():
+
+	qs = modules.attribute.Attribute.objects.get_query_set()
 	
-	class AttributeQuerySet(modules.attribute.Attribute.objects.get_query_set().__class__):
+	class AttributeQuerySet(qs.__class__):
 		def for_product(self, product):
 			return self.filter(Q(values__product=product) | Q(values__base_product=product)).distinct()
 	
@@ -141,7 +143,9 @@ def load_model():
 @load(after='finalize_attribute_Value')	
 def load_manager():
 	
-	class ValueQuerySet(QuerySet):
+	qs = modules.attribute.Value.objects.get_query_set()
+	
+	class ValueQuerySet(qs.__class__):
 		def recipe(self, exclude=False):
 			if exclude:
 				return self.filter(recipe=None)
@@ -159,7 +163,7 @@ def load_manager():
 					qargs = {
 						attribute.value_field : value
 					}
-					id = q.filter(**qargs).values_list('id', flat=True)[0]
+					id = q.filter(**qargs).annotate(has_recipe=Count('recipe')).order_by('-has_recipe')[0].id
 					distinct.append(id)
 				return q.filter(id__in=distinct)
 			else:
@@ -178,12 +182,6 @@ def load_manager():
 			
 		def recipe(self, *args, **kwargs):
 			return ValueQuerySet(self.model).recipe(*args, **kwargs)
-			
-		def for_product(self, *args, **kwargs):
-			return ValueQuerySet(self.model).for_product(*args, **kwargs)
-			
-		def for_attribute(self, *args, **kwargs):
-			return ValueQuerySet(self.model).for_attribute(*args, **kwargs)
 			
 	class Value(ModelMixin):
 		model = modules.attribute.Value
@@ -287,36 +285,21 @@ class VariationManager(models.Manager):
 		existing = self.filter(product=product)
 		existing.delete()
 		
-		# Get all values related to this product
-		values = modules.attribute.Value.objects.recipe(exclude=False).filter(base_product=product)
-		
-		if not values:
-			# No values, means no variations
-			return
-		
 		# Get all attributes related to this product
-		attributes = values.values_list('attribute', flat=True).distinct()
-		attributes = modules.attribute.Attribute.objects.filter(pk__in=attributes)
+		attributes = modules.attribute.Attribute.objects.for_product(product)
 		
-		# Narrow down values to have no duplicate values
-		# Prioritize recipe based values above explicit values
-		pks = []
-		for attribute in attributes:
-			duplicates = []
-			for value in values.filter(attribute=attribute).annotate(null_position=Count('recipe')).order_by('-recipe'):
-				if value.get_value() not in duplicates:
-					duplicates.append(value.get_value())
-					pks.append(value.pk)
-		
-		values = modules.attribute.Value.objects.recipe(exclude=False).filter(pk__in=pks)
-		
+		# No attributes, means no variations
+		if not attributes:
+			return
+			
+		invalidations = []
 		def _construct(variation_values):
 			
 			variant = None
 			
-			# Ensure all pk's are still available
+			# Try to invaldiate values
 			for value in variation_values:
-				if not value.pk in pks:
+				if value in invalidations:
 					return None
 			
 			# Find variant (if any)
@@ -331,15 +314,20 @@ class VariationManager(models.Manager):
 			else:
 				# Constructing explicit variation
 				# Find all explicit values
+				# And see if we're dealing with a 'fully' explicit variation
+				# A fully explicit variation should exclude it's values
+				fully_explicit=True
 				for value in list(variation_values):
 					try:
-						explicit = modules.attribute.Value.objects.recipe(exclude=True).get(product=variant, attribute=value.attribute)
+						explicit = modules.attribute.Value.objects.get(product=variant, attribute=value.attribute)
 					except modules.attribute.Value.DoesNotExist:
-						continue
+						fully_explicit=False
 					else:
 						variation_values[variation_values.index(value)] = explicit
-						if explicit.pk in pks:
-							pks.remove(explicit.pk)
+						
+				if fully_explicit:
+					invalidations.extend(variation_values)
+						
 			
 			variation = modules.variation.Variation.objects.create(
 				id = modules.variation.Variation.generate_id(product, variation_values),
@@ -358,7 +346,7 @@ class VariationManager(models.Manager):
 					variations.append(variation)
 			else:
 				attribute = attribute_queue[0]
-				for value in values.filter(attribute=attribute):
+				for value in modules.attribute.Value.objects.recipe().for_attribute(attribute=attribute, distinct=True):
 					variations.extend(_variate(attribute_queue[1:], variation_values + [value]))
 				
 			return variations
@@ -405,6 +393,7 @@ class Variation(models.Model):
 		abstract = True
 		verbose_name = _("variation")
 		verbose_name_plural = _("variations")
+		ordering = ['id']
 	
 @load(after='finalize_store_Purchase')
 def load_model():

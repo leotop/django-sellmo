@@ -72,7 +72,8 @@ def finalize_model():
 			modules.attribute.Attribute,
 			db_index = True,
 			verbose_name=_(u"attribute"),
-			related_name = 'values'
+			related_name = 'values',
+			on_delete = models.PROTECT
 		)
 	
 		# The product to which we apply
@@ -88,6 +89,7 @@ def finalize_model():
 			null = True,
 			blank = True,
 			db_index = True,
+			on_delete = models.PROTECT
 		)
 		
 		class Meta:
@@ -96,11 +98,21 @@ def finalize_model():
 	modules.attribute.Value = Value
 	
 class ValueQuerySet(QuerySet):
-	pass
+	def for_product(self, product):
+		return self.filter(product=product)
+		
+	def for_attribute(self, attribute, distinct=False):
+		return self.filter(attribute=attribute)
 	
 class ValueManager(models.Manager):
 	def get_query_set(self):
 		return ValueQuerySet(self.model)
+		
+	def for_product(self, *args, **kwargs):
+		return self.get_query_set().for_product(*args, **kwargs)
+		
+	def for_attribute(self, *args, **kwargs):
+		return self.get_query_set().for_attribute(*args, **kwargs)
 	
 class Value(models.Model):
 
