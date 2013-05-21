@@ -6,6 +6,6 @@ from sellmo.api.decorators import link
 
 @link()
 def details(request, product, context, **kwargs):
-	context['product'] = product
-	context = RequestContext(request, context)
-	return render_to_response('product/details.html', context)
+    context['product'] = product
+    context = RequestContext(request, context)
+    return render_to_response('product/details.html', context)

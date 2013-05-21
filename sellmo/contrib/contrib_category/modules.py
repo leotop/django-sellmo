@@ -35,20 +35,20 @@ from sellmo.contrib.contrib_category.models import Category
 #
 
 class CategoryModule(Module):
-	namespace = 'category'
-	Category = Category
-	
-	@view(r'(?P<category_slug>[a-z0-9_-]+)$')
-	def category(self, chain, request, category_slug, context=None, **kwargs):
-		if context == None:
-			context = {}
-		try:
-			category = self.Category.objects.get(slug=category_slug)
-		except self.Category.DoesNotExist:
-			raise Http404("""Category '%s' not found.""" % category_slug)
-		
-		if chain:
-			return chain.execute(request, category=category, context=context, **kwargs)
-		else:
-			# We don't render anything
-			raise Http404
+    namespace = 'category'
+    Category = Category
+    
+    @view(r'(?P<category_slug>[a-z0-9_-]+)$')
+    def category(self, chain, request, category_slug, context=None, **kwargs):
+        if context == None:
+            context = {}
+        try:
+            category = self.Category.objects.get(slug=category_slug)
+        except self.Category.DoesNotExist:
+            raise Http404("""Category '%s' not found.""" % category_slug)
+        
+        if chain:
+            return chain.execute(request, category=category, context=context, **kwargs)
+        else:
+            # We don't render anything
+            raise Http404

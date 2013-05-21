@@ -36,96 +36,96 @@ from django.contrib.admin.util import quote
 #
 
 class PolymorphicQuerySet(QuerySet):
-	
-	def __init__(self, *args, **kwargs):
-		self._downcast = False
-		if kwargs.has_key('downcast'):
-			self._downcast = kwargs.pop('downcast')
-		super(PolymorphicQuerySet, self).__init__(*args, **kwargs)
-	
-	def iterator(self):
-		if not self._downcast:
-			return super(PolymorphicQuerySet, self).iterator()
-		else:
-			content_types = {}
-			content_types_elements = {}
-			order = []
-			result = []
-			downcasts = {}
-			
-			for el in super(PolymorphicQuerySet, self).iterator():
-				if not content_types.has_key(el.content_type.pk):
-					content_types[el.content_type.pk] = el.content_type
-					content_types_elements[el.content_type.pk] = []
-				content_types_elements[el.content_type.pk].append(el)
-				order.append(el.pk)
-					
-			if self._downcast:
-				for content_type in content_types.values():
-					model = content_type.model_class()
-					elements = content_types_elements[content_type.pk]
-					pks = [element.pk for element in elements]
-					
-					for el in model.objects.filter(pk__in=pks):
-						downcasts[el.pk] = el
-						
-				for pk in order:
-					result.append(downcasts[pk])
-					
-			return result
-	
-	def __iter__(self):	
-		if self._downcast:
-			elements = self.prefetch_related('content_type')
-		else:
-			elements = self
-		return super(PolymorphicQuerySet, elements).__iter__()
-				
-				
-	def _clone(self, *args, **kwargs):
-		clone = super(PolymorphicQuerySet, self)._clone(*args, **kwargs)
-		clone._downcast = self._downcast
-		return clone
-			
-	def polymorphic(self):
-		self._downcast = True
-		return self
-			
+    
+    def __init__(self, *args, **kwargs):
+        self._downcast = False
+        if kwargs.has_key('downcast'):
+            self._downcast = kwargs.pop('downcast')
+        super(PolymorphicQuerySet, self).__init__(*args, **kwargs)
+    
+    def iterator(self):
+        if not self._downcast:
+            return super(PolymorphicQuerySet, self).iterator()
+        else:
+            content_types = {}
+            content_types_elements = {}
+            order = []
+            result = []
+            downcasts = {}
+            
+            for el in super(PolymorphicQuerySet, self).iterator():
+                if not content_types.has_key(el.content_type.pk):
+                    content_types[el.content_type.pk] = el.content_type
+                    content_types_elements[el.content_type.pk] = []
+                content_types_elements[el.content_type.pk].append(el)
+                order.append(el.pk)
+                    
+            if self._downcast:
+                for content_type in content_types.values():
+                    model = content_type.model_class()
+                    elements = content_types_elements[content_type.pk]
+                    pks = [element.pk for element in elements]
+                    
+                    for el in model.objects.filter(pk__in=pks):
+                        downcasts[el.pk] = el
+                        
+                for pk in order:
+                    result.append(downcasts[pk])
+                    
+            return result
+    
+    def __iter__(self): 
+        if self._downcast:
+            elements = self.prefetch_related('content_type')
+        else:
+            elements = self
+        return super(PolymorphicQuerySet, elements).__iter__()
+                
+                
+    def _clone(self, *args, **kwargs):
+        clone = super(PolymorphicQuerySet, self)._clone(*args, **kwargs)
+        clone._downcast = self._downcast
+        return clone
+            
+    def polymorphic(self):
+        self._downcast = True
+        return self
+            
 class PolymorphicManager(models.Manager):
-	
-	def get_query_set(self):
-		return PolymorphicQuerySet(self.model)
-		
-	def polymorphic(self):
-		return self.get_query_set().polymorphic()
+    
+    def get_query_set(self):
+        return PolymorphicQuerySet(self.model)
+        
+    def polymorphic(self):
+        return self.get_query_set().polymorphic()
 
 class PolymorphicModel(models.Model):
-	
-	content_type = models.ForeignKey(ContentType, editable=False, null=True, related_name='+')
-	objects = PolymorphicManager()
-	
-	@classmethod
-	def get_admin_url(cls, content_type, object_id):
-		parent = ContentType.objects.get_for_model(cls._meta.parents.keys()[-1])
-		return "%s/%s/%s/" % (parent.app_label, parent.model, quote(object_id))
-	
-	def save(self, *args, **kwargs):
-		if not self.content_type:
-			self.content_type = ContentType.objects.get_for_model(self.__class__)
-		super(PolymorphicModel, self).save(*args, **kwargs)
-		
-	def downcast(self):
-		if self.content_type:
-			model = self.content_type.model_class()
-			if(model == self.__class__):
-				return self
-			try:
-				downcasted = model.objects.get(id=self.id)
-			except model.DoesNotExist:
-				return self
-			else:
-				return downcasted 
-		return self
-		
-	class Meta:
-		abstract = True
+    
+    content_type = models.ForeignKey(ContentType, editable=False, null=True, related_name='+')
+    objects = PolymorphicManager()
+    
+    @classmethod
+    def get_admin_url(cls, content_type, object_id):
+        parent = ContentType.objects.get_for_model(cls._meta.parents.keys()[-1])
+        return "%s/%s/%s/" % (parent.app_label, parent.model, quote(object_id))
+    
+    def save(self, *args, **kwargs):
+        if not self.content_type:
+            self.content_type = ContentType.objects.get_for_model(self.__class__)
+        super(PolymorphicModel, self).save(*args, **kwargs)
+        
+    def downcast(self):
+        if self.content_type:
+            model = self.content_type.model_class()
+            if(model == self.__class__):
+                return self
+            try:
+                downcasted = model.objects.get(id=self.id)
+            except model.DoesNotExist:
+                return self
+            else:
+                return downcasted 
+        return self
+        
+    class Meta:
+        abstract = True

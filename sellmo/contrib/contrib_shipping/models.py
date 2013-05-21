@@ -36,56 +36,56 @@ from django.utils.translation import ugettext_lazy as _
 
 class Method(models.Model):
 
-	carrier = models.CharField(
-		max_length = 30,
-	)
-	
-	description = models.TextField(
-		blank = True,
-		null = True
-	)
-	
-	def to_sellmo_method(self):
-		raise NotImplementedError()
+    carrier = models.CharField(
+        max_length = 30,
+    )
+    
+    description = models.TextField(
+        blank = True,
+        null = True
+    )
+    
+    def to_sellmo_method(self):
+        raise NotImplementedError()
 
-	class Meta:
-		abstract = True
+    class Meta:
+        abstract = True
 
 #
 
 class BasicMethod(Method):
 
-	def to_sellmo_method(self):
-		return ShippingMethod(self.carrier, description=self.description)
+    def to_sellmo_method(self):
+        return ShippingMethod(self.carrier, description=self.description)
 
-	class Meta:
-		app_label = 'shipping'
-		verbose_name = _("basic shipping method")
-		verbose_name_plural = _("basic shipping methods")
+    class Meta:
+        app_label = 'shipping'
+        verbose_name = _("basic shipping method")
+        verbose_name_plural = _("basic shipping methods")
 
 #
 
 class TieredMethod(Method):
 
-	def to_sellmo_method(self):
-		return ShippingMethod(self.carrier, description=self.description)
+    def to_sellmo_method(self):
+        return ShippingMethod(self.carrier, description=self.description)
 
-	class Meta:
-		app_label = 'shipping'
-		verbose_name = _("tiered shipping method")
-		verbose_name_plural = _("tiered shipping methods")
+    class Meta:
+        app_label = 'shipping'
+        verbose_name = _("tiered shipping method")
+        verbose_name_plural = _("tiered shipping methods")
 
 class TieredMethodTier(models.Model):
-	
-	method = models.ForeignKey(
-		TieredMethod
-	)
-	
-	#
-	amount = modules.pricing.construct_decimal_field()
-	tier = modules.pricing.construct_decimal_field()
-	
-	class Meta:
-		app_label = 'shipping'
-		verbose_name = _("shipping tier")
-		verbose_name_plural = _("shipping tiers")
+    
+    method = models.ForeignKey(
+        TieredMethod
+    )
+    
+    #
+    amount = modules.pricing.construct_decimal_field()
+    tier = modules.pricing.construct_decimal_field()
+    
+    class Meta:
+        app_label = 'shipping'
+        verbose_name = _("shipping tier")
+        verbose_name_plural = _("shipping tiers")

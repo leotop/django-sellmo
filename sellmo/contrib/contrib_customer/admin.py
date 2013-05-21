@@ -35,13 +35,13 @@ from sellmo import modules
 from . models import *
 
 #
-	
+    
 class AddressInline(admin.StackedInline):
-	model = modules.customer.Address
-	
+    model = modules.customer.Address
+    
 class CustomerAdmin(admin.ModelAdmin):
-	inlines = [AddressInline]
-	
+    inlines = [AddressInline]
+    
 #
 
 admin.site.register(modules.customer.Customer, CustomerAdmin)

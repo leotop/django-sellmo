@@ -33,15 +33,15 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
-class AttributeModule(Module):	
+class AttributeModule(Module):  
 
-	namespace = 'attribute'
-	Attribute = Attribute
-	Value = Value
-	
-	@chainable()
-	def get_attributes(self, chain, product, **kwargs):
-		return self.Attribute.objects.for_product(product)
-	
-	def __init__(self):
-		pass
+    namespace = 'attribute'
+    Attribute = Attribute
+    Value = Value
+    
+    @chainable()
+    def get_attributes(self, chain, product, **kwargs):
+        return self.Attribute.objects.for_product(product)
+    
+    def __init__(self):
+        pass

@@ -38,90 +38,90 @@ from sellmo.utils.sessions import TrackingManager
 
 @load(after='finalize_customer_Customer')
 def load_model():
-	class Address(modules.customer.Address):
-		customer = models.ForeignKey(
-			modules.customer.Customer,
-			related_name = 'addresses',
-			verbose_name = _("customer")
-		)
-		
-		class Meta:
-			abstract = True
-		
-	modules.customer.Address = Address
+    class Address(modules.customer.Address):
+        customer = models.ForeignKey(
+            modules.customer.Customer,
+            related_name = 'addresses',
+            verbose_name = _("customer")
+        )
+        
+        class Meta:
+            abstract = True
+        
+    modules.customer.Address = Address
 
 @load(after='finalize_customer_Addressee', before='finalize_customer_Customer')
 def load_model():
-	class Customer(modules.customer.Customer, modules.customer.Addressee):
-		class Meta:
-			abstract = True
-		
-	modules.customer.Customer = Customer
-	
+    class Customer(modules.customer.Customer, modules.customer.Addressee):
+        class Meta:
+            abstract = True
+        
+    modules.customer.Customer = Customer
+    
 @load(after='finalize_customer_Addressee', before='finalize_customer_Address')
 def load_model():
-	class Address(modules.customer.Address, modules.customer.Addressee):
-		class Meta:
-			abstract = True
-		
-	modules.customer.Address = Address
-		
+    class Address(modules.customer.Address, modules.customer.Addressee):
+        class Meta:
+            abstract = True
+        
+    modules.customer.Address = Address
+        
 @load(action='finalize_customer_Customer')
 def finalize_model():
-	class Customer(modules.customer.Customer):
-		pass
-	modules.customer.Customer = Customer
-	
+    class Customer(modules.customer.Customer):
+        pass
+    modules.customer.Customer = Customer
+    
 @load(action='finalize_customer_Address')
 def finalize_model():
-	class Address(modules.customer.Address):
-		pass
-	modules.customer.Address = Address
+    class Address(modules.customer.Address):
+        pass
+    modules.customer.Address = Address
 
 class Addressee(models.Model):
 
-	first_name = models.CharField(
-		max_length = 30,
-		verbose_name = _("first name")
-	)
-	
-	last_name = models.CharField(
-		max_length = 30,
-		verbose_name = _("last name")
-	)
-	
-	class Meta:
-		app_label = 'customer'
-		abstract = True
+    first_name = models.CharField(
+        max_length = 30,
+        verbose_name = _("first name")
+    )
+    
+    last_name = models.CharField(
+        max_length = 30,
+        verbose_name = _("last name")
+    )
+    
+    class Meta:
+        app_label = 'customer'
+        abstract = True
 
 class Customer(models.Model):
-	
-	objects = TrackingManager('sellmo_customer')
-	
-	user = models.OneToOneField(
-		User,
-		blank = True,
-		null = True,
-		verbose_name = _("user")
-	)
-	
-	class Meta:
-		app_label = 'customer'
-		verbose_name = _("customer")
-		verbose_name_plural = _("customers")
-		ordering = ['last_name', 'first_name']
-		abstract = True
-	
+    
+    objects = TrackingManager('sellmo_customer')
+    
+    user = models.OneToOneField(
+        User,
+        blank = True,
+        null = True,
+        verbose_name = _("user")
+    )
+    
+    class Meta:
+        app_label = 'customer'
+        verbose_name = _("customer")
+        verbose_name_plural = _("customers")
+        ordering = ['last_name', 'first_name']
+        abstract = True
+    
 class Address(models.Model):
-	
-	type = models.CharField(
-		max_length = 30,
-		verbose_name = _("type")
-	)
-	
-	class Meta:
-		app_label = 'customer'
-		verbose_name = _("address")
-		verbose_name_plural = _("addresses")
-		ordering = ['last_name', 'first_name']
-		abstract = True
+    
+    type = models.CharField(
+        max_length = 30,
+        verbose_name = _("type")
+    )
+    
+    class Meta:
+        app_label = 'customer'
+        verbose_name = _("address")
+        verbose_name_plural = _("addresses")
+        ordering = ['last_name', 'first_name']
+        abstract = True

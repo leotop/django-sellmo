@@ -36,26 +36,26 @@ from sellmo.api.decorators import load
 
 @load(after='load_product_Product', before='finalize_product_Product')
 def load_model():
-	
-	class Product(modules.product.Product):
-		
-		active = models.BooleanField(
-			default = True,
-			verbose_name = _("active"),
-			help_text = (
-				"Inactive products will be hidden from the site."
-			)
-		)
-		
-		featured = models.BooleanField(
-			verbose_name = _("featured"),
-			help_text = (
-				"Marks this product as featured allowing additional showcasing across the site."
-			)
-		)
-		
-		class Meta:
-			abstract = True
-	
-	modules.product.Product = Product
-	
+    
+    class Product(modules.product.Product):
+        
+        active = models.BooleanField(
+            default = True,
+            verbose_name = _("active"),
+            help_text = (
+                "Inactive products will be hidden from the site."
+            )
+        )
+        
+        featured = models.BooleanField(
+            verbose_name = _("featured"),
+            help_text = (
+                "Marks this product as featured allowing additional showcasing across the site."
+            )
+        )
+        
+        class Meta:
+            abstract = True
+    
+    modules.product.Product = Product
+    

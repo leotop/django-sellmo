@@ -37,122 +37,122 @@ from sellmo.utils.sessions import TrackingManager
 
 @load(after='finalize_cart_Cart', before='finalize_cart_CartItem')
 def load_model():
-	class CartItem(modules.cart.CartItem):
-		cart = models.ForeignKey(
-			modules.cart.Cart,
-			related_name = 'items'
-		)
-		
-		class Meta:
-			abstract = True
-		
-	modules.cart.CartItem = CartItem
-		
+    class CartItem(modules.cart.CartItem):
+        cart = models.ForeignKey(
+            modules.cart.Cart,
+            related_name = 'items'
+        )
+        
+        class Meta:
+            abstract = True
+        
+    modules.cart.CartItem = CartItem
+        
 @load(after='finalize_store_Purchase', before='finalize_cart_CartItem')
 def load_model():
-	class CartItem(modules.cart.CartItem):
-		purchase = models.OneToOneField(
-			modules.store.Purchase,
-			editable = False
-		)
-		
-		class Meta:
-			abstract = True
-		
-	modules.cart.CartItem = CartItem
-		
+    class CartItem(modules.cart.CartItem):
+        purchase = models.OneToOneField(
+            modules.store.Purchase,
+            editable = False
+        )
+        
+        class Meta:
+            abstract = True
+        
+    modules.cart.CartItem = CartItem
+        
 @load(action='finalize_cart_Cart')
 def finalize_model():
-	class Cart(modules.cart.Cart):
-		pass
-	modules.cart.Cart = Cart
-	
+    class Cart(modules.cart.Cart):
+        pass
+    modules.cart.Cart = Cart
+    
 @load(action='finalize_cart_CartItem')
 def finalize_model():
-	class CartItem(modules.cart.CartItem):
-		pass
-	modules.cart.CartItem = CartItem
+    class CartItem(modules.cart.CartItem):
+        pass
+    modules.cart.CartItem = CartItem
 
 class Cart(models.Model):
-	
-	objects = TrackingManager('sellmo_cart')
-	
-	#
-	
-	created = models.DateTimeField(
-		auto_now_add = True,
-		editable = False
-	)
-	
-	modified = models.DateTimeField(
-		auto_now = True,
-		editable = False
-	)
-	
-	#
-		
-	def add(self, purchase):
-		if self.pk == None:
-			self.save()
-		item = modules.cart.CartItem(cart=self, purchase=purchase)
-		item.save()
-		
-	def remove(self, purchase):
-		pass
-		
-	def clear(self):
-		pass
-	
-	def __iter__(self):
-		if hasattr(self, 'items'):
-			for item in self.items.all():
-				yield item
-			
-	# Pricing
-	@property
-	def total(self):
-		price = Price()
-		for item in self:
-			price += item.total
-		return price
-		
-	#
-	
-	def __unicode__(self):
-		return unicode(self.modified)
-	
-	class Meta:
-		app_label = 'cart'
-		abstract = True
-		
+    
+    objects = TrackingManager('sellmo_cart')
+    
+    #
+    
+    created = models.DateTimeField(
+        auto_now_add = True,
+        editable = False
+    )
+    
+    modified = models.DateTimeField(
+        auto_now = True,
+        editable = False
+    )
+    
+    #
+        
+    def add(self, purchase):
+        if self.pk == None:
+            self.save()
+        item = modules.cart.CartItem(cart=self, purchase=purchase)
+        item.save()
+        
+    def remove(self, purchase):
+        pass
+        
+    def clear(self):
+        pass
+    
+    def __iter__(self):
+        if hasattr(self, 'items'):
+            for item in self.items.all():
+                yield item
+            
+    # Pricing
+    @property
+    def total(self):
+        price = Price()
+        for item in self:
+            price += item.total
+        return price
+        
+    #
+    
+    def __unicode__(self):
+        return unicode(self.modified)
+    
+    class Meta:
+        app_label = 'cart'
+        abstract = True
+        
 class CartItem(models.Model):
-	
-	__purchase = None
-	@property
-	def _purchase(self):
-		if self.__purchase is None:
-			self.__purchase = self.purchase.downcast()
-		return self.__purchase
-		
-	@property
-	def qty(self):
-		return self._purchase.qty
-		
-	@property
-	def description(self):
-		return self._purchase.description
-		
-	@property
-	def product(self):
-		return self._purchase.product
-	
-	@property
-	def total(self):
-		return self._purchase.price
-	
-	def __unicode__(self):
-		return unicode(self._purchase)
-	
-	class Meta:
-		app_label = 'cart'
-		abstract = True
+    
+    __purchase = None
+    @property
+    def _purchase(self):
+        if self.__purchase is None:
+            self.__purchase = self.purchase.downcast()
+        return self.__purchase
+        
+    @property
+    def qty(self):
+        return self._purchase.qty
+        
+    @property
+    def description(self):
+        return self._purchase.description
+        
+    @property
+    def product(self):
+        return self._purchase.product
+    
+    @property
+    def total(self):
+        return self._purchase.price
+    
+    def __unicode__(self):
+        return unicode(self._purchase)
+    
+    class Meta:
+        app_label = 'cart'
+        abstract = True

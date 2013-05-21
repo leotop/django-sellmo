@@ -29,60 +29,60 @@ from decimal import Decimal
 
 class Price(object):
 
-	@staticmethod
-	def _sanity_check(a, b):
-		assert isinstance(a, Price), """Not a price"""
-		assert isinstance(b, Price), """Not a price"""
-		assert a.currency == b.currency, """Currency mismatch"""
+    @staticmethod
+    def _sanity_check(a, b):
+        assert isinstance(a, Price), """Not a price"""
+        assert isinstance(b, Price), """Not a price"""
+        assert a.currency == b.currency, """Currency mismatch"""
 
-	def __init__(self, amount=0, currency=None, type=None):
-		self.amount = amount
-		if not isinstance(self.amount, Decimal):
-			self.amount = Decimal(str(self.amount))
-		
-		self.currency = currency
-		self.type = type
-		self._mutations = [(amount, type)]
-		
-	def __add__(a, b):
-		Price._sanity_check(a, b)
-		a.amount += b.amount
-		a._mutations.extend(b._mutations)
-		return a
-		
-	def __sub__(a, b):
-		Price._sanity_check(a, b)
-		a.amount -= b.amount
-		a._mutations.extend((-mutation[0], mutation[1]) for mutation in b._mutations)
-		return a
-		
-	def __mul__(a, b):
-		Price._sanity_check(a, b)
-		d = a.amount
-		a.amount *= b.amount
-		d = a.amount - d
-		a._mutations.append((d, b.type))
-		return a
-		
-	def __div__(a, b):
-		Price._sanity_check(a, b)
-		d = a.amount
-		a.amount /= b.amount
-		d = a.amount - d
-		a._mutations.append((d, b.type))
-		return a
-		
-	def __getitem__(self, key):
-		if key:
-			price = Price(0, self.currency, key)
-			for mutation in self._mutations:
-				if mutation[1] == key:
-					price.amount += mutation[0]
-			return price
-		raise KeyError(key)
-	
-	def __unicode__(self):
-		return unicode(self.amount)
-		
-	def __str(self):
-		return str(self.amount)
+    def __init__(self, amount=0, currency=None, type=None):
+        self.amount = amount
+        if not isinstance(self.amount, Decimal):
+            self.amount = Decimal(str(self.amount))
+        
+        self.currency = currency
+        self.type = type
+        self._mutations = [(amount, type)]
+        
+    def __add__(a, b):
+        Price._sanity_check(a, b)
+        a.amount += b.amount
+        a._mutations.extend(b._mutations)
+        return a
+        
+    def __sub__(a, b):
+        Price._sanity_check(a, b)
+        a.amount -= b.amount
+        a._mutations.extend((-mutation[0], mutation[1]) for mutation in b._mutations)
+        return a
+        
+    def __mul__(a, b):
+        Price._sanity_check(a, b)
+        d = a.amount
+        a.amount *= b.amount
+        d = a.amount - d
+        a._mutations.append((d, b.type))
+        return a
+        
+    def __div__(a, b):
+        Price._sanity_check(a, b)
+        d = a.amount
+        a.amount /= b.amount
+        d = a.amount - d
+        a._mutations.append((d, b.type))
+        return a
+        
+    def __getitem__(self, key):
+        if key:
+            price = Price(0, self.currency, key)
+            for mutation in self._mutations:
+                if mutation[1] == key:
+                    price.amount += mutation[0]
+            return price
+        raise KeyError(key)
+    
+    def __unicode__(self):
+        return unicode(self.amount)
+        
+    def __str(self):
+        return str(self.amount)

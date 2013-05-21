@@ -39,23 +39,23 @@ from sellmo.api.store.models import Purchase
 
 class StoreModule(sellmo.Module):
 
-	namespace = 'store'
-	Purchase = Purchase
+    namespace = 'store'
+    Purchase = Purchase
 
-	def __init__(self, *args, **kwargs):
-		pass
-			
-	@chainable()
-	def make_purchase(self, chain, product, qty, purchase=None, **kwargs):
-		
-		if not purchase:
-			purchase = self.Purchase(product=product, qty=qty)
-			purchase.stamp(product.get_price())
-			
-		if chain:
-			out = chain.execute(product=product, qty=qty, purchase=purchase, **kwargs)
-			if out.has_key('purchase'):
-				purchase = out['purchase']
-		
-		purchase.save()
-		return purchase
+    def __init__(self, *args, **kwargs):
+        pass
+            
+    @chainable()
+    def make_purchase(self, chain, product, qty, purchase=None, **kwargs):
+        
+        if not purchase:
+            purchase = self.Purchase(product=product, qty=qty)
+            purchase.stamp(product.get_price())
+            
+        if chain:
+            out = chain.execute(product=product, qty=qty, purchase=purchase, **kwargs)
+            if out.has_key('purchase'):
+                purchase = out['purchase']
+        
+        purchase.save()
+        return purchase

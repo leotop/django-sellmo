@@ -30,68 +30,68 @@ from sellmo.magic import singleton, SingletonMeta
 
 @singleton
 class MountPoint(object):
-	
-	def __init__(self):
-		self._pending = []
-		self._modules = []
-	
-	def on_module_creation(self, module):
-		if module.enabled:
-			setattr(self, module.namespace, module)
-			self._pending.append(module)
-			self._modules.append(module)
-			
-	def on_module_init(self, module, instance):
-		setattr(self, module.namespace, instance)
-		
-		# Remove class based module and add instance based module
-		self._pending.remove(module)
-		self._modules.remove(module)
-		self._modules.append(instance)
-			
-	def init_pending_modules(self):
-		while self._pending:
-			module = self._pending[0]
-			module()
-			
-	def __iter__(self):
-		for module in self._modules:
-			yield module
-			
+    
+    def __init__(self):
+        self._pending = []
+        self._modules = []
+    
+    def on_module_creation(self, module):
+        if module.enabled:
+            setattr(self, module.namespace, module)
+            self._pending.append(module)
+            self._modules.append(module)
+            
+    def on_module_init(self, module, instance):
+        setattr(self, module.namespace, instance)
+        
+        # Remove class based module and add instance based module
+        self._pending.remove(module)
+        self._modules.remove(module)
+        self._modules.append(instance)
+            
+    def init_pending_modules(self):
+        while self._pending:
+            module = self._pending[0]
+            module()
+            
+    def __iter__(self):
+        for module in self._modules:
+            yield module
+            
 modules = MountPoint()
 
 class _ModuleMeta(SingletonMeta):
-	
-	def __new__(meta, name, bases, dict):
-		cls = super(_ModuleMeta, meta).__new__(meta, name, bases, dict)
-		
-		# Threat the actual 'Module' class not as a module
-		if cls.__ignore__:
-			cls.__ignore__ = False
-			return cls
-		
-		# Validate the module
-		if not cls.namespace:
-			raise Exception("No namespace defined for module '%s'" % cls)
-		
-		# Signal mountpoint
-		modules.on_module_creation(cls)
-		
-		return cls
+    
+    def __new__(meta, name, bases, dict):
+        cls = super(_ModuleMeta, meta).__new__(meta, name, bases, dict)
+        
+        # Threat the actual 'Module' class not as a module
+        if cls.__ignore__:
+            cls.__ignore__ = False
+            return cls
+        
+        # Validate the module
+        if not cls.namespace:
+            raise Exception("No namespace defined for module '%s'" % cls)
+        
+        # Signal mountpoint
+        modules.on_module_creation(cls)
+        
+        return cls
 
 class Module(object):
-	
-	__metaclass__ = _ModuleMeta
-	__ignore__ = True
-	
-	enabled = True
-	namespace = None
-	prefix = None
-	
-	def __new__(cls, *args, **kwargs):
-		module = None
-		if cls.enabled:
-			module = object.__new__(cls)
-			
-		modules.on_module_init(cls, module)
-		return module
+    
+    __metaclass__ = _ModuleMeta
+    __ignore__ = True
+    
+    enabled = True
+    namespace = None
+    prefix = None
+    
+    def __new__(cls, *args, **kwargs):
+        module = None
+        if cls.enabled:
+            module = object.__new__(cls)
+            
+        modules.on_module_init(cls, module)
+        return module

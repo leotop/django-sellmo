@@ -34,17 +34,17 @@ from django.utils.translation import ugettext_lazy as _
 #
 
 class Address(models.Model):
-	
-	street1 = models.CharField(
-		max_length = 50,
-	)
-	
-	street2 = models.CharField(
-		max_length = 50,
-		blank = True,
-		null = True
-	)
-	
-	class Meta:
-		abstract = True
-		app_label = 'customer'
+    
+    street1 = models.CharField(
+        max_length = 50,
+    )
+    
+    street2 = models.CharField(
+        max_length = 50,
+        blank = True,
+        null = True
+    )
+    
+    class Meta:
+        abstract = True
+        app_label = 'customer'

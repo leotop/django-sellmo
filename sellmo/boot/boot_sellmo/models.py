@@ -32,7 +32,7 @@ from sellmo.core.main import Sellmo
 
 # Wrap all exceptions because Django does not capture ImportErrors
 try:
-	# !! THIS INITS SELLMO
-	sellmo = Sellmo()
+    # !! THIS INITS SELLMO
+    sellmo = Sellmo()
 except Exception as exception:
-	raise Exception(str(exception)), None, sys.exc_info()[2]
+    raise Exception(str(exception)), None, sys.exc_info()[2]

@@ -27,59 +27,59 @@
 from sellmo.core.loading import loader
 
 def load(action=None, after=None, before=None):
-	def decorator(func):
-		loader.register(func, action=action, after=after, before=before)
-		return func
-	
-	return decorator
-	
+    def decorator(func):
+        loader.register(func, action=action, after=after, before=before)
+        return func
+    
+    return decorator
+    
 def link(name=None, namespace=None, capture=False):
-	def decorator(func):
-		func._name = name if name else func.func_name
-		func._namespace = namespace
-		func._capture = capture
-		func._im_linked = True
-		return func
-	
-	return decorator
-	
+    def decorator(func):
+        func._name = name if name else func.func_name
+        func._namespace = namespace
+        func._capture = capture
+        func._im_linked = True
+        return func
+    
+    return decorator
+    
 def view(regex=None, name=None, namespace=None):
-	def decorator(func):
-		def view(self, request, **kwargs):
-			chain = getattr(self, '_%s_chain' % func.func_name, None)
-			if chain.can_capture:
-				# Capture
-				captured = chain.capture(request, **kwargs)
-				kwargs.update(captured)
-			
-			response = func(self, chain, request, **kwargs)
-			return response
-		
-		view._im_chainable = True
-		view._im_view = True
-		view._regex = regex
-		view._name = name if name else func.func_name
-		view._namespace = namespace
-		return view
-		
-	return decorator
-	
+    def decorator(func):
+        def view(self, request, **kwargs):
+            chain = getattr(self, '_%s_chain' % func.func_name, None)
+            if chain.can_capture:
+                # Capture
+                captured = chain.capture(request, **kwargs)
+                kwargs.update(captured)
+            
+            response = func(self, chain, request, **kwargs)
+            return response
+        
+        view._im_chainable = True
+        view._im_view = True
+        view._regex = regex
+        view._name = name if name else func.func_name
+        view._namespace = namespace
+        return view
+        
+    return decorator
+    
 def chainable(name=None, namespace=None):
-	def decorator(func):
-		def chainable(self, **kwargs):
-			chain = getattr(self, '_%s_chain' % func.func_name, None)
-			if chain:
-				# Capture
-				captured = chain.capture(**kwargs)
-				kwargs.update(captured)
-			
-			result = func(self, chain, **kwargs)
-			return result
-			
-		chainable._im_chainable = True
-		chainable._im_get = True
-		chainable._name = name if name else func.func_name
-		chainable._namespace = namespace
-		return chainable
-		
-	return decorator
+    def decorator(func):
+        def chainable(self, **kwargs):
+            chain = getattr(self, '_%s_chain' % func.func_name, None)
+            if chain:
+                # Capture
+                captured = chain.capture(**kwargs)
+                kwargs.update(captured)
+            
+            result = func(self, chain, **kwargs)
+            return result
+            
+        chainable._im_chainable = True
+        chainable._im_get = True
+        chainable._name = name if name else func.func_name
+        chainable._namespace = namespace
+        return chainable
+        
+    return decorator

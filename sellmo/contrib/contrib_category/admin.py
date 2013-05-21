@@ -38,37 +38,37 @@ from django.contrib.admin.sites import NotRegistered
 #
 
 class ProductCategoryMixin(object):
-	def formfield_for_manytomany(self, db_field, request, **kwargs):
-		if db_field.name == 'category':
-			kwargs['queryset'] = modules.category.Category.objects.all().prefetch_related('parent')
-		return super(ProductCategoryMixin, self).formfield_for_manytomany(db_field, request, **kwargs)
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        if db_field.name == 'category':
+            kwargs['queryset'] = modules.category.Category.objects.all().prefetch_related('parent')
+        return super(ProductCategoryMixin, self).formfield_for_manytomany(db_field, request, **kwargs)
 
 class ProductCategoryListFilter(admin.SimpleListFilter):
-	title = _("category")
-	parameter_name = 'category'
-	
-	def lookups(self, request, model_admin):
-		return [(str(category.pk), unicode(category)) for category in modules.category.Category.objects.all()]
-		
-	def queryset(self, request, queryset):
-		pk = self.value()
-		if pk != None:
-			category = modules.category.Category.objects.get(pk=pk)
-			return queryset.in_category(category)
-		else:
-			return queryset.all()
-			
+    title = _("category")
+    parameter_name = 'category'
+    
+    def lookups(self, request, model_admin):
+        return [(str(category.pk), unicode(category)) for category in modules.category.Category.objects.all()]
+        
+    def queryset(self, request, queryset):
+        pk = self.value()
+        if pk != None:
+            category = modules.category.Category.objects.get(pk=pk)
+            return queryset.in_category(category)
+        else:
+            return queryset.all()
+            
 class CategoryParentListFilter(admin.SimpleListFilter):
-	title = _("parent category")
-	parameter_name = 'parent'
-	
-	def lookups(self, request, model_admin):
-		return [(str(category.pk), unicode(category)) for category in modules.category.Category.objects.all()]
-		
-	def queryset(self, request, queryset):
-		pk = self.value()
-		if pk != None:
-			category = modules.category.Category.objects.get(pk=pk)
-			return queryset.in_parent(category)
-		else:
-			return queryset.all()
+    title = _("parent category")
+    parameter_name = 'parent'
+    
+    def lookups(self, request, model_admin):
+        return [(str(category.pk), unicode(category)) for category in modules.category.Category.objects.all()]
+        
+    def queryset(self, request, queryset):
+        pk = self.value()
+        if pk != None:
+            category = modules.category.Category.objects.get(pk=pk)
+            return queryset.in_parent(category)
+        else:
+            return queryset.all()

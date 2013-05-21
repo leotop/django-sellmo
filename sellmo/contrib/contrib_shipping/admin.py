@@ -32,12 +32,12 @@ from sellmo.contrib.contrib_shipping.models import TieredMethod, TieredMethodTie
 from django.contrib import admin
 
 #
-	
+    
 class TieredMethodTierInline(admin.TabularInline):
-	model = TieredMethodTier
-	
+    model = TieredMethodTier
+    
 class TieredMethodAdmin(admin.ModelAdmin):
-	inlines = [TieredMethodTierInline]
-	
+    inlines = [TieredMethodTierInline]
+    
 
 admin.site.register(TieredMethod, TieredMethodAdmin)

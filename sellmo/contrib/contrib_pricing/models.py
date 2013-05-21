@@ -41,36 +41,36 @@ from django.utils.translation import ugettext_lazy as _
 #
 
 class QtyPriceBase(models.Model):
-	
-	qty = models.PositiveIntegerField(
-		verbose_name = _("quantity"),
-	)
-	
-	def __unicode__(self):
-		return _("%s qty or more") % unicode(self.qty)
-	
-	class Meta:
-		abstract = True
-		app_label = 'pricing'
+    
+    qty = models.PositiveIntegerField(
+        verbose_name = _("quantity"),
+    )
+    
+    def __unicode__(self):
+        return _("%s qty or more") % unicode(self.qty)
+    
+    class Meta:
+        abstract = True
+        app_label = 'pricing'
 
 
 class QtyPrice(QtyPriceBase):
-	
-	amount = modules.pricing.construct_decimal_field(
-		verbose_name = _("amount"),
-	)
-	
-	class Meta:
-		abstract = True
-		app_label = 'pricing'
-		
+    
+    amount = modules.pricing.construct_decimal_field(
+        verbose_name = _("amount"),
+    )
+    
+    class Meta:
+        abstract = True
+        app_label = 'pricing'
+        
 class QtyPriceRatio(QtyPriceBase):
-	
-	ratio = modules.pricing.construct_decimal_field(
-		default = Decimal('1.00'),
-		verbose_name = _("ratio"),
-	)
-	
-	class Meta:
-		abstract = True
-		app_label = 'pricing'
+    
+    ratio = modules.pricing.construct_decimal_field(
+        default = Decimal('1.00'),
+        verbose_name = _("ratio"),
+    )
+    
+    class Meta:
+        abstract = True
+        app_label = 'pricing'

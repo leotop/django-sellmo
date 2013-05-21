@@ -47,94 +47,94 @@ logger = logging.getLogger('sellmo')
 # 
 
 class NotLinkedException(Exception):
-	pass
+    pass
 
 @singleton
 class Sellmo(object):
-	
-	def __init__(self):
-	
-		# Init sellmo apps before initing modules allowing them to configure the class based modules
-		apps = list(self._init_apps())
-		
-		# Init sellmo modules now to
-		self._init_modules()
-		
-		self._load_apps(apps)
-		self._link_apps(apps)
-		self._link_apps(apps, '.links')
-	
-	def _init_apps(self):
-		for app in settings.INSTALLED_APPS:
-			mod = import_module(app)
-			try:
-				sellmo = import_module('%s.__sellmo__' % app)
-			except Exception as exception:
-				if module_has_submodule(mod, '__sellmo__'):
-					raise Exception(str(exception)), None, sys.exc_info()[2]
-			else:
-				sellmo.path = app
-				yield sellmo
-				
-	def _init_modules(self):
-		modules.init_pending_modules()
-		for module in modules:
-			for name in dir(module):
-				attr = getattr(module, name)
-				if hasattr(attr, '_im_chainable'):
-					self._init_chain(module, attr)
-				
-	def _init_chain(self, module, func):
-		name = '_%s_chain' % func._name
-		if hasattr(module, name):
-			raise Exception()
-			
-		chain = chaining.Chain
-		if getattr(func, '_im_view', False):
-			chain = chaining.ViewChain
-		chain = chain(func)
-		setattr(module, name, chain)		
-			
-	def _load_apps(self, apps):
-		loading.loader.load()
-		
-						
-	def _link_apps(self, apps, module='.views'):
-		for app in apps:
-			try:
-				imported = import_module(module, app.path)
-			except ImportError:
-				continue
-			else:
-				kwargs = {
-					'namespace' : getattr(app, 'namespace', None),
-				}
-				for name in dir(imported):
-					attr = getattr(imported, name)
-					if hasattr(attr, '_im_linked'):
-						if not self._link(attr, **kwargs):
-							logger.warning("Could not link '%s.%s'"  % (attr.__module__, attr.__name__))
-	
-	def _link(self, link, namespace=None):
-		if link._namespace:
-			# override default namespace
-			namespace = link._namespace
-		
-		if not namespace:
-			raise Exception("Link '%s' does not define a namespace" % link)
-		
-		if not hasattr(modules, namespace):
-			logger.warning("Module '%s' not found"  % namespace)
-			return False
-		
-		module = getattr(modules, namespace)
-		name = '_%s_chain' % link._name
-		
-		if not hasattr(module, name):
-			logger.warning("Module '%s' has no chainable method '%s'"  % (namespace, link._name))
-			return False
-		
-		links = getattr(module, name)
-		links.link(link)
-		return True
-		
+    
+    def __init__(self):
+    
+        # Init sellmo apps before initing modules allowing them to configure the class based modules
+        apps = list(self._init_apps())
+        
+        # Init sellmo modules now to
+        self._init_modules()
+        
+        self._load_apps(apps)
+        self._link_apps(apps)
+        self._link_apps(apps, '.links')
+    
+    def _init_apps(self):
+        for app in settings.INSTALLED_APPS:
+            mod = import_module(app)
+            try:
+                sellmo = import_module('%s.__sellmo__' % app)
+            except Exception as exception:
+                if module_has_submodule(mod, '__sellmo__'):
+                    raise Exception(str(exception)), None, sys.exc_info()[2]
+            else:
+                sellmo.path = app
+                yield sellmo
+                
+    def _init_modules(self):
+        modules.init_pending_modules()
+        for module in modules:
+            for name in dir(module):
+                attr = getattr(module, name)
+                if hasattr(attr, '_im_chainable'):
+                    self._init_chain(module, attr)
+                
+    def _init_chain(self, module, func):
+        name = '_%s_chain' % func._name
+        if hasattr(module, name):
+            raise Exception()
+            
+        chain = chaining.Chain
+        if getattr(func, '_im_view', False):
+            chain = chaining.ViewChain
+        chain = chain(func)
+        setattr(module, name, chain)        
+            
+    def _load_apps(self, apps):
+        loading.loader.load()
+        
+                        
+    def _link_apps(self, apps, module='.views'):
+        for app in apps:
+            try:
+                imported = import_module(module, app.path)
+            except ImportError:
+                continue
+            else:
+                kwargs = {
+                    'namespace' : getattr(app, 'namespace', None),
+                }
+                for name in dir(imported):
+                    attr = getattr(imported, name)
+                    if hasattr(attr, '_im_linked'):
+                        if not self._link(attr, **kwargs):
+                            logger.warning("Could not link '%s.%s'"  % (attr.__module__, attr.__name__))
+    
+    def _link(self, link, namespace=None):
+        if link._namespace:
+            # override default namespace
+            namespace = link._namespace
+        
+        if not namespace:
+            raise Exception("Link '%s' does not define a namespace" % link)
+        
+        if not hasattr(modules, namespace):
+            logger.warning("Module '%s' not found"  % namespace)
+            return False
+        
+        module = getattr(modules, namespace)
+        name = '_%s_chain' % link._name
+        
+        if not hasattr(module, name):
+            logger.warning("Module '%s' has no chainable method '%s'"  % (namespace, link._name))
+            return False
+        
+        links = getattr(module, name)
+        links.link(link)
+        return True
+        

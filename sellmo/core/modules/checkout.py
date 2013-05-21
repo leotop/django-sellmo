@@ -38,62 +38,62 @@ from sellmo.api.checkout.models import Order, OrderLine
 
 class CheckoutModule(sellmo.Module):
 
-	namespace = 'checkout'
-	prefix = 'checkout'
-	enabled = True
-	Order = Order
-	OrderLine = OrderLine
-	
-	collect_shipping_methods = dispatch.Signal(providing_args=['methods'])
-	collect_payment_methods = dispatch.Signal(providing_args=['methods'])
-	
-	def __init__(self, *args, **kwargs):
-		pass
-		
-	@view(r'$')
-	def checkout(self, chain, request, cart=None, context=None, **kwargs):
-		if context == None:
-			context = {}
-		
-		#
-		modules.customer.customer_form(request, context=context)
-		modules.customer.address_form(request, prefix='billing', context=context)
-		
-		#
-		#self.on_shipping_method_form(request, context=context, **kwargs)
-		#self.on_payment_method_form(request, context=context, **kwargs)
-		
-		#
-		if chain:
-			return chain.execute(request, cart=cart, context=context, **kwargs)
-		
-	@chainable()
-	def get_shipping_method_form(self, chain, data=None, methods=None, **kwargs):
-		
-		#
-		if methods == None:
-			methods = []
-			self.collect_shipping_methods.send(sender=self, methods=methods)
-		
-		#
-		if data == None:
-			form = self._ShippingMethodForm(methods=methods, **kwargs)
-		else:
-			form = _ShippingMethodForm(data, methods=methods)
-		
-		if chain:
-			return chain.execute(form=form, post=post, methods=methods, context=context, **kwargs)
-		
-		return form
-			
-	@view()
-	def shipping_method_form(self, chain, request, methods=None, context=None, **kwargs):
-		if context == None:
-			context = {}
-		
-		#
-		context['shipping_method'] = self.get_shipping_method_form(post=request.POST)
-			
-		#
-		if chain:
-			chain.execute(request, context=context, **kwargs)
+    namespace = 'checkout'
+    prefix = 'checkout'
+    enabled = True
+    Order = Order
+    OrderLine = OrderLine
+    
+    collect_shipping_methods = dispatch.Signal(providing_args=['methods'])
+    collect_payment_methods = dispatch.Signal(providing_args=['methods'])
+    
+    def __init__(self, *args, **kwargs):
+        pass
+        
+    @view(r'$')
+    def checkout(self, chain, request, cart=None, context=None, **kwargs):
+        if context == None:
+            context = {}
+        
+        #
+        modules.customer.customer_form(request, context=context)
+        modules.customer.address_form(request, prefix='billing', context=context)
+        
+        #
+        #self.on_shipping_method_form(request, context=context, **kwargs)
+        #self.on_payment_method_form(request, context=context, **kwargs)
+        
+        #
+        if chain:
+            return chain.execute(request, cart=cart, context=context, **kwargs)
+        
+    @chainable()
+    def get_shipping_method_form(self, chain, data=None, methods=None, **kwargs):
+        
+        #
+        if methods == None:
+            methods = []
+            self.collect_shipping_methods.send(sender=self, methods=methods)
+        
+        #
+        if data == None:
+            form = self._ShippingMethodForm(methods=methods, **kwargs)
+        else:
+            form = _ShippingMethodForm(data, methods=methods)
+        
+        if chain:
+            return chain.execute(form=form, post=post, methods=methods, context=context, **kwargs)
+        
+        return form
+            
+    @view()
+    def shipping_method_form(self, chain, request, methods=None, context=None, **kwargs):
+        if context == None:
+            context = {}
+        
+        #
+        context['shipping_method'] = self.get_shipping_method_form(post=request.POST)
+            
+        #
+        if chain:
+            chain.execute(request, context=context, **kwargs)

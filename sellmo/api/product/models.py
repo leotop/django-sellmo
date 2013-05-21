@@ -37,42 +37,42 @@ from sellmo.utils.polymorphism import PolymorphicModel
 
 @load(action='finalize_product_Product')
 def finalize_model():
-	class Product(modules.product.Product):
-		pass
-	modules.product.Product = Product
+    class Product(modules.product.Product):
+        pass
+    modules.product.Product = Product
 
 class Product(PolymorphicModel):
-	
-	slug = models.SlugField(
-		max_length = 80,
-		db_index = True,
-		unique = True,
-		verbose_name = _("slug"),
-		help_text = _(
-			"Slug will be used in the address of"
-			" the product page. It should be"
-			" URL-friendly (letters, numbers,"
-			" hyphens and underscores only) and"
-			" descriptive for the SEO needs."
-		)
-	)
-	
-	def __unicode__(self):
-		return self.slug
-		
-	def natural_key(self):
-		return (self.slug,)
-		
-	@models.permalink
-	def get_absolute_url(self):
-		return 'product.details', (self.slug,)
-		
-	def get_price(self, **kwargs):
-		return modules.pricing.get_price(product=self, **kwargs)
-	
-	class Meta:
-		ordering = ['slug']
-		app_label = 'product'
-		verbose_name = _("product")
-		verbose_name_plural = _("products")
-		abstract = True
+    
+    slug = models.SlugField(
+        max_length = 80,
+        db_index = True,
+        unique = True,
+        verbose_name = _("slug"),
+        help_text = _(
+            "Slug will be used in the address of"
+            " the product page. It should be"
+            " URL-friendly (letters, numbers,"
+            " hyphens and underscores only) and"
+            " descriptive for the SEO needs."
+        )
+    )
+    
+    def __unicode__(self):
+        return self.slug
+        
+    def natural_key(self):
+        return (self.slug,)
+        
+    @models.permalink
+    def get_absolute_url(self):
+        return 'product.details', (self.slug,)
+        
+    def get_price(self, **kwargs):
+        return modules.pricing.get_price(product=self, **kwargs)
+    
+    class Meta:
+        ordering = ['slug']
+        app_label = 'product'
+        verbose_name = _("product")
+        verbose_name_plural = _("products")
+        abstract = True

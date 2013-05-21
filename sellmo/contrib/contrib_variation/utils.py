@@ -30,29 +30,29 @@ from sellmo import modules
 
 def generate_slug(product, values=None, unique=False, full=False, short=False):
 
-	if not values:
-		values = list(product.attributes)
-		
-	sequences = []
-	if not full:
-		sequences.append('-'.join([unicode(value.get_value()) for value in values]))
-	if not short:
-		sequences.append('_'.join([u'%s-%s' % (value.attribute.key, unicode(value.get_value())) for value in values]))
-	
-	 
-	for attributes in sequences:
-		slug = u'%(prefix)s-%(attributes)s' % {
-			'attributes' : attributes,
-			'prefix' : product.slug
-		}
-		if not unique or VariantMixin.is_unique_slug(slug, ignore=product):
-			return slug
-	return slug
+    if not values:
+        values = list(product.attributes)
+        
+    sequences = []
+    if not full:
+        sequences.append('-'.join([unicode(value.get_value()) for value in values]))
+    if not short:
+        sequences.append('_'.join([u'%s-%s' % (value.attribute.key, unicode(value.get_value())) for value in values]))
+    
+     
+    for attributes in sequences:
+        slug = u'%(prefix)s-%(attributes)s' % {
+            'attributes' : attributes,
+            'prefix' : product.slug
+        }
+        if not unique or VariantMixin.is_unique_slug(slug, ignore=product):
+            return slug
+    return slug
 
 def is_unique_slug(slug, ignore=None):
-	try:
-		existing = modules.product.Product.objects.polymorphic().get(slug=slug)
-	except modules.product.Product.DoesNotExist:
-		return True
-	
-	return existing == ignore
+    try:
+        existing = modules.product.Product.objects.polymorphic().get(slug=slug)
+    except modules.product.Product.DoesNotExist:
+        return True
+    
+    return existing == ignore

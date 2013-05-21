@@ -33,10 +33,10 @@ from sellmo.contrib.contrib_tax.models import Tax
 from django.contrib import admin
 
 #
-	
+    
 class TaxAdmin(admin.ModelAdmin):
-	pass
-	
+    pass
+    
 #
 
 admin.site.register(Tax, TaxAdmin)

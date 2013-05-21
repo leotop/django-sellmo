@@ -33,11 +33,11 @@ from sellmo import modules
 #
 
 class AddressForm(modules.customer.AddressForm):
-	class Meta:
-		model = modules.customer.Address
-		exclude = ('customer', 'type')
+    class Meta:
+        model = modules.customer.Address
+        exclude = ('customer', 'type')
 
 class CustomerForm(modules.customer.CustomerForm):
-	class Meta:
-		model = modules.customer.Customer
-		exclude = ('user',)
+    class Meta:
+        model = modules.customer.Customer
+        exclude = ('user',)

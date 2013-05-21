@@ -39,46 +39,46 @@ from django.utils.translation import ugettext_lazy as _
 #
 
 class AttributeKeyField(models.SlugField):
-	def validate(self, value, instance):
-		super(AttributeKeyField, self).validate(value, instance)
-		key_regex = r'[a-z][a-z0-9_]*'
-		if not re.match(key_regex, value):
-			raise ValidationError(_(u"Must be all lower case, " \
-				u"start with a letter, and contain " \
-				u"only letters, numbers, or underscores."))
-				
-	@staticmethod
-	def create_key_from_name(name):
-    	
-		name = name.strip().lower()
-		
-		# Change spaces to underscores
-		name = '_'.join(name.split())
-		
-		# Remove non alphanumeric characters
-		return re.sub('[^\w]', '', name)
-		
+    def validate(self, value, instance):
+        super(AttributeKeyField, self).validate(value, instance)
+        key_regex = r'[a-z][a-z0-9_]*'
+        if not re.match(key_regex, value):
+            raise ValidationError(_(u"Must be all lower case, " \
+                u"start with a letter, and contain " \
+                u"only letters, numbers, or underscores."))
+                
+    @staticmethod
+    def create_key_from_name(name):
+        
+        name = name.strip().lower()
+        
+        # Change spaces to underscores
+        name = '_'.join(name.split())
+        
+        # Remove non alphanumeric characters
+        return re.sub('[^\w]', '', name)
+        
 class AttributeTypeField(models.CharField):
-	def validate(self, value, instance):
-		super(AttributeTypeField, self).validate(value, instance)
-		if not instance.pk:
-			return
-		
-		if value == modules.attribute.Attribute.objects.get(pk=instance.pk).type:
-			return	
-		
-		if instance.values.count() > 0:
-			raise ValidationError(_(u"Cannot change attribute type " \
-				u"of an attribute that is already in use."))
-		
-		
-		
+    def validate(self, value, instance):
+        super(AttributeTypeField, self).validate(value, instance)
+        if not instance.pk:
+            return
+        
+        if value == modules.attribute.Attribute.objects.get(pk=instance.pk).type:
+            return  
+        
+        if instance.values.count() > 0:
+            raise ValidationError(_(u"Cannot change attribute type " \
+                u"of an attribute that is already in use."))
+        
+        
+        
 # South support
 
 try:
-	from south.modelsinspector import add_introspection_rules
+    from south.modelsinspector import add_introspection_rules
 except ImportError:
-	pass
+    pass
 else:
-	add_introspection_rules([], ["^sellmo\.contrib\.contrib_attribute\.fields\.AttributeKeyField"])
-	add_introspection_rules([], ["^sellmo\.contrib\.contrib_attribute\.fields\.AttributeTypeField"])
+    add_introspection_rules([], ["^sellmo\.contrib\.contrib_attribute\.fields\.AttributeKeyField"])
+    add_introspection_rules([], ["^sellmo\.contrib\.contrib_attribute\.fields\.AttributeTypeField"])

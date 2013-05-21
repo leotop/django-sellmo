@@ -29,18 +29,18 @@ from django.db.models import fields
 #
 
 class _ModelMixin(type):
-	def __new__(meta, name, bases, dict):
-		cls = type.__new__(meta, name, bases, dict)
-		
-		if name != 'ModelMixin':
-			assert 'model' in dict
-			model = dict.pop('model')
+    def __new__(meta, name, bases, dict):
+        cls = type.__new__(meta, name, bases, dict)
+        
+        if name != 'ModelMixin':
+            assert 'model' in dict
+            model = dict.pop('model')
 
-			for name, member in dict.iteritems():
-				if name not in ModelMixin.__dict__:					
-					model.add_to_class(name, member)
-		
-		return cls
+            for name, member in dict.iteritems():
+                if name not in ModelMixin.__dict__:                 
+                    model.add_to_class(name, member)
+        
+        return cls
 
 class ModelMixin(object):
     __metaclass__ = _ModelMixin

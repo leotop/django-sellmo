@@ -43,22 +43,22 @@ from django.contrib.admin.sites import NotRegistered
 from django.contrib.contenttypes.models import ContentType
 
 #
-			
+            
 class ProductAttributeMixin(object):
-	
-	form = ProductAttributeForm
-	
-	def get_fieldsets(self, request, obj=None):
-	
-		fieldsets = ()
-		if self.declared_fieldsets:
-			fieldsets = self.declared_fieldsets
-		
-		fieldsets += ((_("Attributes"), {'fields': modules.attribute.Attribute.objects.values_list('key', flat=True)}),)
-		return fieldsets
-	
+    
+    form = ProductAttributeForm
+    
+    def get_fieldsets(self, request, obj=None):
+    
+        fieldsets = ()
+        if self.declared_fieldsets:
+            fieldsets = self.declared_fieldsets
+        
+        fieldsets += ((_("Attributes"), {'fields': modules.attribute.Attribute.objects.values_list('key', flat=True)}),)
+        return fieldsets
+    
 class AttributeAdminMixin(object):
-	def formfield_for_manytomany(self, db_field, request, **kwargs):
-		if db_field.name == 'object_choices':
-			kwargs['queryset'] = ValueObject.objects.polymorphic().all()
-		return super(AttributeAdminMixin, self).formfield_for_manytomany(db_field, request, **kwargs)
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        if db_field.name == 'object_choices':
+            kwargs['queryset'] = ValueObject.objects.polymorphic().all()
+        return super(AttributeAdminMixin, self).formfield_for_manytomany(db_field, request, **kwargs)

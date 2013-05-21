@@ -37,52 +37,52 @@ from sellmo.api.pricing.models import Stampable
 #
 
 class PricingModule(sellmo.Module):
-	"""
-	Routes product pricing logic to higher level modules and acts as a container for pricing
-	related models.
-	"""
+    """
+    Routes product pricing logic to higher level modules and acts as a container for pricing
+    related models.
+    """
 
-	namespace = 'pricing'
-	currency = 'EUR'
-	types = []
-	Stampable = Stampable
-	
-	#: Configures the max digits for a pricing (decimal) field
-	decimal_max_digits = 9
-	#: Configures the amount of decimal places for a pricing (decimal) field
-	decimal_places = 2
-	
-	@staticmethod
-	def construct_decimal_field(**kwargs):
-		"""
-		Constructs a decimal field. 
-		"""
-		return models.DecimalField(
-			max_digits = modules.pricing.decimal_max_digits,
-			decimal_places = modules.pricing.decimal_places,
-			**kwargs
-		)
-	
-	def __init__(self, *args, **kwargs):
-		pass
-			
-	@chainable()
-	def stamp(self, chain, stampable, price, **kwargs):
-		stampable.amount = price.amount
-		for type in self.types:
-			attr = '%s_amount' % type
-			setattr(stampable, attr, price[type].amount)
-			
-	@chainable()
-	def get_price(self, chain, product, price=None, **kwargs):
-		if chain:
-			out = chain.execute(product=product, price=price, **kwargs)
-			if out.has_key('price'):
-				price = out['price']
-		
-		# Ensure we're dealing with a number
-		if not isinstance(price, Price):
-			raise Exception("An invalid 'price' was provided")
-		
-		return price
-	
+    namespace = 'pricing'
+    currency = 'EUR'
+    types = []
+    Stampable = Stampable
+    
+    #: Configures the max digits for a pricing (decimal) field
+    decimal_max_digits = 9
+    #: Configures the amount of decimal places for a pricing (decimal) field
+    decimal_places = 2
+    
+    @staticmethod
+    def construct_decimal_field(**kwargs):
+        """
+        Constructs a decimal field. 
+        """
+        return models.DecimalField(
+            max_digits = modules.pricing.decimal_max_digits,
+            decimal_places = modules.pricing.decimal_places,
+            **kwargs
+        )
+    
+    def __init__(self, *args, **kwargs):
+        pass
+            
+    @chainable()
+    def stamp(self, chain, stampable, price, **kwargs):
+        stampable.amount = price.amount
+        for type in self.types:
+            attr = '%s_amount' % type
+            setattr(stampable, attr, price[type].amount)
+            
+    @chainable()
+    def get_price(self, chain, product, price=None, **kwargs):
+        if chain:
+            out = chain.execute(product=product, price=price, **kwargs)
+            if out.has_key('price'):
+                price = out['price']
+        
+        # Ensure we're dealing with a number
+        if not isinstance(price, Price):
+            raise Exception("An invalid 'price' was provided")
+        
+        return price
+    

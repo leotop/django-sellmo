@@ -26,60 +26,60 @@
 
 # Dummy method, assigned the 2nd time an instance is made.
 def __init__(self, *args, **kwargs):
-	pass
-	
+    pass
+    
 # Descriptor for __new__ method 
 class SingletonAccess(object):
-	
-	def __init__(self, cls, new):
-		self._cls = cls
-		self._new = new
-		self._instance = None
-	
-	def __get__(self, obj, objtype):
-		if objtype == self._cls:
-			return self._get_instance
-		else:
-			return self._new
-	
-	def __set__(self, obj, val):
-		raise Exception()
-	
-	def _get_instance(self, cls, *args, **kwargs):
-		if not self._instance:
-			# Create first and only instance by calling original __new__
-			self._instance = self._new(cls, *args, **kwargs)
-		return self._instance
-		
+    
+    def __init__(self, cls, new):
+        self._cls = cls
+        self._new = new
+        self._instance = None
+    
+    def __get__(self, obj, objtype):
+        if objtype == self._cls:
+            return self._get_instance
+        else:
+            return self._new
+    
+    def __set__(self, obj, val):
+        raise Exception()
+    
+    def _get_instance(self, cls, *args, **kwargs):
+        if not self._instance:
+            # Create first and only instance by calling original __new__
+            self._instance = self._new(cls, *args, **kwargs)
+        return self._instance
+        
 # Descriptor for ___init__ method 
 class OneTimeInitAccess(object):
-	
-	def __init__(self, cls, init):
-		self._cls = cls
-		self._init = init
-		self._omit = False
-	
-	def __get__(self, obj, objtype):
-		init = self._init
-		if objtype == self._cls:
-			if self._omit:
-				init = __init__
-			self._omit = True
-		return init.__get__(obj, objtype)
-	
-	def __set__(self, obj, val):
-		raise Exception()
-		
+    
+    def __init__(self, cls, init):
+        self._cls = cls
+        self._init = init
+        self._omit = False
+    
+    def __get__(self, obj, objtype):
+        init = self._init
+        if objtype == self._cls:
+            if self._omit:
+                init = __init__
+            self._omit = True
+        return init.__get__(obj, objtype)
+    
+    def __set__(self, obj, val):
+        raise Exception()
+        
 # Usage option 1: __metaclass__ assignment
 class SingletonMeta(type):
-	def __new__(meta, name, bases, dict):
-		cls = type.__new__(meta, name, bases, dict)
-		cls.__new__ = SingletonAccess(cls, cls.__new__)
-		cls.__init__ = OneTimeInitAccess(cls, cls.__init__)
-		return cls
-		
+    def __new__(meta, name, bases, dict):
+        cls = type.__new__(meta, name, bases, dict)
+        cls.__new__ = SingletonAccess(cls, cls.__new__)
+        cls.__init__ = OneTimeInitAccess(cls, cls.__init__)
+        return cls
+        
 # Usage option 2: decorator usage
 def singleton(cls):
-	cls.__new__ = SingletonAccess(cls, cls.__new__)
-	cls.__init__ = OneTimeInitAccess(cls, cls.__init__)
-	return cls
+    cls.__new__ = SingletonAccess(cls, cls.__new__)
+    cls.__init__ = OneTimeInitAccess(cls, cls.__init__)
+    return cls

@@ -34,5 +34,5 @@ from sellmo.api.decorators import link
 
 @link()
 def details(request, product, context, **kwargs):
-	if not product.active:
-		raise Http404
+    if not product.active:
+        raise Http404

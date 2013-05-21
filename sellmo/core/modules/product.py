@@ -37,32 +37,32 @@ from sellmo.api.product.models import Product
 
 class ProductModule(sellmo.Module):
 
-	namespace = 'product'
-	prefix = 'products'
-	Product = Product
-	
-	def __init__(self, *args, **kwargs):
-		from sellmo.api.product.models import Product
-		self.Product = Product
-		self.subtypes = []
-		
-	def register_subtype(self, subtype):
-		self.subtypes.append(subtype)
-		
-		# Shouldn't be a problem if Capital cased classnames are used.
-		setattr(self, subtype.__name__, subtype)
-	
-	@view(r'(?P<product_slug>[a-z0-9_-]+)$')
-	def details(self, chain, request, product_slug, context=None, **kwargs):
-		if context == None:
-			context = {}
-		try:
-			product = self.Product.objects.polymorphic().get(slug=product_slug)
-		except self.Product.DoesNotExist:
-			raise Http404("""Product '%s' not found.""" % product_slug)
-		
-		if chain:
-			return chain.execute(request, product=product, context=context, **kwargs)
-		else:
-			# We don't render anything
-			raise Http404
+    namespace = 'product'
+    prefix = 'products'
+    Product = Product
+    
+    def __init__(self, *args, **kwargs):
+        from sellmo.api.product.models import Product
+        self.Product = Product
+        self.subtypes = []
+        
+    def register_subtype(self, subtype):
+        self.subtypes.append(subtype)
+        
+        # Shouldn't be a problem if Capital cased classnames are used.
+        setattr(self, subtype.__name__, subtype)
+    
+    @view(r'(?P<product_slug>[a-z0-9_-]+)$')
+    def details(self, chain, request, product_slug, context=None, **kwargs):
+        if context == None:
+            context = {}
+        try:
+            product = self.Product.objects.polymorphic().get(slug=product_slug)
+        except self.Product.DoesNotExist:
+            raise Http404("""Product '%s' not found.""" % product_slug)
+        
+        if chain:
+            return chain.execute(request, product=product, context=context, **kwargs)
+        else:
+            # We don't render anything
+            raise Http404

@@ -38,86 +38,86 @@ from django.utils.text import capfirst
 # Exceptions
 
 class ProductUnassignedException(Exception):
-	pass
-	
+    pass
+    
 class DuplicateSlugException(Exception):
-	pass
-	
+    pass
+    
 #
 
 class VariantMixin(object):
-	
-	non_variable_fields = ['content_type', 'slug', 'product']
-	non_variable_field_types = [models.BooleanField]
-	_variable_fields_enabled = True
-	_is_variant = True
-	
-	@classmethod
-	def get_variable_fields(cls):
-		for field in cls._meta.fields:
-			if not field.auto_created and field.null and not field.name in cls.non_variable_fields and not field.__class__ in cls.non_variable_field_types:
-				yield field
-	
-	def get_product(self):
-		if hasattr(self, 'product_id') and self.product_id != None:
-			return self.product		
-		return None
-		
-	def validate_unique(self, exclude=None):
-		super(self.__class__.__base__, self).validate_unique(exclude)
-		if 'slug' not in exclude:
-			if not is_unique_slug(self.slug, ignore=self):
-				message = _("%(model_name)s with this %(field_label)s already exists.") % {
-					'model_name': capfirst(modules.product.Product._meta.verbose_name),
-					'field_label': 'slug'
-				}
-				raise ValidationError({'slug' : [message]})		
+    
+    non_variable_fields = ['content_type', 'slug', 'product']
+    non_variable_field_types = [models.BooleanField]
+    _variable_fields_enabled = True
+    _is_variant = True
+    
+    @classmethod
+    def get_variable_fields(cls):
+        for field in cls._meta.fields:
+            if not field.auto_created and field.null and not field.name in cls.non_variable_fields and not field.__class__ in cls.non_variable_field_types:
+                yield field
+    
+    def get_product(self):
+        if hasattr(self, 'product_id') and self.product_id != None:
+            return self.product     
+        return None
+        
+    def validate_unique(self, exclude=None):
+        super(self.__class__.__base__, self).validate_unique(exclude)
+        if 'slug' not in exclude:
+            if not is_unique_slug(self.slug, ignore=self):
+                message = _("%(model_name)s with this %(field_label)s already exists.") % {
+                    'model_name': capfirst(modules.product.Product._meta.verbose_name),
+                    'field_label': 'slug'
+                }
+                raise ValidationError({'slug' : [message]})     
 
-	def save(self, *args, **kwargs):
-		product = self.get_product()
-		if not product:
-			raise ProductUnassignedException()
-			
-		for field in self.__class__.get_variable_fields():
-			val = getattr(self, field.name)
-			pval = getattr(product, field.name)
-			if val == pval:
-				setattr(self, field.name, None)
-		
-		self._variable_fields_enabled = False
-		super(VariantMixin, self).save(*args, **kwargs)
-		self._variable_fields_enabled = True
+    def save(self, *args, **kwargs):
+        product = self.get_product()
+        if not product:
+            raise ProductUnassignedException()
+            
+        for field in self.__class__.get_variable_fields():
+            val = getattr(self, field.name)
+            pval = getattr(product, field.name)
+            if val == pval:
+                setattr(self, field.name, None)
+        
+        self._variable_fields_enabled = False
+        super(VariantMixin, self).save(*args, **kwargs)
+        self._variable_fields_enabled = True
 
-	class Meta:
-		app_label = 'product'
-		verbose_name = _("variant")
-		verbose_name_plural = _("variants")
-	
+    class Meta:
+        app_label = 'product'
+        verbose_name = _("variant")
+        verbose_name_plural = _("variants")
+    
 class VariantFieldDescriptor(object):
-	
-	def __init__(self, field, descriptor=None):
-		self.field = field
-		self.descriptor = descriptor
-	
-	def __get__(self, obj, objtype):
-		if not self.descriptor:
-			val = obj.__dict__.get(self.field.name, None)
-		else:
-			val = self.descriptor.__get__(obj, objtype)
+    
+    def __init__(self, field, descriptor=None):
+        self.field = field
+        self.descriptor = descriptor
+    
+    def __get__(self, obj, objtype):
+        if not self.descriptor:
+            val = obj.__dict__.get(self.field.name, None)
+        else:
+            val = self.descriptor.__get__(obj, objtype)
 
-		if not val and obj._variable_fields_enabled:
-			product = obj.get_product()
-			if product:
-				# Get this variant products value
-				val = getattr(obj.product, self.field.name)
-			
-		return val
-		
-	def __set__(self, obj, val):
-		if not self.descriptor:
-			obj.__dict__[self.field.name] = val
-		else:
-			self.descriptor.__set__(obj, val)
-			
-		
-		
+        if not val and obj._variable_fields_enabled:
+            product = obj.get_product()
+            if product:
+                # Get this variant products value
+                val = getattr(obj.product, self.field.name)
+            
+        return val
+        
+    def __set__(self, obj, val):
+        if not self.descriptor:
+            obj.__dict__[self.field.name] = val
+        else:
+            self.descriptor.__set__(obj, val)
+            
+        
+        

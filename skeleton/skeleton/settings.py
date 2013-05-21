@@ -88,7 +88,7 @@ TEMPLATE_LOADERS = (
 )
 
 MIDDLEWARE_CLASSES = (
-	#'debug_toolbar.middleware.DebugToolbarMiddleware',
+    #'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -127,54 +127,54 @@ INSTALLED_APPS = (
     # --- Sellmo BEGIN ---
     
     # Needs to be first
-	'sellmo.boot.boot_modules',
-	
-	# Product apps
-	'sellmo.contrib.contrib_attribute',
-	'sellmo.contrib.contrib_attribute.objects.color',
-	'attribute',
-	'sellmo.contrib.contrib_variation',
-	'variation',
-	'sellmo.contrib.contrib_product',
-	'sellmo.contrib.contrib_product.subtypes.simple_product',
-	'product',
-	
-	# Pricing apps
-	'sellmo.contrib.contrib_pricing',
-	'pricing',
-	
-	# Cart apps
-	'cart',
-	
-	# Tax apps
-	'sellmo.contrib.contrib_tax',
-	'tax',
-	
-	# Customer apps
-	'sellmo.contrib.contrib_customer',
-	'customer',
-	
-	# Shipping apps
-	'sellmo.contrib.contrib_shipping',
-	'shipping',
-	
-	# Checkout apps
-	'checkout',
-	
-	# Category apps
-	'sellmo.contrib.contrib_category',
-	'category',
-	
-	# Store apps
-	'store',
-	
-	# Enables polymorphism in admin
-	'sellmo.contrib.polymorphism',
-	
-	# Needs to be last
-	'sellmo.boot.boot_sellmo'
-	# --- Sellmo END ---
-	
+    'sellmo.boot.boot_modules',
+    
+    # Product apps
+    'sellmo.contrib.contrib_attribute',
+    'sellmo.contrib.contrib_attribute.objects.color',
+    'attribute',
+    'sellmo.contrib.contrib_variation',
+    'variation',
+    'sellmo.contrib.contrib_product',
+    'sellmo.contrib.contrib_product.subtypes.simple_product',
+    'product',
+    
+    # Pricing apps
+    'sellmo.contrib.contrib_pricing',
+    'pricing',
+    
+    # Cart apps
+    'cart',
+    
+    # Tax apps
+    'sellmo.contrib.contrib_tax',
+    'tax',
+    
+    # Customer apps
+    'sellmo.contrib.contrib_customer',
+    'customer',
+    
+    # Shipping apps
+    'sellmo.contrib.contrib_shipping',
+    'shipping',
+    
+    # Checkout apps
+    'checkout',
+    
+    # Category apps
+    'sellmo.contrib.contrib_category',
+    'category',
+    
+    # Store apps
+    'store',
+    
+    # Enables polymorphism in admin
+    'sellmo.contrib.polymorphism',
+    
+    # Needs to be last
+    'sellmo.boot.boot_sellmo'
+    # --- Sellmo END ---
+    
 )
 
 INTERNAL_IPS = ('192.168.187.1',)

@@ -38,8 +38,8 @@ register = template.Library()
 
 @register.filter
 def tiers(product):
-	return modules.qty_pricing.get_qty_tiers(product=product)
-	
+    return modules.qty_pricing.get_qty_tiers(product=product)
+    
 @register.filter
 def price(product, qty=1):
-	return product.get_price(qty=qty)
+    return product.get_price(qty=qty)

@@ -34,18 +34,18 @@ from django.conf.urls.defaults import *
 
 urlpatterns = patterns('sellmo')
 for module in modules:
-	
-	urls = []
-	for name in dir(module):
-		attr = getattr(module, name)
-		if hasattr(attr, '_im_view') and attr._regex:
-			urls.append(url(attr._regex, attr, name='%s.%s' % (module.namespace, attr._name)))
-	
-	if urls:
-		prefix = module.prefix
-		if not prefix:
-			prefix = module.namespace
-	
-		urlpatterns += patterns('modules', 
-			('^%s/' % prefix, include(patterns(module.namespace, *urls))),
-		)
+    
+    urls = []
+    for name in dir(module):
+        attr = getattr(module, name)
+        if hasattr(attr, '_im_view') and attr._regex:
+            urls.append(url(attr._regex, attr, name='%s.%s' % (module.namespace, attr._name)))
+    
+    if urls:
+        prefix = module.prefix
+        if not prefix:
+            prefix = module.namespace
+    
+        urlpatterns += patterns('modules', 
+            ('^%s/' % prefix, include(patterns(module.namespace, *urls))),
+        )

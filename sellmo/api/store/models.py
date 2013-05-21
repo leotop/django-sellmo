@@ -36,37 +36,37 @@ from sellmo.utils.polymorphism import PolymorphicModel
 
 @load(after='finalize_product_Product', before='finalize_store_Purchase')
 def load_model():
-	class Purchase(modules.store.Purchase):
-		product = models.ForeignKey(
-			modules.product.Product
-		)
-		class Meta:
-			abstract = True
-	
-	modules.store.Purchase = Purchase
-		
+    class Purchase(modules.store.Purchase):
+        product = models.ForeignKey(
+            modules.product.Product
+        )
+        class Meta:
+            abstract = True
+    
+    modules.store.Purchase = Purchase
+        
 @load(action='finalize_store_Purchase')
 def finalize_model():
-	class Purchase(modules.store.Purchase):
-		pass
-	modules.store.Purchase = Purchase
+    class Purchase(modules.store.Purchase):
+        pass
+    modules.store.Purchase = Purchase
 
 class Purchase(PolymorphicModel, modules.pricing.Stampable):
-	
-	qty = models.PositiveIntegerField(
-		default = 1
-	)
-	
-	@property
-	def description(self):
-		return self.describe()
-	
-	def describe(self):
-		return unicode(self.product)
-	
-	def __unicode__(self):
-		return u"%s x %s" % (self.qty, self.description)
-	
-	class Meta:
-		app_label = 'store'
-		abstract = True
+    
+    qty = models.PositiveIntegerField(
+        default = 1
+    )
+    
+    @property
+    def description(self):
+        return self.describe()
+    
+    def describe(self):
+        return unicode(self.product)
+    
+    def __unicode__(self):
+        return u"%s x %s" % (self.qty, self.description)
+    
+    class Meta:
+        app_label = 'store'
+        abstract = True

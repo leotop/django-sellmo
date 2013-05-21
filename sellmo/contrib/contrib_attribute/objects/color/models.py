@@ -33,25 +33,25 @@ from sellmo.contrib.contrib_attribute.models import ValueObject
 #
 
 class Color(ValueObject):
-	
-	name = models.CharField(max_length=100)
-	value = models.CharField(max_length=6)
-		
-	def __unicode__(self):
-		return self.name
-		
-	class Meta:
-		app_label = 'attribute'
-	
+    
+    name = models.CharField(max_length=100)
+    value = models.CharField(max_length=6)
+        
+    def __unicode__(self):
+        return self.name
+        
+    class Meta:
+        app_label = 'attribute'
+    
 class MultiColor(ValueObject):
-	
-	name = models.CharField(max_length=100)
-	colors = models.ManyToManyField(
-		Color
-	)
-	
-	def __unicode__(self):
-		return self.name
-	
-	class Meta:
-		app_label = 'attribute'
+    
+    name = models.CharField(max_length=100)
+    colors = models.ManyToManyField(
+        Color
+    )
+    
+    def __unicode__(self):
+        return self.name
+    
+    class Meta:
+        app_label = 'attribute'

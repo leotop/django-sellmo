@@ -30,21 +30,21 @@ from sellmo.api.decorators import chainable
 #
 
 class QtyPricingModule(Module):
-	namespace = 'qty_pricing'
-	
-	@chainable()
-	def get_qty_tiers(self, chain, product, tiers=None, **kwargs):
-		if not tiers:
-			q = product.qty_prices.all()
-			if q:
-				tiers =  q
-	
-		if chain:
-			out = chain.execute(product=product, tiers=tiers, **kwargs)
-			if out.has_key('tiers'):
-				tiers = out['tiers']
-		
-		# Ensure we're dealing with a collection of numbers
-		# TODO	
-		
-		return tiers
+    namespace = 'qty_pricing'
+    
+    @chainable()
+    def get_qty_tiers(self, chain, product, tiers=None, **kwargs):
+        if not tiers:
+            q = product.qty_prices.all()
+            if q:
+                tiers =  q
+    
+        if chain:
+            out = chain.execute(product=product, tiers=tiers, **kwargs)
+            if out.has_key('tiers'):
+                tiers = out['tiers']
+        
+        # Ensure we're dealing with a collection of numbers
+        # TODO  
+        
+        return tiers

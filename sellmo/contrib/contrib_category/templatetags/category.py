@@ -38,4 +38,4 @@ register = template.Library()
 
 @register.assignment_tag
 def categories():
-	return modules.category.Category.objects.active().root()
+    return modules.category.Category.objects.active().root()

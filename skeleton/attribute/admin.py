@@ -9,15 +9,15 @@ from sellmo.contrib.contrib_attribute.admin import AttributeAdminMixin
 #
 
 class AttributeAdmin(AttributeAdminMixin, admin.ModelAdmin):
-	pass
-	
+    pass
+    
 class ValueAdmin(admin.ModelAdmin):
-	list_display = ['product', 'attribute', 'value']
-	def value(self, obj):
-		return obj.get_value()
-		
-	def queryset(self, queryset):
-		return modules.attribute.Value.objects.recipe(exclude=False).all()
+    list_display = ['product', 'attribute', 'value']
+    def value(self, obj):
+        return obj.get_value()
+        
+    def queryset(self, queryset):
+        return modules.attribute.Value.objects.recipe(exclude=False).all()
 
 admin.site.register(modules.attribute.Attribute, AttributeAdmin)
 admin.site.register(modules.attribute.Value, ValueAdmin)

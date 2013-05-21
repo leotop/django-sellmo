@@ -37,110 +37,111 @@ from django.db.models import Q
 
 #
 
-class VariationModule(Module):	
+class VariationModule(Module):  
 
-	namespace = 'variation'
-	batch_buy_enabled = False
-	Variation = Variation
-	VariationRecipe = VariationRecipe
-	
-	def __init__(self):
-		self.product_subtypes = []
-		self.subtypes = []
-		
-	def register_product_subtype(self, subtype):
-		self.product_subtypes.append(subtype)
-		
-	@view(r'add/(?P<product_slug>[a-z0-9_-]+)/(?P<variation_key>[a-z0-9_-]+)$')
-	def add_to_cart(self, chain, request, product_slug, variation_key, **kwargs):
-		try:
-			product = modules.product.Product.objects.polymorphic().get(slug=product_slug)
-		except modules.product.models.Product.DoesNotExist:
-			raise Http404
-			
-		variation = product.find_variation(variation_key)
-		if not variation:
-			raise Http404
-			
-		if request.method == 'POST':
-			formset = modules.cart.get_add_to_cart_formset(product=product, variation=variation, data=request.POST)
-		else:
-			formset = modules.cart.get_add_to_cart_formset(product=product, variation=variation, data=request.GET)
-			
-		return modules.cart.add_to_cart(request, product_slug=product_slug, product=product, formset=formset)
-		
-	@chainable()
-	def get_variations(self, chain, product, grouped=False, **kwargs):
-		variations = modules.variation.Variation.objects.for_product(product)
-		
-		if grouped:
-			try:
-				attribute = modules.attribute.get_attributes(product=product).get(groups=True)
-			except modules.attribute.Attribute.DoesNotExist:
-				return None
-			else:
-				result = ()
-				for value in modules.attribute.Value.objects.recipe().for_product(product).for_attribute(attribute=attribute, distinct=True):
-					
-					# Find closest variant, defaults to product
-					variant = product
-					qargs = { attribute.value_field : value.get_value() }
-					# Find explicit values for this attribute / product / value combo
-					for explicit in modules.attribute.Value.objects.for_product(product).for_attribute(attribute=attribute).filter(**qargs):
-						# See if variant only related to one and one only attribute
-						if modules.attribute.Value.objects.filter(product=explicit.product).count() == 1:
-							variant = explicit.product
-					
-					# Build grouped result
-					qargs = {
-						'values__attribute' : attribute,
-						'values__%s' % attribute.value_field : value.get_value()
-					}
-					result += ({
-						'attribute' : value.attribute,
-						'value' : value.get_value(),
-						'variations' : modules.variation.Variation.objects.filter(**qargs),
-						'variant' : variant.downcast()
-					},)
-				variations = result
-		
-		return variations
-		
-	@chainable()
-	def get_sub_variation_label(self, chain, variation=None, **kwargs):
-		# Get first child
-		if not variation.children:
-			raise Exception()
-			
-		sub = variation.children[0]
-		if len(sub.options) == 1:
-			return sub.options[0].variable.name
-		return _("variation")
-		
-	@chainable()
-	def get_variation_name(self, chain, variation=None, **kwargs):
-		options = u' '.join([unicode(option.attribute) for option in variation.options])
-		product = variation.product
-		
-		if hasattr(product, 'product'):
-			product = product.product
-		prefix = unicode(product)
-		
-		if not options:
-			return prefix
-		elif variation.parent:
-			return options
-			
-		return '%s %s' % (prefix, options)
-		
-	@chainable()
-	def get_variation_id(self, chain, variation=None, **kwargs):
-		options = '_'.join([option.key for option in variation.options if option.custom])
-		prefix = variation.product.slug
-		
-		if variation.parent:
-			prefix = variation.parent.key
-		if not options:
-			return prefix
-		
-		return '%s_%s' % (prefix, options)
+    namespace = 'variation'
+    batch_buy_enabled = False
+    Variation = Variation
+    VariationRecipe = VariationRecipe
+    
+    def __init__(self):
+        self.product_subtypes = []
+        self.subtypes = []
+        
+    def register_product_subtype(self, subtype):
+        self.product_subtypes.append(subtype)
+        
+    @view(r'add/(?P<product_slug>[a-z0-9_-]+)/(?P<variation_key>[a-z0-9_-]+)$')
+    def add_to_cart(self, chain, request, product_slug, variation_key, **kwargs):
+        try:
+            product = modules.product.Product.objects.polymorphic().get(slug=product_slug)
+        except modules.product.models.Product.DoesNotExist:
+            raise Http404
+            
+        variation = product.find_variation(variation_key)
+        if not variation:
+            raise Http404
+            
+        if request.method == 'POST':
+            formset = modules.cart.get_add_to_cart_formset(product=product, variation=variation, data=request.POST)
+        else:
+            formset = modules.cart.get_add_to_cart_formset(product=product, variation=variation, data=request.GET)
+            
+        return modules.cart.add_to_cart(request, product_slug=product_slug, product=product, formset=formset)
+        
+    @chainable()
+    def get_variations(self, chain, product, grouped=False, **kwargs):
+        variations = modules.variation.Variation.objects.for_product(product)
+        
+        if grouped:
+            try:
+                attribute = modules.attribute.get_attributes(product=product).get(groups=True)
+            except modules.attribute.Attribute.DoesNotExist:
+                return None
+            else:
+                result = ()
+                for value in modules.attribute.Value.objects.recipe().for_product(product).for_attribute(attribute=attribute, distinct=True):
+                    
+                    # Find closest variant, defaults to product
+                    variant = product
+                    qargs = { attribute.value_field : value.get_value() }
+                    
+                    # Find explicit values for this attribute / product / value combo
+                    for explicit in modules.attribute.Value.objects.for_product(product).for_attribute(attribute=attribute).filter(**qargs):
+                        # See if variant only related to one and one only attribute
+                        if modules.attribute.Value.objects.filter(product=explicit.product).count() == 1:
+                            variant = explicit.product
+                    
+                    # Build grouped result
+                    qargs = {
+                        'values__attribute' : attribute,
+                        'values__%s' % attribute.value_field : value.get_value()
+                    }
+                    result += ({
+                        'attribute' : value.attribute,
+                        'value' : value.get_value(),
+                        'variations' : modules.variation.Variation.objects.filter(**qargs),
+                        'variant' : variant.downcast()
+                    },)
+                variations = result
+        
+        return variations
+        
+    @chainable()
+    def get_sub_variation_label(self, chain, variation=None, **kwargs):
+        # Get first child
+        if not variation.children:
+            raise Exception()
+            
+        sub = variation.children[0]
+        if len(sub.options) == 1:
+            return sub.options[0].variable.name
+        return _("variation")
+        
+    @chainable()
+    def get_variation_name(self, chain, variation=None, **kwargs):
+        options = u' '.join([unicode(option.attribute) for option in variation.options])
+        product = variation.product
+        
+        if hasattr(product, 'product'):
+            product = product.product
+        prefix = unicode(product)
+        
+        if not options:
+            return prefix
+        elif variation.parent:
+            return options
+            
+        return '%s %s' % (prefix, options)
+        
+    @chainable()
+    def get_variation_id(self, chain, variation=None, **kwargs):
+        options = '_'.join([option.key for option in variation.options if option.custom])
+        prefix = variation.product.slug
+        
+        if variation.parent:
+            prefix = variation.parent.key
+        if not options:
+            return prefix
+        
+        return '%s_%s' % (prefix, options)

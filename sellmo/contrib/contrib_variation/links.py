@@ -43,88 +43,88 @@ from sellmo import modules
 
 @link(namespace=modules.pricing.namespace, name='get_price', capture=True)
 def capture_get_price(product=None, **kwargs):
-	out = {}
-	
-	if getattr(product, '_is_variant', False):
-		out['variant'] = product
-		product = product.product
-	
-	out['product'] = product
-	return out
-	
+    out = {}
+    
+    if getattr(product, '_is_variant', False):
+        out['variant'] = product
+        product = product.product
+    
+    out['product'] = product
+    return out
+    
 @link(namespace=modules.store.namespace)
 def make_purchase(purchase, variation=None, **kwargs):
-	if variation:
-		purchase = modules.variation.VariationPurchase(
-			product = purchase.product,
-			qty = purchase.qty,
-			variation_key = variation.key,
-			variation_name = variation.name
-		)
-		
-	return {
-		'purchase' : purchase
-	}
+    if variation:
+        purchase = modules.variation.VariationPurchase(
+            product = purchase.product,
+            qty = purchase.qty,
+            variation_key = variation.key,
+            variation_name = variation.name
+        )
+        
+    return {
+        'purchase' : purchase
+    }
 
 @link(namespace=modules.cart.namespace)
 def get_purchase_args(form, product, args, **kwargs):
-	if form.__class__.__name__ == 'AddToCartVariationForm':
-		# Dealing with a varation form
-		variation = find_variation(product, form.cleaned_data['variation'])
-		if not variation:
-			raise Exception()
-		args['product'] = variation.product
-		args['variation'] = variation
-		
-	return args
+    if form.__class__.__name__ == 'AddToCartVariationForm':
+        # Dealing with a varation form
+        variation = find_variation(product, form.cleaned_data['variation'])
+        if not variation:
+            raise Exception()
+        args['product'] = variation.product
+        args['variation'] = variation
+        
+    return args
 
 @link(namespace=modules.cart.namespace)
 def get_add_to_cart_formset(formset, cls, product, variations=None, initial=None, data=None, **kwargs):
-	
-	if not variations:
-		variations = product.variations
-	
-	# Before proceeding to custom form creation, check if we're dealing with a variation product
-	if not variations:
-		return
-	
-	# Create the custom form
-	dict = {}
-	
-	# Add variation field as either a choice or as a hidden integer
-	if not modules.variation.batch_buy_enabled and variations:
-		dict['variation'] = forms.ChoiceField(
-			choices = [(el.id, unicode(el)) for el in variations]
-		)
-	else:
-		dict['variation'] = forms.CharField(widget = forms.HiddenInput)
-	
-			
-	AddToCartForm = type('AddToCartVariationForm', (cls,), dict)
-		
-	# Create the formset based upon the custom form
-	AddToCartFormSet = formset_factory(AddToCartForm, extra=0)
-	
-	# Fill in initial data
-	if not data:
-		if modules.variation.batch_buy_enabled:
-			initial = [{
-				'product' : product.pk,
-				'variation' : variation.id,
-				'qty' : 1
-			} for variation in variations]
-		else:
-			initial = [{
-				'product' : product.pk,
-				'variation' : variations[:1][0].id,
-				'qty' : 1
-			}]
-			
-		formset = AddToCartFormSet(initial=initial)
-	else:
-		formset = AddToCartFormSet(data)
-		
-	return {
-		'formset' : formset,
-		'variations' : variations
-	}
+    
+    if not variations:
+        variations = product.variations
+    
+    # Before proceeding to custom form creation, check if we're dealing with a variation product
+    if not variations:
+        return
+    
+    # Create the custom form
+    dict = {}
+    
+    # Add variation field as either a choice or as a hidden integer
+    if not modules.variation.batch_buy_enabled and variations:
+        dict['variation'] = forms.ChoiceField(
+            choices = [(el.id, unicode(el)) for el in variations]
+        )
+    else:
+        dict['variation'] = forms.CharField(widget = forms.HiddenInput)
+    
+            
+    AddToCartForm = type('AddToCartVariationForm', (cls,), dict)
+        
+    # Create the formset based upon the custom form
+    AddToCartFormSet = formset_factory(AddToCartForm, extra=0)
+    
+    # Fill in initial data
+    if not data:
+        if modules.variation.batch_buy_enabled:
+            initial = [{
+                'product' : product.pk,
+                'variation' : variation.id,
+                'qty' : 1
+            } for variation in variations]
+        else:
+            initial = [{
+                'product' : product.pk,
+                'variation' : variations[:1][0].id,
+                'qty' : 1
+            }]
+            
+        formset = AddToCartFormSet(initial=initial)
+    else:
+        formset = AddToCartFormSet(data)
+        
+    return {
+        'formset' : formset,
+        'variations' : variations
+    }

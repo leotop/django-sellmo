@@ -30,25 +30,25 @@ from sellmo.api.pricing import Price
 #
 
 class ShippingMethod(object):
-	
-	def __init__(self, name, description=None):
-		self.name = name
-		self.description = description
-		
-	def calculate_price(self, cart):
-		raise NotImplementedError()
-		
-	def __unicode__(self):
-		return self.name
-		
+    
+    def __init__(self, name, description=None):
+        self.name = name
+        self.description = description
+        
+    def calculate_price(self, cart):
+        raise NotImplementedError()
+        
+    def __unicode__(self):
+        return self.name
+        
 class PaymentMethod(object):
-	
-	def __init__(self, name, description=None):
-		self.name = name
-		self.description = description
-		
-	def calculate_price(self, cart):
-		raise NotImplementedError()
-		
-	def __unicode__(self):
-		return self.name
+    
+    def __init__(self, name, description=None):
+        self.name = name
+        self.description = description
+        
+    def calculate_price(self, cart):
+        raise NotImplementedError()
+        
+    def __unicode__(self):
+        return self.name

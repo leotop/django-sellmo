@@ -35,5 +35,5 @@ namespace = modules.variation.namespace
 
 @load(action='setup_variants', after='load_subtypes')
 def setup_variants():
-	pass
-	
+    pass
+    

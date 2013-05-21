@@ -30,5 +30,5 @@ from django import forms
 #
 
 class ShippingMethodForm(forms.Form):
-	product = forms.IntegerField(widget = forms.HiddenInput)
-	variant = forms.IntegerField(required = False, widget= forms.HiddenInput)
+    product = forms.IntegerField(widget = forms.HiddenInput)
+    variant = forms.IntegerField(required = False, widget= forms.HiddenInput)

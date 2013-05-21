@@ -42,12 +42,12 @@ namespace = modules.product.namespace
 
 @load(action='load_subtypes', after='finalize_product_Product')
 def load_subtypes():
-	
-	class SimpleProduct(modules.product.Product):
-		objects = ProductSubTypeManager()
-		class Meta:
-			app_label = 'product'
-			verbose_name = _("product")
-			verbose_name_plural = _("products")
-	
-	modules.product.register_subtype(SimpleProduct)
+    
+    class SimpleProduct(modules.product.Product):
+        objects = ProductSubTypeManager()
+        class Meta:
+            app_label = 'product'
+            verbose_name = _("product")
+            verbose_name_plural = _("products")
+    
+    modules.product.register_subtype(SimpleProduct)

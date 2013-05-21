@@ -38,34 +38,34 @@ from django.utils.translation import ugettext_lazy as _
 
 @load(after='load_product_Product', before='finalize_product_Product')
 def load_model():
-	class Product(modules.product.Product):
-		tax = models.ForeignKey(
-			Tax,
-			blank = True,
-			null = True,
-			verbose_name = _("tax"),
-		)
-		
-		class Meta:
-			abstract = True
-		
-	modules.product.Product = Product
+    class Product(modules.product.Product):
+        tax = models.ForeignKey(
+            Tax,
+            blank = True,
+            null = True,
+            verbose_name = _("tax"),
+        )
+        
+        class Meta:
+            abstract = True
+        
+    modules.product.Product = Product
 
 class Tax(models.Model):
-	
-	name = models.CharField(
-		max_length = 20,
-		verbose_name = _("name"),
-	)
-	
-	rate = modules.pricing.construct_decimal_field(
-		verbose_name = _("rate"),
-	)
-	
-	def __unicode__(self):
-		return self.name
-	
-	class Meta:
-		app_label = 'tax'
-		verbose_name = _("tax")
-		verbose_name_plural = _("taxes")
+    
+    name = models.CharField(
+        max_length = 20,
+        verbose_name = _("name"),
+    )
+    
+    rate = modules.pricing.construct_decimal_field(
+        verbose_name = _("rate"),
+    )
+    
+    def __unicode__(self):
+        return self.name
+    
+    class Meta:
+        app_label = 'tax'
+        verbose_name = _("tax")
+        verbose_name_plural = _("taxes")
