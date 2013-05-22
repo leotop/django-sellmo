@@ -56,6 +56,13 @@ class AttributeHelper(object):
             raise AttributeError(key)
         else:
             return self._attributes[key]
+            
+    def _populate(self):
+        for value in modules.attribute.Value.objects.filter(product=self._product):
+            attribute = value.attribute
+            self._attributes[attribute.key] = attribute
+            if not self._values.has_key(attribute.key):
+                self._values[attribute.key] = value
         
     def __getattr__(self, name):
         
@@ -69,7 +76,7 @@ class AttributeHelper(object):
             try:
                 value = modules.attribute.Value.objects.get(attribute=attribute, product=self._product)
             except modules.attribute.Value.DoesNotExist:
-                self._values[attribute.key] = modules.attribute.Value(product=product, attribute=attribute)
+                self._values[attribute.key] = modules.attribute.Value(product=self._product, attribute=attribute)
             else:
                 self._values[attribute.key] = value
         return self._values[attribute.key].get_value()
@@ -86,10 +93,19 @@ class AttributeHelper(object):
             self._values[attribute.key].set_value(value)
         
     def __iter__(self):
+        self._populate()
         for value in self._values.values():
             if value.is_assigned:
                 yield value
-        
+                
+    def __len__(self):
+        self._populate()
+        count = 0
+        for value in self._values.values():
+            if value.is_assigned:
+                count += 1
+        return count
+    
     def save(self):
         for value in self._values.values():
             value.save_value()

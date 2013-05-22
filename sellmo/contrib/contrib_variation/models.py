@@ -288,76 +288,16 @@ class VariationManager(models.Manager):
         # Get all attributes related to this product
         attributes = modules.attribute.Attribute.objects.for_product(product)
         
-        # No attributes, means no variations
-        if not attributes:
-            return
-            
-        invalidations = []
-        def _construct(variation_values):
-            
-            variant = None
-            
-            # Try to invaldiate values
-            for value in variation_values:
-                if value in invalidations:
-                    return None
-            
-            # Find variant (if any)
-            for value in variation_values:
-                if value.recipe is None:
-                    variant = value.product
-                    break
-                
-            # 
-            if variant is None:
-                variant = product
-            else:
-                # Constructing explicit variation
-                # Find all explicit values
-                # And see if we're dealing with a 'fully' explicit variation
-                # A fully explicit variation should exclude it's values
-                fully_explicit=True
-                for value in list(variation_values):
-                    try:
-                        explicit = modules.attribute.Value.objects.get(product=variant, attribute=value.attribute)
-                    except modules.attribute.Value.DoesNotExist:
-                        fully_explicit=False
-                    else:
-                        variation_values[variation_values.index(value)] = explicit
-                        
-                if fully_explicit:
-                    invalidations.extend(variation_values)
-                        
-            
-            variation = modules.variation.Variation.objects.create(
-                id = modules.variation.Variation.generate_id(product, variation_values),
-                product = product,
-                variant = variant,
-            )
-            
-            variation.values.add(*variation_values)
+        # Get all values related to this product
+        values = modules.attribute.Value.objects.recipe().for_product(product)
         
-        def _variate(attribute_queue, variation_values=[]):
-            variations = []
-            if not attribute_queue:
-                # Create the variation
-                variation = _construct(variation_values)
-                if not variation is None:
-                    variations.append(variation)
-            else:
-                attribute = attribute_queue[0]
-                for value in modules.attribute.Value.objects.recipe().for_attribute(attribute=attribute, distinct=True):
-                    variations.extend(_variate(attribute_queue[1:], variation_values + [value]))
-                
-            return variations
-            
-        variations = _variate(attributes)
-        return variations
+        
     
     def deprecate(self, product):
         self.select_for_update().filter(product=product).update(deprecated=True)
         
     def for_product(self, product):
+        self.build(product)
         variations = self.filter(product=product, deprecated=False)
         if variations.count() > 0:
             return variations

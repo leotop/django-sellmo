@@ -88,19 +88,23 @@ class VariationModule(Module):
                     
                     # Find explicit values for this attribute / product / value combo
                     for explicit in modules.attribute.Value.objects.for_product(product).for_attribute(attribute=attribute).filter(**qargs):
-                        # See if variant only related to one and one only attribute
-                        if modules.attribute.Value.objects.filter(product=explicit.product).count() == 1:
-                            variant = explicit.product
+                        pass
                     
-                    # Build grouped result
+                    # Get variations for this grouped attribute / value combination
                     qargs = {
                         'values__attribute' : attribute,
                         'values__%s' % attribute.value_field : value.get_value()
                     }
+                    
+                    variations = modules.variation.Variation.objects.filter(**qargs)
+                    if not variations:
+                        continue
+                    
+                    # Build grouped result
                     result += ({
                         'attribute' : value.attribute,
                         'value' : value.get_value(),
-                        'variations' : modules.variation.Variation.objects.filter(**qargs),
+                        'variations' : variations,
                         'variant' : variant.downcast()
                     },)
                 variations = result
