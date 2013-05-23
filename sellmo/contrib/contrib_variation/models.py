@@ -152,7 +152,8 @@ def load_manager():
             return self
             
         def for_product(self, product):
-            return self.filter(~Q(base_product=F('product')) | Q(recipe__isnull=False), base_product=product)
+            q = Q(product=product) | Q(base_product=product)
+            return self.filter(q)
             
         def for_attribute(self, attribute, distinct=False):
             q = self.filter(attribute=attribute)
@@ -287,11 +288,91 @@ class VariationManager(models.Manager):
         
         # Get all attributes related to this product
         attributes = modules.attribute.Attribute.objects.for_product(product)
+        attributes = list(attributes)
         
-        # Get all values related to this product
-        values = modules.attribute.Value.objects.recipe().for_product(product)
+        # Keep track of explicit attributes
+        explicits = {}
+        for attribute in attributes:
+            for value in modules.attribute.Value.objects.recipe().for_product(product).for_attribute(attribute, distinct=True):
+                if not value.recipe is None:
+                    explicits[attribute.key] = False
+                    break
+            else:
+                explicits[attribute.key] = True
+            
         
+        # Create all possible variations
+        map = []
+        variants = []
+         
+        def _map(attributes, combination):
+            if attributes:
+                attribute = attributes[0]
+                values = modules.attribute.Value.objects.recipe().for_product(product).for_attribute(attribute, distinct=True)
+                for value in values:
+                    _map(attributes[1:], combination + [value])
+            else:
+                for value in list(combination):
+                    index = combination.index(value)
+                    if value.recipe is None:
+                        combination[index] = value.get_value()
+                map.append(combination)
         
+        _map(attributes, [])
+        variants = [product] * len(map)
+        
+        # Mix in variants
+        for variant in product.variants.all():
+            # Find values related to this variant
+            values = modules.attribute.Value.objects.for_product(variant)
+                
+            for combination in map:
+                for value in values:
+                    index = attributes.index(value.attribute)
+                    current = combination[index]
+                    if isinstance(current, modules.attribute.Value):
+                        current = current.get_value()
+                    if current != value.get_value():
+                        break
+                else:
+                    variants[map.index(combination)] = variant
+                    for value in values:
+                        index = attributes.index(value.attribute)
+                        combination[index] = value
+                    
+        # Fix non existent explicit combinations
+        for attribute in attributes:
+            if explicits[attribute.key]:
+                index = attributes.index(attribute)
+                for combination in map:
+                    value = combination[index]
+                    if not isinstance(value, modules.attribute.Value):
+                        combination[index] = None
+                    
+            
+                          
+        # Filter out non existent combinations
+        for combination in list(map):
+            for value in combination:
+                if not value is None and not isinstance(value, modules.attribute.Value):
+                    print combination
+                    index = map.index(combination)
+                    map.pop(index)
+                    variants.pop(index)
+                    break
+        
+        # Create variations
+        while map:
+            values = map.pop()
+            values = [value for value in values if not value is None]
+            variant = variants.pop()
+            variation = modules.variation.Variation.objects.create(
+                id = modules.variation.Variation.generate_id(product, values),
+                product = product,
+                variant = variant,
+            )
+            
+            variation.values.add(*values)
     
     def deprecate(self, product):
         self.select_for_update().filter(product=product).update(deprecated=True)
