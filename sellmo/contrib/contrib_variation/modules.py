@@ -27,6 +27,7 @@
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable
 from sellmo.contrib.contrib_variation.models import Variation, VariationRecipe
+from sellmo.contrib.contrib_attribute.query import AttributeQ
 
 from django.http import Http404
 from django.utils.translation import ugettext_lazy as _
@@ -72,40 +73,30 @@ class VariationModule(Module):
     @chainable()
     def get_variations(self, chain, product, grouped=False, **kwargs):
         variations = modules.variation.Variation.objects.for_product(product)
+        attributes = modules.attribute.get_attributes(product=product)
         
         if grouped:
             try:
-                attribute = modules.attribute.get_attributes(product=product).get(groups=True)
+                group = modules.attribute.get_attributes(product=product).get(groups=True)
             except modules.attribute.Attribute.DoesNotExist:
                 return None
             else:
                 result = ()
-                for value in modules.attribute.Value.objects.recipe().for_product(product).for_attribute(attribute=attribute, distinct=True):
-                    
-                    # Find closest variant, defaults to product
-                    variant = product
-                    qargs = { attribute.value_field : value.get_value() }
-                    
-                    # Find explicit values for this attribute / product / value combo
-                    for explicit in modules.attribute.Value.objects.for_product(product).for_attribute(attribute=attribute).filter(**qargs):
-                        pass
+                for value in modules.attribute.Value.objects.recipe().for_product(product).for_attribute(attribute=group, distinct=True):
                     
                     # Get variations for this grouped attribute / value combination
                     qargs = {
-                        'values__attribute' : attribute,
-                        'values__%s' % attribute.value_field : value.get_value()
+                        'values__attribute' : group,
+                        'values__%s' % group.value_field : value.get_value()
                     }
-                    
                     variations = modules.variation.Variation.objects.filter(**qargs)
-                    if not variations:
-                        continue
                     
                     # Build grouped result
                     result += ({
-                        'attribute' : value.attribute,
+                        'attribute' : group,
                         'value' : value.get_value(),
                         'variations' : variations,
-                        'variant' : variant.downcast()
+                        'variant' : variations[0].group_variant,
                     },)
                 variations = result
         

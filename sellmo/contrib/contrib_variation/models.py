@@ -30,8 +30,9 @@ from sellmo import modules
 from sellmo.api.decorators import load
 from sellmo.magic import ModelMixin
 from sellmo.utils.polymorphism import PolymorphicModel, PolymorphicManager
-from sellmo.contrib.contrib_variation.variant import VariantFieldDescriptor, VariantMixin
+from sellmo.contrib.contrib_variation.variant import VariantFieldDescriptor, VariantMixin, get_differs_field_name
 from sellmo.contrib.contrib_variation.utils import generate_slug
+from sellmo.contrib.contrib_attribute.query import AttributeQ
 
 #
 
@@ -80,6 +81,7 @@ def load_variants():
         for field in model.get_variable_fields():
             descriptor = field.model.__dict__.get(field.name, None)
             setattr(model, field.name, VariantFieldDescriptor(field, descriptor=descriptor))
+            model.add_to_class(get_differs_field_name(field.name), models.BooleanField(editable=False, auto_created=True))
         
         modules.variation.subtypes.append(model)
         setattr(modules.variation, name, model)
@@ -269,6 +271,15 @@ def finalize_model():
             related_name = '+',
         )
         
+        # The variant we are based on and which is common across every variation in the group (can be a product)
+        group_variant = models.ForeignKey(
+            modules.product.Product,
+            db_index = True,
+            editable = False,
+            null = True,
+            related_name = '+',
+        )
+        
         #
         values = models.ManyToManyField(
             modules.attribute.Value,
@@ -287,7 +298,18 @@ class VariationManager(models.Manager):
         existing.delete()
         
         # Get all attributes related to this product
-        attributes = modules.attribute.Attribute.objects.for_product(product)
+        attributes = modules.attribute.Attribute.objects.for_product(product).filter(variates=True)
+       
+        # Do we have an attribute which groups ?
+        try:
+            group = attributes.get(groups=True)
+        except modules.attribute.Attribute.DoesNotExist:
+            group = False
+        except modules.attribute.Attribute.MultipleObjectsReturned:
+            # Abort generation
+            raise Exception("Only one attribute can group")
+            
+        # CONVERT TO LIST FOR PERFORMANCE AND INDEXING
         attributes = list(attributes)
         
         # Keep track of explicit attributes
@@ -303,8 +325,6 @@ class VariationManager(models.Manager):
         
         # Create all possible variations
         map = []
-        variants = []
-         
         def _map(attributes, combination):
             if attributes:
                 attribute = attributes[0]
@@ -319,7 +339,6 @@ class VariationManager(models.Manager):
                 map.append(combination)
         
         _map(attributes, [])
-        variants = [product] * len(map)
         
         # Mix in variants
         for variant in product.variants.all():
@@ -335,7 +354,7 @@ class VariationManager(models.Manager):
                     if current != value.get_value():
                         break
                 else:
-                    variants[map.index(combination)] = variant
+                    # Override with variant values
                     for value in values:
                         index = attributes.index(value.attribute)
                         combination[index] = value
@@ -348,31 +367,78 @@ class VariationManager(models.Manager):
                     value = combination[index]
                     if not isinstance(value, modules.attribute.Value):
                         combination[index] = None
-                    
             
                           
         # Filter out non existent combinations
         for combination in list(map):
             for value in combination:
                 if not value is None and not isinstance(value, modules.attribute.Value):
-                    print combination
                     index = map.index(combination)
                     map.pop(index)
-                    variants.pop(index)
                     break
         
         # Create variations
         while map:
             values = map.pop()
             values = [value for value in values if not value is None]
-            variant = variants.pop()
+            
+            variant = product
+            explicits = []
+            for value in values:
+                current = value.product.downcast()
+                if getattr(current, '_is_variant', False):
+                    explicits.append(value)
+             
+            if explicits:
+                # Find the one variant which defines all the explicit values
+                # If not, we are dealing with mutliple non overlapping variants
+                qargs = []
+                for value in values:
+                    if value in explicits:
+                        q = AttributeQ(value.attribute, value.get_value())
+                    else:
+                        q = ~AttributeQ(value.attribute)
+                    qargs.append(q)
+                try:
+                    variant = product.variants.get(*qargs)
+                except (modules.product.Product.DoesNotExist, modules.product.Product.MultipleObjectsReturned) as ex:
+                    variant = product
+            
             variation = modules.variation.Variation.objects.create(
                 id = modules.variation.Variation.generate_id(product, values),
                 product = product,
                 variant = variant,
             )
-            
+
             variation.values.add(*values)
+        
+        # Handle grouping
+        if group:
+            # We need to find a single variant which is common across all variations in this group
+            for value in modules.attribute.Value.objects.recipe().for_product(product).for_attribute(attribute=group, distinct=True):
+                # Get variations for this grouped attribute / value combination
+                qargs = {
+                    'values__attribute' : group,
+                    'values__%s' % group.value_field : value.get_value()
+                }
+                variations = modules.variation.Variation.objects.filter(**qargs)
+                
+                # Get single variant
+                qargs = [AttributeQ(group, value.get_value())]
+                for attribute in attributes:
+                    if attribute != group:
+                        q = ~AttributeQ(attribute)
+                        qargs.append(q)
+                        
+                try:
+                    variant = product.variants.get(*qargs)
+                except modules.product.Product.DoesNotExist:
+                    variant = product
+                except modules.product.Product.MultipleObjectsReturned:
+                    raise Exception("Invalid variant consruction in combination with grouping")
+        
+                variations.update(group_variant=variant)
+                
     
     def deprecate(self, product):
         self.select_for_update().filter(product=product).update(deprecated=True)

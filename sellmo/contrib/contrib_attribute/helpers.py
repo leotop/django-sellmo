@@ -42,6 +42,7 @@ class AttributeHelper(object):
         self.__dict__['_product'] = product
         self.__dict__['_values'] = {}
         self.__dict__['_attributes'] = {}
+        self.__dict__['_populated'] = False
         
     def get_attribute(self, key):
         if not self._attributes.has_key(key):
@@ -57,7 +58,10 @@ class AttributeHelper(object):
         else:
             return self._attributes[key]
             
-    def _populate(self):
+    def populate(self):
+        if self.__dict__['_populated']:
+            return
+        self.__dict__['_populated'] = True
         for value in modules.attribute.Value.objects.filter(product=self._product):
             attribute = value.attribute
             self._attributes[attribute.key] = attribute
@@ -93,13 +97,13 @@ class AttributeHelper(object):
             self._values[attribute.key].set_value(value)
         
     def __iter__(self):
-        self._populate()
+        self.populate()
         for value in self._values.values():
             if value.is_assigned:
                 yield value
                 
     def __len__(self):
-        self._populate()
+        self.populate()
         count = 0
         for value in self._values.values():
             if value.is_assigned:

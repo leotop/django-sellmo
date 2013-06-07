@@ -45,11 +45,13 @@ class DuplicateSlugException(Exception):
     
 #
 
+def get_differs_field_name(name):
+    return '%s_differs' % name
+
 class VariantMixin(object):
     
     non_variable_fields = ['content_type', 'slug', 'product']
     non_variable_field_types = [models.BooleanField]
-    _variable_fields_enabled = True
     _is_variant = True
     
     @classmethod
@@ -77,47 +79,58 @@ class VariantMixin(object):
         product = self.get_product()
         if not product:
             raise ProductUnassignedException()
-            
+        
         for field in self.__class__.get_variable_fields():
             val = getattr(self, field.name)
-            pval = getattr(product, field.name)
-            if val == pval:
-                setattr(self, field.name, None)
-        
-        self._variable_fields_enabled = False
+            product_val = getattr(product, field.name)
+            differs = getattr(self, get_differs_field_name(field.name))
+            
+            # Empty field will always copy it's parent field
+            if not val:
+                val = product_val
+                differs = False
+            
+            # See if we need to copy our parent's field
+            if not differs and not val == product_val:
+                val = product_val
+            
+            # Finally set 
+            if not differs:     
+                setattr(self, field.name, val)
+                setattr(self, get_differs_field_name(field.name), differs)
+                
         super(VariantMixin, self).save(*args, **kwargs)
-        self._variable_fields_enabled = True
 
     class Meta:
         app_label = 'product'
         verbose_name = _("variant")
         verbose_name_plural = _("variants")
-    
+        
 class VariantFieldDescriptor(object):
-    
+
     def __init__(self, field, descriptor=None):
         self.field = field
         self.descriptor = descriptor
-    
+
     def __get__(self, obj, objtype):
         if not self.descriptor:
-            val = obj.__dict__.get(self.field.name, None)
+            return obj.__dict__.get(self.field.name, None)
         else:
-            val = self.descriptor.__get__(obj, objtype)
+            return self.descriptor.__get__(obj, objtype)
 
-        if not val and obj._variable_fields_enabled:
-            product = obj.get_product()
-            if product:
-                # Get this variant products value
-                val = getattr(obj.product, self.field.name)
-            
-        return val
-        
     def __set__(self, obj, val):
+        # See if we differ and keep track
+        differs = getattr(obj, get_differs_field_name(self.field.name), False)
+        if not differs:
+            old_val = getattr(obj, self.field.name)
+            differs = not old_val is None and old_val != val
+            setattr(obj, get_differs_field_name(self.field.name), differs)
+        
+        # Now set
         if not self.descriptor:
             obj.__dict__[self.field.name] = val
         else:
             self.descriptor.__set__(obj, val)
             
         
-        
+            
