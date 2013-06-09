@@ -24,15 +24,25 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from django import template
+from django.template import loader, Context
+
+#
+
 from sellmo import modules
-from sellmo.api.decorators import load
 
 #
 
-namespace = modules.variation.namespace
+register = template.Library()
 
 #
 
-@load(action='setup_variants', after='load_subtypes')
-def setup_variants():
-    pass
+@register.simple_tag()
+def render_value(value, **kwargs):
+	template = loader.get_template(value.template)
+	context = {
+		'value' : value.get_value(),
+		'attribute' : value.attribute,
+	}
+	context.update(kwargs)
+	return template.render(Context(context))

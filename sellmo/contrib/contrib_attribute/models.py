@@ -160,6 +160,10 @@ class Value(models.Model):
             return not value is None and len(value) > 0
         return not value is None
         
+    @property
+    def template(self):
+        return modules.attribute.get_value_template(value=self)
+        
     def save_value(self):
         # Re-assign product
         self.product = self.product

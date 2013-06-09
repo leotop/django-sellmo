@@ -52,6 +52,25 @@ def load_model():
             model = subtype
             
             @property
+            def grouped_by(self):
+                try:
+                    return modules.attribute.Attribute.objects.for_product(self).get(variates=True, groups=True)
+                except modules.attribute.Attribute.DoesNotExist:
+                    return None
+                    
+            @property
+            def grouped_choices(self):
+                group = self.grouped_by
+                if group:
+                    return modules.attribute.Value.objects.recipe().for_product(self).for_attribute(group, distinct=True)
+                else:
+                    return None
+                    
+            @property
+            def variated_by(self):
+                return modules.attribute.Attribute.objects.for_product(self).filter(variates=True)
+            
+            @property
             def variations(self):
                 return self.get_variations()
             
@@ -444,7 +463,6 @@ class VariationManager(models.Manager):
         self.select_for_update().filter(product=product).update(deprecated=True)
         
     def for_product(self, product):
-        self.build(product)
         variations = self.filter(product=product, deprecated=False)
         if variations.count() > 0:
             return variations

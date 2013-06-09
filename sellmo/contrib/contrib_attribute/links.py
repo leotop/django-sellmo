@@ -24,15 +24,31 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+#
+
 from sellmo import modules
-from sellmo.api.decorators import load
+from sellmo.api.decorators import link
+from sellmo.api.pricing import Price
+from sellmo.contrib.contrib_variation.variation import find_variation
 
 #
 
-namespace = modules.variation.namespace
+from django import forms
+from django.forms.formsets import formset_factory
+
+
+from sellmo import modules
 
 #
 
-@load(action='setup_variants', after='load_subtypes')
-def setup_variants():
-    pass
+@link(namespace=modules.product.namespace)
+def list(request, products, **kwargs):
+	for key, value in request.GET.items():
+		if key.startswith('attr__'):
+			attr = key[len('attr__'):]
+			if attr:
+				products = modules.attribute.filter(request=request, products=products, attr=attr, value=value)
+				
+	return {
+		'products' : products
+	}

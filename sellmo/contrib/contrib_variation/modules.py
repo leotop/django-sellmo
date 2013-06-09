@@ -73,11 +73,11 @@ class VariationModule(Module):
     @chainable()
     def get_variations(self, chain, product, grouped=False, **kwargs):
         variations = modules.variation.Variation.objects.for_product(product)
-        attributes = modules.attribute.get_attributes(product=product)
+        attributes = modules.attribute.Attribute.objects.for_product(product=product).filter(variates=True)
         
         if grouped:
             try:
-                group = modules.attribute.get_attributes(product=product).get(groups=True)
+                group = modules.attribute.Attribute.objects.for_product(product=product).get(variates=True, groups=True)
             except modules.attribute.Attribute.DoesNotExist:
                 return None
             else:

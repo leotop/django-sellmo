@@ -25,7 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from sellmo import modules, Module
-from sellmo.api.decorators import view, chainable
+from sellmo.api.decorators import view, chainable, link
 from sellmo.contrib.contrib_attribute.models import Attribute, Value
 
 from django.http import Http404
@@ -39,9 +39,23 @@ class AttributeModule(Module):
     Attribute = Attribute
     Value = Value
     
-    @chainable()
-    def get_attributes(self, chain, product, **kwargs):
-        return self.Attribute.objects.for_product(product)
-    
     def __init__(self):
         pass
+        
+    @chainable()
+    def get_value_template(self, chain, value, template=None, **kwargs):
+        if not template:
+            type = value.attribute.type
+            if value.attribute.type == Attribute.TYPE_OBJECT:
+                type = value.get_value().__class__.__name__
+            template = 'attribute/%s.html' % type.lower()
+        return template
+        
+    @chainable()
+    def filter(self, chain, request, products, attr, value, **kwargs):
+        try:
+            attribute = modules.attribute.Attribute.objects.get(key=attr)
+        except modules.attribute.Attribute.DoesNotExist:
+            return products
+        
+        return products

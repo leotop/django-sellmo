@@ -1,19 +1,45 @@
 {% extends "store/base.html" %}
+{%  load attribute %}
 
 {% block body %}
 	<h1>{{ category.name }}</h1>
 	<ul>
+		{%  for child in category.children.all %}
+			<li style="display: inline-block;"><a href="{% url 'category.category' child.slug %}">{{ child.name }}</a></li>
+		{%  endfor  %}
+	</ul>
+	<ul>
 		{% for product in products %}
 			<li>
-				<h3>{{ product }}</h3>
+				<h3><a href="{% url 'product.details' product.slug %}">{{ product }}</a></h3>
+				{%  if product.grouped_by %}
 				<div>
+					{{ product.grouped_by }}
 					<ul>
-						{% for variation in product.variations %}
-							<li>{{ variation }}</li>
+						{% for value in product.grouped_choices %}
+							<li>
+								{%  render_value value %}
+							</li>
 						{% endfor %}
 					</ul>
 				</div>
+				{% endif %}
 			</li>
 		{% endfor %} 
 	</ul>
+	<div class="pagination">
+		<span class="step-links">
+			{% if products.has_previous %}
+				<a href="?page={{ products.previous_page_number }}">previous</a>
+			{% endif %}
+	
+			<span class="current">
+				Page {{ products.number }} of {{ products.paginator.num_pages }}.
+			</span>
+	
+			{% if products.has_next %}
+				<a href="?page={{ products.next_page_number }}">next</a>
+			{% endif %}
+		</span>
+	</div>
 {% endblock %}

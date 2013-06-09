@@ -30,7 +30,7 @@ from django.http import Http404
 
 import sellmo
 from sellmo import modules
-from sellmo.api.decorators import view
+from sellmo.api.decorators import view, chainable
 from sellmo.api.product.models import Product
 
 #
@@ -51,6 +51,16 @@ class ProductModule(sellmo.Module):
         
         # Shouldn't be a problem if Capital cased classnames are used.
         setattr(self, subtype.__name__, subtype)
+        
+    @chainable()
+    def list(self, chain, request, products=None):
+        if not products:
+            products = self.Product.objects.all()
+        if chain:
+            out = chain.execute(request=request, products=products)
+            if out.has_key('products'):
+                products = out['products']
+        return products
     
     @view(r'(?P<product_slug>[a-z0-9_-]+)$')
     def details(self, chain, request, product_slug, context=None, **kwargs):
