@@ -25,6 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from sellmo import modules
+from sellmo.core.chaining import ViewChain
 
 #
 
@@ -38,8 +39,10 @@ for module in modules:
     urls = []
     for name in dir(module):
         attr = getattr(module, name)
-        if hasattr(attr, '_im_view') and attr._regex:
-            urls.append(url(attr._regex, attr, name='%s.%s' % (module.namespace, attr._name)))
+        if hasattr(attr, '_chain'):
+            chain = attr._chain
+            if isinstance(chain, ViewChain):
+                urls.append(url(chain.regex, attr, name='%s.%s' % (module.namespace, name)))
     
     if urls:
         prefix = module.prefix

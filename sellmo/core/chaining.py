@@ -43,6 +43,16 @@ class Chain(object):
             self._capture_queue.append(func)
         else:
             self._queue.append(func)
+            
+    def handle(self, module, **kwargs):
+        captured = self.capture(**kwargs)
+        kwargs.update(captured)
+        out = self.func(module, **kwargs)
+        return out
+        
+    def func(self, module, **kwargs):
+       out = self._func(module, self, **kwargs)
+       return out
         
     def capture(self, **kwargs):
         out = dict()
@@ -86,6 +96,13 @@ class Chain(object):
         return False
         
 class ViewChain(Chain):
+    
+    def __init__(self, func, regex, **kwargs):
+        super(ViewChain, self).__init__(func, **kwargs)
+        self.regex = regex
+        
+    def handle(self, module, request, **kwargs):
+        return super(ViewChain, self).handle(module=module, request=request, **kwargs)
     
     def capture(self, request, **kwargs):
         return super(ViewChain, self).capture(request=request, **kwargs)

@@ -78,26 +78,9 @@ class Sellmo(object):
                 
     def _init_modules(self):
         modules.init_pending_modules()
-        for module in modules:
-            for name in dir(module):
-                attr = getattr(module, name)
-                if hasattr(attr, '_im_chainable'):
-                    self._init_chain(module, attr)
-                
-    def _init_chain(self, module, func):
-        name = '_%s_chain' % func._name
-        if hasattr(module, name):
-            raise Exception()
-            
-        chain = chaining.Chain
-        if getattr(func, '_im_view', False):
-            chain = chaining.ViewChain
-        chain = chain(func)
-        setattr(module, name, chain)        
             
     def _load_apps(self, apps):
         loading.loader.load()
-        
                         
     def _link_apps(self, apps, module='.views'):
         for app in apps:
@@ -128,13 +111,13 @@ class Sellmo(object):
             return False
         
         module = getattr(modules, namespace)
-        name = '_%s_chain' % link._name
+        name = link._name
         
-        if not hasattr(module, name):
+        if not hasattr(module, name) or not hasattr(getattr(module, name), '_chain'):
             logger.warning("Module '%s' has no chainable method '%s'"  % (namespace, link._name))
             return False
         
-        links = getattr(module, name)
-        links.link(link)
+        chain = getattr(module, name)._chain
+        chain.link(link)
         return True
         

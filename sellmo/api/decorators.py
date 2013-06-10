@@ -25,6 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from sellmo.core.loading import loader
+from sellmo.core.chaining import Chain, ViewChain
 
 def load(action=None, after=None, before=None):
     def decorator(func):
@@ -44,43 +45,20 @@ def link(name=None, namespace=None, capture=False, override=False):
     
     return decorator
     
-def view(regex=None, name=None, namespace=None):
+def view(regex=None):
     def decorator(func):
-        def view(self, request, **kwargs):
-            chain = getattr(self, '_%s_chain' % func.func_name, None)
-            if chain.can_capture:
-                # Capture
-                captured = chain.capture(request, **kwargs)
-                kwargs.update(captured)
-            
-            response = func(self, chain, request, **kwargs)
-            return response
-        
-        view._im_chainable = True
-        view._im_view = True
-        view._regex = regex
-        view._name = name if name else func.func_name
-        view._namespace = namespace
-        return view
-        
+        chain = ViewChain(func, regex=regex)
+        def wrapper(self, request, **kwargs):
+            return chain.handle(module=self, request=request, **kwargs)
+        wrapper._chain = chain
+        return wrapper
     return decorator
     
-def chainable(name=None, namespace=None):
+def chainable():
     def decorator(func):
-        def chainable(self, **kwargs):
-            chain = getattr(self, '_%s_chain' % func.func_name, None)
-            if chain:
-                # Capture
-                captured = chain.capture(**kwargs)
-                kwargs.update(captured)
-            
-            result = func(self, chain, **kwargs)
-            return result
-            
-        chainable._im_chainable = True
-        chainable._im_get = True
-        chainable._name = name if name else func.func_name
-        chainable._namespace = namespace
-        return chainable
-        
+        chain = Chain(func)
+        def wrapper(self, **kwargs):
+            return chain.handle(module=self, **kwargs)
+        wrapper._chain = chain
+        return wrapper
     return decorator
