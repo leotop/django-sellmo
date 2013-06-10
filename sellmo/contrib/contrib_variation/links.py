@@ -41,6 +41,13 @@ from sellmo import modules
 
 #
 
+@link(namespace=modules.attribute.namespace, name='filter', capture=True)
+def capture_filter(request, products, attr, value, **kwargs):
+    pass
+    
+def override_filter(module, chain, request, products, attr, value, **kwargs):
+    return products
+
 @link(namespace=modules.pricing.namespace, name='get_price', capture=True)
 def capture_get_price(product=None, **kwargs):
     out = {}

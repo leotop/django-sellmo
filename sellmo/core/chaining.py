@@ -25,6 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from django.http import HttpResponse
+from inspect import isfunction
 
 #
 
@@ -45,14 +46,18 @@ class Chain(object):
             self._queue.append(func)
             
     def handle(self, module, **kwargs):
-        captured = self.capture(**kwargs)
-        kwargs.update(captured)
-        out = self.func(module, **kwargs)
-        return out
         
-    def func(self, module, **kwargs):
-       out = self._func(module, self, **kwargs)
-       return out
+        func = self._func
+        
+        # Capture
+        captured = self.capture(**kwargs)
+        if isinstance(captured, dict):
+            kwargs.update(captured)
+        elif isfunction(captured):
+            func = captured
+        
+        out = func(module, self, **kwargs)
+        return out
         
     def capture(self, **kwargs):
         out = dict()
@@ -61,9 +66,11 @@ class Chain(object):
             if isinstance(response, dict):
                 out.update(response)
                 kwargs.update(response)
-            elif response == False:
+            elif response is False:
                 break
-            elif response != None:
+            elif isfunction(response):
+                return response
+            elif not response is None:
                 raise Exception("Func '%s' gave an unexpected response during capture fase." % func)
                     
         return out
@@ -77,9 +84,9 @@ class Chain(object):
             elif isinstance(response, dict):
                 out.update(response)
                 kwargs.update(response)
-            elif response == False:
+            elif response is False:
                 break
-            elif response != None:
+            elif not response is None:
                 raise Exception("Func '%s' gave an unexpected response during bubble fase." % func)
                 
         return out

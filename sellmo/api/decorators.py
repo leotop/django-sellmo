@@ -34,12 +34,11 @@ def load(action=None, after=None, before=None):
     
     return decorator
     
-def link(name=None, namespace=None, capture=False, override=False):
+def link(name=None, namespace=None, capture=False):
     def decorator(func):
         func._name = name if name else func.func_name
         func._namespace = namespace
         func._capture = capture
-        func._override = override
         func._im_linked = True
         return func
     
