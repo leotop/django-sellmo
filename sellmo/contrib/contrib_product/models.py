@@ -32,7 +32,7 @@ from django.utils.translation import ugettext_lazy as _
 from sellmo import modules
 from sellmo.api.decorators import load
 
-# 
+#
 
 @load(after='load_product_Product', before='finalize_product_Product')
 def load_model():

@@ -36,11 +36,26 @@ from sellmo.contrib.contrib_attribute.query import AttributeQ
 
 from django import forms
 from django.forms.formsets import formset_factory
+from django.contrib.contenttypes.models import ContentType
 
 
 from sellmo import modules
 
 #
+
+@link(namespace=modules.product.namespace)
+def list(request, products, **kwargs):
+    flag = request.GET.get('variants', 'no').lower()
+    if flag == 'yes':
+        pass
+    elif flag == 'only':
+        products = products.exclude(content_type__in=ContentType.objects.get_for_models(*modules.product.subtypes).values())
+    else:
+        products = products.filter(content_type__in=ContentType.objects.get_for_models(*modules.product.subtypes).values())
+    
+    return {
+        'products' : products
+    }
 
 @link(namespace=modules.attribute.namespace, name='filter', capture=True)
 def capture_filter(request, products, attr, value, **kwargs):

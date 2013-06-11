@@ -11,9 +11,9 @@ def category(request, category, context, **kwargs):
     context['category'] = category
     
     # Get products
-    q = modules.product.Product.objects.polymorphic().in_category(category)
-    q = modules.product.list(request=request, products=q)
-    paginator = Paginator(q, 25)
+    products = modules.product.Product.objects.polymorphic().in_category(category)
+    products = modules.product.list(request=request, products=products)
+    paginator = Paginator(products, 25)
     try:
         products = paginator.page(request.GET.get('page'))
     except PageNotAnInteger:
