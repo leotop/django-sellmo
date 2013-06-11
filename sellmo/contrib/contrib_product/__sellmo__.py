@@ -35,7 +35,3 @@ from sellmo.api.decorators import load
 #
 
 namespace = modules.product.namespace
-
-@load(action='setup_variants', after='load_subtypes')
-def setup_variants():
-    pass
