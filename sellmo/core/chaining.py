@@ -25,7 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from django.http import HttpResponse
-from inspect import isfunction
+from inspect import isfunction, isgeneratorfunction
 
 #
 
@@ -46,50 +46,54 @@ class Chain(object):
             self._queue.append(func)
             
     def handle(self, module, **kwargs):
-        
         func = self._func
         
         # Capture
-        captured = self.capture(**kwargs)
-        if isinstance(captured, dict):
-            kwargs.update(captured)
-        elif isfunction(captured):
-            func = captured
+        out = self._loop(reversed(self._capture_queue), **kwargs)
+        if not out[1] is None:
+            if isfunction(out[1]):
+                func = out[1]
+            else:
+                return out[1]
         
-        out = func(module, self, **kwargs)
-        return out
+        kwargs = out[0]
+        return func(module, self, **kwargs)
         
-    def capture(self, **kwargs):
-        out = dict()
-        for func in reversed(self._capture_queue):
-            response = func(**kwargs)
-            if isinstance(response, dict):
-                out.update(response)
-                kwargs.update(response)
-            elif response is False:
-                break
-            elif isfunction(response):
-                return response
-            elif not response is None:
-                raise Exception("Func '%s' gave an unexpected response during capture fase." % func)
-                    
-        return out
-        
+    def _loop(self, queue, **kwargs):
+        for func in queue:
+            # We allow for yieldable output
+            if isgeneratorfunction(func):
+                responses = list(func(**kwargs))
+            else:
+                responses = [func(**kwargs)]
+            # Iterate through output
+            for response in responses:
+                if self.should_return(response):
+                    # Return immediately
+                    return (kwargs, response)
+                elif isinstance(response, dict):
+                    # Merge
+                    kwargs.update(response)
+                elif response is False:
+                    # SKIP (1)
+                    break
+                elif response is None:
+                    # Nothing to do, just keep on looping
+                    continue
+                else:
+                    raise Exception("Func '%s' gave an unexpected response '%s'." % (func, response))
+            else:
+                # No break in inner loop, continue
+                continue
+            # SKIP (2)
+            break
+        return (kwargs, None)
+    
     def execute(self, **kwargs):
-        out = dict()
-        for func in self._queue:
-            response = func(**kwargs)
-            if self.should_return(response):
-                return response
-            elif isinstance(response, dict):
-                out.update(response)
-                kwargs.update(response)
-            elif response is False:
-                break
-            elif not response is None:
-                raise Exception("Func '%s' gave an unexpected response during bubble fase." % func)
-                
-        return out
+        out = self._loop(self._queue, **kwargs)
+        if not out[1] is None:
+            return out[1]
+        return out[0]
         
     @property
     def can_execute(self):
@@ -100,7 +104,7 @@ class Chain(object):
         return len(self._capture_queue) > 0
         
     def should_return(self, response):
-        return False
+        return isfunction(response)
         
 class ViewChain(Chain):
     
@@ -118,5 +122,5 @@ class ViewChain(Chain):
         return super(ViewChain, self).execute(request=request, **kwargs)
     
     def should_return(self, response):
-        return isinstance(response, HttpResponse)
+        return isinstance(response, HttpResponse) or super(ViewChain, self).should_return(response)
         
