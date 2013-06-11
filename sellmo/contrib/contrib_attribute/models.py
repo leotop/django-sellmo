@@ -238,6 +238,16 @@ class Attribute(models.Model):
         default=False
     )
     
+    def parse(self, string):
+        if self.type == self.TYPE_STRING:
+            return string
+        elif self.type in (self.TYPE_INT, self.TYPE_OBJECT):
+            try:
+                return int(string)
+            except ValueError:
+                pass
+        raise ValueError("Could not parse '%s' for attribute '%s'." % (string, self))
+    
     @property
     def value_field(self):
         return 'value_%s' % (self.type,)

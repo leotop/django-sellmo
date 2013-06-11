@@ -47,7 +47,14 @@ def list(request, products, **kwargs):
 		if key.startswith('attr__'):
 			attr = key[len('attr__'):]
 			if attr:
-				products = modules.attribute.filter(request=request, products=products, attr=attr, value=value)
+				parts = attr.split('__')
+				attr = parts[0]
+				operator = None
+				if len(parts) == 2:
+					operator = parts[1]
+				elif len(parts) > 2:
+					continue
+				products = modules.attribute.filter(request=request, products=products, attr=attr, value=value, operator=operator)
 				
 	return {
 		'products' : products

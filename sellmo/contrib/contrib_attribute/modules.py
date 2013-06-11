@@ -27,6 +27,7 @@
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable, link
 from sellmo.contrib.contrib_attribute.models import Attribute, Value
+from sellmo.contrib.contrib_attribute.query import AttributeQ
 
 from django.http import Http404
 from django.utils.translation import ugettext_lazy as _
@@ -52,10 +53,25 @@ class AttributeModule(Module):
         return template
         
     @chainable()
-    def filter(self, chain, request, products, attr, value, **kwargs):
-        try:
-            attribute = modules.attribute.Attribute.objects.get(key=attr)
-        except modules.attribute.Attribute.DoesNotExist:
-            return products
+    def filter(self, chain, request, products, attr, value, attribute=None, operator=None, **kwargs):
+        if not attribute:
+            try:
+                attribute = modules.attribute.Attribute.objects.get(key=attr)
+            except modules.attribute.Attribute.DoesNotExist:
+                return products
         
+        try:
+            value = attribute.parse(value)
+        except ValueError:
+            pass
+        else:
+            if operator is None:
+                q = AttributeQ(attribute, value)
+            else:
+                qargs = {
+                    operator : value
+                }
+                q = AttributeQ(attribute, **qargs)
+            return products.filter(q)
         return products
+        

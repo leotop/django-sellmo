@@ -30,6 +30,7 @@ from sellmo import modules
 from sellmo.api.decorators import link
 from sellmo.api.pricing import Price
 from sellmo.contrib.contrib_variation.variation import find_variation
+from sellmo.contrib.contrib_attribute.query import AttributeQ
 
 #
 
@@ -43,9 +44,33 @@ from sellmo import modules
 
 @link(namespace=modules.attribute.namespace, name='filter', capture=True)
 def capture_filter(request, products, attr, value, **kwargs):
-    pass
+    try:
+        attribute = modules.attribute.Attribute.objects.get(key=attr)
+    except modules.attribute.Attribute.DoesNotExist:
+        return
+        
+    yield {
+        'attribute' : attribute
+    }
     
-def override_filter(module, chain, request, products, attr, value, **kwargs):
+    if attribute.variates:
+        yield override_filter
+    
+def override_filter(module, chain, request, products, attr, value, attribute, operator=None, **kwargs):
+    try:
+        value = attribute.parse(value)
+    except ValueError:
+        pass
+    else:
+        values=modules.attribute.Value.objects.recipe()
+        if operator is None:
+            q = AttributeQ(attribute, value, values=values)
+        else:
+            qargs = {
+                operator : value
+            }
+            q = AttributeQ(attribute, values=values, **qargs)
+        return products.filter(q)
     return products
 
 @link(namespace=modules.pricing.namespace, name='get_price', capture=True)
