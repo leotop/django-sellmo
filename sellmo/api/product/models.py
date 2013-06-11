@@ -35,6 +35,10 @@ from sellmo.utils.polymorphism import PolymorphicModel
 
 #
 
+@load(action='load_subtypes', after='finalize_product_Product')
+def load_subtypes():
+    pass
+
 @load(action='finalize_product_Product')
 def finalize_model():
     class Product(modules.product.Product):
