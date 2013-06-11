@@ -56,8 +56,9 @@ class VariantMixin(object):
     
     @classmethod
     def get_variable_fields(cls):
-        for field in cls._meta.fields:
-            if not field.auto_created and field.null and not field.name in cls.non_variable_fields and not field.__class__ in cls.non_variable_field_types:
+        fields = cls._meta.many_to_many + cls._meta.fields
+        for field in fields:
+            if not field.auto_created and not field.name in cls.non_variable_fields and not field.__class__ in cls.non_variable_field_types:
                 yield field
     
     def get_product(self):
@@ -83,6 +84,12 @@ class VariantMixin(object):
         for field in self.__class__.get_variable_fields():
             val = getattr(self, field.name)
             product_val = getattr(product, field.name)
+            
+            # Handle many to many 
+            if isinstance(field, models.ManyToManyField):
+                val = list(val.all())
+                product_val = list(product_val.all())
+            
             differs = getattr(self, get_differs_field_name(field.name))
             
             # Empty field will always copy it's parent field
@@ -94,7 +101,7 @@ class VariantMixin(object):
             if not differs and not val == product_val:
                 val = product_val
             
-            # Finally set 
+            # Finally set
             if not differs:     
                 setattr(self, field.name, val)
                 setattr(self, get_differs_field_name(field.name), differs)
