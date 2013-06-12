@@ -129,7 +129,12 @@ class VariantFieldDescriptor(object):
         # See if we differ and keep track
         differs = getattr(obj, get_differs_field_name(self.field.name), False)
         if not differs:
-            old_val = getattr(obj, self.field.name)
+            try:
+                # In case we are initializing, an exception could occur while
+                # getting this field's value
+                old_val = getattr(obj, self.field.name)
+            except Exception:
+                old_val = None
             differs = not old_val is None and old_val != val
             setattr(obj, get_differs_field_name(self.field.name), differs)
         
