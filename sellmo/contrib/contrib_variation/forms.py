@@ -61,7 +61,7 @@ class SaveFieldMixin(object):
         
         q = ~Q(**kwargs) 
         
-        return modules.attribute.Value.objects.recipe(exclude=False).filter(attribute=attribute, recipe=recipe).filter(q)
+        return modules.attribute.Value.objects.filter(attribute=attribute, recipe=recipe).filter(q)
         
     def get_existing_values(self, recipe, attribute, values):
         field = '%s__in' % (attribute.value_field, )
@@ -71,7 +71,7 @@ class SaveFieldMixin(object):
         
         q = Q(**kwargs) 
         
-        return modules.attribute.Value.objects.recipe(exclude=False).filter(attribute=attribute, recipe=recipe).filter(q)
+        return modules.attribute.Value.objects.filter(attribute=attribute, recipe=recipe).filter(q)
 
     def save(self, recipe, attribute, values):
         deprecated = self.get_deprecated_values(recipe, attribute, values)
@@ -141,7 +141,7 @@ class VariationRecipeForm(ModelForm):
             if not self.instance.pk is None:
                 # Get attribute values (if any)
                 try:
-                    values = modules.attribute.Value.objects.recipe(exclude=False).filter(attribute=attribute, recipe=self.instance)
+                    values = modules.attribute.Value.objects.filter(attribute=attribute, recipe=self.instance)
                 except modules.attribute.Value.DoesNotExist:
                     values = None
             else:

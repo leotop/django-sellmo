@@ -37,12 +37,29 @@ from django.db.models import Q
 
 #
 
-class AttributeQ(Q):
+class ValueQ(Q):
+	def __init__(self, attribute, value=None, **kwargs):
+		qargs = dict()
+		qargs['attribute'] = attribute
+		
+		suffix = None
+		if value is None:
+			if len(kwargs) == 1:
+				suffix, value = kwargs.popitem()
+		
+		if not value is None:
+			value_field = attribute.value_field		
+			if not suffix is None:
+				value_field = '%s__%s' % (value_field, suffix)
+			qargs[value_field] = value
+		
+		super(ValueQ, self).__init__(**qargs) 
+
+class ProductQ(Q):
 	pks = []
 	def __init__(self, attribute=None, value=None, values=None, **kwargs):
 		if not attribute is None:
-			
-			qargs = {}
+			qargs = dict()
 			qargs['attribute'] = attribute
 			
 			if values is None:
@@ -61,9 +78,9 @@ class AttributeQ(Q):
 				qargs[value_field] = value
 				
 			self.pks = values.filter(**qargs).values_list('product', flat=True).distinct()
-			super(AttributeQ, self).__init__(pk__in=self.pks)
+			super(ProductQ, self).__init__(pk__in=self.pks)
 		else:
-			super(AttributeQ, self).__init__()
+			super(ProductQ, self).__init__()
 		
 	def clone(self):
 		return Q(pk__in=self.pks)

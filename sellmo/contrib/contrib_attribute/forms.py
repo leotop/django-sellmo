@@ -68,11 +68,7 @@ class ProductAttributeForm(ModelForm):
             
         # Append attribute fields
         for attribute in attributes:
-            # Get attribute value (if any)
-            try:
-                value = modules.attribute.Value.objects.get(attribute=attribute, product=self.instance)
-            except modules.attribute.Value.DoesNotExist:
-                value = None
+            value = self.instance.attributes.get_value(attribute.key)
                 
             defaults = {
                 'label' : attribute.name.capitalize(),
@@ -88,8 +84,7 @@ class ProductAttributeForm(ModelForm):
                 field = field(**defaults)
             
             self.fields[attribute.key] = field
-            if value:
-                self.initial[attribute.key] = getattr(self.instance.attributes, attribute.key)
+            self.initial[attribute.key] = value.value
                 
     def save(self, commit=True):
         instance = super(ProductAttributeForm, self).save(commit=False)

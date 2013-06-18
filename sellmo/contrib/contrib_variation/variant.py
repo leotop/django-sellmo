@@ -80,16 +80,8 @@ class VariantMixin(object):
         product = self.get_product()
         if not product:
             raise ProductUnassignedException()
-        
-        for field in self.__class__.get_variable_fields():
-            val = getattr(self, field.name)
-            product_val = getattr(product, field.name)
             
-            # Handle many to many 
-            if isinstance(field, models.ManyToManyField):
-                val = list(val.all())
-                product_val = list(product_val.all())
-            
+        def assign_field(field, val, product_val):
             differs = getattr(self, get_differs_field_name(field.name))
             
             # Empty field will always copy it's parent field
@@ -105,8 +97,31 @@ class VariantMixin(object):
             if not differs:     
                 setattr(self, field.name, val)
                 setattr(self, get_differs_field_name(field.name), differs)
+        
+        for field in self.__class__.get_variable_fields():
+            # Handle many to many 
+            if isinstance(field, models.ManyToManyField):
+                continue
+            
+            val = getattr(self, field.name)
+            product_val = getattr(product, field.name)
+                
+            assign_field(field, val, product_val)
                 
         super(VariantMixin, self).save(*args, **kwargs)
+        
+        for field in self.__class__.get_variable_fields():
+            # Handle many to many 
+            if not isinstance(field, models.ManyToManyField):
+                continue
+            
+            val = getattr(self, field.name)
+            product_val = getattr(product, field.name)
+            val = list(val.all())
+            product_val = list(product_val.all())
+            
+            assign_field(field, val, product_val)
+            
 
     class Meta:
         app_label = 'product'

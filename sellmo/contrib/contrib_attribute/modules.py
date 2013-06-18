@@ -27,7 +27,7 @@
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable, link
 from sellmo.contrib.contrib_attribute.models import Attribute, Value
-from sellmo.contrib.contrib_attribute.query import AttributeQ
+from sellmo.contrib.contrib_attribute.query import ProductQ
 
 from django.http import Http404
 from django.utils.translation import ugettext_lazy as _
@@ -66,12 +66,12 @@ class AttributeModule(Module):
             pass
         else:
             if operator is None:
-                q = AttributeQ(attribute, value)
+                q = ProductQ(attribute, value)
             else:
                 qargs = {
                     operator : value
                 }
-                q = AttributeQ(attribute, **qargs)
+                q = ProductQ(attribute, **qargs)
             return products.filter(q)
         return products
         

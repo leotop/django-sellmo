@@ -30,7 +30,6 @@ from sellmo import modules
 from sellmo.api.decorators import link
 from sellmo.api.pricing import Price
 from sellmo.contrib.contrib_variation.variation import find_variation
-from sellmo.contrib.contrib_attribute.query import AttributeQ
 
 #
 
@@ -56,37 +55,6 @@ def list(request, products, **kwargs):
     return {
         'products' : products
     }
-
-@link(namespace=modules.attribute.namespace, name='filter', capture=True)
-def capture_filter(request, products, attr, value, **kwargs):
-    try:
-        attribute = modules.attribute.Attribute.objects.get(key=attr)
-    except modules.attribute.Attribute.DoesNotExist:
-        return
-        
-    yield {
-        'attribute' : attribute
-    }
-    
-    if attribute.variates:
-        yield override_filter
-    
-def override_filter(module, chain, request, products, attr, value, attribute, operator=None, **kwargs):
-    try:
-        value = attribute.parse(value)
-    except ValueError:
-        pass
-    else:
-        values=modules.attribute.Value.objects.recipe()
-        if operator is None:
-            q = AttributeQ(attribute, value, values=values)
-        else:
-            qargs = {
-                operator : value
-            }
-            q = AttributeQ(attribute, values=values, **qargs)
-        return products.filter(q)
-    return products
 
 @link(namespace=modules.pricing.namespace, name='get_price', capture=True)
 def capture_get_price(product=None, **kwargs):
@@ -141,7 +109,7 @@ def get_add_to_cart_formset(formset, cls, product, variations=None, initial=None
     # Add variation field as either a choice or as a hidden integer
     if not modules.variation.batch_buy_enabled and variations:
         dict['variation'] = forms.ChoiceField(
-            choices = [(el.id, unicode(el)) for el in variations]
+            choices = [(el.id, modules.variation.get_variation_choice(variation=el)) for el in variations]
         )
     else:
         dict['variation'] = forms.CharField(widget = forms.HiddenInput)

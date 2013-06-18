@@ -37,5 +37,26 @@ register = template.Library()
 #
 
 @register.assignment_tag
-def categories():
-    return modules.category.Category.objects.active().root()
+def categories(parent=None):
+    if parent:
+        return parent.children.active()
+    else:
+        return modules.category.Category.objects.active().root()
+        
+@register.filter
+def is_active(value, product_or_category):
+    product = None
+    category = None
+    
+    if isinstance(product_or_category, modules.product.Product):
+        product = product_or_category
+    elif isinstance(product_or_category, modules.category.Category):
+        category = product_or_category
+    
+    if product is None and category is None:
+        raise Exception("Neither a product nor category was given.")
+        
+    if product:
+        pass
+    
+    return False

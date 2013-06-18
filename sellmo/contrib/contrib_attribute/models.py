@@ -101,7 +101,7 @@ class ValueQuerySet(QuerySet):
     def for_product(self, product):
         return self.filter(product=product)
         
-    def for_attribute(self, attribute, distinct=False):
+    def for_attribute(self, attribute):
         return self.filter(attribute=attribute)
     
 class ValueManager(models.Manager):
@@ -151,6 +151,8 @@ class Value(models.Model):
         if field == 'value_object':
             self.__value_object = None
         setattr(self, field, value)
+        
+    value = property(get_value, set_value)
     
     @property   
     def is_assigned(self):

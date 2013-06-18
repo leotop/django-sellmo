@@ -58,6 +58,17 @@ class AttributeHelper(object):
         else:
             return self._attributes[key]
             
+    def get_value(self, key):
+        attribute = self.get_attribute(key)
+        if not self._values.has_key(attribute.key):
+            try:
+                value = modules.attribute.Value.objects.get(attribute=attribute, product=self._product)
+            except modules.attribute.Value.DoesNotExist:
+                self._values[attribute.key] = modules.attribute.Value(product=self._product, attribute=attribute)
+            else:
+                self._values[attribute.key] = value
+        return self._values[attribute.key]
+            
     def populate(self):
         if self.__dict__['_populated']:
             return
@@ -74,16 +85,8 @@ class AttributeHelper(object):
             return super(AttributeHelper, self).__getattr__(self, name)
         except AttributeError:
             pass
-            
-        attribute = self.get_attribute(name)
-        if not self._values.has_key(attribute.key):
-            try:
-                value = modules.attribute.Value.objects.get(attribute=attribute, product=self._product)
-            except modules.attribute.Value.DoesNotExist:
-                self._values[attribute.key] = modules.attribute.Value(product=self._product, attribute=attribute)
-            else:
-                self._values[attribute.key] = value
-        return self._values[attribute.key].get_value()
+        else:
+            return self.get_value(name).value
         
     def __setattr__(self, name, value):
         
@@ -92,9 +95,7 @@ class AttributeHelper(object):
         except AttributeError:
             super(AttributeHelper, self).__setattr__(name, value)
         else:
-            if not self._values.has_key(attribute.key):
-                self._values[attribute.key] = modules.attribute.Value(attribute=attribute, product=self._product)
-            self._values[attribute.key].set_value(value)
+            self.get_value(name).value = value
         
     def __iter__(self):
         self.populate()

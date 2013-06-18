@@ -32,7 +32,8 @@ from sellmo.magic import ModelMixin
 from sellmo.utils.polymorphism import PolymorphicModel, PolymorphicManager
 from sellmo.contrib.contrib_variation.variant import VariantFieldDescriptor, VariantMixin, get_differs_field_name
 from sellmo.contrib.contrib_variation.utils import generate_slug
-from sellmo.contrib.contrib_attribute.query import AttributeQ
+from sellmo.contrib.contrib_variation.helpers import RecipelessAttributeHelper
+from sellmo.contrib.contrib_attribute.query import ProductQ
 
 #
 
@@ -44,6 +45,19 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
 #
+
+@load(before='finalize_product_Product')
+def load_model():
+    class Product(modules.product.Product):
+
+        def __init__(self, *args, **kwargs):
+            super(Product, self).__init__(*args, **kwargs)
+            self.attributes = RecipelessAttributeHelper(self)
+
+        class Meta:
+            abstract = True
+
+    modules.product.Product = Product
                 
 @load(after='load_variants')
 def load_model():
@@ -54,7 +68,7 @@ def load_model():
             @property
             def grouped_by(self):
                 try:
-                    return modules.attribute.Attribute.objects.for_product(self).get(variates=True, groups=True)
+                    return modules.attribute.Attribute.objects.which_variates(self).get(groups=True)
                 except modules.attribute.Attribute.DoesNotExist:
                     return None
                     
@@ -62,13 +76,13 @@ def load_model():
             def grouped_choices(self):
                 group = self.grouped_by
                 if group:
-                    return modules.attribute.Value.objects.recipe().for_product(self).for_attribute(group, distinct=True)
+                    return modules.attribute.Value.objects.for_product_or_variant(self).for_attribute(group, distinct=True)
                 else:
                     return None
                     
             @property
             def variated_by(self):
-                return modules.attribute.Attribute.objects.for_product(self).filter(variates=True)
+                return modules.attribute.Attribute.objects.which_variates(self)
             
             @property
             def variations(self):
@@ -107,7 +121,7 @@ def load_variants():
                 
 def on_value_pre_save(sender, instance, *args, **kwargs):
     product = instance.product.downcast()
-    instance.base_product = product
+    instance.base_product = None
     if getattr(product, '_is_variant', False):
         instance.base_product = product.product
         
@@ -131,12 +145,24 @@ def load_manager():
     qs = modules.attribute.Attribute.objects.get_query_set()
     
     class AttributeQuerySet(qs.__class__):
-        def for_product(self, product):
+        def for_product_or_variant(self, product):
             return self.filter(Q(values__product=product) | Q(values__base_product=product)).distinct()
+            
+        def which_variates(self, product):
+            return self.filter(
+                Q(variates=True)
+                & (Q(values__base_product=product) | Q(values__product=product) & Q(values__recipe__isnull=False))
+            ).distinct()
     
     class AttributeManager(modules.attribute.Attribute.objects.__class__):
         def get_query_set(self):
             return AttributeQuerySet(self.model)
+            
+        def for_product_or_variant(self, *args, **kwargs):
+            return self.get_query_set().for_product_or_variant(*args, **kwargs)
+            
+        def which_variates(self, *args, **kwargs):
+            return self.get_query_set().which_variates(*args, **kwargs)
     
     class Attribute(ModelMixin):
         model = modules.attribute.Attribute
@@ -166,13 +192,8 @@ def load_manager():
     
     qs = modules.attribute.Value.objects.get_query_set()
     
-    class ValueQuerySet(qs.__class__):
-        def recipe(self, exclude=False):
-            if exclude:
-                return self.filter(recipe=None)
-            return self
-            
-        def for_product(self, product):
+    class ValueQuerySet(qs.__class__):            
+        def for_product_or_variant(self, product):
             q = Q(product=product) | Q(base_product=product)
             return self.filter(q)
             
@@ -192,22 +213,15 @@ def load_manager():
                 return q
     
     class ValueManager(modules.attribute.Value.objects.__class__):
-        
-        def __init__(self, *args, **kwargs):
-            self.recipeless = False
-            if kwargs.has_key('recipeless'):
-                self.recipeless = kwargs.pop('recipeless')
-            super(ValueManager, self).__init__(*args, **kwargs)
-    
         def get_query_set(self):
-            return ValueQuerySet(self.model).recipe(exclude=self.recipeless)
-            
-        def recipe(self, *args, **kwargs):
-            return ValueQuerySet(self.model).recipe(*args, **kwargs)
+            return ValueQuerySet(self.model)
+        
+        def for_product_or_variant(self, *args, **kwargs):
+            return self.get_query_set().for_product_or_variant(*args, **kwargs)
             
     class Value(ModelMixin):
         model = modules.attribute.Value
-        objects = ValueManager(recipeless=True)
+        objects = ValueManager()
 
 @load(before='finalize_attribute_Value')
 @load(after='finalize_variation_VariationRecipe')
@@ -317,7 +331,9 @@ class VariationManager(models.Manager):
         existing.delete()
         
         # Get all attributes related to this product
-        attributes = modules.attribute.Attribute.objects.for_product(product).filter(variates=True)
+        attributes = modules.attribute.Attribute.objects.which_variates(product)
+        if attributes.count() == 0:
+            return
        
         # Do we have an attribute which groups ?
         try:
@@ -334,7 +350,7 @@ class VariationManager(models.Manager):
         # Keep track of explicit attributes
         explicits = {}
         for attribute in attributes:
-            for value in modules.attribute.Value.objects.recipe().for_product(product).for_attribute(attribute, distinct=True):
+            for value in modules.attribute.Value.objects.for_product_or_variant(product).for_attribute(attribute, distinct=True):
                 if not value.recipe is None:
                     explicits[attribute.key] = False
                     break
@@ -347,7 +363,7 @@ class VariationManager(models.Manager):
         def _map(attributes, combination):
             if attributes:
                 attribute = attributes[0]
-                values = modules.attribute.Value.objects.recipe().for_product(product).for_attribute(attribute, distinct=True)
+                values = modules.attribute.Value.objects.for_product_or_variant(product).for_attribute(attribute, distinct=True)
                 for value in values:
                     _map(attributes[1:], combination + [value])
             else:
@@ -386,7 +402,7 @@ class VariationManager(models.Manager):
                     value = combination[index]
                     if not isinstance(value, modules.attribute.Value):
                         combination[index] = None
-            
+        
                           
         # Filter out non existent combinations
         for combination in list(map):
@@ -395,6 +411,16 @@ class VariationManager(models.Manager):
                     index = map.index(combination)
                     map.pop(index)
                     break
+                    
+        # Filter out duplicate combinations
+        existing = []
+        for combination in list(map):
+            values = [value for value in combination if not value is None]
+            id = modules.variation.Variation.generate_id(product, values)
+            if id in existing:
+                index = map.index(combination)
+                map.pop(index)
+            existing.append(id)
         
         # Create variations
         while map:
@@ -414,9 +440,9 @@ class VariationManager(models.Manager):
                 qargs = []
                 for value in values:
                     if value in explicits:
-                        q = AttributeQ(value.attribute, value.get_value())
+                        q = ProductQ(value.attribute, value.get_value())
                     else:
-                        q = ~AttributeQ(value.attribute)
+                        q = ~ProductQ(value.attribute)
                     qargs.append(q)
                 try:
                     variant = product.variants.get(*qargs)
@@ -425,6 +451,7 @@ class VariationManager(models.Manager):
             
             variation = modules.variation.Variation.objects.create(
                 id = modules.variation.Variation.generate_id(product, values),
+                description = modules.variation.Variation.generate_description(product, values),
                 product = product,
                 variant = variant,
             )
@@ -434,7 +461,7 @@ class VariationManager(models.Manager):
         # Handle grouping
         if group:
             # We need to find a single variant which is common across all variations in this group
-            for value in modules.attribute.Value.objects.recipe().for_product(product).for_attribute(attribute=group, distinct=True):
+            for value in modules.attribute.Value.objects.for_product_or_variant(product).for_attribute(attribute=group, distinct=True):
                 # Get variations for this grouped attribute / value combination
                 qargs = {
                     'values__attribute' : group,
@@ -443,10 +470,10 @@ class VariationManager(models.Manager):
                 variations = modules.variation.Variation.objects.filter(**qargs)
                 
                 # Get single variant
-                qargs = [AttributeQ(group, value.get_value())]
+                qargs = [ProductQ(group, value.get_value())]
                 for attribute in attributes:
                     if attribute != group:
-                        q = ~AttributeQ(attribute)
+                        q = ~ProductQ(attribute)
                         qargs.append(q)
                         
                 try:
@@ -478,10 +505,19 @@ class Variation(models.Model):
     @staticmethod
     def generate_id(product, values):
         return generate_slug(product=product, values=values, full=True, unique=False)
+        
+    @staticmethod
+    def generate_description(product, values):
+        return modules.variation.generate_variation_description(product=product, values=values)
 
     id = models.CharField(
         max_length = 255,
         primary_key = True,
+        editable = False,
+    )
+    
+    description = models.CharField(
+        max_length = 255,
         editable = False,
     )
         
@@ -491,7 +527,7 @@ class Variation(models.Model):
     )
     
     def __unicode__(self):
-        return self.id
+        return self.description
 
     class Meta:
         app_label = 'variation'
@@ -513,9 +549,6 @@ def load_model():
         variation_description = models.CharField(
             max_length = 255
         )
-        
-        def describe(self):
-            return self.variation_name
         
         class Meta:
             app_label = 'store'

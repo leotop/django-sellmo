@@ -27,7 +27,7 @@
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable
 from sellmo.contrib.contrib_variation.models import Variation, VariationRecipe
-from sellmo.contrib.contrib_attribute.query import AttributeQ
+from sellmo.contrib.contrib_attribute.query import ProductQ
 
 from django.http import Http404
 from django.utils.translation import ugettext_lazy as _
@@ -73,28 +73,31 @@ class VariationModule(Module):
     @chainable()
     def get_variations(self, chain, product, grouped=False, **kwargs):
         variations = modules.variation.Variation.objects.for_product(product)
-        attributes = modules.attribute.Attribute.objects.for_product(product=product).filter(variates=True)
-        
+        attributes = modules.attribute.Attribute.objects.which_variates(product=product)
         if grouped:
             try:
-                group = modules.attribute.Attribute.objects.for_product(product=product).get(variates=True, groups=True)
+                group = attributes.get(groups=True)
             except modules.attribute.Attribute.DoesNotExist:
                 return None
             else:
                 result = ()
-                for value in modules.attribute.Value.objects.recipe().for_product(product).for_attribute(attribute=group, distinct=True):
+                for value in modules.attribute.Value.objects.for_product_or_variant(product).for_attribute(attribute=group, distinct=True):
                     
                     # Get variations for this grouped attribute / value combination
                     qargs = {
                         'values__attribute' : group,
-                        'values__%s' % group.value_field : value.get_value()
+                        'values__%s' % group.value_field : value.get_value(),
+                        'product' : product,
                     }
+                    
                     variations = modules.variation.Variation.objects.filter(**qargs)
+                    if not variations:
+                        continue
                     
                     # Build grouped result
                     result += ({
                         'attribute' : group,
-                        'value' : value.get_value(),
+                        'value' : value,
                         'variations' : variations,
                         'variant' : variations[0].group_variant,
                     },)
@@ -103,40 +106,28 @@ class VariationModule(Module):
         return variations
         
     @chainable()
-    def get_sub_variation_label(self, chain, variation=None, **kwargs):
-        # Get first child
-        if not variation.children:
-            raise Exception()
+    def get_variation_choice(self, chain, variation, choice=None, **kwargs):
+        if choice is None:
+            choice = u", ".join([u"%s: %s" % (value.attribute.name ,unicode(value.value)) for value in variation.values.all()])
             
-        sub = variation.children[0]
-        if len(sub.options) == 1:
-            return sub.options[0].variable.name
-        return _("variation")
+        if chain:
+            out = chain.execute(variation=variation, choice=choice, **kwargs)
+            if out.has_key('choice'):
+                choice = out['choice']
+        
+        return choice
         
     @chainable()
-    def get_variation_name(self, chain, variation=None, **kwargs):
-        options = u' '.join([unicode(option.attribute) for option in variation.options])
-        product = variation.product
-        
-        if hasattr(product, 'product'):
-            product = product.product
-        prefix = unicode(product)
-        
-        if not options:
-            return prefix
-        elif variation.parent:
-            return options
+    def generate_variation_description(self, chain, product, values, description=None, **kwargs):
+        if description is None:
+            if hasattr(product, 'product'):
+                product = product.product
+            prefix = unicode(product)
+            description = u"%s %s" % (prefix, u", ".join([unicode(value.value) for value in values]))
             
-        return '%s %s' % (prefix, options)
+        if chain:
+            out = chain.execute(product=product, values=values, description=description, **kwargs)
+            if out.has_key('description'):
+                description = out['description']
         
-    @chainable()
-    def get_variation_id(self, chain, variation=None, **kwargs):
-        options = '_'.join([option.key for option in variation.options if option.custom])
-        prefix = variation.product.slug
-        
-        if variation.parent:
-            prefix = variation.parent.key
-        if not options:
-            return prefix
-        
-        return '%s_%s' % (prefix, options)
+        return description
