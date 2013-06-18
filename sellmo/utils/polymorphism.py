@@ -106,8 +106,9 @@ class PolymorphicModel(models.Model):
     
     @classmethod
     def get_admin_url(cls, content_type, object_id):
-        parent = ContentType.objects.get_for_model(cls._meta.parents.keys()[-1])
-        return "%s/%s/%s/" % (parent.app_label, parent.model, quote(object_id))
+        if cls._meta.parents.keys():
+            content_type = ContentType.objects.get_for_model(cls._meta.parents.keys()[-1])
+        return "%s/%s/%s/" % (content_type.app_label, content_type.model, quote(object_id))
     
     def save(self, *args, **kwargs):
         if not self.content_type:

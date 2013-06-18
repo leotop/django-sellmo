@@ -1,5 +1,5 @@
 {% extends "store/base.html" %}
-{%  load attribute %}
+{%  load attribute color %}
 
 {% block body %}
 	<h1>{{ category.name }}</h1>
@@ -13,16 +13,13 @@
 			<li>
 				<h3><a href="{% url 'product.details' product.slug %}">{{ product }}</a></h3>
 				{%  if product.grouped_by %}
-				<div>
-					{{ product.grouped_by }}
-					<ul>
-						{% for value in product.grouped_choices %}
-							<li>
-								{%  render_value value %}
-							</li>
-						{% endfor %}
-					</ul>
-				</div>
+				<ul>
+					{% for color in product|colors:product.grouped_by %}
+						<li>
+							{% render_color color %}
+						</li>
+					{% endfor %}
+				</ul>
 				{% endif %}
 			</li>
 		{% endfor %} 

@@ -74,14 +74,21 @@ class PricingModule(sellmo.Module):
             setattr(stampable, attr, price[type].amount)
             
     @chainable()
+    def retrieve(self, chain, stampable, **kwargs):
+        price = Price(stampable.amount)
+        for type in self.types:
+            attr = '%s_amount' % type
+            price[type] = Price(getattr(stampable, attr))
+        return price
+            
+    @chainable()
     def get_price(self, chain, product, price=None, **kwargs):
         if chain:
             out = chain.execute(product=product, price=price, **kwargs)
             if out.has_key('price'):
                 price = out['price']
         
-        # Ensure we're dealing with a number
-        if not isinstance(price, Price):
+        if not price is None and not isinstance(price, Price):
             raise Exception("An invalid 'price' was provided")
         
         return price

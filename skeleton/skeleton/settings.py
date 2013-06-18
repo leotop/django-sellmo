@@ -131,10 +131,11 @@ INSTALLED_APPS = (
     
     # Product apps
     'sellmo.contrib.contrib_attribute',
-    'sellmo.contrib.contrib_attribute.objects.color',
     'attribute',
     'sellmo.contrib.contrib_variation',
     'variation',
+    'sellmo.contrib.contrib_color',
+    'color',
     'sellmo.contrib.contrib_product',
     'sellmo.contrib.contrib_product.subtypes.simple_product',
     'product',

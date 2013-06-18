@@ -11,6 +11,7 @@ skeleton/store/migrations
 skeleton/tax/migrations
 skeleton/attribute/migrations
 skeleton/variation/migrations
+skeleton/color/migrations
 
 # Python generated files #
 ######################
