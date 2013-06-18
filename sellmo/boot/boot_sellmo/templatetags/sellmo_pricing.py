@@ -39,3 +39,7 @@ register = template.Library()
 @register.filter
 def price(product):
     return product.get_price()
+    
+@register.filter
+def currency(price):
+    return 

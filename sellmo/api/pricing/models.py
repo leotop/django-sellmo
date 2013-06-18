@@ -49,12 +49,12 @@ class Stampable(models.Model):
         """
         Reconstructs the stamped price 
         """
-        price = Price(self.amount)
-        for type in modules.pricing.types:
-            pass
-        return price
+        return modules.pricing.retrieve(stampable=self, **kwargs)
     
     def stamp(self, price, **kwargs):
+        """
+        Stamps the price 
+        """
         modules.pricing.stamp(stampable=self, price=price, **kwargs)
     
     class Meta:
