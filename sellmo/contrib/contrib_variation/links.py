@@ -40,7 +40,7 @@ from django.contrib.contenttypes.models import ContentType
 
 
 from sellmo import modules
-
+raise Exception("WTF")
 #
 @link(namespace=modules.attribute.namespace, name='filter', capture=True)
 def capture_filter(request, products, attr, value, attribute=None, operator=None, **kwargs):
@@ -75,7 +75,6 @@ def override_filter(module, chain, request, products, attr, value, attribute, op
 
 @link(namespace=modules.product.namespace)
 def list(request, products, **kwargs):
-    raise Exception("WTF")
     flag = request.GET.get('variants', 'no').lower()
     if flag == 'yes':
         pass

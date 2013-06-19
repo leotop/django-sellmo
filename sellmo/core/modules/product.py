@@ -57,7 +57,6 @@ class ProductModule(sellmo.Module):
         if products is None:
             products = self.Product.objects.all()
         if chain:
-            raise Exception("ik snap dit niet2")
             out = chain.execute(request=request, products=products)
             if out.has_key('products'):
                 products = out['products']
