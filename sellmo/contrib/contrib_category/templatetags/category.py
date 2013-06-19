@@ -38,25 +38,16 @@ register = template.Library()
 
 @register.assignment_tag
 def categories(parent=None):
-    if parent:
-        return parent.children.active()
-    else:
-        return modules.category.Category.objects.active().root()
+    return modules.category.list(category=parent)
         
-@register.filter
-def is_active(value, product_or_category):
-    product = None
-    category = None
-    
-    if isinstance(product_or_category, modules.product.Product):
-        product = product_or_category
-    elif isinstance(product_or_category, modules.category.Category):
-        category = product_or_category
-    
-    if product is None and category is None:
-        raise Exception("Neither a product nor category was given.")
-        
-    if product:
-        pass
-    
+@register.assignment_tag(takes_context=True)
+def is_current(context, category, current_category=None):
+    if not current_category:
+        return False
+    if not context.has_key('_is_current_cache'):
+        context['_is_current_cache'] = [current_category] + current_category.parents
+    if category in context['_is_current_cache']:
+        if current_category == category:
+            return 'exact'
+        return True
     return False

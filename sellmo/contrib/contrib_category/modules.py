@@ -29,7 +29,7 @@ from django.http import Http404
 #
 
 from sellmo import modules, Module
-from sellmo.api.decorators import view
+from sellmo.api.decorators import view, chainable
 from sellmo.contrib.contrib_category.models import Category
 
 #
@@ -38,17 +38,48 @@ class CategoryModule(Module):
     namespace = 'category'
     Category = Category
     
-    @view(r'(?P<category_slug>[a-z0-9_-]+)$')
-    def category(self, chain, request, category_slug, context=None, **kwargs):
-        if context == None:
-            context = {}
-        try:
-            category = self.Category.objects.get(slug=category_slug)
-        except self.Category.DoesNotExist:
-            raise Http404("""Category '%s' not found.""" % category_slug)
+    @chainable()
+    def list(self, chain, category=None, categories=None):
+        if categories is None:
+            if category:
+                categories = category.children.active()
+            else:
+                categories = self.Category.objects.root().active()
         
         if chain:
-            return chain.execute(request, category=category, context=context, **kwargs)
+            out = chain.execute(request=request, products=products)
+            if out.has_key('categories'):
+                categories = out['categories']
+        
+        return categories
+    
+    @view(r'(?P<full_slug>[-/\w]+)/')
+    def category(self, chain, request, full_slug, category=None, context=None, **kwargs):
+        if context == None:
+            context = {}
+        
+        if category is None:
+            parents = None
+            categories = self.Category.objects.all()
+            for slug in full_slug.split('/'):
+                categories = self.Category.objects.filter(slug=slug)
+                if not parents is None:
+                    categories = categories.filter(parent__in=parents)
+                
+                # Get parent id's
+                parents = categories.values_list('id', flat=True)
+                if not parents:
+                    break
+                    
+            if categories.count() == 0:
+                raise Http404("""Category '%s' not found.""" % full_slug)
+            elif categories.count() > 1:
+                raise Http404("""Category '%s' could not be resolved.""" % full_slug)
+        
+            category = categories[0]
+        
+        if chain:
+            return chain.execute(request, category=category, full_slug=full_slug, context=context, **kwargs)
         else:
             # We don't render anything
             raise Http404

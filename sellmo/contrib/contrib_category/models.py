@@ -70,6 +70,25 @@ def load_manager():
 @load(before='finalize_product_Product', after='finalize_category_Category')
 def load_model():
     class Product(modules.product.Product):
+        
+        @staticmethod
+        def find_primary_category(product):
+            primary = None
+            max_parents = 0
+            
+            for category in product.category.all():
+                # Get number of parents for this category
+                parent = category.parent
+                num_parents = 0
+                while parent:
+                    num_parents += 1
+                    parent = parent.parent
+                
+                if num_parents > max_parents:
+                    primary = category
+                    
+            return primary
+        
         category = models.ManyToManyField(
             modules.category.Category,
             blank = True,
@@ -77,6 +96,22 @@ def load_model():
             related_name = 'products',
             verbose_name = _("category"),
         )
+        
+        primary_category = models.ForeignKey(
+            modules.category.Category,
+            blank = True,
+            null = True,
+            on_delete = models.SET_NULL,
+            related_name = '+',
+            verbose_name = _("primary category"),
+        )
+        
+        def save(self, *args, **kwargs):
+            super(Product, self).save(*args, **kwargs)
+            if not self.primary_category and self.category.count() > 0:
+                self.primary_category = self.find_primary_category(self)
+                if self.primary_category:
+                    super(Product, self).save()
         
         class Meta:
             abstract = True
@@ -176,6 +211,11 @@ class Category(models.Model):
         categories = self.parents + [self]
         return " | ".join(category.name for category in categories)
         
+    @property
+    def full_slug(self):
+        categories = self.parents + [self]
+        return "/".join(category.slug for category in categories)
+        
     @classmethod
     def reorder(cls):
         categories = sorted([ (unicode(x), x) for x in cls.objects.all() ])
@@ -197,7 +237,7 @@ class Category(models.Model):
             
     @models.permalink
     def get_absolute_url(self):
-        return 'category.category', (self.slug,)
+        return 'category.category', (self.full_slug,)
     
     def __unicode__(self):
         return self.full_name
