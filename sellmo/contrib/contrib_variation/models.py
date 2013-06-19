@@ -42,6 +42,7 @@ from django.db.models import Q, F, Count
 from django.db.models.query import QuerySet
 from django.db.models.signals import pre_save, post_save, pre_delete
 from django.core.exceptions import ValidationError
+from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy as _
 
 #
@@ -58,6 +59,31 @@ def load_model():
             abstract = True
 
     modules.product.Product = Product
+    
+@load(after='finalize_product_Product') 
+def load_manager():
+
+    qs = modules.product.Product.objects.get_query_set()
+
+    class ProductQuerySet(qs.__class__):
+        def variants(self, exclude=False, only=False):
+            if exclude:
+                return self.filter(content_type__in=ContentType.objects.get_for_models(*modules.product.subtypes).values())
+            if only:
+                return self.filter(content_type__in=ContentType.objects.get_for_models(*modules.variation.subtypes).values())
+            return self
+                
+
+    class ProductManager(modules.product.Product.objects.__class__):
+        def get_query_set(self):
+            return ProductQuerySet(self.model)
+
+        def variants(self, *args, **kwargs):
+            return self.get_query_set().variants(*args, **kwargs)
+
+    class Product(ModelMixin):
+        model = modules.product.Product
+        objects = ProductManager()
                 
 @load(after='load_variants')
 def load_model():

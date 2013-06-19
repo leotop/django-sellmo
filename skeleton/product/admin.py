@@ -67,7 +67,7 @@ class ProductAdmin(PolymorphicParentModelAdmin):
     search_fields = ['name', 'slug', 'sku']
     
     def queryset(self, queryset):
-        return modules.product.Product.objects.filter(content_type__in=ContentType.objects.get_for_models(*modules.product.subtypes).values())
+        return modules.product.Product.objects.variants(exclude=True)
     
     def categories(self, instance):
         return "<br/>".join([unicode(category) for category in instance.category.all()])

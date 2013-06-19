@@ -89,7 +89,7 @@ class ColorMappingManager(models.Manager):
             
         colors = [color]
         if isinstance(color, MultiColor):
-            colors = color.colors
+            colors = color.colors.all()
         
         product = value.product.downcast()
         products = [product]

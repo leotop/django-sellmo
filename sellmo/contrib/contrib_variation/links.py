@@ -30,6 +30,7 @@ from sellmo import modules
 from sellmo.api.decorators import link
 from sellmo.api.pricing import Price
 from sellmo.contrib.contrib_variation.variation import find_variation
+from sellmo.contrib.contrib_attribute.query import ProductQ
 
 #
 
@@ -41,6 +42,36 @@ from django.contrib.contenttypes.models import ContentType
 from sellmo import modules
 
 #
+@link(namespace=modules.attribute.namespace, name='filter', capture=True)
+def capture_filter(request, products, attr, value, attribute=None, operator=None, **kwargs):
+    if not attribute:
+        try:
+            attribute = modules.attribute.Attribute.objects.get(key=attr)
+        except modules.attribute.Attribute.DoesNotExist:
+            return
+        
+    yield {
+        'attribute' : attribute
+    }
+    
+    if attribute.variates:
+        yield override_filter
+
+def override_filter(module, chain, request, products, attr, value, attribute, operator=None, **kwargs):
+    try:
+        value = attribute.parse(value)
+    except ValueError:
+        pass
+    else:
+        if operator is None:
+            q = ProductQ(attribute, value) | ProductQ(attribute, value, product_field='base_product')
+        else:
+            qargs = {
+                operator : value
+            }
+            q = ProductQ(attribute, **qargs) | ProductQ(attribute, product_field='base_product' **qargs)
+        return products.filter(q)
+    return products
 
 @link(namespace=modules.product.namespace)
 def list(request, products, **kwargs):
@@ -48,9 +79,9 @@ def list(request, products, **kwargs):
     if flag == 'yes':
         pass
     elif flag == 'only':
-        products = products.exclude(content_type__in=ContentType.objects.get_for_models(*modules.product.subtypes).values())
+        products = products.variants(only=True)
     else:
-        products = products.filter(content_type__in=ContentType.objects.get_for_models(*modules.product.subtypes).values())
+        products = products.variants(exclude=True)
     
     return {
         'products' : products
