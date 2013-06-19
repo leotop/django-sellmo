@@ -76,6 +76,7 @@ def override_filter(module, chain, request, products, attr, value, attribute, op
 @link(namespace=modules.product.namespace)
 def list(request, products, **kwargs):
     flag = request.GET.get('variants', 'no').lower()
+    print flag
     if flag == 'yes':
         pass
     elif flag == 'only':
