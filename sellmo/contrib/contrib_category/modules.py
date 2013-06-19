@@ -63,7 +63,9 @@ class CategoryModule(Module):
             categories = self.Category.objects.all()
             for slug in full_slug.split('/'):
                 categories = self.Category.objects.filter(slug=slug)
-                if not parents is None:
+                if parents is None:
+                    categories = categories.filter(parent__isnull=True)
+                else:
                     categories = categories.filter(parent__in=parents)
                 
                 # Get parent id's
