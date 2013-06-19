@@ -54,10 +54,10 @@ class PolymorphicQuerySet(QuerySet):
             downcasts = {}
             
             for el in super(PolymorphicQuerySet, self).iterator():
-                if not content_types.has_key(el.content_type.pk):
-                    content_types[el.content_type.pk] = el.content_type
-                    content_types_elements[el.content_type.pk] = []
-                content_types_elements[el.content_type.pk].append(el)
+                if not content_types.has_key(el.content_type_id):
+                    content_types[el.content_type_id] = el.content_type
+                    content_types_elements[el.content_type_id] = []
+                content_types_elements[el.content_type_id].append(el)
                 order.append(el.pk)
                     
             if self._downcast:
@@ -80,7 +80,6 @@ class PolymorphicQuerySet(QuerySet):
         else:
             elements = self
         return super(PolymorphicQuerySet, elements).__iter__()
-                
                 
     def _clone(self, *args, **kwargs):
         clone = super(PolymorphicQuerySet, self)._clone(*args, **kwargs)
