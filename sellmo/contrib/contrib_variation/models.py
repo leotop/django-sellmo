@@ -583,4 +583,3 @@ def load_model():
         
 # Init modules
 from sellmo.contrib.contrib_variation.modules import *
-raise Exception("WTF333")

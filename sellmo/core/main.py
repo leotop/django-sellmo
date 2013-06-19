@@ -117,6 +117,7 @@ class Sellmo(object):
             logger.warning("Module '%s' has no chainable method '%s'"  % (namespace, link._name))
             return False
         
+        logger.warning("Linking '%s'.'%s'"  % (link.__module__, link._name))
         chain = getattr(module, name)._chain
         chain.link(link)
         return True
