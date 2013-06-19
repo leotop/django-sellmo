@@ -28,8 +28,6 @@
 
 from sellmo import modules
 from sellmo.api.decorators import link
-from sellmo.api.pricing import Price
-from sellmo.contrib.contrib_variation.variation import find_variation
 from sellmo.contrib.contrib_attribute.query import ProductQ
 
 #
