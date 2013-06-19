@@ -31,7 +31,7 @@ from sellmo.api.decorators import link
 from sellmo.api.pricing import Price
 
 #
-raise Exception("WTF")
+
 @link()
 def get_price(product, price, **kwargs):
     if price and product.tax:

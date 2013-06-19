@@ -47,6 +47,8 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
+raise Exception("WTF333")
+
 @load(before='finalize_product_Product')
 def load_model():
     class Product(modules.product.Product):
