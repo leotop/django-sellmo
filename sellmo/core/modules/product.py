@@ -54,6 +54,7 @@ class ProductModule(sellmo.Module):
         
     @chainable()
     def list(self, chain, request, products=None):
+        raise Exception("ik snap dit niet")
         if products is None:
             products = self.Product.objects.all()
         if chain:
