@@ -491,9 +491,9 @@ class VariationManager(models.Manager):
                 # Get variations for this grouped attribute / value combination
                 qargs = {
                     'values__attribute' : group,
-                    'values__%s' % group.value_field : value.get_value()
+                    'values__%s' % group.value_field : value.get_value(),
                 }
-                variations = modules.variation.Variation.objects.filter(**qargs)
+                variations = modules.variation.Variation.objects.filter(product=product).filter(**qargs)
                 
                 # Get single variant
                 qargs = [ProductQ(group, value.get_value())]
