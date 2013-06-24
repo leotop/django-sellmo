@@ -44,6 +44,7 @@ class QtyPriceBase(models.Model):
     
     qty = models.PositiveIntegerField(
         verbose_name = _("quantity"),
+        default = 1,
     )
     
     def __unicode__(self):

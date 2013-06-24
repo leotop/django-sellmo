@@ -24,21 +24,45 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from sellmo import modules
+
+#
+
 from django.db import models
 from decimal import Decimal
+
+class Currency(object):
+    
+    """
+    ISO 4217
+    """
+    def __init__(self, code, description, format):
+        self.code = code
+        self.description = description
+        self._format = format
+        
+    def format(self, amount):
+        return self._format.format(amount=amount)
 
 class Price(object):
 
     @staticmethod
     def _sanity_check(a, b):
-        assert isinstance(a, Price), """Not a price"""
-        assert isinstance(b, Price), """Not a price"""
-        assert a.currency == b.currency, """Currency mismatch"""
+        if not isinstance(a, Price) or not isinstance(b, Price):
+            raise Exception("""Not a price""")
+        if a.currency != b.currency:
+            raise Exception("""Currency mismatch""")
 
     def __init__(self, amount=0, currency=None, type=None):
         self.amount = amount
         if not isinstance(self.amount, Decimal):
             self.amount = Decimal(str(self.amount))
+            
+        if currency is None:
+            currency = modules.pricing.get_currency()
+        
+        if currency is None:
+            raise Exception("Could not resolve currency")
         
         self.currency = currency
         self.type = type
@@ -82,7 +106,5 @@ class Price(object):
         raise KeyError(key)
     
     def __unicode__(self):
-        return unicode(self.amount)
-        
-    def __str(self):
-        return str(self.amount)
+        return self.currency.format(self.amount)
+    

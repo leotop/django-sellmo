@@ -44,7 +44,4 @@ class QtyPricingModule(Module):
             if out.has_key('tiers'):
                 tiers = out['tiers']
         
-        # Ensure we're dealing with a collection of numbers
-        # TODO  
-        
         return tiers

@@ -108,6 +108,7 @@ def load_model():
         
         def save(self, *args, **kwargs):
             super(Product, self).save(*args, **kwargs)
+            print self.category.count()
             if not self.primary_category and self.category.count() > 0:
                 self.primary_category = self.find_primary_category(self)
                 if self.primary_category:
@@ -158,7 +159,7 @@ class Category(models.Model):
         'self',
         blank = True,
         null = True,
-        verbose_name = _("parent"),
+        verbose_name = _("parent category"),
         related_name = 'children'
     )
     

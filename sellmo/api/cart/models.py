@@ -25,6 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from django.db import models
+from django.utils.translation import ugettext_lazy as _
 
 #
 
@@ -64,13 +65,17 @@ def load_model():
 @load(action='finalize_cart_Cart')
 def finalize_model():
     class Cart(modules.cart.Cart):
-        pass
+        class Meta:
+            verbose_name = _("cart")
+            verbose_name_plural = _("carts")
     modules.cart.Cart = Cart
     
 @load(action='finalize_cart_CartItem')
 def finalize_model():
     class CartItem(modules.cart.CartItem):
-        pass
+        class Meta:
+            verbose_name = _("cart item")
+            verbose_name_plural = _("cart items")
     modules.cart.CartItem = CartItem
 
 class Cart(models.Model):

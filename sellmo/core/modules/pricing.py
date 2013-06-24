@@ -43,7 +43,7 @@ class PricingModule(sellmo.Module):
     """
 
     namespace = 'pricing'
-    currency = 'EUR'
+    currency = None
     types = []
     Stampable = Stampable
     
@@ -80,16 +80,28 @@ class PricingModule(sellmo.Module):
             attr = '%s_amount' % type
             price[type] = Price(getattr(stampable, attr))
         return price
+        
+    @chainable()
+    def get_currency(self, chain, request=None, currency=None, **kwargs):
+        if currency is None:
+            currency = self.currency
+        
+        if chain:
+            out = chain.execute(request=request, currency=currency, **kwargs)
+            if out.has_key('currency'):
+                currency = out['currency']
+        
+        return currency
             
     @chainable()
-    def get_price(self, chain, product, price=None, **kwargs):
+    def get_price(self, chain, product, currency=None, price=None, **kwargs):
+        if currency is None:
+            currency = self.get_currency()
+        
         if chain:
-            out = chain.execute(product=product, price=price, **kwargs)
+            out = chain.execute(product=product, price=price, currency=currency, **kwargs)
             if out.has_key('price'):
                 price = out['price']
-        
-        if not price is None and not isinstance(price, Price):
-            raise Exception("An invalid 'price' was provided")
         
         return price
     

@@ -69,13 +69,18 @@ def load_model():
 @load(action='finalize_customer_Customer')
 def finalize_model():
     class Customer(modules.customer.Customer):
-        pass
+        class Meta:
+            verbose_name = _("customer")
+            verbose_name_plural = _("customers")
+            
     modules.customer.Customer = Customer
     
 @load(action='finalize_customer_Address')
 def finalize_model():
     class Address(modules.customer.Address):
-        pass
+        class Meta:
+            verbose_name = _("address")
+            verbose_name_plural = _("addresses")
     modules.customer.Address = Address
 
 class Addressee(models.Model):
@@ -107,8 +112,6 @@ class Customer(models.Model):
     
     class Meta:
         app_label = 'customer'
-        verbose_name = _("customer")
-        verbose_name_plural = _("customers")
         ordering = ['last_name', 'first_name']
         abstract = True
     
@@ -121,7 +124,5 @@ class Address(models.Model):
     
     class Meta:
         app_label = 'customer'
-        verbose_name = _("address")
-        verbose_name_plural = _("addresses")
         ordering = ['last_name', 'first_name']
         abstract = True

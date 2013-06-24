@@ -41,21 +41,23 @@ def load_model():
         modules.pricing.Stampable.add_to_class('%s_amount' % type, modules.pricing.construct_decimal_field())
 
 class Stampable(models.Model):
-    """
-    Enabled suptypes to store(stamp) a price and retrieve this exact same price
-    """
-    @property
-    def price(self):
+   
+    def get_price(self, **kwargs):
         """
         Reconstructs the stamped price 
         """
         return modules.pricing.retrieve(stampable=self, **kwargs)
-    
-    def stamp(self, price, **kwargs):
+        
+    def set_price(self, value, **kwargs):
         """
         Stamps the price 
         """
-        modules.pricing.stamp(stampable=self, price=price, **kwargs)
+        modules.pricing.stamp(stampable=self, price=value, **kwargs)
+        
+    """
+    Enabled suptypes to store(stamp) a price and retrieve this exact same price
+    """
+    price = property(get_price, set_price)
     
     class Meta:
         abstract = True

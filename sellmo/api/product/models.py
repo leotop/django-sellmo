@@ -42,7 +42,9 @@ def load_subtypes():
 @load(action='finalize_product_Product')
 def finalize_model():
     class Product(modules.product.Product):
-        pass
+        class Meta:
+            verbose_name = _("product")
+            verbose_name_plural = _("products")
     modules.product.Product = Product
 
 class Product(PolymorphicModel):
@@ -70,13 +72,11 @@ class Product(PolymorphicModel):
     @models.permalink
     def get_absolute_url(self):
         return 'product.details', (self.slug,)
-        
-    def get_price(self, **kwargs):
-        return modules.pricing.get_price(product=self, **kwargs)
+    
+    def get_price(self, currency=None, **kwargs):
+        return modules.pricing.get_price(product=self, currency=currency, **kwargs)
     
     class Meta:
         ordering = ['slug']
         app_label = 'product'
-        verbose_name = _("product")
-        verbose_name_plural = _("products")
         abstract = True
