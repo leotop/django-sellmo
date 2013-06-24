@@ -29,8 +29,8 @@ from sellmo.magic import ModelMixin
 from sellmo.api.decorators import load
 
 #
-
 from django.db import models
+from django.db.models.signals import m2m_changed
 from django.db.models.query import QuerySet
 from django.utils.translation import ugettext_lazy as _
 
@@ -65,7 +65,11 @@ def load_manager():
     class Product(ModelMixin):
         model = modules.product.Product
         objects = ProductManager()
-        
+
+# Admin will not call "post_remove", this will cause an issue if all categories are unassigned.
+def on_category_changed(sender, instance, action, **kwargs):
+    if action == 'post_add' or action == 'post_remove':
+        instance.update_primary_category(instance)
     
 @load(before='finalize_product_Product', after='finalize_category_Category')
 def load_model():
@@ -74,7 +78,7 @@ def load_model():
         @staticmethod
         def find_primary_category(product):
             primary = None
-            max_parents = 0
+            max_parents = -1
             
             for category in product.category.all():
                 # Get number of parents for this category
@@ -86,8 +90,27 @@ def load_model():
                 
                 if num_parents > max_parents:
                     primary = category
+                    max_parents = num_parents
                     
             return primary
+            
+        @staticmethod
+        def update_primary_category(product):
+            
+            if (product.primary_category is None 
+            or getattr(product, '_primary_category_found', False) 
+            or product.category.filter(pk=product.primary_category.pk).count() == 0
+            ) and product.category.count() > 0:
+                # Find best suitable category
+                found = product.find_primary_category(product)
+                if product.primary_category != found:
+                    product.primary_category = found
+                    setattr(product, '_primary_category_found', True)
+                    product.save()
+            elif not product.primary_category is None and product.category.count() == 0:
+                # Unassign
+                product.primary_category = None
+                product.save()
         
         category = models.ManyToManyField(
             modules.category.Category,
@@ -108,15 +131,12 @@ def load_model():
         
         def save(self, *args, **kwargs):
             super(Product, self).save(*args, **kwargs)
-            print self.category.count()
-            if not self.primary_category and self.category.count() > 0:
-                self.primary_category = self.find_primary_category(self)
-                if self.primary_category:
-                    super(Product, self).save()
+            self.update_primary_category(self)
         
         class Meta:
             abstract = True
-        
+    
+    m2m_changed.connect(on_category_changed, sender=Product.category.through)
     modules.product.Product = Product
     
 class CategoryQuerySet(QuerySet):
