@@ -25,7 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from sellmo import modules
-from sellmo.magic import ModelMixin
+from sellmo.magic import ModelMixin, ManagerMixinHelper
 from sellmo.api.decorators import load
 
 #
@@ -55,13 +55,13 @@ def load_manager():
             else:
                 return self.filter(category__in=[category])
     
-    class ProductManager(modules.product.Product.objects.__class__):
+    class ProductManager(ManagerMixinHelper, modules.product.Product.objects.__class__):
         def in_category(self, *args, **kwargs):
             return self.get_query_set().in_category(*args, **kwargs)
     
         def get_query_set(self):
             return ProductQuerySet(self.model)
-            
+    
     class Product(ModelMixin):
         model = modules.product.Product
         objects = ProductManager()

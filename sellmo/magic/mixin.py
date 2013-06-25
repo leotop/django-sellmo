@@ -44,3 +44,8 @@ class _ModelMixin(type):
 
 class ModelMixin(object):
     __metaclass__ = _ModelMixin
+    
+class ManagerMixinHelper(object):
+    def contribute_to_class(self, model, name):
+        super(ManagerMixinHelper, self).contribute_to_class(model, name)
+        model._default_manager = self

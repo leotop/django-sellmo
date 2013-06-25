@@ -25,4 +25,4 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from singleton import SingletonMeta, singleton
-from mixin import ModelMixin
+from mixin import ModelMixin, ManagerMixinHelper

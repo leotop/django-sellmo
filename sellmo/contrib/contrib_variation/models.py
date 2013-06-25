@@ -28,7 +28,7 @@
 
 from sellmo import modules
 from sellmo.api.decorators import load
-from sellmo.magic import ModelMixin
+from sellmo.magic import ModelMixin, ManagerMixinHelper
 from sellmo.utils.polymorphism import PolymorphicModel, PolymorphicManager
 from sellmo.contrib.contrib_variation.variant import VariantFieldDescriptor, VariantMixin, get_differs_field_name
 from sellmo.contrib.contrib_variation.utils import generate_slug
@@ -74,7 +74,7 @@ def load_manager():
             return self
                 
 
-    class ProductManager(modules.product.Product.objects.__class__):
+    class ProductManager(ManagerMixinHelper, modules.product.Product.objects.__class__):
         def get_query_set(self):
             return ProductQuerySet(self.model)
 
@@ -88,7 +88,7 @@ def load_manager():
 @load(after='load_variants')
 def load_model():
     for subtype in modules.variation.product_subtypes:
-        class ProductMixin(ModelMixin):
+        class Product(ModelMixin):
             model = subtype
             
             @property
@@ -180,7 +180,7 @@ def load_manager():
                 & (Q(values__base_product=product) | Q(values__product=product) & Q(values__recipe__isnull=False))
             ).distinct()
     
-    class AttributeManager(modules.attribute.Attribute.objects.__class__):
+    class AttributeManager(ManagerMixinHelper, modules.attribute.Attribute.objects.__class__):
         def get_query_set(self):
             return AttributeQuerySet(self.model)
             
@@ -238,7 +238,7 @@ def load_manager():
             else:
                 return q
     
-    class ValueManager(modules.attribute.Value.objects.__class__):
+    class ValueManager(ManagerMixinHelper, modules.attribute.Value.objects.__class__):
         def get_query_set(self):
             return ValueQuerySet(self.model)
         
