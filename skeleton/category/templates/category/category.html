@@ -4,11 +4,6 @@
 {% block body %}
 	<h1>{{ category.name }}</h1>
 	<ul>
-		{%  for child in category.children.all %}
-			<li style="display: inline-block;"><a href="{% url 'category.category' child.slug %}">{{ child.name }}</a></li>
-		{%  endfor  %}
-	</ul>
-	<ul>
 		{% for product in products %}
 			<li>
 				<h3><a href="{% url 'product.details' product.slug %}">{{ product }}</a></h3>

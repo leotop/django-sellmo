@@ -26,7 +26,7 @@ class ProductAdminBase(ProductAttributeMixin, admin.ModelAdmin):
             'fields': ('tax',)
         }),
         (_("Webshop arrangement"), {
-            'fields': ('slug', 'category', 'active', 'featured')
+            'fields': ('slug', 'category', 'primary_category', 'active', 'featured')
         })
     )
     

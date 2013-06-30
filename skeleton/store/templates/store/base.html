@@ -7,6 +7,13 @@
         <meta name="viewport" content="width=device-width">
 	</head>
 	<body>
+	   <div class="categories">
+	       {% block category-list %}
+	           {% load category %}
+	           {% nested_categories as categories %}
+	           {% include 'category/_category_list.html' with categories=categories current=category %}
+	       {% endblock %}
+	   </div>
 		{% block body %}
 		
 		{% endblock %}
