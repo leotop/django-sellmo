@@ -35,7 +35,18 @@ from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.admin.sites import NotRegistered
 
+
 #
+
+class CategoryBaseAdmin(admin.ModelAdmin):
+    def queryset(self, request):
+        # optimize the list display.
+        qs = super(CategoryBaseAdmin, self).queryset(request)
+        
+        # always order by (tree_id, left)
+        tree_id = qs.model._mptt_meta.tree_id_attr
+        left = qs.model._mptt_meta.left_attr
+        return qs.order_by(tree_id, left)
 
 class ProductCategoryMixin(object):
     def formfield_for_manytomany(self, db_field, request, **kwargs):

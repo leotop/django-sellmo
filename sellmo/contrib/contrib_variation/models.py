@@ -74,7 +74,7 @@ def load_manager():
             return self
                 
 
-    class ProductManager(ManagerMixinHelper, modules.product.Product.objects.__class__):
+    class ProductManager(modules.product.Product.objects.__class__, ManagerMixinHelper):
         def get_query_set(self):
             return ProductQuerySet(self.model)
 
@@ -180,7 +180,7 @@ def load_manager():
                 & (Q(values__base_product=product) | Q(values__product=product) & Q(values__recipe__isnull=False))
             ).distinct()
     
-    class AttributeManager(ManagerMixinHelper, modules.attribute.Attribute.objects.__class__):
+    class AttributeManager(modules.attribute.Attribute.objects.__class__, ManagerMixinHelper):
         def get_query_set(self):
             return AttributeQuerySet(self.model)
             
@@ -238,7 +238,7 @@ def load_manager():
             else:
                 return q
     
-    class ValueManager(ManagerMixinHelper, modules.attribute.Value.objects.__class__):
+    class ValueManager(modules.attribute.Value.objects.__class__, ManagerMixinHelper):
         def get_query_set(self):
             return ValueQuerySet(self.model)
         

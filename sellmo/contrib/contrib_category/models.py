@@ -36,6 +36,10 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
+from mptt.models import MPTTModel, TreeForeignKey, TreeManager
+
+#
+
 @load(action='finalize_category_Category')
 def finalize_model():
     class Category(modules.category.Category):
@@ -50,12 +54,12 @@ def load_manager():
     class ProductQuerySet(qs.__class__):
         def in_category(self, category, recurse=True):
             if recurse:
-                descendants = [category] + category.descendants
-                return self.filter(category__in=descendants)
+                return self.filter(category__in=category.get_descendants(include_self=True))
             else:
                 return self.filter(category__in=[category])
     
-    class ProductManager(ManagerMixinHelper, modules.product.Product.objects.__class__):
+    
+    class ProductManager(modules.product.Product.objects.__class__, ManagerMixinHelper):
         def in_category(self, *args, **kwargs):
             return self.get_query_set().in_category(*args, **kwargs)
     
@@ -70,6 +74,10 @@ def load_manager():
 def on_category_changed(sender, instance, action, **kwargs):
     if action == 'post_add' or action == 'post_remove':
         instance.update_primary_category(instance)
+    
+@load(after='finalize_product_Product')
+def load_model():
+    m2m_changed.connect(on_category_changed, sender=modules.product.Product.category.through)
     
 @load(before='finalize_product_Product', after='finalize_category_Category')
 def load_model():
@@ -136,24 +144,23 @@ def load_model():
         class Meta:
             abstract = True
     
-    m2m_changed.connect(on_category_changed, sender=Product.category.through)
     modules.product.Product = Product
     
 class CategoryQuerySet(QuerySet):
     def in_parent(self, category, recurse=True):
+        q = self.filter(tree_id=category.tree_id)
         if recurse:
-            descendants = [category] + category.descendants
-            return self.filter(parent__in=descendants)
+            return q.filter(level__gt=category.level)
         else:
-            return self.filter(parent__in=[category])
+            return q.filter(level=category.level + 1)
             
     def active(self):
         return self.filter(active=True)
         
     def root(self):
-        return self.filter(parent=None)
+        return self.filter(level=0)
     
-class CategoryManager(models.Manager):
+class CategoryManager(TreeManager):
     def in_parent(self, *args, **kwargs):
         return self.get_query_set().in_parent(*args, **kwargs)
         
@@ -166,16 +173,16 @@ class CategoryManager(models.Manager):
     def get_query_set(self):
         return CategoryQuerySet(self.model)
 
-class Category(models.Model):
+class Category(MPTTModel):
     
     objects = CategoryManager()
     
-    order = models.PositiveSmallIntegerField(
+    sort_order = models.SmallIntegerField(
         default = 0,
-        editable = False
+        verbose_name = _("sort order"),
     )
     
-    parent = models.ForeignKey(
+    parent = TreeForeignKey(
         'self',
         blank = True,
         null = True,
@@ -210,64 +217,49 @@ class Category(models.Model):
     )
     
     @property
-    def parents(self):
-        parents = []
-        parent = self.parent
-        while parent:
-            parents.append(parent)
-            parent = parent.parent
-        parents.reverse()
-        return parents
-        
-    @property
     def descendants(self):
-        descendants = []
-        for child in self.children.all():
-            descendants.append(child)
-            descendants.extend(child.descendants)
-        return descendants
+        qs = modules.category.Category.objects.get_query_set()
+        return self.get_descendants()._clone(klass=qs.__class__)
         
     @property
-    def full_name(self):
-        categories = self.parents + [self]
-        return " | ".join(category.name for category in categories)
+    def ancestors(self):
+        qs = modules.category.Category.objects.get_query_set()
+        return self.get_ancestors()._clone(klass=qs.__class__)
         
-    @property
-    def full_slug(self):
-        categories = self.parents + [self]
-        return "/".join(category.slug for category in categories)
+    def get_full_name(self, ancestors=None):
+        if ancestors is None:
+            ancestors = self.get_ancestors(include_self=True)
+        else:
+            ancestors = ancestors + [self]
+        return " | ".join(category.name for category in ancestors)
         
-    @classmethod
-    def reorder(cls):
-        categories = sorted([ (unicode(x), x) for x in cls.objects.all() ])
-        for i in range(len(categories)):
-            full_description, category = categories[i]
-            category.order = i
-            super(Category, category).save()
-    
-    def save(self, *args, **kwargs):
-        super(Category, self).save(*args, **kwargs)
-        self.reorder()
-    
-    def clean(self):
-        parent = self.parent
-        while parent:
-            if parent.id == self.id:
-                raise ValidationError(_("Parent assignment causes a loop."))
-            parent = parent.parent
+    full_name = property(get_full_name)
+        
+    def get_full_slug(self, ancestors=None):
+        if ancestors is None:
+            ancestors = self.get_ancestors(include_self=True)
+        else:
+            ancestors = ancestors + [self]
+        return "/".join(category.slug for category in ancestors)
+        
+    full_slug = property(get_full_slug)
             
     @models.permalink
-    def get_absolute_url(self):
-        return 'category.category', (self.full_slug,)
+    def get_absolute_url(self, slug=None):
+        if slug is None:
+            slug = self.full_slug
+        return 'category.category', (slug,)
     
     def __unicode__(self):
         return self.full_name
+        
+    class MPTTMeta:
+        order_insertion_by = ['sort_order', 'name']
     
     class Meta:
         app_label = 'category'
         verbose_name = _("category")
         verbose_name_plural = _("categories")
-        ordering = ['order']
         abstract = True
         
 # Init modules

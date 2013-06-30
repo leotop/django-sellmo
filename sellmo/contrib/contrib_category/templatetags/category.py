@@ -25,10 +25,15 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from django import template
+from django.utils.safestring import mark_safe
 
 #
 
 from sellmo import modules
+
+#
+
+from mptt.templatetags.mptt_tags import cache_tree_children
 
 #
 
@@ -38,16 +43,57 @@ register = template.Library()
 
 @register.assignment_tag
 def categories(parent=None):
-    return modules.category.list(category=parent)
+    return modules.category.list(parent=parent)
+    
+@register.assignment_tag
+def nested_categories(parent=None):
+    return modules.category.list(parent=parent, nested=True)
         
 @register.assignment_tag(takes_context=True)
 def is_current(context, category, current_category=None):
     if not current_category:
         return False
-    if not context.has_key('_is_current_cache'):
-        context['_is_current_cache'] = [current_category] + current_category.parents
-    if category in context['_is_current_cache']:
-        if current_category == category:
-            return 'exact'
+    if current_category == category:
+        return 'exact'
+    if category.is_ancestor_of(current_category):
         return True
     return False
+    
+class RenderCategoriesNode(template.Node):
+    def __init__(self, template_nodes, queryset_var):
+        self.template_nodes = template_nodes
+        self.queryset_var = queryset_var
+
+    def _render_node(self, context, node, ancestors):
+        bits = []
+        context.push()
+        for child in node.get_children():
+            bits.append(self._render_node(context, child, ancestors + [node]))
+        
+        context['node'] = node
+        context['children'] = mark_safe(''.join(bits))
+        context['ancestors'] = ancestors
+        context['absolute_url'] = node.get_absolute_url(slug=node.get_full_slug(ancestors=ancestors))
+        context['path'] = ancestors + [node]
+        
+        rendered = self.template_nodes.render(context)
+        context.pop()
+        return rendered
+    
+    def render(self, context):
+        queryset = self.queryset_var.resolve(context)
+        roots = cache_tree_children(queryset)
+        bits = [self._render_node(context, node, []) for node in roots]
+        return ''.join(bits)
+
+
+@register.tag
+def render_categories(parser, token):
+    bits = token.contents.split()
+    if len(bits) != 2:
+        raise template.TemplateSyntaxError(_("%s tag requires a queryset") % bits[0])
+
+    queryset_var = template.Variable(bits[1])
+    template_nodes = parser.parse(('endrender_categories',))
+    parser.delete_first_token()
+    return RenderCategoriesNode(template_nodes, queryset_var)

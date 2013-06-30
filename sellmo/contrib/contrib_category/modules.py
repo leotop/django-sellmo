@@ -39,12 +39,16 @@ class CategoryModule(Module):
     Category = Category
     
     @chainable()
-    def list(self, chain, category=None, categories=None):
+    def list(self, chain, parent=None, categories=None, nested=False):
         if categories is None:
-            if category:
-                categories = category.children.active()
+            if parent:
+                categories = parent.children.all()
             else:
-                categories = self.Category.objects.root().active()
+                if nested:
+                    categories = self.Category.objects.all()
+                else:
+                    categories = self.Category.objects.root()
+            categories = categories.active()
         
         if chain:
             out = chain.execute(request=request, products=products)
