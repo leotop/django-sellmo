@@ -96,7 +96,14 @@ class Price(object):
         a._mutations.append((d, b.type))
         return a
         
+    def __xor__(a, b):
+        for i in range(1, b):
+            a = a + a
+        return a
+        
     def __getitem__(self, key):
+        if not isinstance(key, basestring):
+            raise TypeError()
         if key:
             price = Price(0, self.currency, key)
             for mutation in self._mutations:
@@ -104,6 +111,18 @@ class Price(object):
                     price.amount += mutation[0]
             return price
         raise KeyError(key)
+        
+    def __setitem__(self, key, value):
+        if not isinstance(key, basestring):
+            raise TypeError()
+        if key:
+            for mutation in self._mutations:
+                if mutation[1] == key:
+                    mutation[0] = value.amount
+                    return
+            self._mutations.append((value.amount, key))
+        else:
+            raise KeyError(key)
     
     def __unicode__(self):
         return self.currency.format(self.amount)
