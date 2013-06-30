@@ -8,7 +8,7 @@
         {% else %}
         <li class="current">
         {% endif %}
-        <h3 class="name">{{ node.name }}</h3>
+        <a href="{{ absolute_url }}">{{ node.name }}</a>
         {% if not node.is_leaf_node %}
             <ul>
                 {{ children }}

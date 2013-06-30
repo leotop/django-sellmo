@@ -85,22 +85,10 @@ def load_model():
         
         @staticmethod
         def find_primary_category(product):
-            primary = None
-            max_parents = -1
-            
-            for category in product.category.all():
-                # Get number of parents for this category
-                parent = category.parent
-                num_parents = 0
-                while parent:
-                    num_parents += 1
-                    parent = parent.parent
-                
-                if num_parents > max_parents:
-                    primary = category
-                    max_parents = num_parents
-                    
-            return primary
+            q = product.category.all().order_by('-level')
+            if q:
+                return q[0]
+            return None
             
         @staticmethod
         def update_primary_category(product):
@@ -136,10 +124,6 @@ def load_model():
             related_name = '+',
             verbose_name = _("primary category"),
         )
-        
-        def save(self, *args, **kwargs):
-            super(Product, self).save(*args, **kwargs)
-            self.update_primary_category(self)
         
         class Meta:
             abstract = True
