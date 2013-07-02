@@ -46,16 +46,27 @@ class StoreModule(sellmo.Module):
         pass
             
     @chainable()
+    def edit_purchase(self, chain, purchase, qty, **kwargs):
+        
+        purchase.qty = qty
+        
+        if chain:
+            out = chain.execute(purchase=purchase, **kwargs)
+            if out.has_key('purchase'):
+                purchase = out['purchase']
+        
+        return purchase
+            
+    @chainable()
     def make_purchase(self, chain, product, qty, purchase=None, **kwargs):
         
         if not purchase:
             purchase = self.Purchase(product=product, qty=qty)
-            purchase.stamp(product.get_price())
+            purchase.price = product.get_price()
             
         if chain:
             out = chain.execute(product=product, qty=qty, purchase=purchase, **kwargs)
             if out.has_key('purchase'):
                 purchase = out['purchase']
         
-        purchase.save()
         return purchase

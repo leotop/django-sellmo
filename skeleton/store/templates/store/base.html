@@ -14,6 +14,13 @@
 	           {% include 'category/_category_list.html' with categories=categories current=category %}
 	       {% endblock %}
 	   </div>
+	   <div class="cart">
+	       {% block cart %}
+	           {% load sellmo_cart %}
+	           {% cart as cart %}
+	           <a href={% url 'cart.cart' %}>{{ cart.total }}</a>
+	       {% endblock %}
+	   </div>
 		{% block body %}
 		
 		{% endblock %}

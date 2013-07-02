@@ -120,12 +120,18 @@ class PolymorphicModel(models.Model):
             if(model == self.__class__):
                 return self
             try:
-                downcasted = model.objects.get(id=self.id)
+                downcasted = model.objects.get(pk=self.pk)
             except model.DoesNotExist:
                 return self
             else:
                 return downcasted 
         return self
+        
+    def clone(self, cls=None):
+        if cls is None:
+            cls = self.__class__
+        clone = cls()
+        return clone
         
     class Meta:
         abstract = True

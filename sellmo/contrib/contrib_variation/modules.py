@@ -52,7 +52,7 @@ class VariationModule(Module):
     def register_product_subtype(self, subtype):
         self.product_subtypes.append(subtype)
         
-    @view(r'add/(?P<product_slug>[a-z0-9_-]+)/(?P<variation_key>[a-z0-9_-]+)$')
+    @view(r'^add/(?P<product_slug>[a-z0-9_-]+)/(?P<variation_key>[a-z0-9_-]+)$')
     def add_to_cart(self, chain, request, product_slug, variation_key, **kwargs):
         try:
             product = modules.product.Product.objects.polymorphic().get(slug=product_slug)

@@ -1,16 +1,30 @@
 {% extends "store/base.html" %}
+{% load sellmo_cart %}
 
 {% block body %}
 	<h1>Cart</h1>
 	<table>
+		<thead>
+			<th>Qty</th>
+			<th>Product</th>
+			<th>Price</th>
+			<th>Total</th>
+		</thead>
 		<tbody>
-		{% for item in cart %}
+		{% for purchase in cart %}
 			<tr>
-				<th>{{ item.description }}</th>
-				<td>{{ item.qty }}</td>
-				<td>{{ item.total }}</td>
+				<td>{% edit_cart_form purchase=purchase %}</td>
+				<th>{{ purchase.description }}</th>
+				<td>{{ purchase.price }} <small>({{ purchase.price.tax }} vat)</small></td>
+				<td><b>{{ purchase.total }} <small>({{ purchase.total.tax }} vat)</small></b></td>
 			</tr>
 		{% endfor %}
+		<tr>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td><b>{{ cart.total }} <small>({{ cart.total.tax }} vat)</small></b></td>
+		<tr>
 		</tbody>
 	</table>
 {% endblock %}

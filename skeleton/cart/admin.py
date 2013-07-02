@@ -4,10 +4,10 @@ from django.utils.translation import ugettext_lazy as _
 
 from sellmo import modules
 
-class CartItemInline(admin.TabularInline):
-    model = modules.cart.CartItem
+class PurchaseInline(admin.TabularInline):
+    model = modules.store.Purchase
 
 class CartAdmin(admin.ModelAdmin):
-    inlines = [CartItemInline]
+    inlines = [PurchaseInline]
     
 admin.site.register(modules.cart.Cart, CartAdmin)

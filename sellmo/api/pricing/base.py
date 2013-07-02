@@ -97,8 +97,9 @@ class Price(object):
         return a
         
     def __xor__(a, b):
-        for i in range(1, b):
-            a = a + a
+        a.amount *= b
+        for i in range(len(a._mutations)):
+            a._mutations[i] = (a._mutations[i][0] * b, a._mutations[i][1])
         return a
         
     def __getitem__(self, key):

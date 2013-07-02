@@ -62,7 +62,7 @@ class ProductModule(sellmo.Module):
                 products = out['products']
         return products
     
-    @view(r'(?P<product_slug>[a-z0-9_-]+)$')
+    @view(r'^(?P<product_slug>[a-z0-9_-]+)$')
     def details(self, chain, request, product_slug, context=None, **kwargs):
         if context == None:
             context = {}

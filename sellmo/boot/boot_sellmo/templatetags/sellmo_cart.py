@@ -36,6 +36,10 @@ register = template.Library()
 
 #
 
+@register.assignment_tag(takes_context=True)
+def cart(context):
+    return modules.cart.get(request=context['request'])
+
 @register.inclusion_tag('cart/add_to_cart_formset.html')
 def add_to_cart_formset(product, **kwargs):
     context = {
@@ -46,4 +50,12 @@ def add_to_cart_formset(product, **kwargs):
     context.update(kwargs)
     return context
     
+@register.inclusion_tag('cart/edit_cart_form.html')
+def edit_cart_form(purchase, **kwargs):
+    context = {
+        'form' : modules.cart.get_edit_cart_form(purchase=purchase, **kwargs),
+        'purchase' : purchase
+    }
     
+    context.update(kwargs)
+    return context

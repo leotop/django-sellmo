@@ -32,6 +32,10 @@ from sellmo import modules
 
 #
 
-class AddToCartForm(modules.cart.AddToCartForm):
+class AddToCartForm(forms.Form):
     product = forms.IntegerField(widget = forms.HiddenInput)
+    qty = forms.IntegerField()
+    
+class EditCartForm(forms.Form):
+    purchase = forms.IntegerField(widget = forms.HiddenInput)
     qty = forms.IntegerField()

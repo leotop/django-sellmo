@@ -41,7 +41,6 @@ class PricingModule(sellmo.Module):
     Routes product pricing logic to higher level modules and acts as a container for pricing
     related models.
     """
-
     namespace = 'pricing'
     currency = None
     types = []

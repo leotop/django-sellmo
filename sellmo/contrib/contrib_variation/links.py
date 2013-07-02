@@ -99,12 +99,9 @@ def capture_get_price(product=None, **kwargs):
 @link(namespace=modules.store.namespace)
 def make_purchase(purchase, variation=None, **kwargs):
     if variation:
-        purchase = modules.variation.VariationPurchase(
-            product = purchase.product,
-            qty = purchase.qty,
-            variation_key = variation.key,
-            variation_name = variation.name
-        )
+        purchase = purchase.clone(cls=modules.variation.VariationPurchase)
+        purchase.variation_key = variation.pk
+        purchase.variation_description = variation.description
         
     return {
         'purchase' : purchase
@@ -114,9 +111,10 @@ def make_purchase(purchase, variation=None, **kwargs):
 def get_purchase_args(form, product, args, **kwargs):
     if form.__class__.__name__ == 'AddToCartVariationForm':
         # Dealing with a varation form
-        variation = find_variation(product, form.cleaned_data['variation'])
-        if not variation:
-            raise Exception()
+        try:
+            variation = modules.variation.Variation.objects.get(pk=form.cleaned_data['variation'])
+        except modules.variation.Variation.DoesNotExist:
+            raise Exception("Invalid variation")
         args['product'] = variation.product
         args['variation'] = variation
         
@@ -154,13 +152,13 @@ def get_add_to_cart_formset(formset, cls, product, variations=None, initial=None
         if modules.variation.batch_buy_enabled:
             initial = [{
                 'product' : product.pk,
-                'variation' : variation.id,
+                'variation' : variation.pk,
                 'qty' : 1
             } for variation in variations]
         else:
             initial = [{
                 'product' : product.pk,
-                'variation' : variations[:1][0].id,
+                'variation' : variations[:1][0].pk,
                 'qty' : 1
             }]
             

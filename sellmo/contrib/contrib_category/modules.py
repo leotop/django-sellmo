@@ -57,7 +57,7 @@ class CategoryModule(Module):
         
         return categories
         
-    @view(r'$')
+    @view(r'^$')
     def index(self, chain, request, context=None, **kwargs):
         if chain:
             return chain.execute(request, context=context, **kwargs)
@@ -65,7 +65,7 @@ class CategoryModule(Module):
             # We don't render anything
             raise Http404
     
-    @view(r'(?P<full_slug>[-/\w]+)/')
+    @view(r'^(?P<full_slug>[-/\w]+)/')
     def category(self, chain, request, full_slug, category=None, context=None, **kwargs):
         if context == None:
             context = {}

@@ -45,13 +45,13 @@ def load_model():
     
     modules.store.Purchase = Purchase
         
-@load(action='finalize_store_Purchase')
+@load(action='finalize_store_Purchase', after='finalize_pricing_Stampable')
 def finalize_model():
-    class Purchase(modules.store.Purchase):
+    class Purchase(modules.store.Purchase, modules.pricing.Stampable):
         pass
     modules.store.Purchase = Purchase
 
-class Purchase(PolymorphicModel, modules.pricing.Stampable):
+class Purchase(PolymorphicModel):
     
     qty = models.PositiveIntegerField(
         default = 1
@@ -60,9 +60,20 @@ class Purchase(PolymorphicModel, modules.pricing.Stampable):
     @property
     def description(self):
         return self.describe()
+        
+    @property
+    def total(self):
+        return self.price ^ self.qty
     
     def describe(self):
         return unicode(self.product)
+        
+    def clone(self, cls=None):
+        clone = super(Purchase, self).clone(cls=cls)
+        clone.product = self.product
+        clone.qty = self.qty
+        clone.price = self.price
+        return clone
     
     def __unicode__(self):
         return u"%s x %s" % (self.qty, self.description)

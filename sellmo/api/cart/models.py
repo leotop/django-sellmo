@@ -36,31 +36,20 @@ from sellmo.utils.sessions import TrackingManager
 
 #
 
-@load(after='finalize_cart_Cart', before='finalize_cart_CartItem')
+@load(after='finalize_cart_Cart', before='finalize_store_Purchase')
 def load_model():
-    class CartItem(modules.cart.CartItem):
+    class Purchase(modules.store.Purchase):
         cart = models.ForeignKey(
             modules.cart.Cart,
-            related_name = 'items'
+            null = True,
+            editable = False,
+            related_name = 'items',
         )
         
         class Meta:
             abstract = True
         
-    modules.cart.CartItem = CartItem
-        
-@load(after='finalize_store_Purchase', before='finalize_cart_CartItem')
-def load_model():
-    class CartItem(modules.cart.CartItem):
-        purchase = models.OneToOneField(
-            modules.store.Purchase,
-            editable = False
-        )
-        
-        class Meta:
-            abstract = True
-        
-    modules.cart.CartItem = CartItem
+    modules.store.Purchase = Purchase
         
 @load(action='finalize_cart_Cart')
 def finalize_model():
@@ -69,14 +58,6 @@ def finalize_model():
             verbose_name = _("cart")
             verbose_name_plural = _("carts")
     modules.cart.Cart = Cart
-    
-@load(action='finalize_cart_CartItem')
-def finalize_model():
-    class CartItem(modules.cart.CartItem):
-        class Meta:
-            verbose_name = _("cart item")
-            verbose_name_plural = _("cart items")
-    modules.cart.CartItem = CartItem
 
 class Cart(models.Model):
     
@@ -99,18 +80,25 @@ class Cart(models.Model):
     def add(self, purchase):
         if self.pk == None:
             self.save()
-        item = modules.cart.CartItem(cart=self, purchase=purchase)
-        item.save()
+        purchase.cart = self
+        purchase.save()
+        
+    def update(self, purchase):
+        if purchase.cart != self:
+            raise Exception("We don't own this purchase")
+        purchase.save()
         
     def remove(self, purchase):
-        pass
+        if purchase.cart != self:
+            raise Exception("We don't own this purchase")
+        purchase.delete()
         
     def clear(self):
         pass
     
     def __iter__(self):
         if hasattr(self, 'items'):
-            for item in self.items.all():
+            for item in self.items.polymorphic().all():
                 yield item
             
     # Pricing
@@ -125,38 +113,6 @@ class Cart(models.Model):
     
     def __unicode__(self):
         return unicode(self.modified)
-    
-    class Meta:
-        app_label = 'cart'
-        abstract = True
-        
-class CartItem(models.Model):
-    
-    __purchase = None
-    @property
-    def _purchase(self):
-        if self.__purchase is None:
-            self.__purchase = self.purchase.downcast()
-        return self.__purchase
-        
-    @property
-    def qty(self):
-        return self._purchase.qty
-        
-    @property
-    def description(self):
-        return self._purchase.description
-        
-    @property
-    def product(self):
-        return self._purchase.product
-    
-    @property
-    def total(self):
-        return self._purchase.price
-    
-    def __unicode__(self):
-        return unicode(self._purchase)
     
     class Meta:
         app_label = 'cart'

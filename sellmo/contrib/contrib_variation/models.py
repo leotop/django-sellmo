@@ -576,6 +576,15 @@ def load_model():
             max_length = 255
         )
         
+        def describe(self):
+            return self.variation_description
+            
+        def clone(self, cls=None):
+            clone = super(VariationPurchase, self).clone(cls=cls)
+            clone.variation_key = self.variation_key
+            clone.variation_description = self.variation_description
+            return clone
+        
         class Meta:
             app_label = 'store'
         

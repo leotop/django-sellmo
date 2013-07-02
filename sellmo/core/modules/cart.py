@@ -35,7 +35,8 @@ from django.shortcuts import redirect
 import sellmo
 from sellmo import modules
 from sellmo.api.decorators import view, chainable
-from sellmo.api.cart.models import Cart, CartItem
+from sellmo.api.cart.models import Cart
+from sellmo.api.cart.forms import AddToCartForm, EditCartForm
 
 #
 
@@ -46,17 +47,43 @@ class CartModule(sellmo.Module):
     enabled = True
     
     Cart = Cart
-    CartItem = CartItem
     
-    AddToCartForm = forms.Form
+    AddToCartForm = AddToCartForm
+    EditCartForm = EditCartForm
     
     def __init__(self, *args, **kwargs):        
-        from sellmo.api.cart.forms import AddToCartForm
-        self.AddToCartForm = AddToCartForm
+        pass
+        
+    @chainable()
+    def get_edit_cart_form(self, chain, form=None, cls=None, purchase=None, initial=None, data=None, **kwargs):
+        if purchase is None:
+            raise Exception()
+            
+        if cls is None:
+            cls = self.EditCartForm
+            
+        if form is None:
+            if not data and not initial:
+                initial = {
+                    'purchase' : purchase.pk,
+                    'qty' : purchase.qty
+                }
+            
+            if not data:
+                form = cls(initial=initial)
+            else:
+                form = cls(data)
+                
+        if chain:
+            out = chain.execute(form=form, cls=cls, purchase=purchase, initial=initial, data=data, **kwargs)
+            if out.has_key('form'):
+                form = out['form']
+        
+        return form
+        
     
     @chainable()
     def get_add_to_cart_formset(self, chain, formset=None, cls=None, product=None, initial=None, data=None, **kwargs):
-        
         if product is None:
             raise Exception()
         else:
@@ -84,6 +111,28 @@ class CartModule(sellmo.Module):
                 formset = out['formset']
         
         return formset
+    
+    @chainable()
+    def get_edit_purchase_args(self, chain, purchase, form, **kwargs):
+        
+        args = {
+            'purchase' : purchase,
+        }
+        
+        if isinstance(form, self.EditCartForm):
+            args['qty'] = form.cleaned_data['qty']
+        
+        if chain:
+            args = chain.execute(purchase=purchase, form=form, args=args, **kwargs)
+        
+        # Purchase args should always contain
+        # 'purchase', 'qty'
+        if not args.has_key('purchase'):
+            raise Exception("Purchase arg 'purchase' was not given")
+        if not args.has_key('qty'):
+            raise Exception("Purchase arg 'qty' was not given")
+            
+        return args
         
     @chainable()
     def get_purchase_args(self, chain, product, form, **kwargs):
@@ -106,13 +155,24 @@ class CartModule(sellmo.Module):
             raise Exception("Purchase arg 'qty' was not given")
             
         return args
-            
-    @view(r'$')
+        
+    @chainable()
+    def get(self, chain, cart=None, request=None, **kwargs):
+        if cart is None:
+            cart = self.Cart.objects.from_request(request)
+        
+        if chain:
+            out = chain.execute(cart=cart, request=request, **kwargs)
+            if out.has_key('cart'):
+                cart = out['cart']
+        return cart
+        
+    @view(r'^$')
     def cart(self, chain, request, cart=None, context=None, **kwargs):
         if context == None:
             context = {}
             
-        cart = self.Cart.objects.from_request(request)
+        cart = self.get(request=request)
         context['cart'] = cart
         
         if chain:
@@ -120,10 +180,40 @@ class CartModule(sellmo.Module):
         else:
             # We don't render anything
             raise Http404
+            
+    @view(r'^edit/(?P<purchase_id>[0-9]+)$')
+    def edit_cart(self, chain, request, purchase_id, purchase=None, form=None, context=None, **kwargs):
+        if purchase is None:
+            try:
+                purchase = modules.store.Purchase.objects.get(pk=purchase_id)
+            except modules.store.Purchase.DoesNotExist:
+                raise Http404
+           
+        if form is None:
+            if request.method == 'POST':
+                form = self.get_edit_cart_form(purchase=purchase, data=request.POST)
+            else:
+                form = self.get_edit_cart_form(purchase=purchase, data=request.GET)
+                
+        # We require a valid formset
+        if form.is_valid():
+            purchase_args = self.get_edit_purchase_args(purchase=purchase, form=form)
+            purchase = modules.store.edit_purchase(**purchase_args)
+        else:
+            # TO DO
+            pass
+            
+        # Get the cart
+        cart = self.get(request=request)
+        cart.update(purchase)
+            
+        if chain:
+            return chain.execute(request, purchase=purchase, form=form, context=context, **kwargs)
+        else:
+            return redirect('cart.cart')
         
-    @view(r'add/(?P<product_slug>[a-z0-9_-]+)$')
+    @view(r'^add/(?P<product_slug>[a-z0-9_-]+)$')
     def add_to_cart(self, chain, request, product_slug, product=None, formset=None, purchases=None, context=None, **kwargs):
-        
         if product is None:
             try:
                 product = modules.product.Product.objects.polymorphic().get(slug=product_slug)
@@ -162,9 +252,12 @@ class CartModule(sellmo.Module):
                     purchase = modules.store.make_purchase(**purchase_args)
                     if purchase:
                         purchases.append(purchase)
+            else:
+                # TO DO
+                pass
         
         # Get the cart
-        cart = self.Cart.objects.from_request(request)
+        cart = self.get(request=request)
         
         if purchases:   
             # Add purchases to cart

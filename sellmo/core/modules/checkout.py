@@ -50,7 +50,7 @@ class CheckoutModule(sellmo.Module):
     def __init__(self, *args, **kwargs):
         pass
         
-    @view(r'$')
+    @view(r'^$')
     def checkout(self, chain, request, cart=None, context=None, **kwargs):
         if context == None:
             context = {}
