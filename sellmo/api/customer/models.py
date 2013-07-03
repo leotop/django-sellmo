@@ -32,7 +32,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from sellmo import modules
 from sellmo.api.decorators import load
-from sellmo.utils.sessions import TrackingManager
+from sellmo.utils.tracking import TrackingManager
 
 #
 

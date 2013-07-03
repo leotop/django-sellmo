@@ -24,19 +24,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django import forms
+from django.conf import settings
 
 #
 
-from sellmo import modules
-from sellmo.api.forms import RedirectableForm
+from sellmo.conf import defaults
 
 #
 
-class AddToCartForm(RedirectableForm):
-    product = forms.IntegerField(widget = forms.HiddenInput)
-    qty = forms.IntegerField(min_value=1)
-    
-class EditCartForm(RedirectableForm):
-    purchase = forms.IntegerField(widget = forms.HiddenInput)
-    qty = forms.IntegerField(min_value=0)
+REDIRECTION_SESSION_PREFIX = getattr(settings, 'SELLMO_REDIRECTION_SESSION_PREFIX', defaults.REDIRECTION_SESSION_PREFIX)

@@ -24,19 +24,48 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django import forms
+import types
 
 #
 
-from sellmo import modules
-from sellmo.api.forms import RedirectableForm
+from django.db import models
 
 #
 
-class AddToCartForm(RedirectableForm):
-    product = forms.IntegerField(widget = forms.HiddenInput)
-    qty = forms.IntegerField(min_value=1)
+def make_trackable(obj, session_key):
+    def track(self, request):
+        if self.pk is None:
+            raise Exception("Cannot track non persistent object")
+        request.session[session_key] = self.pk
+    obj.track = track.__get__(obj, obj.__class__)
+    return obj
+
+#
+
+class TrackingManager(models.Manager):
     
-class EditCartForm(RedirectableForm):
-    purchase = forms.IntegerField(widget = forms.HiddenInput)
-    qty = forms.IntegerField(min_value=0)
+    def __init__(self, session_key, *args, **kwargs):
+        self._session_key = session_key
+        super(TrackingManager, self).__init__(*args, **kwargs)
+    
+    def _exists(self, request):
+        return request.session.get(self._session_key, False) != False
+            
+    def _new(self, request):
+        obj = self.model()
+        return make_trackable(obj, self._session_key)
+
+    def _existing(self, request):
+        try:
+            obj = self.get(pk=request.session.get(self._session_key))
+            obj.is_tracked = True
+        except self.model.DoesNotExist:
+            obj = self._new(request)
+        return make_trackable(obj, self._session_key)
+    
+    def from_request(self, request):
+        if self._exists(request):
+            return self._existing(request)
+        else:
+            return self._new(request)
+    

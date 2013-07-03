@@ -38,6 +38,7 @@ from django.contrib.contenttypes.models import ContentType
 
 
 from sellmo import modules
+from sellmo.api.forms import RedirectableFormSet
 
 #
 @link(namespace=modules.attribute.namespace, name='filter', capture=True)
@@ -131,7 +132,9 @@ def get_add_to_cart_formset(formset, cls, product, variations=None, initial=None
         return
     
     # Create the custom form
-    dict = {}
+    dict = {
+        'variations_key' : forms.CharField(widget = forms.HiddenInput)
+    }
     
     # Add variation field as either a choice or as a hidden integer
     if not modules.variation.batch_buy_enabled and variations:
@@ -145,7 +148,8 @@ def get_add_to_cart_formset(formset, cls, product, variations=None, initial=None
     AddToCartForm = type('AddToCartVariationForm', (cls,), dict)
         
     # Create the formset based upon the custom form
-    AddToCartFormSet = formset_factory(AddToCartForm, extra=0)
+    AddToCartFormSet = formset_factory(AddToCartForm, formset=RedirectableFormSet, extra=0)
+    variations_key = '|'.join([variation.pk for variation in variations])
     
     # Fill in initial data
     if not data:
@@ -153,20 +157,52 @@ def get_add_to_cart_formset(formset, cls, product, variations=None, initial=None
             initial = [{
                 'product' : product.pk,
                 'variation' : variation.pk,
-                'qty' : 1
+                'qty' : 1,
+                'variations_key' : variations_key,
             } for variation in variations]
         else:
             initial = [{
                 'product' : product.pk,
                 'variation' : variations[:1][0].pk,
-                'qty' : 1
+                'qty' : 1,
+                'variations_key' : variations_key,
             }]
             
         formset = AddToCartFormSet(initial=initial)
     else:
         formset = AddToCartFormSet(data)
-        
+    
+    key = 'add_to_cart_variation_formset_%s' % variations_key
+    formset.set_redirect_key(key)
     return {
         'formset' : formset,
-        'variations' : variations
     }
+    
+@link(namespace=modules.cart.namespace, name='add_to_cart', capture=True)
+def capture_add_to_cart(request, product_slug, product=None, formset=None, **kwargs):
+    
+    if formset is None:
+        if request.method == 'POST':
+            data = request.POST
+        else:
+            data = request.GET
+        variations_key = data.get('form-0-variations_key', None)
+        if variations_key:
+            
+            # Resolve product
+            if product is None:
+                try:
+                    product = modules.product.Product.objects.polymorphic().get(slug=product_slug)
+                except modules.product.Product.DoesNotExist:
+                    raise Http404
+            
+            # Resolve variations
+            variations = modules.variation.Variation.objects.filter(pk__in=variations_key.split('|'))
+            
+            # Get formset
+            formset = modules.cart.get_add_to_cart_formset(product=product, variations=variations, data=data)
+            
+            return {
+                'product' : product,
+                'formset' : formset,
+            }

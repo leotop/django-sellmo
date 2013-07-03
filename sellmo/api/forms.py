@@ -24,47 +24,31 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import types
+from django import forms
+from django.forms import formsets
 
 #
 
-from django.db import models
-
-#
-
-def make_trackable(obj, session_key):
-    def track(self, request):
-        if self.pk is None:
-            raise Exception("Cannot track not persistent object")
-        request.session[session_key] = self.pk
-    obj.track = track.__get__(obj, obj.__class__)
-    return obj
-
-#
-
-class TrackingManager(models.Manager):
+class RedirectableMixin(object):
+    __redirect_key__ = None
+    def redirect(self, request):
+        print self.get_redirect_key()
+        request.redirection[self.get_redirect_key()] = self.data
     
-    def __init__(self, session_key, *args, **kwargs):
-        self._session_key = session_key
-        super(TrackingManager, self).__init__(*args, **kwargs)
+    def get_redirect_data(self, request):
+        return request.redirection.get(self.get_redirect_key())
+        
+    def get_redirect_key(self):
+        if self.__redirect_key__ is None:
+            raise Exception("Redirect key was not set.")
+        return self.__redirect_key__
+        
+    def set_redirect_key(self, key):
+        self.__redirect_key__ = key
+        
+        
+class RedirectableForm(forms.Form, RedirectableMixin):
+    pass
     
-    def _exists(self, request):
-        return request.session.get(self._session_key, False) != False
-            
-    def _new(self, request):
-        obj = self.model()
-        return make_trackable(obj, self._session_key)
-
-    def _existing(self, request):
-        try:
-            obj = self.get(pk=request.session.get(self._session_key))
-            obj.is_tracked = True
-        except self.model.DoesNotExist:
-            obj = self._new(request)
-        return make_trackable(obj, self._session_key)
-    
-    def from_request(self, request):
-        if self._exists(request):
-            return self._existing(request)
-        else:
-            return self._new(request)
+class RedirectableFormSet(formsets.BaseFormSet, RedirectableMixin):
+    pass

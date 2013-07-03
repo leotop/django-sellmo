@@ -25,6 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from django import template
+from django.core.urlresolvers import reverse
 
 #
 
@@ -40,22 +41,46 @@ register = template.Library()
 def cart(context):
     return modules.cart.get(request=context['request'])
 
-@register.inclusion_tag('cart/add_to_cart_formset.html')
-def add_to_cart_formset(product, **kwargs):
-    context = {
-        'formset' : modules.cart.get_add_to_cart_formset(product=product, **kwargs),
-        'product' : product
+@register.inclusion_tag('cart/add_to_cart_formset.html', takes_context=True)
+def add_to_cart_formset(context, product, next=None, invalid=None, **kwargs):
+    formset = modules.cart.get_add_to_cart_formset(product=product, **kwargs) 
+    data = formset.get_redirect_data(context['request'])
+    if data:
+        formset = modules.cart.get_add_to_cart_formset(product=product, data=data, **kwargs) 
+    
+    params = []
+    if not next is None:
+        params.append('next=%s' % next)
+    if not invalid is None:
+        params.append('invalid=%s' % invalid)
+        
+    inner = {
+        'formset' : formset,
+        'product' : product,
+        'params' : params,
     }
     
-    context.update(kwargs)
-    return context
+    inner.update(kwargs)
+    return inner
     
-@register.inclusion_tag('cart/edit_cart_form.html')
-def edit_cart_form(purchase, **kwargs):
-    context = {
-        'form' : modules.cart.get_edit_cart_form(purchase=purchase, **kwargs),
-        'purchase' : purchase
+@register.inclusion_tag('cart/edit_cart_form.html', takes_context=True)
+def edit_cart_form(context, purchase, next=None, invalid=None, **kwargs):
+    form = modules.cart.get_edit_cart_form(purchase=purchase, **kwargs)
+    data = form.get_redirect_data(context['request'])
+    if data:
+        form = modules.cart.get_edit_cart_form(purchase=purchase, data=data, **kwargs)
+    
+    params = []
+    if not next is None:
+        params.append('next=%s' % next)
+    if not invalid is None:
+        params.append('invalid=%s' % invalid)
+    
+    inner = {
+        'form' : form,
+        'purchase' : purchase,
+        'params' : params,
     }
     
-    context.update(kwargs)
-    return context
+    inner.update(kwargs)
+    return inner

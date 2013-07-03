@@ -25,6 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from django import forms
+from django.contrib import messages
 from django.forms.formsets import formset_factory
 from django.db import models
 from django.http import Http404
@@ -37,6 +38,7 @@ from sellmo import modules
 from sellmo.api.decorators import view, chainable
 from sellmo.api.cart.models import Cart
 from sellmo.api.cart.forms import AddToCartForm, EditCartForm
+from sellmo.api.forms import RedirectableFormSet
 
 #
 
@@ -74,6 +76,7 @@ class CartModule(sellmo.Module):
             else:
                 form = cls(data)
                 
+        form.set_redirect_key('edit_cart_form_%s' % purchase.pk)
         if chain:
             out = chain.execute(form=form, cls=cls, purchase=purchase, initial=initial, data=data, **kwargs)
             if out.has_key('form'):
@@ -99,12 +102,12 @@ class CartModule(sellmo.Module):
                     'qty' : 1
                 }]
             
-            AddToCartFormSet = formset_factory(cls, extra=0)
+            AddToCartFormSet = formset_factory(cls, extra=0, formset=RedirectableFormSet)
             if not data:
                 formset = AddToCartFormSet(initial=initial)
             else:
                 formset = AddToCartFormSet(data)
-                
+        formset.set_redirect_key('add_to_cart_formset_%s' % product.pk)
         if chain:
             out = chain.execute(formset=formset, cls=cls, product=product, initial=initial, data=data, **kwargs)
             if out.has_key('formset'):
@@ -183,6 +186,9 @@ class CartModule(sellmo.Module):
             
     @view(r'^edit/(?P<purchase_id>[0-9]+)$')
     def edit_cart(self, chain, request, purchase_id, purchase=None, form=None, context=None, **kwargs):
+        
+        target = request.GET.get('next', 'cart.cart')
+        
         if purchase is None:
             try:
                 purchase = modules.store.Purchase.objects.get(pk=purchase_id)
@@ -195,25 +201,28 @@ class CartModule(sellmo.Module):
             else:
                 form = self.get_edit_cart_form(purchase=purchase, data=request.GET)
                 
+        # Get the cart
+        cart = self.get(request=request)
+                
         # We require a valid formset
         if form.is_valid():
             purchase_args = self.get_edit_purchase_args(purchase=purchase, form=form)
             purchase = modules.store.edit_purchase(**purchase_args)
-        else:
-            # TO DO
-            pass
+            cart.update(purchase)
             
-        # Get the cart
-        cart = self.get(request=request)
-        cart.update(purchase)
-            
-        if chain:
-            return chain.execute(request, purchase=purchase, form=form, context=context, **kwargs)
+            if chain:
+                return chain.execute(request, purchase=purchase, form=form, context=context, **kwargs)
         else:
-            return redirect('cart.cart')
+            form.redirect(request)
+            target = request.GET.get('invalid', target)
+        
+        return redirect(target)
         
     @view(r'^add/(?P<product_slug>[a-z0-9_-]+)$')
     def add_to_cart(self, chain, request, product_slug, product=None, formset=None, purchases=None, context=None, **kwargs):
+        
+        target = request.GET.get('next', 'cart.cart')
+        
         if product is None:
             try:
                 product = modules.product.Product.objects.polymorphic().get(slug=product_slug)
@@ -244,17 +253,13 @@ class CartModule(sellmo.Module):
                 
                 # get data from form
                 for form in formset:
-                    
-                    # 
                     purchase_args = self.get_purchase_args(product=product, form=form)
-                
-                    # Try create the purchase
                     purchase = modules.store.make_purchase(**purchase_args)
-                    if purchase:
-                        purchases.append(purchase)
+                    purchases.append(purchase)
             else:
-                # TO DO
-                pass
+                print 'INVALID'
+                formset.redirect(request)
+                target = request.GET.get('invalid', target)
         
         # Get the cart
         cart = self.get(request=request)
@@ -266,10 +271,9 @@ class CartModule(sellmo.Module):
         
             # Keep track of our cart 
             cart.track(request)
+            
+            if chain:
+                return chain.execute(request, purchases=purchases, formset=formset, context=context, **kwargs)
         
-        #
-        if chain:
-            return chain.execute(request, purchases=purchases, formset=formset, context=context, **kwargs)
-        else:
-            return redirect('cart.cart')
+        return redirect(target)
             
