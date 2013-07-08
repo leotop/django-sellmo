@@ -1,4 +1,0 @@
-<form method="post" action="{% url 'cart.edit_cart' purchase.pk %}{% if params %}?{{ params|join:"&" }}{% endif %}">{% csrf_token %}
-    {{ form.as_p }}
-    <input type="submit" value="Edit"/>
-</form>

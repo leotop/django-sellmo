@@ -26,6 +26,8 @@
 
 from django.utils.translation import ugettext_lazy as _
 from django.db import models
+from django.db.models import Q
+from django.db.models.query import QuerySet
 
 #
 
@@ -41,11 +43,35 @@ def load_subtypes():
 
 @load(action='finalize_product_Product')
 def finalize_model():
+    
     class Product(modules.product.Product):
         class Meta:
             verbose_name = _("product")
             verbose_name_plural = _("products")
+    
     modules.product.Product = Product
+ 
+# Make sure to load directly after finalizing the product model
+# Also ensure 'finalize_product_ProductRelatable' is called directly afterwards
+@load(before='finalize_product_ProductRelatable', after='finalize_product_Product', directly=True)
+def load_model():
+    
+    class ProductRelatable(modules.product.ProductRelatable):
+        product = models.ManyToManyField(
+            modules.product.Product,
+            related_name = '+',
+            blank = True,
+        )
+        
+        class Meta:
+            abstract = True
+    
+    modules.product.ProductRelatable = ProductRelatable
+
+
+@load(action='finalize_product_ProductRelatable')
+def finalize_model():
+    pass
 
 class Product(PolymorphicModel):
     
@@ -79,4 +105,44 @@ class Product(PolymorphicModel):
     class Meta:
         ordering = ['slug']
         app_label = 'product'
+        abstract = True
+        
+class ProductRelatableQuerySet(QuerySet):
+    def for_product(self, product):
+        return self.filter(self.model.get_for_product_query(product=product)).distinct()
+    
+    def best_for_product(self, product):
+        q = self.for_product(product)
+        if q:
+            return self.model.get_best_for_product(product=product, matches=q)
+        raise self.model.DoesNotExist(
+            "%s matching query does not exist." %
+            self.model._meta.object_name) 
+        
+class ProductRelatableManager(models.Manager):
+    def for_product(self, *args, **kwargs):
+        return self.get_query_set().for_product(*args, **kwargs)
+        
+    def best_for_product(self, *args, **kwargs):
+        return self.get_query_set().best_for_product(*args, **kwargs)
+    
+    def get_query_set(self):
+        return ProductRelatableQuerySet(self.model)
+        
+class ProductRelatable(models.Model):
+    objects = ProductRelatableManager()
+    
+    all_products = models.BooleanField(
+        verbose_name = _("all products"),
+    )
+    
+    @classmethod
+    def get_for_product_query(cls, product):
+        return Q(all_products=True) | Q(product=product)
+        
+    @classmethod
+    def get_best_for_product(cls, product, matches):
+        return matches[0]
+    
+    class Meta:
         abstract = True

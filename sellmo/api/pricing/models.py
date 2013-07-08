@@ -36,12 +36,16 @@ from django.db import models
 
 @load(after='load_pricing_Stampable', before='finalize_pricing_Stampable')
 def load_model():
-    modules.pricing.Stampable.add_to_class('amount', modules.pricing.construct_decimal_field())
+    modules.pricing.Stampable.add_to_class('amount', modules.pricing.construct_decimal_field(default=0))
     for type in modules.pricing.types:
-        modules.pricing.Stampable.add_to_class('%s_amount' % type, modules.pricing.construct_decimal_field())
+        modules.pricing.Stampable.add_to_class('%s_amount' % type, modules.pricing.construct_decimal_field(default=0))
 
 class Stampable(models.Model):
-   
+    
+    @staticmethod
+    def get_stampable_fields():
+        return ['amount'] + ['%s_amount' % type for type in modules.pricing.types]
+    
     def get_price(self, **kwargs):
         """
         Reconstructs the stamped price 

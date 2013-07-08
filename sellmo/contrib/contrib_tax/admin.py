@@ -26,7 +26,6 @@
 
 
 from sellmo import modules
-from sellmo.contrib.contrib_tax.models import Tax
 
 #
 
@@ -39,4 +38,4 @@ class TaxAdmin(admin.ModelAdmin):
     
 #
 
-admin.site.register(Tax, TaxAdmin)
+admin.site.register(modules.tax.Tax, TaxAdmin)

@@ -25,12 +25,14 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from django.db import models
+from django.db.models import Q
+from django.db.models.query import QuerySet
 
 #
 
 from sellmo import modules
 from sellmo.api.decorators import load
-from sellmo.utils.polymorphism import PolymorphicModel
+from sellmo.utils.polymorphism import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
 
 #
 
@@ -50,8 +52,28 @@ def finalize_model():
     class Purchase(modules.store.Purchase, modules.pricing.Stampable):
         pass
     modules.store.Purchase = Purchase
+    
+class PurchaseQuerySet(PolymorphicQuerySet):
+    def mergeable_with(self, purchase):
+        return self.filter(~Q(pk=purchase.pk), content_type=purchase.content_type, product=purchase.product)
+
+class PurchaseManager(PolymorphicManager):
+    def get_query_set(self):
+        return PurchaseQuerySet(self.model)
+
+    def mergeable_with(self, *args, **kwargs):
+        return self.get_query_set().mergeable_with(*args, **kwargs)
+    
+    def merge(self, purchases):
+        purchase = purchases[0]
+        result = modules.store.Purchase(product=purchase.product, qty=0)
+        for purchase in purchases:
+            result.qty += purchase.qty
+        return result
 
 class Purchase(PolymorphicModel):
+    
+    objects = PurchaseManager()
     
     qty = models.PositiveIntegerField(
         default = 1

@@ -101,6 +101,9 @@ class PricingModule(sellmo.Module):
             out = chain.execute(product=product, price=price, currency=currency, **kwargs)
             if out.has_key('price'):
                 price = out['price']
+                
+        if price is None:
+            price = Price(0, currency=currency)
         
         return price
     

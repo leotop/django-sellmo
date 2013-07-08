@@ -24,21 +24,16 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#
-
-from sellmo import modules
-from sellmo.api.decorators import link
-from sellmo.api.pricing import Price
+from django.http import Http404
 
 #
 
-@link()
-def get_price(product, price, **kwargs):
-    try:
-        tax = modules.tax.Tax.objects.best_for_product(product)
-    except modules.tax.Tax.DoesNotExist:
-        pass
-    else:
-        return {
-            'price' : price * Price(tax.rate, currency=price.currency, type='tax')
-        }
+from sellmo import modules, Module
+from sellmo.api.decorators import view, chainable
+from sellmo.contrib.contrib_tax.models import Tax
+
+#
+
+class TaxModule(Module):
+    namespace = 'tax'
+    Tax = Tax

@@ -43,6 +43,7 @@ def load_model():
             modules.cart.Cart,
             null = True,
             editable = False,
+            on_delete=models.SET_NULL,
             related_name = 'items',
         )
         
@@ -77,29 +78,41 @@ class Cart(models.Model):
     
     #
         
-    def add(self, purchase):
+    def add(self, purchase, save=True):
         if self.pk == None:
             self.save()
         purchase.cart = self
-        purchase.save()
+        if save:
+            purchase.save()
         
-    def update(self, purchase):
+    def update(self, purchase, save=True):
         if purchase.cart != self:
             raise Exception("We don't own this purchase")
-        purchase.save()
+        if purchase.qty == 0:
+            self.remove(purchase, save=False)
+        if save:
+            purchase.save()
         
-    def remove(self, purchase):
+    def remove(self, purchase, save=True):
         if purchase.cart != self:
             raise Exception("We don't own this purchase")
-        purchase.delete()
+        purchase.cart = None
+        if save:
+            purchase.save()
         
     def clear(self):
         pass
+        
+    def __contains__(self, purchase):
+        return purchase.cart == self
     
     def __iter__(self):
         if hasattr(self, 'items'):
             for item in self.items.polymorphic().all():
                 yield item
+                
+    def __nonzero__(self):
+        return self.items.count() > 0
             
     # Pricing
     @property

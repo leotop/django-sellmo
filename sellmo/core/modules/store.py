@@ -25,6 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from django.db import models
+from django.db.models.query import QuerySet
 
 #
 
@@ -44,28 +45,44 @@ class StoreModule(sellmo.Module):
 
     def __init__(self, *args, **kwargs):
         pass
+    
+    @chainable()
+    def merge_purchase(self, chain, purchase, others, result=None, merged=None, **kwargs):
+        
+        purchase = purchase.downcast()
+        manager = purchase.__class__.objects
+        
+        # Ensure others is a queryset of the given purchase's queryset type
+        others = manager.filter(pk__in=[other.pk for other in others])
+        
+        # Narrow down
+        others = others.mergeable_with(purchase)
+        if others:
+            merged = manager.filter(pk__in=[other.pk for other in others] + [purchase.pk])
+            result = manager.merge(merged)
+            if result:
+                self.make_purchase(purchase=result)
+        
+        return (result, merged)
+        
             
     @chainable()
-    def edit_purchase(self, chain, purchase, qty, **kwargs):
+    def make_purchase(self, chain, product=None, qty=None, purchase=None, **kwargs):
         
-        purchase.qty = qty
+        if purchase is None:
+            purchase = self.Purchase()
         
-        if chain:
-            out = chain.execute(purchase=purchase, **kwargs)
-            if out.has_key('purchase'):
-                purchase = out['purchase']
+        if not product is None:
+            purchase.product = product    
         
-        return purchase
-            
-    @chainable()
-    def make_purchase(self, chain, product, qty, purchase=None, **kwargs):
+        if not qty is None:
+            purchase.qty = qty
         
-        if not purchase:
-            purchase = self.Purchase(product=product, qty=qty)
-            purchase.price = product.get_price()
+        # Always (re) assign price
+        purchase.price = purchase.product.get_price(qty=purchase.qty)
             
         if chain:
-            out = chain.execute(product=product, qty=qty, purchase=purchase, **kwargs)
+            out = chain.execute(product=purchase.product, qty=purchase.qty, purchase=purchase, **kwargs)
             if out.has_key('purchase'):
                 purchase = out['purchase']
         

@@ -37,7 +37,7 @@ import sellmo
 from sellmo import modules
 from sellmo.api.decorators import view, chainable
 from sellmo.api.cart.models import Cart
-from sellmo.api.cart.forms import AddToCartForm, EditCartForm
+from sellmo.api.cart.forms import AddToCartForm, EditPurchaseForm
 from sellmo.api.forms import RedirectableFormSet
 
 #
@@ -51,18 +51,18 @@ class CartModule(sellmo.Module):
     Cart = Cart
     
     AddToCartForm = AddToCartForm
-    EditCartForm = EditCartForm
+    EditPurchaseForm = EditPurchaseForm
     
     def __init__(self, *args, **kwargs):        
         pass
         
     @chainable()
-    def get_edit_cart_form(self, chain, form=None, cls=None, purchase=None, initial=None, data=None, **kwargs):
+    def get_edit_purchase_form(self, chain, form=None, cls=None, purchase=None, initial=None, data=None, **kwargs):
         if purchase is None:
             raise Exception()
             
         if cls is None:
-            cls = self.EditCartForm
+            cls = self.EditPurchaseForm
             
         if form is None:
             if not data and not initial:
@@ -76,7 +76,7 @@ class CartModule(sellmo.Module):
             else:
                 form = cls(data)
                 
-        form.set_redirect_key('edit_cart_form_%s' % purchase.pk)
+        form.set_redirect_key('edit_purchase_form_%s' % purchase.pk)
         if chain:
             out = chain.execute(form=form, cls=cls, purchase=purchase, initial=initial, data=data, **kwargs)
             if out.has_key('form'):
@@ -122,7 +122,7 @@ class CartModule(sellmo.Module):
             'purchase' : purchase,
         }
         
-        if isinstance(form, self.EditCartForm):
+        if isinstance(form, self.EditPurchaseForm):
             args['qty'] = form.cleaned_data['qty']
         
         if chain:
@@ -183,23 +183,46 @@ class CartModule(sellmo.Module):
         else:
             # We don't render anything
             raise Http404
-            
-    @view(r'^edit/(?P<purchase_id>[0-9]+)$')
-    def edit_cart(self, chain, request, purchase_id, purchase=None, form=None, context=None, **kwargs):
+    
+    @view(r'^remove/(?P<purchase_id>[0-9]+)$')
+    def remove_purchase(self, chain, request, purchase_id, purchase=None, context=None, **kwargs):
         
         target = request.GET.get('next', 'cart.cart')
         
         if purchase is None:
             try:
-                purchase = modules.store.Purchase.objects.get(pk=purchase_id)
+                purchase = modules.store.Purchase.objects.polymorphic().get(pk=purchase_id)
+            except modules.store.Purchase.DoesNotExist:
+                raise Http404
+                
+        # Get the cart
+        cart = self.get(request=request)
+        
+        # Delete the purchase
+        cart.remove(purchase, save=False)
+        purchase.delete()
+        
+        if chain:
+            return chain.execute(request, purchase=purchase, context=context, **kwargs)
+        
+        return redirect(target)
+            
+    @view(r'^edit/(?P<purchase_id>[0-9]+)$')
+    def edit_purchase(self, chain, request, purchase_id, purchase=None, form=None, context=None, **kwargs):
+        
+        target = request.GET.get('next', 'cart.cart')
+        
+        if purchase is None:
+            try:
+                purchase = modules.store.Purchase.objects.polymorphic().get(pk=purchase_id)
             except modules.store.Purchase.DoesNotExist:
                 raise Http404
            
         if form is None:
             if request.method == 'POST':
-                form = self.get_edit_cart_form(purchase=purchase, data=request.POST)
+                form = self.get_edit_purchase_form(purchase=purchase, data=request.POST)
             else:
-                form = self.get_edit_cart_form(purchase=purchase, data=request.GET)
+                form = self.get_edit_purchase_form(purchase=purchase, data=request.GET)
                 
         # Get the cart
         cart = self.get(request=request)
@@ -207,8 +230,8 @@ class CartModule(sellmo.Module):
         # We require a valid formset
         if form.is_valid():
             purchase_args = self.get_edit_purchase_args(purchase=purchase, form=form)
-            purchase = modules.store.edit_purchase(**purchase_args)
-            cart.update(purchase)
+            purchase = modules.store.make_purchase(**purchase_args)
+            self.on_purchase(purchase=purchase, cart=cart)
             
             if chain:
                 return chain.execute(request, purchase=purchase, form=form, context=context, **kwargs)
@@ -217,6 +240,7 @@ class CartModule(sellmo.Module):
             target = request.GET.get('invalid', target)
         
         return redirect(target)
+     
         
     @view(r'^add/(?P<product_slug>[a-z0-9_-]+)$')
     def add_to_cart(self, chain, request, product_slug, product=None, formset=None, purchases=None, context=None, **kwargs):
@@ -257,7 +281,6 @@ class CartModule(sellmo.Module):
                     purchase = modules.store.make_purchase(**purchase_args)
                     purchases.append(purchase)
             else:
-                print 'INVALID'
                 formset.redirect(request)
                 target = request.GET.get('invalid', target)
         
@@ -267,7 +290,7 @@ class CartModule(sellmo.Module):
         if purchases:   
             # Add purchases to cart
             for purchase in purchases:
-                cart.add(purchase)
+                self.on_purchase(purchase=purchase, cart=cart)
         
             # Keep track of our cart 
             cart.track(request)
@@ -276,4 +299,22 @@ class CartModule(sellmo.Module):
                 return chain.execute(request, purchases=purchases, formset=formset, context=context, **kwargs)
         
         return redirect(target)
-            
+        
+    @chainable()
+    def on_purchase(self, chain, purchase, cart, **kwargs):
+        
+        # Need to save before trying to merge
+        purchase.save()
+        
+        # See if we can merge this purchase
+        merged = modules.store.merge_purchase(purchase=purchase, others=list(cart))
+        if merged[0]:
+            for purchase in merged[1]:
+                purchase.delete()
+            purchase = merged[0]
+        
+        if purchase in cart:
+            cart.update(purchase)
+        else:
+            cart.add(purchase)
+       

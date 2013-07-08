@@ -3,6 +3,7 @@
 
 {% block body %}
 	<h1>Cart</h1>
+	{% if cart %}
 	<table>
 		<thead>
 			<th>Qty</th>
@@ -13,10 +14,15 @@
 		<tbody>
 		{% for purchase in cart %}
 			<tr>
-				<td>{% edit_cart_form purchase=purchase %}</td>
-				<th>{{ purchase.description }}</th>
+				<td>{% edit_purchase_form purchase=purchase %}</td>
+				<th><a href="{% url 'product.details' purchase.product.slug %}">{{ purchase.description }}</a></th>
 				<td>{{ purchase.price }} <small>({{ purchase.price.tax }} vat)</small></td>
 				<td><b>{{ purchase.total }} <small>({{ purchase.total.tax }} vat)</small></b></td>
+				<td>
+					<form action="{% url 'cart.remove_purchase' purchase.pk %}">
+						<input type="submit" value="Remove">
+					</form>
+				</td>
 			</tr>
 		{% endfor %}
 		<tr>
@@ -27,4 +33,7 @@
 		<tr>
 		</tbody>
 	</table>
+	{% else %}
+	<p>Shopping cart is empty</p>
+	{% endif %}
 {% endblock %}

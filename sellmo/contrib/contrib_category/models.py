@@ -32,6 +32,7 @@ from sellmo.api.decorators import load
 from django.db import models
 from django.db.models.signals import m2m_changed
 from django.db.models.query import QuerySet
+from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 
 #
@@ -39,6 +40,34 @@ from django.utils.translation import ugettext_lazy as _
 from mptt.models import MPTTModel, TreeForeignKey, TreeManager
 
 #
+
+@load(after='finalize_category_Category', before='finalize_product_ProductRelatable')
+def load_model():
+    class ProductRelatable(modules.product.ProductRelatable):
+        category = models.ManyToManyField(
+            modules.category.Category,
+            related_name = '+',
+            blank = True,
+        )
+        
+        @classmethod
+        def get_for_product_query(cls, product):
+            # Get categories including ancestors
+            categories = []
+            for category in product.category.all():
+                categories += list(modules.category.Category.objects.filter(tree_id=category.tree_id, level__lte=category.level))
+            
+            return super(ProductRelatable, cls).get_for_product_query(product) | Q(category__in=categories)
+
+        @classmethod
+        def get_best_for_product(cls, product, matches):
+            matches = matches.order_by('-category__level')
+            return super(ProductRelatable, cls).get_best_for_product(product=product, matches=matches)
+
+        class Meta:
+            abstract = True
+
+    modules.product.ProductRelatable = ProductRelatable
 
 @load(action='finalize_category_Category')
 def finalize_model():

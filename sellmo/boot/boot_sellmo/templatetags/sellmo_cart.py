@@ -63,12 +63,12 @@ def add_to_cart_formset(context, product, next=None, invalid=None, **kwargs):
     inner.update(kwargs)
     return inner
     
-@register.inclusion_tag('cart/edit_cart_form.html', takes_context=True)
-def edit_cart_form(context, purchase, next=None, invalid=None, **kwargs):
-    form = modules.cart.get_edit_cart_form(purchase=purchase, **kwargs)
+@register.inclusion_tag('cart/edit_purchase_form.html', takes_context=True)
+def edit_purchase_form(context, purchase, next=None, invalid=None, **kwargs):
+    form = modules.cart.get_edit_purchase_form(purchase=purchase, **kwargs)
     data = form.get_redirect_data(context['request'])
     if data:
-        form = modules.cart.get_edit_cart_form(purchase=purchase, data=data, **kwargs)
+        form = modules.cart.get_edit_purchase_form(purchase=purchase, data=data, **kwargs)
     
     params = []
     if not next is None:

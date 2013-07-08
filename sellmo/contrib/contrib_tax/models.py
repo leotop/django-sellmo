@@ -28,29 +28,55 @@
 
 from sellmo import modules
 from sellmo.api.decorators import load
+from sellmo.magic import ModelMixin
 
 #
 
 from django.db import models
+from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 
 #
 
-@load(after='load_product_Product', before='finalize_product_Product')
+# Make sure to load directly after finalize_tax_Tax and thus 
+# directly after finalize_product_Product
+@load(after='finalize_tax_Tax', directly=True)
 def load_model():
-    class Product(modules.product.Product):
+    class ProductMixin(ModelMixin):
+        model = modules.product.Product
         tax = models.ForeignKey(
-            Tax,
+            modules.tax.Tax,
             blank = True,
             null = True,
+            related_name = 'products',
             verbose_name = _("tax"),
         )
+
+# Make sure to load directly after finalize_product_ProductRelatable and thus 
+# directly after finalize_product_Product          
+@load(action='finalize_tax_Tax', after='finalize_product_ProductRelatable', directly=True)
+def finalize_model():
+    class Tax(modules.tax.Tax, modules.product.ProductRelatable):
+        
+        @classmethod
+        def get_for_product_query(cls, product):
+            return super(Tax, cls).get_for_product_query(product) | Q(products=product)
+            
+        @classmethod
+        def get_best_for_product(cls, product, matches):
+            better = matches.filter(products=product)
+            if better:
+                matches = better
+            matches = matches.order_by('-rate')
+            return super(Tax, cls).get_best_for_product(product=product, matches=matches)
         
         class Meta:
-            abstract = True
+            app_label = 'tax'
+            verbose_name = _("tax")
+            verbose_name_plural = _("taxes")
+    
+    modules.tax.Tax = Tax
         
-    modules.product.Product = Product
-
 class Tax(models.Model):
     
     name = models.CharField(
@@ -62,10 +88,12 @@ class Tax(models.Model):
         verbose_name = _("rate"),
     )
     
+    class Meta:
+        abstract = True
+    
     def __unicode__(self):
         return self.name
-    
-    class Meta:
-        app_label = 'tax'
-        verbose_name = _("tax")
-        verbose_name_plural = _("taxes")
+        
+# Init modules
+from sellmo.contrib.contrib_tax.modules import *
+            

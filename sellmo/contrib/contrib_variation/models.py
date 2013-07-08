@@ -565,7 +565,28 @@ class Variation(models.Model):
 @load(after='finalize_store_Purchase')
 def load_model():
     
+    qs = modules.store.Purchase.objects.get_query_set()
+    
+    class PurchaseQuerySet(qs.__class__):            
+        def mergeable_with(self, purchase):
+            return super(PurchaseQuerySet, self).mergeable_with(purchase).filter(variation_key=purchase.variation_key)
+            
+    
+    class PurchaseManager(modules.store.Purchase.objects.__class__, ManagerMixinHelper):
+        def get_query_set(self):
+            return PurchaseQuerySet(self.model)
+            
+        def merge(self, purchases):
+            purchase = purchases[0]
+            result = super(PurchaseManager, self).merge(purchases)
+            result = result.clone(cls=self.model)
+            result.variation_key = purchase.variation_key
+            result.variation_description = purchase.variation_description
+            return result
+    
     class VariationPurchase(modules.store.Purchase):
+        
+        objects = PurchaseManager()
         
         variation_key = models.CharField(
             max_length = 255

@@ -37,6 +37,6 @@ class AddToCartForm(RedirectableForm):
     product = forms.IntegerField(widget = forms.HiddenInput)
     qty = forms.IntegerField(min_value=1)
     
-class EditCartForm(RedirectableForm):
+class EditPurchaseForm(RedirectableForm):
     purchase = forms.IntegerField(widget = forms.HiddenInput)
     qty = forms.IntegerField(min_value=0)

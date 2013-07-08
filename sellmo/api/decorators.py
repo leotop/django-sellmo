@@ -27,9 +27,9 @@
 from sellmo.core.loading import loader
 from sellmo.core.chaining import Chain, ViewChain
 
-def load(action=None, after=None, before=None):
+def load(action=None, after=None, before=None, directly=False):
     def decorator(func):
-        loader.register(func, action=action, after=after, before=before)
+        loader.register(func, action=action, after=after, before=before, directly=directly)
         return func
     
     return decorator
