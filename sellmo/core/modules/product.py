@@ -43,7 +43,6 @@ class ProductModule(sellmo.Module):
     ProductRelatable = ProductRelatable
     
     def __init__(self, *args, **kwargs):
-        from sellmo.api.product.models import Product
         self.Product = Product
         self.subtypes = []
         

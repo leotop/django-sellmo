@@ -26,13 +26,24 @@
 
 from sellmo import modules
 from sellmo.api.decorators import load
+from sellmo.api.pricing import Price
 
 #
 
-namespace = modules.variation.namespace
+from django.db import models
+from django.utils.translation import ugettext_lazy as _
 
 #
 
-@load(action='setup_variants', after='load_product_subtypes')
-def setup_variants():
-    pass
+namespace = modules.discount.namespace
+
+#
+
+@load(before='finalize_discount_Discount')
+def load_model():
+    class Discount(modules.discount.Discount):
+        
+        class Meta:
+            abstract = True
+
+    modules.discount.Discount = Discount

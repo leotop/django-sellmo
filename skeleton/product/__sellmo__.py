@@ -12,7 +12,7 @@ namespace = modules.product.namespace
 # Configure the product app
 # modules.product.prefix = 'yoururl'
 
-@load(action='setup_variants', after='load_subtypes')
+@load(action='setup_variants', after='load_product_subtypes')
 def setup_variants():
     # 
     # modules.variation.batch_buy_enabled = True

@@ -24,15 +24,22 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from django import template
+
+#
+
 from sellmo import modules
-from sellmo.api.decorators import load
 
 #
 
-namespace = modules.variation.namespace
+register = template.Library()
 
 #
 
-@load(action='setup_variants', after='load_product_subtypes')
-def setup_variants():
-    pass
+@register.filter
+def tax(value):
+    return value['tax']
+    
+@register.filter
+def taxless(value):
+    return value - value['tax']

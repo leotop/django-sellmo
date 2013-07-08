@@ -163,6 +163,7 @@ INSTALLED_APPS = (
     
     # Tax apps
     'sellmo.contrib.contrib_tax',
+    'sellmo.contrib.contrib_tax.subtypes.percent_tax',
     'tax',
     
     # Customer apps

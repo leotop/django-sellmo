@@ -24,15 +24,21 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+#
+
 from sellmo import modules
-from sellmo.api.decorators import load
+from sellmo.api.decorators import link
+from sellmo.api.pricing import Price
 
 #
 
-namespace = modules.variation.namespace
-
-#
-
-@load(action='setup_variants', after='load_product_subtypes')
-def setup_variants():
-    pass
+@link()
+def get_price(product, price, **kwargs):
+    try:
+        discount = modules.discount.Discount.objects.best_for_product(product)
+    except modules.discount.Discount.DoesNotExist:
+        pass
+    else:
+        return {
+            'price' : discount.apply(price)
+        }

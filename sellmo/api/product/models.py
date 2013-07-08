@@ -37,8 +37,8 @@ from sellmo.utils.polymorphism import PolymorphicModel
 
 #
 
-@load(action='load_subtypes', after='finalize_product_Product')
-def load_subtypes():
+@load(action='load_product_subtypes', after='finalize_product_Product')
+def load_product_subtypes():
     pass
 
 @load(action='finalize_product_Product')
@@ -142,7 +142,7 @@ class ProductRelatable(models.Model):
         
     @classmethod
     def get_best_for_product(cls, product, matches):
-        return matches[0]
+        return [matches[0]]
     
     class Meta:
         abstract = True

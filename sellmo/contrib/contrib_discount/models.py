@@ -40,67 +40,64 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
-@load(action='load_tax_subtypes', after='finalize_tax_Tax')
+@load(action='load_discount_subtypes', after='finalize_discount_Discount')
 def load_tax_subtypes():
     pass
 
-# Make sure to load directly after finalize_tax_Tax and thus 
+# Make sure to load directly after finalize_discount_Discount and thus 
 # directly after finalize_product_Product
-@load(after='finalize_tax_Tax', directly=True)
+@load(after='finalize_discount_Discount', directly=True)
 def load_model():
     class ProductMixin(ModelMixin):
         model = modules.product.Product
-        tax = models.ForeignKey(
-            modules.tax.Tax,
+        discount = models.ForeignKey(
+            modules.discount.Discount,
             blank = True,
             null = True,
             related_name = 'products',
-            verbose_name = _("tax"),
+            verbose_name = _("discount"),
         )
 
 # Make sure to load directly after finalize_product_ProductRelatable and thus 
 # directly after finalize_product_Product          
-@load(action='finalize_tax_Tax', after='finalize_product_ProductRelatable', directly=True)
+@load(action='finalize_discount_Discount', after='finalize_product_ProductRelatable', directly=True)
 def finalize_model():
     
-    class TaxQuerySet(ProductRelatableQuerySet, PolymorphicQuerySet):
+    class DiscountQuerySet(ProductRelatableQuerySet, PolymorphicQuerySet):
         pass
     
-    class TaxManager(ProductRelatableManager, PolymorphicManager):
+    class DiscountManager(ProductRelatableManager, PolymorphicManager):
         def get_query_set(self):
-            return TaxQuerySet(self.model)
+            return DiscountQuerySet(self.model)
     
-    class Tax(modules.tax.Tax, modules.product.ProductRelatable):
+    class Discount(modules.discount.Discount, modules.product.ProductRelatable):
         
-        objects = TaxManager()
+        objects = DiscountManager()
         
         @classmethod
         def get_for_product_query(cls, product):
-            return super(Tax, cls).get_for_product_query(product) | Q(products=product)
+            return super(Discount, cls).get_for_product_query(product) | Q(products=product)
             
         @classmethod
         def get_best_for_product(cls, product, matches):
             better = matches.filter(products=product)
             if better:
                 matches = better
-            return super(Tax, cls).get_best_for_product(product=product, matches=matches)
+            return super(Discount, cls).get_best_for_product(product=product, matches=matches)
         
         class Meta:
-            app_label = 'tax'
-            verbose_name = _("tax")
-            verbose_name_plural = _("taxes")
+            app_label = 'discount'
+            verbose_name = _("discount")
+            verbose_name_plural = _("discounts")
     
-    modules.tax.Tax = Tax
+    modules.discount.Discount = Discount
         
-class Tax(PolymorphicModel):
+class Discount(PolymorphicModel):
     
     name = models.CharField(
         max_length = 80,
         verbose_name = _("name"),
     )
-    
-    def apply(self, price):
-        raise NotImplementedError()
     
     class Meta:
         abstract = True
@@ -109,5 +106,5 @@ class Tax(PolymorphicModel):
         return self.name
         
 # Init modules
-from sellmo.contrib.contrib_tax.modules import *
+from sellmo.contrib.contrib_discount.modules import *
             

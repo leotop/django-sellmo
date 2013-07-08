@@ -32,7 +32,7 @@ from sellmo.api.decorators import load
 from django.db import models
 from django.db.models.signals import m2m_changed
 from django.db.models.query import QuerySet
-from django.db.models import Q
+from django.db.models import Q, Max
 from django.utils.translation import ugettext_lazy as _
 
 #
@@ -61,7 +61,7 @@ def load_model():
 
         @classmethod
         def get_best_for_product(cls, product, matches):
-            matches = matches.order_by('-category__level')
+            matches = matches.annotate(max_level=Max('category__level')).order_by('-max_level')
             return super(ProductRelatable, cls).get_best_for_product(product=product, matches=matches)
 
         class Meta:

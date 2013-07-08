@@ -26,13 +26,11 @@
 
 from sellmo import modules
 from sellmo.api.decorators import load
-from sellmo.api.product.manager import ProductSubTypeManager
 
 #
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from django.contrib.contenttypes.models import ContentType
 
 #
 
@@ -40,8 +38,8 @@ namespace = modules.product.namespace
 
 #
 
-@load(action='load_subtypes', after='finalize_product_Product')
-def load_subtypes():
+@load(action='load_product_subtypes', after='finalize_product_Product')
+def load_product_subtypes():
     class SimpleProduct(modules.product.Product):
         class Meta:
             app_label = 'product'

@@ -24,15 +24,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo import modules
-from sellmo.api.decorators import load
 
 #
 
-namespace = modules.variation.namespace
+from django.contrib import admin
 
-#
-
-@load(action='setup_variants', after='load_product_subtypes')
-def setup_variants():
-    pass

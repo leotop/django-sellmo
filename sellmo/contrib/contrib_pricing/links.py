@@ -36,7 +36,7 @@ from sellmo import modules
 
 @link()
 def get_price(product, price=None, currency=None, qty=1, **kwargs):
-    if price is None:
+    if not price:
         q = modules.qty_pricing.ProductQtyPrice.objects.filter(product=product, qty__lte=qty).order_by('-qty')
         if q:
             price = Price(amount=q[0].amount, currency=currency)

@@ -26,13 +26,33 @@
 
 from sellmo import modules
 from sellmo.api.decorators import load
+from sellmo.api.pricing import Price
 
 #
 
-namespace = modules.variation.namespace
+from django.db import models
+from django.utils.translation import ugettext_lazy as _
 
 #
 
-@load(action='setup_variants', after='load_product_subtypes')
-def setup_variants():
-    pass
+namespace = modules.discount.namespace
+
+#
+
+@load(action='load_discount_subtypes', after='finalize_discount_Discount')
+def load_tax_subtypes():
+    class PercentDiscount(modules.discount.Discount):
+        
+        rate = modules.pricing.construct_decimal_field(
+            verbose_name = _("rate"),
+        )
+        
+        def apply(self, price):
+            return price * Price(self.rate, currency=price.currency, type='discount')
+        
+        class Meta:
+            app_label = 'discount'
+            verbose_name = _("percent discount")
+            verbose_name_plural = _("percent discounts")
+
+    modules.discount.register_subtype(PercentDiscount)

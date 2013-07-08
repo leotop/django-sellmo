@@ -124,6 +124,9 @@ class Price(object):
             self._mutations.append((value.amount, key))
         else:
             raise KeyError(key)
+            
+    def __nonzero__(self):
+        return self.amount > 0
     
     def __unicode__(self):
         return self.currency.format(self.amount)

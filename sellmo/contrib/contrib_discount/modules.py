@@ -24,15 +24,25 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo import modules
-from sellmo.api.decorators import load
+from django.http import Http404
 
 #
 
-namespace = modules.variation.namespace
+from sellmo import modules, Module
+from sellmo.api.decorators import view, chainable
+from sellmo.contrib.contrib_discount.models import Discount
 
 #
 
-@load(action='setup_variants', after='load_product_subtypes')
-def setup_variants():
-    pass
+class DiscountModule(Module):
+    namespace = 'discount'
+    Discount = Discount
+    
+    def __init__(self, *args, **kwargs):
+        self.subtypes = []
+    
+    def register_subtype(self, subtype):
+        self.subtypes.append(subtype)
+        
+        # Shouldn't be a problem if Capital cased classnames are used.
+        setattr(self, subtype.__name__, subtype)

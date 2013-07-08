@@ -37,3 +37,12 @@ from sellmo.contrib.contrib_tax.models import Tax
 class TaxModule(Module):
     namespace = 'tax'
     Tax = Tax
+    
+    def __init__(self, *args, **kwargs):
+        self.subtypes = []
+    
+    def register_subtype(self, subtype):
+        self.subtypes.append(subtype)
+        
+        # Shouldn't be a problem if Capital cased classnames are used.
+        setattr(self, subtype.__name__, subtype)
