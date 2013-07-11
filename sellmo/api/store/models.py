@@ -85,7 +85,7 @@ class Purchase(PolymorphicModel):
         
     @property
     def total(self):
-        return self.price ^ self.qty
+        return self.price * self.qty
     
     def describe(self):
         return unicode(self.product)

@@ -100,7 +100,7 @@ class PolymorphicManager(models.Manager):
 
 class PolymorphicModel(models.Model):
     
-    content_type = models.ForeignKey(ContentType, editable=False, null=True, related_name='+')
+    content_type = models.ForeignKey(ContentType, editable=False, related_name='+')
     objects = PolymorphicManager()
     
     @classmethod
@@ -110,8 +110,7 @@ class PolymorphicModel(models.Model):
         return "%s/%s/%s/" % (content_type.app_label, content_type.model, quote(object_id))
     
     def save(self, *args, **kwargs):
-        if not self.content_type:
-            self.content_type = ContentType.objects.get_for_model(self.__class__)
+        self.content_type = ContentType.objects.get_for_model(self.__class__)
         super(PolymorphicModel, self).save(*args, **kwargs)
         
     def downcast(self):

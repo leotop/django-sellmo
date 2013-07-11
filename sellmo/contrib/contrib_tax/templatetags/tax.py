@@ -29,6 +29,7 @@ from django import template
 #
 
 from sellmo import modules
+from sellmo.api.pricing import Price
 
 #
 
@@ -38,8 +39,12 @@ register = template.Library()
 
 @register.filter
 def tax(value):
-    return value['tax']
+    if 'tax' in value:
+        return value['tax']
+    return Price(0, currency=value.currency, type='tax')
     
 @register.filter
 def taxless(value):
-    return value - value['tax']
+    if 'tax' in value:
+        return value - value['tax']
+    return value

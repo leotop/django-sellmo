@@ -47,81 +47,105 @@ class Currency(object):
 class Price(object):
 
     @staticmethod
-    def _sanity_check(a, b):
-        if not isinstance(a, Price) or not isinstance(b, Price):
+    def sanity_check(price, other):
+        if not isinstance(price, Price) or not isinstance(other, Price):
             raise Exception("""Not a price""")
-        if a.currency != b.currency:
+        if price.currency != other.currency:
             raise Exception("""Currency mismatch""")
 
-    def __init__(self, amount=0, currency=None, type=None):
-        self.amount = amount
-        if not isinstance(self.amount, Decimal):
-            self.amount = Decimal(str(self.amount))
+    def __init__(self, amount=0, currency=None, type=None, context=None):
+        if not isinstance(amount, Decimal):
+            amount = Decimal(str(amount))
             
         if currency is None:
             currency = modules.pricing.get_currency()
         
         if currency is None:
             raise Exception("Could not resolve currency")
+            
+        if context is None:
+            context = {}
+        elif not isinstance(context, dict):
+            raise Exception("Context should be a dict")
         
+        self.amount = amount
         self.currency = currency
         self.type = type
-        self._mutations = [(amount, type)]
+        self.context = context.copy()
         
-    def __add__(a, b):
-        Price._sanity_check(a, b)
-        a.amount += b.amount
-        a._mutations.extend(b._mutations)
-        return a
+        mutations = {}
+        if type:
+            mutations[type] = amount
+        self.mutations = mutations
         
-    def __sub__(a, b):
-        Price._sanity_check(a, b)
-        a.amount -= b.amount
-        a._mutations.extend((-mutation[0], mutation[1]) for mutation in b._mutations)
-        return a
+    def clone(self, cls=None):
+        if cls is None:
+            cls = self.__class__
+        price = cls(amount=self.amount, currency=self.currency, type=self.type, context=self.context)
+        price.mutations = self.mutations.copy()
+        return price
         
-    def __mul__(a, b):
-        Price._sanity_check(a, b)
-        d = a.amount
-        a.amount *= b.amount
-        d = a.amount - d
-        a._mutations.append((d, b.type))
-        return a
+    def _update_context(self, context):
+        self.context.update(context)
         
-    def __div__(a, b):
-        Price._sanity_check(a, b)
-        d = a.amount
-        a.amount /= b.amount
-        d = a.amount - d
-        a._mutations.append((d, b.type))
-        return a
+    def _addition_mutations(self, mutations):
+        for type, amount in mutations.iteritems():
+            current = self.mutations.get(type, 0)
+            self.mutations[type] = current + amount
         
-    def __xor__(a, b):
-        a.amount *= b
-        for i in range(len(a._mutations)):
-            a._mutations[i] = (a._mutations[i][0] * b, a._mutations[i][1])
-        return a
+    def __invert__(self):
+        price = self.clone()
+        price.amount = -price.amount
+        price.mutations = {type : -amount for type, amount in price.mutations.iteritems()}
+        return price
         
+    def __add__(self, other):
+        Price.sanity_check(self, other)
+        price = self.clone()
+        price.amount += other.amount
+        price._addition_mutations({type : amount for type, amount in other.mutations.iteritems()})
+        price._update_context(other.context)
+        return price
+        
+    def __sub__(self, other):
+        Price.sanity_check(self, other)
+        price = self.clone()
+        price.amount -= other.amount
+        price._addition_mutations({type : -amount for type, amount in other.mutations.iteritems()})
+        price._update_context(other.context)
+        return price
+        
+    def __mul__(self, multiplier):
+        price = self.clone()
+        price.amount *= multiplier
+        price.mutations = {type : amount * multiplier for type, amount in price.mutations.iteritems()}
+        return price
+        
+    def __div__(self, divider):
+        price = self.clone()
+        price.amount /= multiplier
+        price.mutations = {type : amount / multiplier for type, amount in price.mutations.iteritems()}
+        return price
+        
+    def __contains__(self, key):
+        if not isinstance(key, basestring):
+            raise TypeError()
+        return self.mutations.has_key(key)
+    
     def __getitem__(self, key):
         if not isinstance(key, basestring):
             raise TypeError()
-        if key:
-            price = Price(0, self.currency, key)
-            for mutation in self._mutations:
-                if mutation[1] == key:
-                    price.amount += mutation[0]
-            return price
+        if self.mutations.has_key(key):
+            return Price(self.mutations[key], self.currency, key)
         raise KeyError(key)
         
     def __setitem__(self, key, value):
         if not isinstance(key, basestring):
             raise TypeError()
+        if not isinstance(value, Price):
+            raise TypeError()
         if key:
-            for mutation in self._mutations:
-                if mutation[1] == key:
-                    mutation[0] = value.amount
-                    return
-            self._mutations.append((value.amount, key))
+            self.mutations[key] = value.amount
         else:
             raise KeyError(key)
             

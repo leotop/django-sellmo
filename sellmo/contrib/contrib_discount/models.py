@@ -54,6 +54,7 @@ def load_model():
             modules.discount.Discount,
             blank = True,
             null = True,
+            on_delete = models.SET_NULL,
             related_name = 'products',
             verbose_name = _("discount"),
         )

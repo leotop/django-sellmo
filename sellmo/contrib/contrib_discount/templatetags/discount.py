@@ -29,6 +29,7 @@ from django import template
 #
 
 from sellmo import modules
+from sellmo.api.pricing import Price
 
 #
 
@@ -36,10 +37,15 @@ register = template.Library()
 
 #
 
+
 @register.filter
 def discount(value):
-    return value['discount']
-    
+    if 'discount' in value:
+        return value['discount']
+    return Price(0, currency=value.currency, type='discount')
+
 @register.filter
 def discountless(value):
-    return value - value['discount']
+    if 'discount' in value:
+        return value - value['discount']
+    return value

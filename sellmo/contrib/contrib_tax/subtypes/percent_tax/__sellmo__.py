@@ -48,7 +48,8 @@ def load_tax_subtypes():
         )
         
         def apply(self, price):
-            return price * Price(self.rate, currency=price.currency, type='tax')
+            tax = Price(price.amount * self.rate, currency=price.currency, type='tax', context={'tax' : self})
+            return price + tax
         
         class Meta:
             app_label = 'tax'
