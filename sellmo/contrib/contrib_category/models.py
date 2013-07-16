@@ -33,6 +33,7 @@ from django.db import models
 from django.db.models.signals import m2m_changed
 from django.db.models.query import QuerySet
 from django.db.models import Q, Max
+from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_lazy as _
 
 #
@@ -256,12 +257,11 @@ class Category(MPTTModel):
         return "/".join(category.slug for category in ancestors)
         
     full_slug = property(get_full_slug)
-            
-    @models.permalink
+    
     def get_absolute_url(self, slug=None):
         if slug is None:
             slug = self.full_slug
-        return 'category.category', (slug,)
+        return reverse('category.category', args=[slug])
     
     def __unicode__(self):
         return self.full_name

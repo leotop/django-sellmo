@@ -49,8 +49,8 @@ def categories(parent=None):
 def nested_categories(parent=None):
     return modules.category.list(parent=parent, nested=True)
         
-@register.assignment_tag(takes_context=True)
-def is_current(context, category, current_category=None):
+@register.assignment_tag
+def is_current(category, current_category=None):
     if not current_category:
         return False
     if current_category == category:

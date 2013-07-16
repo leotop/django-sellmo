@@ -24,5 +24,5 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from singleton import SingletonMeta, singleton
-from mixin import ModelMixin, ManagerMixinHelper
+from sellmo.magic.singleton import SingletonMeta, singleton
+from sellmo.magic.mixin import ModelMixin, ManagerMixinHelper
