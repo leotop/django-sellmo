@@ -49,9 +49,9 @@ packages, data_files = [], []
 root_dir = os.path.dirname(__file__)
 if root_dir != '':
     os.chdir(root_dir)
-django_dir = 'sellmo'
+code_dir = 'sellmo'
 
-for dirpath, dirnames, filenames in os.walk(django_dir):
+for dirpath, dirnames, filenames in os.walk(code_dir):
     # Ignore PEP 3147 cache dirs and those whose names start with '.'
     for i, dirname in enumerate(dirnames):
         if dirname.startswith('.') or dirname == '__pycache__':
