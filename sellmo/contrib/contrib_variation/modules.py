@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -38,7 +38,7 @@ from django.db.models import Q
 
 #
 
-class VariationModule(Module):  
+class VariationModule(Module):
 
     namespace = 'variation'
     batch_buy_enabled = False
@@ -90,13 +90,13 @@ class VariationModule(Module):
     @chainable()
     def get_variation_choice(self, chain, variation, choice=None, **kwargs):
         if choice is None:
-            choice = u", ".join([u"%s: %s" % (value.attribute.name ,unicode(value.value)) for value in variation.values.all()])
+            choice = u", ".join([u"%s: %s" % (value.attribute.name ,unicode(value.value)) for value in variation.values.all().order_by('attribute')])
             
         if chain:
             out = chain.execute(variation=variation, choice=choice, **kwargs)
             if out.has_key('choice'):
                 choice = out['choice']
-        
+                
         return choice
         
     @chainable()

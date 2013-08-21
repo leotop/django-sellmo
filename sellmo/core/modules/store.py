@@ -49,6 +49,13 @@ class StoreModule(sellmo.Module):
     @chainable()
     def merge_purchase(self, chain, purchase, others, result=None, merged=None, **kwargs):
         
+        if not purchase.pk:
+            raise Exception("Can only merge persistent purchases.")
+            
+        for other in others:
+            if not other.pk:
+                raise Exception("Can only merge persistent purchases.")
+        
         purchase = purchase.downcast()
         manager = purchase.__class__.objects
         
@@ -61,7 +68,7 @@ class StoreModule(sellmo.Module):
             merged = manager.filter(pk__in=[other.pk for other in others] + [purchase.pk])
             result = manager.merge(merged)
             if result:
-                self.make_purchase(purchase=result)
+                result = self.make_purchase(purchase=result)
         
         return (result, merged)
         

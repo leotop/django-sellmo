@@ -296,25 +296,28 @@ class CartModule(sellmo.Module):
             cart.track(request)
             
             if chain:
-                return chain.execute(request, purchases=purchases, formset=formset, context=context, **kwargs)
+                return chain.execute(request, product=product, purchases=purchases, formset=formset, context=context, **kwargs)
         
         return redirect(target)
         
     @chainable()
-    def on_purchase(self, chain, purchase, cart, **kwargs):
-        
-        # Need to save before trying to merge
-        purchase.save()
-        
-        # See if we can merge this purchase
-        merged = modules.store.merge_purchase(purchase=purchase, others=list(cart))
-        if merged[0]:
-            for purchase in merged[1]:
-                purchase.delete()
-            purchase = merged[0]
-        
-        if purchase in cart:
-            cart.update(purchase)
-        else:
-            cart.add(purchase)
+    def on_purchase(self, chain, cart, purchase=None, **kwargs):
+        if purchase:
+            # Need to save before trying to merge
+            purchase.save()
+            
+            # See if we can merge this purchase
+            merged = modules.store.merge_purchase(purchase=purchase, others=list(cart))
+            if merged[0]:
+                for purchase in merged[1]:
+                    purchase.delete()
+                purchase = merged[0]
+            
+            # Add to cart / update cart
+            if purchase in cart:
+                cart.update(purchase)
+            else:
+                cart.add(purchase)
+        if chain:
+            chain.execute(purchase=purchase, cart=cart, **kwargs)
        

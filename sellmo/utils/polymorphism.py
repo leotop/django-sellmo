@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -74,7 +74,7 @@ class PolymorphicQuerySet(QuerySet):
                     
             return result
     
-    def __iter__(self): 
+    def __iter__(self):
         if self._downcast:
             elements = self.prefetch_related('content_type')
         else:
@@ -110,20 +110,21 @@ class PolymorphicModel(models.Model):
         return "%s/%s/%s/" % (content_type.app_label, content_type.model, quote(object_id))
     
     def save(self, *args, **kwargs):
-        self.content_type = ContentType.objects.get_for_model(self.__class__)
+        if self.content_type_id is None:
+            self.content_type = ContentType.objects.get_for_model(self.__class__)
         super(PolymorphicModel, self).save(*args, **kwargs)
         
     def downcast(self):
-        if self.content_type:
+        if not self.content_type_id is None:
             model = self.content_type.model_class()
             if(model == self.__class__):
                 return self
             try:
                 downcasted = model.objects.get(pk=self.pk)
             except model.DoesNotExist:
-                return self
+                raise Exception("Could not downcast to model class '{0}', lookup failed for pk '{1}'".format(model, self.pk))
             else:
-                return downcasted 
+                return downcasted
         return self
         
     def clone(self, cls=None):

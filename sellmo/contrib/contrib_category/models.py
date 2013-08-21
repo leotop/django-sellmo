@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -123,8 +123,8 @@ def load_model():
         @staticmethod
         def update_primary_category(product):
             
-            if (product.primary_category is None 
-            or getattr(product, '_primary_category_found', False) 
+            if (product.primary_category is None
+            or getattr(product, '_primary_category_found', False)
             or product.category.filter(pk=product.primary_category.pk).count() == 0
             ) and product.category.count() > 0:
                 # Find best suitable category

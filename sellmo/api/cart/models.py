@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -110,6 +110,9 @@ class Cart(models.Model):
         if hasattr(self, 'items'):
             for item in self.items.polymorphic().all():
                 yield item
+                
+    def __len__(self):
+        return self.items.count()
                 
     def __nonzero__(self):
         return self.items.count() > 0

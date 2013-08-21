@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -113,7 +113,7 @@ class ColorMappingManager(models.Manager):
                 'attribute' : value.attribute,
             }
             
-            if exists:                
+            if exists:
                 # Ensure we have a mapping
                 self.get_or_create(**kwargs)
             else:

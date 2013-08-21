@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -154,7 +154,7 @@ class Value(models.Model):
         
     value = property(get_value, set_value)
     
-    @property   
+    @property
     def is_assigned(self):
         value = self.get_value()
         field = self.attribute.value_field
@@ -176,7 +176,7 @@ class Value(models.Model):
     
     class Meta:
         abstract = True
-        ordering = ['product']
+        ordering = ['attribute', 'value_string', 'value_int', 'value_object']
         verbose_name = _("value")
         verbose_name_plural = _("values")
 

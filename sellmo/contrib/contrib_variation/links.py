@@ -116,7 +116,7 @@ def get_purchase_args(form, product, args, **kwargs):
             variation = modules.variation.Variation.objects.get(pk=form.cleaned_data['variation'])
         except modules.variation.Variation.DoesNotExist:
             raise Exception("Invalid variation")
-        args['product'] = variation.product
+        args['product'] = variation.variant
         args['variation'] = variation
         
     return args

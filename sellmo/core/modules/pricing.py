@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -54,7 +54,7 @@ class PricingModule(sellmo.Module):
     @staticmethod
     def construct_decimal_field(**kwargs):
         """
-        Constructs a decimal field. 
+        Constructs a decimal field.
         """
         return models.DecimalField(
             max_digits = modules.pricing.decimal_max_digits,
@@ -70,7 +70,11 @@ class PricingModule(sellmo.Module):
         stampable.amount = price.amount
         for type in self.types:
             attr = '%s_amount' % type
-            setattr(stampable, attr, price[type].amount)
+            if type in price:
+                amount = price[type].amount
+            else:
+                amount = 0
+            setattr(stampable, attr, amount)
             
     @chainable()
     def retrieve(self, chain, stampable, **kwargs):

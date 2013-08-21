@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -60,7 +60,7 @@ def load_model():
 
     modules.product.Product = Product
     
-@load(after='finalize_product_Product') 
+@load(after='finalize_product_Product')
 def load_manager():
 
     qs = modules.product.Product.objects.get_query_set()
@@ -165,7 +165,7 @@ def listen():
     pre_delete.connect(on_value_pre_delete, sender=modules.attribute.Value)
     
 
-@load(after='finalize_attribute_Attribute') 
+@load(after='finalize_attribute_Attribute')
 def load_manager():
 
     qs = modules.attribute.Attribute.objects.get_query_set()
@@ -213,12 +213,12 @@ def load_model():
         
     modules.attribute.Attribute = Attribute
     
-@load(after='finalize_attribute_Value') 
+@load(after='finalize_attribute_Value')
 def load_manager():
     
     qs = modules.attribute.Value.objects.get_query_set()
     
-    class ValueQuerySet(qs.__class__):            
+    class ValueQuerySet(qs.__class__):
         def for_product_or_variant(self, product):
             q = Q(product=product) | Q(base_product=product)
             return self.filter(q)
@@ -322,7 +322,7 @@ def finalize_model():
             related_name = '+',
         )
         
-        # The variant we are based on (can be a product)
+        # The variant we are based on (can be product)
         variant = models.ForeignKey(
             modules.product.Product,
             db_index = True,
@@ -475,6 +475,10 @@ class VariationManager(models.Manager):
                 except (modules.product.Product.DoesNotExist, modules.product.Product.MultipleObjectsReturned) as ex:
                     variant = product
             
+            # Query values (this will order them)
+            values = list(modules.attribute.Value.objects.filter(pk__in=[value.pk for value in values]).order_by('attribute'))
+            
+            #
             variation = modules.variation.Variation.objects.create(
                 id = modules.variation.Variation.generate_id(product, values),
                 description = modules.variation.Variation.generate_description(product, values),
@@ -567,7 +571,7 @@ def load_model():
     
     qs = modules.store.Purchase.objects.get_query_set()
     
-    class PurchaseQuerySet(qs.__class__):            
+    class PurchaseQuerySet(qs.__class__):
         def mergeable_with(self, purchase):
             return super(PurchaseQuerySet, self).mergeable_with(purchase).filter(variation_key=purchase.variation_key)
             
