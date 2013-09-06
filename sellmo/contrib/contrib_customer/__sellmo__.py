@@ -25,8 +25,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from sellmo import modules
-from sellmo.contrib.contrib_customer.models import Address
-
 #
 
 from django.utils.translation import ugettext_lazy as _
@@ -34,4 +32,3 @@ from django.utils.translation import ugettext_lazy as _
 #
 
 namespace = modules.customer.namespace
-modules.customer.Address = Address

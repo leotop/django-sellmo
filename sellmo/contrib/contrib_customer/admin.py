@@ -32,7 +32,7 @@ from sellmo import modules
 
 #
 
-from . models import *
+from sellmo.contrib.contrib_customer.models import *
 
 #
     

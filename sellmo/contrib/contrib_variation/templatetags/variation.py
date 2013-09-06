@@ -38,4 +38,4 @@ register = template.Library()
 
 @register.filter
 def variations(product, grouped=False):
-    return product.get_variations(grouped=grouped)
+    return modules.variation.get_variations(product=product, grouped=grouped)

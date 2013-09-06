@@ -89,7 +89,7 @@ def list(request, products, **kwargs):
 @link(namespace=modules.pricing.namespace, name='get_price', capture=True)
 def capture_get_price(product=None, **kwargs):
     out = {}
-    
+    product = product.downcast()
     if getattr(product, '_is_variant', False):
         out['variant'] = product
         product = product.product
@@ -116,7 +116,7 @@ def get_purchase_args(form, product, args, **kwargs):
             variation = modules.variation.Variation.objects.get(pk=form.cleaned_data['variation'])
         except modules.variation.Variation.DoesNotExist:
             raise Exception("Invalid variation")
-        args['product'] = variation.variant
+        args['product'] = variation.variant.downcast()
         args['variation'] = variation
         
     return args

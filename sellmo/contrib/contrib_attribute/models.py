@@ -240,6 +240,11 @@ class Attribute(models.Model):
         default=False
     )
     
+    sort_order = models.SmallIntegerField(
+        default = 0,
+        verbose_name = _("sort order"),
+    )
+    
     def parse(self, string):
         if self.type == self.TYPE_STRING:
             return string
@@ -278,6 +283,7 @@ class Attribute(models.Model):
 
     class Meta:
         abstract = True
+        ordering = ['sort_order', 'name']
         verbose_name = _("attribute")
         verbose_name_plural = _("attributes")
         

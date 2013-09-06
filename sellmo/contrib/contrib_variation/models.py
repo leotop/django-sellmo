@@ -54,7 +54,20 @@ def load_model():
         def __init__(self, *args, **kwargs):
             super(Product, self).__init__(*args, **kwargs)
             self.attributes = RecipelessAttributeHelper(self)
-
+            
+        def save(self, *args, **kwargs):
+            super(Product, self).save(*args, **kwargs)
+            
+            # Check kwargs
+            ignore_variants = False
+            if kwargs.has_key('ignore_variants'):
+                ignore_variants = kwargs.pop('ignore_variants')
+            
+            # Try to update variants
+            if not ignore_variants and hasattr(self, 'variants') and self.variants.count() > 0:
+                for variant in self.variants.all():
+                    variant.save()
+        
         class Meta:
             abstract = True
 
@@ -112,10 +125,9 @@ def load_model():
             
             @property
             def variations(self):
-                return self.get_variations()
-            
-            def get_variations(self, grouped=False, **kwargs):
-                return modules.variation.get_variations(product=self, grouped=grouped, **kwargs)
+                if getattr(self, '_is_variant', False):
+                    return modules.variation.Variation.objects.for_product(self.product).filter(variant=self)
+                return modules.variation.Variation.objects.for_product(self)
                 
 @load(action='load_variants', after='setup_variants')
 def load_variants():
@@ -348,6 +360,10 @@ def finalize_model():
                 
     modules.variation.Variation = Variation
     
+class VariationQuerySet(QuerySet):
+    def for_product(self, product):
+        return self.filter(product=product, deprecated=False)
+    
 class VariationManager(models.Manager):
     
     def build(self, product):
@@ -519,14 +535,16 @@ class VariationManager(models.Manager):
     def deprecate(self, product):
         self.select_for_update().filter(product=product).update(deprecated=True)
         
-    def for_product(self, product):
-        variations = self.filter(product=product, deprecated=False)
+    def get_query_set(self):
+        return VariationQuerySet(self.model)
+    
+    def for_product(self, product, *args, **kwargs):
+        variations = self.get_query_set().for_product(product, *args, **kwargs)
         if variations.count() > 0:
             return variations
         else:
             self.build(product)
-        return self.filter(product=product)
-            
+        return self.get_query_set().for_product(product, *args, **kwargs)
         
 class Variation(models.Model):
 

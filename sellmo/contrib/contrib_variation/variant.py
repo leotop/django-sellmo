@@ -81,6 +81,12 @@ class VariantMixin(object):
         if not product:
             raise ProductUnassignedException()
             
+        # See if object is newly created
+        try:
+            exists = not self.pk is None
+        except Exception:
+            exists = False
+            
         def assign_field(field, val, product_val):
             differs = getattr(self, get_differs_field_name(field.name))
             
@@ -88,24 +94,26 @@ class VariantMixin(object):
             if not val:
                 val = product_val
                 differs = False
-            
+               
+            if not exists and val != product_val:
+                # Newly created and we already differ
+                differs = True
+               
             # See if we need to copy our parent's field
-            if not differs and not val == product_val:
+            if not differs and val != product_val:
                 val = product_val
             
-            # Finally set
-            if not differs:     
-                setattr(self, field.name, val)
-                setattr(self, get_differs_field_name(field.name), differs)
+            setattr(self, field.name, val)
+            setattr(self, get_differs_field_name(field.name), differs)
+                
         
         for field in self.__class__.get_variable_fields():
-            # Handle many to many 
+            # Handle all fields except many to many
             if isinstance(field, models.ManyToManyField):
                 continue
             
             val = getattr(self, field.name)
             product_val = getattr(product, field.name)
-                
             assign_field(field, val, product_val)
                 
         super(VariantMixin, self).save(*args, **kwargs)
@@ -119,7 +127,6 @@ class VariantMixin(object):
             product_val = getattr(product, field.name)
             val = list(val.all())
             product_val = list(product_val.all())
-            
             assign_field(field, val, product_val)
             
 
@@ -141,17 +148,26 @@ class VariantFieldDescriptor(object):
             return self.descriptor.__get__(obj, objtype)
 
     def __set__(self, obj, val):
-        # See if we differ and keep track
-        differs = getattr(obj, get_differs_field_name(self.field.name), False)
-        if not differs:
-            try:
-                # In case we are initializing, an exception could occur while
-                # getting this field's value
-                old_val = getattr(obj, self.field.name)
-            except Exception:
-                old_val = None
-            differs = not old_val is None and old_val != val
-            setattr(obj, get_differs_field_name(self.field.name), differs)
+        
+        # See if object is newly created
+        try:
+            exists = not obj.pk is None
+        except Exception:
+            exists = False
+        
+        if exists:
+            # See if we differ and keep track
+            differs = getattr(obj, get_differs_field_name(self.field.name), False)
+            if not differs:
+                try:
+                    # In case we are initializing, an exception could occur while
+                    # getting this field's value
+                    old_val = getattr(obj, self.field.name)
+                except Exception:
+                    pass
+                else:
+                    differs = not old_val is None and old_val != val
+                    setattr(obj, get_differs_field_name(self.field.name), differs)
         
         # Now set
         if not self.descriptor:
