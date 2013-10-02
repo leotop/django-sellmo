@@ -30,66 +30,90 @@ from django.db import models
 
 from sellmo import modules
 from sellmo.api.decorators import load
+from sellmo.utils.tracking import TrackingManager
 
 #
-
-@load(after='finalize_checkout_Order')
-def load_model():
-    class OrderLine(modules.checkout.OrderLine):
-        order = models.ForeignKey(
-            modules.checkout.Order,
-            related_name = 'lines'
-        )
         
-        class Meta:
-            abstract = True
-        
-    modules.checkout.OrderLine = OrderLine
-        
-@load(after='finalize_pricing_Stampable')
+@load(after='finalize_pricing_Stampable', before='finalize_checkout_Order')
 def load_model():
     class Order(modules.checkout.Order, modules.pricing.Stampable):
         class Meta:
             abstract = True
         
     modules.checkout.Order = Order
-        
-@load(after='finalize_store_Purchase')
+    
+@load(after='finalize_customer_Customer', before='finalize_checkout_Order')
+@load(after='finalize_customer_Contactable', before='finalize_checkout_Order')
 def load_model():
-    class OrderLine(modules.checkout.OrderLine):
-        purchase = models.OneToOneField(
-            modules.store.Purchase
-        )
+    class Order(modules.checkout.Order):
+        
+        customer =  models.ForeignKey(
+             modules.customer.Customer,
+             null = not modules.checkout.customer_required,
+             blank = not modules.checkout.customer_required,
+             related_name = 'orders',
+         )
         
         class Meta:
             abstract = True
+            
+    if not modules.checkout.customer_required:
+        class Order(Order, modules.customer.Contactable):
+            class Meta:
+                abstract = True
+    
+    modules.checkout.Order = Order
+    
+@load(after='finalize_customer_Address', before='finalize_checkout_Order')
+def load_model():
+    for type in modules.checkout.required_address_types:
+        name = '{0}_address'.format(type)
+        modules.checkout.Order.add_to_class(name,
+            models.ForeignKey(
+                modules.customer.Address,
+                null = True,
+                related_name='+',
+            )
+        )
         
-    modules.checkout.OrderLine = OrderLine
+@load(after='finalize_checkout_Order', before='finalize_store_Purchase')
+def load_model():
+    class Purchase(modules.store.Purchase):
+        order = models.ForeignKey(
+            modules.checkout.Order,
+            null = True,
+            editable = False,
+            on_delete = models.SET_NULL,
+            related_name = 'items',
+        )
+
+        class Meta:
+            abstract = True
+
+    modules.store.Purchase = Purchase
         
 @load(action='finalize_checkout_Order')
 def finalize_model():
     class Order(modules.checkout.Order):
         pass
-    modules.checkout.Order = Order
     
-@load(action='finalize_checkout_OrderLine')
-def finalize_model():
-    class OrderLine(modules.checkout.OrderLine):
-        pass
-    modules.checkout.OrderLine = OrderLine
+    modules.checkout.Order = Order
 
 class Order(models.Model):
-    shipping_amount = modules.pricing.construct_decimal_field()
     
-    class Meta:
-        app_label = 'checkout'
-        abstract = True
+    objects = TrackingManager('sellmo_order')
     
-class OrderLine(models.Model):
+    #
     
-    @property
-    def total(self):
-        return self.purchase.price
+    def get_address(self, type):
+        return getattr(self, '{0}_address'.format(type))
+        
+    def set_address(self, type, value):
+        setattr(self, '{0}_address'.format(type), value)
+    
+    #
+    
+    shipping_amount = modules.pricing.construct_decimal_field(default=0)
     
     class Meta:
         app_label = 'checkout'

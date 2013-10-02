@@ -108,9 +108,9 @@ class Chain(object):
         
 class ViewChain(Chain):
     
-    def __init__(self, func, regex, **kwargs):
+    def __init__(self, func, regex=None, **kwargs):
         super(ViewChain, self).__init__(func, **kwargs)
-        self.regex = regex
+        self.regex = regex if not regex is None else []
         
     def handle(self, module, request, **kwargs):
         return super(ViewChain, self).handle(module=module, request=request, **kwargs)

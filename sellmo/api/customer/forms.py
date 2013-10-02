@@ -29,15 +29,35 @@ from django import forms
 #
 
 from sellmo import modules
+from sellmo.api.decorators import load
 
 #
 
-class AddressForm(modules.customer.AddressForm):
-    class Meta:
-        model = modules.customer.Address
-        exclude = ('customer', 'type')
 
-class CustomerForm(modules.customer.CustomerForm):
-    class Meta:
-        model = modules.customer.Customer
-        exclude = ('user',)
+@load(action='load_customer_CustomerForm', after='finalize_customer_Customer')
+def load_form():
+    class CustomerForm(forms.ModelForm):
+        class Meta:
+            model = modules.customer.Customer
+            exclude = ('user',)
+    
+    modules.customer.CustomerForm = CustomerForm
+    
+@load(action='load_customer_ContactableForm', after='finalize_customer_Contactable')
+def load_form():
+    class ContactableForm(forms.ModelForm):
+        class Meta:
+            model = modules.customer.Contactable
+
+    modules.customer.ContactableForm = ContactableForm
+    
+@load(action='load_customer_AddressForm', after='finalize_customer_Address')
+def load_form():
+    class AddressForm(forms.ModelForm):
+        class Meta:
+            model = modules.customer.Address
+            exclude = ('customer', 'type')
+
+    modules.customer.AddressForm = AddressForm
+
+

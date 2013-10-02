@@ -32,24 +32,23 @@ from django.utils.translation import ugettext_lazy as _
 
 from sellmo import modules
 from sellmo.api.decorators import load
-from sellmo.utils.tracking import TrackingManager
 
 #
 
-@load(after='finalize_customer_Customer')
-def load_model():
-    class Address(modules.customer.Address):
-        customer = models.ForeignKey(
-            modules.customer.Customer,
-            related_name = 'addresses',
-            verbose_name = _("customer")
-        )
-        
-        class Meta:
-            abstract = True
-        
-    modules.customer.Address = Address
+#
+# Customer model
+#
 
+@load(before='finalize_customer_Customer', after='finalize_customer_Address')
+def load_model():
+    for type in modules.customer.address_types:
+        name = '{0}_address'.format(type)
+        modules.customer.Customer.add_to_class(name, 
+            models.ForeignKey(
+                modules.customer.Address,
+                related_name='+',
+            )
+        )
 @load(after='finalize_customer_Addressee', before='finalize_customer_Customer')
 def load_model():
     class Customer(modules.customer.Customer, modules.customer.Addressee):
@@ -58,22 +57,56 @@ def load_model():
         
     modules.customer.Customer = Customer
     
-@load(after='finalize_customer_Addressee', before='finalize_customer_Address')
+@load(after='finalize_customer_Contactable', before='finalize_customer_Customer')
 def load_model():
-    class Address(modules.customer.Address, modules.customer.Addressee):
+    class Customer(modules.customer.Customer, modules.customer.Contactable):
         class Meta:
             abstract = True
-        
-    modules.customer.Address = Address
+
+    modules.customer.Customer = Customer
         
 @load(action='finalize_customer_Customer')
 def finalize_model():
     class Customer(modules.customer.Customer):
+        
+        if modules.customer.django_auth_enabled:
+            user = models.OneToOneField(
+                User,
+                editable = False,
+                verbose_name = _("user"),
+                related_name = 'customer'
+            )
+        
         class Meta:
             verbose_name = _("customer")
             verbose_name_plural = _("customers")
             
     modules.customer.Customer = Customer
+    
+class Customer(models.Model):
+
+    def get_address(self, type):
+        return getattr(self, '{0}_address'.format(type))
+
+    def set_address(self, type, value):
+        setattr(self, '{0}_address'.format(type), value)
+
+    class Meta:
+        app_label = 'customer'
+        ordering = ['last_name', 'first_name']
+        abstract = True
+    
+#
+# Address model
+#
+    
+@load(after='finalize_customer_Addressee', before='finalize_customer_Address')
+def load_model():
+    class Address(modules.customer.Address, modules.customer.Addressee):
+        class Meta:
+            abstract = True
+
+    modules.customer.Address = Address
     
 @load(action='finalize_customer_Address')
 def finalize_model():
@@ -81,7 +114,66 @@ def finalize_model():
         class Meta:
             verbose_name = _("address")
             verbose_name_plural = _("addresses")
+    
     modules.customer.Address = Address
+    
+class Address(models.Model):
+
+    class Meta:
+        app_label = 'customer'
+        ordering = ['last_name', 'first_name']
+        abstract = True
+    
+#
+# Contactable model
+#
+
+@load(action='finalize_customer_Contactable')
+def finalize_model():
+    class Contactable(modules.customer.Contactable):
+        
+        email = models.EmailField(
+            blank = not modules.customer.email_required,
+            verbose_name = _("email address"),
+        )
+        
+        class Meta:
+            abstract = True
+
+    modules.customer.Contactable = Contactable
+    
+class Contactable(models.Model):
+    
+    class Meta:
+        app_label = 'customer'
+        abstract = True
+  
+#
+# Addressee model
+#  
+
+@load(action='finalize_customer_Addressee')
+def finalize_model():
+    class Addressee(modules.customer.Addressee):
+        
+        if modules.customer.businesses_allowed:
+            company_name = models.CharField(
+                max_length = 50,
+                verbose_name = _("company name"),
+                blank = not modules.customer.businesses_only,
+            )
+            @property
+            def is_business(self):
+                return bool(self.company_name)
+        else:
+            @property
+            def is_business(self):
+                return False
+        
+        class Meta:
+            abstract = True
+
+    modules.customer.Addressee = Addressee     
 
 class Addressee(models.Model):
 
@@ -95,34 +187,9 @@ class Addressee(models.Model):
         verbose_name = _("last name")
     )
     
-    class Meta:
-        app_label = 'customer'
-        abstract = True
-
-class Customer(models.Model):
-    
-    objects = TrackingManager('sellmo_customer')
-    
-    user = models.OneToOneField(
-        User,
-        blank = True,
-        null = True,
-        verbose_name = _("user")
-    )
+    def __unicode__(self):
+        return u"{0} {1}".format(self.first_name, self.last_name)
     
     class Meta:
         app_label = 'customer'
-        ordering = ['last_name', 'first_name']
-        abstract = True
-    
-class Address(models.Model):
-    
-    type = models.CharField(
-        max_length = 30,
-        verbose_name = _("type")
-    )
-    
-    class Meta:
-        app_label = 'customer'
-        ordering = ['last_name', 'first_name']
         abstract = True

@@ -24,31 +24,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo import modules
-from sellmo.api.pricing import Price
+from django.conf import settings
 
 #
 
-class ShippingMethod(object):
-    
-    def __init__(self, name, description=None):
-        self.name = name
-        self.description = description
-        
-    def calculate_price(self, cart):  
-        raise NotImplementedError()
-        
-    def __unicode__(self):
-        return self.name
-        
-class PaymentMethod(object):
-    
-    def __init__(self, name, description=None):
-        self.name = name
-        self.description = description
-        
-    def calculate_price(self, cart):
-        raise NotImplementedError()
-        
-    def __unicode__(self):
-        return self.name
+from sellmo.config import defaults
+
+#
+
+REDIRECTION_SESSION_PREFIX = getattr(settings, 'SELLMO_REDIRECTION_SESSION_PREFIX', defaults.REDIRECTION_SESSION_PREFIX)

@@ -39,8 +39,9 @@ from sellmo.contrib.contrib_customer.models import *
 class AddressInline(admin.StackedInline):
     model = modules.customer.Address
     
+    
 class CustomerAdmin(admin.ModelAdmin):
-    inlines = [AddressInline]
+    pass
     
 #
 

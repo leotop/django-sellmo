@@ -23,32 +23,3 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-
-from sellmo import modules
-from sellmo.api.pricing import Price
-
-#
-
-class ShippingMethod(object):
-    
-    def __init__(self, name, description=None):
-        self.name = name
-        self.description = description
-        
-    def calculate_price(self, cart):  
-        raise NotImplementedError()
-        
-    def __unicode__(self):
-        return self.name
-        
-class PaymentMethod(object):
-    
-    def __init__(self, name, description=None):
-        self.name = name
-        self.description = description
-        
-    def calculate_price(self, cart):
-        raise NotImplementedError()
-        
-    def __unicode__(self):
-        return self.name

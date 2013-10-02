@@ -24,12 +24,42 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.conf import settings
+from sellmo import modules
+from sellmo.api.decorators import load
 
 #
 
-from sellmo.conf import defaults
+from django.db import models
+from django.utils.translation import ugettext_lazy as _
 
 #
 
-REDIRECTION_SESSION_PREFIX = getattr(settings, 'SELLMO_REDIRECTION_SESSION_PREFIX', defaults.REDIRECTION_SESSION_PREFIX)
+@load(before='finalize_customer_Addressee')
+def load_model():
+	
+	prefix_choices = (
+		('sir', _("sir")),
+		('madame', _("madam")),
+	) if not getattr(modules.customer, 'prefixes', False) else getattr(modules.customer, 'prefixes') 
+	
+	class Addressee(modules.customer.Addressee):
+		
+		if getattr(modules.customer, 'prefix_enabled', False):
+			prefix = models.CharField(
+				max_length = 20,
+				verbose_name = _("prefix"),
+				blank = not getattr(modules.customer, 'prefix_required', True),
+				choices = prefix_choices,
+				default = prefix_choices[0][0]
+			)
+		
+		suffix = models.CharField(
+			max_length = 10,
+			blank = True,
+			verbose_name = _("suffx"),
+		)
+
+		class Meta:
+			abstract = True
+
+	modules.customer.Addressee = Addressee

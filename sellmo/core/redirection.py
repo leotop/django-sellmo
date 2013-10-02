@@ -24,7 +24,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.conf import settings
+from sellmo.config import settings
 
 class RedirectionAccess(object):
     def __init__(self, session):

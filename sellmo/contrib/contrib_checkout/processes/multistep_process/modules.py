@@ -24,31 +24,39 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo import modules
-from sellmo.api.pricing import Price
+
+from django.http import Http404
+from django.shortcuts import redirect
 
 #
 
-class ShippingMethod(object):
-    
-    def __init__(self, name, description=None):
-        self.name = name
-        self.description = description
-        
-    def calculate_price(self, cart):  
-        raise NotImplementedError()
-        
-    def __unicode__(self):
-        return self.name
-        
-class PaymentMethod(object):
-    
-    def __init__(self, name, description=None):
-        self.name = name
-        self.description = description
-        
-    def calculate_price(self, cart):
-        raise NotImplementedError()
-        
-    def __unicode__(self):
-        return self.name
+from sellmo import modules, Module
+from sellmo.api.decorators import chainable, view
+
+#
+
+class MultiStepCheckoutModule(Module):
+	namespace = 'checkout_process'
+	login_required = False
+	
+	@view()
+	def login(self, chain, request, context=None, **kwargs):
+		if context is None:
+			context = {}
+			
+		if chain:
+			return chain.execute(request=request, context=context, **kwargs)
+		else:
+			# We don't render anything
+			raise Http404
+	
+	@view()
+	def customer(self, chain, request, context=None, **kwargs):
+		if context is None:
+			context = {}
+
+		if chain:
+			return chain.execute(request=request, context=context, **kwargs)
+		else:
+			# We don't render anything
+			raise Http404

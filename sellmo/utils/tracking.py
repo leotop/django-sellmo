@@ -32,10 +32,13 @@ from django.db import models
 
 #
 
+class UntrackableError(Exception):
+    pass
+
 def make_trackable(obj, session_key):
     def track(self, request):
         if self.pk is None:
-            raise Exception("Cannot track non persistent object")
+            raise UntrackableError("Cannot track non persistent object")
         request.session[session_key] = self.pk
     obj.track = track.__get__(obj, obj.__class__)
     return obj

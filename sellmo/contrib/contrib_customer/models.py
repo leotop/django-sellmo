@@ -23,30 +23,3 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-
-from sellmo import modules
-from sellmo.api.decorators import load
-
-#
-
-from django.db import models
-from django.utils.translation import ugettext_lazy as _
-
-#
-
-@load(before='finalize_customer_Address')
-def load_model():
-    class Address(modules.customer.Address):
-        
-        street1 = models.CharField(
-            max_length = 50,
-        )
-        
-        street2 = models.CharField(
-            max_length = 50,
-            blank = True,
-            null = True
-        )
-        
-        class Meta:
-            abstract = True

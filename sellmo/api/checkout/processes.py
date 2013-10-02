@@ -24,31 +24,27 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo import modules
-from sellmo.api.pricing import Price
+from django.core.urlresolvers import reverse
 
 #
 
-class ShippingMethod(object):
-    
-    def __init__(self, name, description=None):
-        self.name = name
-        self.description = description
-        
-    def calculate_price(self, cart):  
-        raise NotImplementedError()
-        
-    def __unicode__(self):
-        return self.name
-        
-class PaymentMethod(object):
-    
-    def __init__(self, name, description=None):
-        self.name = name
-        self.description = description
-        
-    def calculate_price(self, cart):
-        raise NotImplementedError()
-        
-    def __unicode__(self):
-        return self.name
+from sellmo.core.processing import Process, ProcessStep
+
+#
+
+class CheckoutProcess(Process):
+	
+	def __init__(self, order, request):
+		super(CheckoutProcess, self).__init__()
+		self.order = order
+		self.request = request
+		
+	def resolve_url(self, step):
+		return reverse('checkout.checkout', args=[step.key])
+		
+class CheckoutStep(ProcessStep):
+	
+	def __init__(self, order, request):
+		super(CheckoutStep, self).__init__()
+		self.order = order
+		self.request = request

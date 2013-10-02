@@ -24,6 +24,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import collections
+
+#
+
 from sellmo import modules
 from sellmo.core.chaining import ViewChain
 
@@ -42,7 +46,11 @@ for module in modules:
         if hasattr(attr, '_chain'):
             chain = attr._chain
             if isinstance(chain, ViewChain):
-                urls.append(url(chain.regex, attr, name='%s.%s' % (module.namespace, name)))
+                regex = chain.regex
+                if isinstance(regex, basestring):
+                    regex = [regex]
+                for regex in regex:
+                    urls.append(url(regex, attr, name='%s.%s' % (module.namespace, name)))
     
     if urls:
         prefix = module.prefix

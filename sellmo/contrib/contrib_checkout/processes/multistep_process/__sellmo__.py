@@ -24,31 +24,16 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo import modules
-from sellmo.api.pricing import Price
+from django.db import models
+from django.utils.translation import ugettext_lazy as _
 
 #
 
-class ShippingMethod(object):
-    
-    def __init__(self, name, description=None):
-        self.name = name
-        self.description = description
-        
-    def calculate_price(self, cart):  
-        raise NotImplementedError()
-        
-    def __unicode__(self):
-        return self.name
-        
-class PaymentMethod(object):
-    
-    def __init__(self, name, description=None):
-        self.name = name
-        self.description = description
-        
-    def calculate_price(self, cart):
-        raise NotImplementedError()
-        
-    def __unicode__(self):
-        return self.name
+from sellmo import modules
+from sellmo.api.decorators import load
+from sellmo.contrib.contrib_checkout.processes.multistep_process.processes import MultiStepCheckoutProcess
+
+#
+
+namespace = modules.checkout.namespace
+modules.checkout.CheckoutProcess = MultiStepCheckoutProcess

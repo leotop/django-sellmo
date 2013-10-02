@@ -25,30 +25,40 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from sellmo import modules
-from sellmo.api.pricing import Price
+from sellmo.api.decorators import load
 
 #
 
-class ShippingMethod(object):
-    
-    def __init__(self, name, description=None):
-        self.name = name
-        self.description = description
-        
-    def calculate_price(self, cart):  
-        raise NotImplementedError()
-        
-    def __unicode__(self):
-        return self.name
-        
-class PaymentMethod(object):
-    
-    def __init__(self, name, description=None):
-        self.name = name
-        self.description = description
-        
-    def calculate_price(self, cart):
-        raise NotImplementedError()
-        
-    def __unicode__(self):
-        return self.name
+from django.db import models
+from django.utils.translation import ugettext_lazy as _
+
+#
+
+@load(before='finalize_customer_Address')
+def load_model():
+	class Address(modules.customer.Address):
+
+		street_name = models.CharField(
+			max_length = 80,
+			verbose_name = _("street name")
+		)
+
+		house_number = models.CharField(
+			max_length = 10,
+			verbose_name = _("house number")
+		)
+		
+		postal_code = models.CharField(
+			max_length = 15,
+			verbose_name = _("postal code")
+		)
+		
+		city = models.CharField(
+			max_length = 50,
+			verbose_name = _("city")
+		)
+
+		class Meta:
+			abstract = True
+
+	modules.customer.Address = Address
