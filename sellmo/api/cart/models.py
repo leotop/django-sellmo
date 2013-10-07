@@ -24,8 +24,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from django import dispatch
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+
 
 #
 
@@ -56,6 +58,7 @@ def load_model():
 def finalize_model():
     class Cart(modules.cart.Cart):
         class Meta:
+            app_label = 'cart'
             verbose_name = _("cart")
             verbose_name_plural = _("carts")
     modules.cart.Cart = Cart
@@ -77,7 +80,7 @@ class Cart(models.Model):
     )
     
     #
-        
+       
     def add(self, purchase, save=True):
         if self.pk == None:
             self.save()
@@ -101,7 +104,8 @@ class Cart(models.Model):
             purchase.save()
         
     def clear(self):
-        pass
+        for purchase in self:
+            self.remove(purchase)
         
     def __contains__(self, purchase):
         return purchase.cart == self
@@ -131,5 +135,5 @@ class Cart(models.Model):
         return unicode(self.modified)
     
     class Meta:
-        app_label = 'cart'
         abstract = True
+        

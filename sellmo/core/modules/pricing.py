@@ -68,6 +68,7 @@ class PricingModule(sellmo.Module):
     @chainable()
     def stamp(self, chain, stampable, price, **kwargs):
         stampable.amount = price.amount
+        stampable.currency_code = price.currency.code
         for type in self.types:
             attr = '%s_amount' % type
             if type in price:
@@ -97,15 +98,15 @@ class PricingModule(sellmo.Module):
         return currency
             
     @chainable()
-    def get_price(self, chain, product, currency=None, price=None, **kwargs):
+    def get_price(self, chain, currency=None, price=None, **kwargs):
         if currency is None:
             currency = self.get_currency()
         
         if price is None:
             price = Price(0, currency=currency)
-        
+            
         if chain:
-            out = chain.execute(product=product, price=price, currency=currency, **kwargs)
+            out = chain.execute(price=price, currency=currency, **kwargs)
             if out.has_key('price'):
                 price = out['price']
         

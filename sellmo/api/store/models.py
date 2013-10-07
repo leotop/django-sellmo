@@ -27,6 +27,7 @@
 from django.db import models
 from django.db.models import Q
 from django.db.models.query import QuerySet
+from django.utils.translation import ugettext_lazy as _
 
 #
 
@@ -50,7 +51,10 @@ def load_model():
 @load(action='finalize_store_Purchase', after='finalize_pricing_Stampable')
 def finalize_model():
     class Purchase(modules.store.Purchase, modules.pricing.Stampable):
-        pass
+        class Meta:
+            app_label = 'store'
+            verbose_name = _("purchase")
+            verbose_name_plural = ("purchases")
     modules.store.Purchase = Purchase
     
 class PurchaseQuerySet(PolymorphicQuerySet):
@@ -101,5 +105,4 @@ class Purchase(PolymorphicModel):
         return u"%s x %s" % (self.qty, self.description)
     
     class Meta:
-        app_label = 'store'
         abstract = True

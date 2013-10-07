@@ -24,8 +24,4 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo import modules
-
-#
-
-namespace = modules.discount.namespace
+from sellmo.contrib.contrib_shipping.subtypes.flat_shipping.base import FlatShippingMethod

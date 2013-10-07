@@ -25,19 +25,43 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from sellmo import modules
-from sellmo.contrib.contrib_shipping.models import TieredMethod, TieredMethodTier
+from sellmo.contrib.polymorphism.admin import PolymorphicParentModelAdmin
 
 #
 
 from django.contrib import admin
+from django.contrib.contenttypes.models import ContentType
+from django.utils.translation import ugettext_lazy as _
 
-#
-    
-class TieredMethodTierInline(admin.TabularInline):
-    model = TieredMethodTier
-    
-class TieredMethodAdmin(admin.ModelAdmin):
-    inlines = [TieredMethodTierInline]
-    
+# Base admin for every shipping method subtype
+class ShippingMethodAdminBase(admin.ModelAdmin):
+    pass
 
-admin.site.register(TieredMethod, TieredMethodAdmin)
+# Admin for shipping method
+class ShippingMethodAdmin(PolymorphicParentModelAdmin):
+    base_model = modules.shipping.ShippingMethod
+    child_models = []
+    
+    polymorphic_list = True
+    list_display = ['description']
+    list_display_links = ['description']
+    search_fields = ['description']
+
+    def queryset(self, queryset):
+        return modules.shipping.ShippingMethod.objects.all()
+
+    def get_child_type_choices(self):
+        choices = []
+        for model, _ in self.child_models:
+            ct = ContentType.objects.get_for_model(model)
+            choices.append((ct.id, model._meta.verbose_name))
+        return choices
+
+admin.site.register(modules.shipping.ShippingMethod, ShippingMethodAdmin)
+
+# Admin for shipping carrier
+class ShippingCarrierAdmin(admin.ModelAdmin):
+    pass
+    
+admin.site.register(modules.shipping.ShippingCarrier, ShippingCarrierAdmin)
+

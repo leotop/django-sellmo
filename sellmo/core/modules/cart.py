@@ -51,7 +51,7 @@ class CartModule(sellmo.Module):
     Cart = Cart
     
     AddToCartForm = AddToCartForm
-    EditPurchaseForm = EditPurchaseForm
+    EditPurchaseForm = EditPurchaseForm    
     
     def __init__(self, *args, **kwargs):        
         pass
@@ -86,11 +86,8 @@ class CartModule(sellmo.Module):
         
     
     @chainable()
-    def get_add_to_cart_formset(self, chain, formset=None, cls=None, product=None, initial=None, data=None, **kwargs):
-        if product is None:
-            raise Exception()
-        else:
-            product = product.downcast()
+    def get_add_to_cart_formset(self, chain, product, formset=None, cls=None, initial=None, data=None, **kwargs):
+        product = product.downcast()
     
         if cls is None:
             cls = self.AddToCartForm
@@ -160,7 +157,7 @@ class CartModule(sellmo.Module):
         return args
         
     @chainable()
-    def get(self, chain, cart=None, request=None, **kwargs):
+    def get_cart(self, chain, request=None, cart=None, **kwargs):
         if cart is None:
             cart = self.Cart.objects.from_request(request)
         
@@ -175,7 +172,7 @@ class CartModule(sellmo.Module):
         if context == None:
             context = {}
             
-        cart = self.get(request=request)
+        cart = self.get_cart(request=request)
         context['cart'] = cart
         
         if chain:
@@ -196,11 +193,10 @@ class CartModule(sellmo.Module):
                 raise Http404
                 
         # Get the cart
-        cart = self.get(request=request)
+        cart = self.get_cart(request=request)
         
-        # Delete the purchase
-        cart.remove(purchase, save=False)
-        purchase.delete()
+        # Now remove from cart
+        self.on_remove_purchase(request=request, cart=cart, purchase=purchase)
         
         if chain:
             return chain.execute(request, purchase=purchase, context=context, **kwargs)
@@ -225,13 +221,13 @@ class CartModule(sellmo.Module):
                 form = self.get_edit_purchase_form(purchase=purchase, data=request.GET)
                 
         # Get the cart
-        cart = self.get(request=request)
+        cart = self.get_cart(request=request)
                 
         # We require a valid formset
         if form.is_valid():
             purchase_args = self.get_edit_purchase_args(purchase=purchase, form=form)
             purchase = modules.store.make_purchase(**purchase_args)
-            self.on_purchase(purchase=purchase, cart=cart)
+            self.on_purchase(request=request, purchase=purchase, cart=cart)
             
             if chain:
                 return chain.execute(request, purchase=purchase, form=form, context=context, **kwargs)
@@ -285,12 +281,12 @@ class CartModule(sellmo.Module):
                 target = request.GET.get('invalid', target)
         
         # Get the cart
-        cart = self.get(request=request)
+        cart = self.get_cart(request=request)
         
         if purchases:   
             # Add purchases to cart
             for purchase in purchases:
-                self.on_purchase(purchase=purchase, cart=cart)
+                self.on_purchase(request=request, purchase=purchase, cart=cart)
         
             # Keep track of our cart 
             cart.track(request)
@@ -301,23 +297,40 @@ class CartModule(sellmo.Module):
         return redirect(target)
         
     @chainable()
-    def on_purchase(self, chain, cart, purchase=None, **kwargs):
+    def on_purchase(self, chain, request, cart, purchase=None, **kwargs):
+        # Need to save before trying to merge
+        purchase.save()
+        
+        # See if we can merge this purchase
+        merged = modules.store.merge_purchase(purchase=purchase, others=list(cart))
+        if merged[0]:
+            for purchase in merged[1]:
+                purchase.delete()
+            purchase = merged[0]
+        
+        # Add to cart / update cart
+        if purchase in cart:
+            cart.update(purchase, save=False)
+        else:
+            cart.add(purchase, save=False)
+        
+        if chain:
+            chain.execute(request=request, purchase=purchase, cart=cart, **kwargs)
+        
+        # Finally save
         if purchase:
-            # Need to save before trying to merge
             purchase.save()
             
-            # See if we can merge this purchase
-            merged = modules.store.merge_purchase(purchase=purchase, others=list(cart))
-            if merged[0]:
-                for purchase in merged[1]:
-                    purchase.delete()
-                purchase = merged[0]
-            
-            # Add to cart / update cart
-            if purchase in cart:
-                cart.update(purchase)
-            else:
-                cart.add(purchase)
+    @chainable()
+    def on_remove_purchase(self, chain, request, cart, purchase=None, **kwargs):
+        # Remove from cart
+        if purchase in cart:
+            cart.remove(purchase, save=False)
+        
         if chain:
-            chain.execute(purchase=purchase, cart=cart, **kwargs)
+            chain.execute(request=request, purchase=purchase, cart=cart, **kwargs)      
+        
+        # Finally delete
+        purchase.delete()
+        
        

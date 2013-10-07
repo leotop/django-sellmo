@@ -28,4 +28,8 @@ from sellmo import modules
 
 #
 
-namespace = modules.discount.namespace
+namespace = modules.shipping.namespace
+
+#
+
+

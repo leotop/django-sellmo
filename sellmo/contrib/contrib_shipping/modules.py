@@ -24,8 +24,26 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo import modules
+from django.http import Http404
 
 #
 
-namespace = modules.discount.namespace
+from sellmo import modules, Module
+from sellmo.api.decorators import view, chainable
+from sellmo.contrib.contrib_shipping.models import ShippingMethod, ShippingCarrier
+
+#
+
+class ShippingModule(Module):
+	namespace = 'shipping'
+	ShippingMethod = ShippingMethod
+	ShippingCarrier = ShippingCarrier
+
+	def __init__(self, *args, **kwargs):
+		self.subtypes = []
+
+	def register_subtype(self, subtype):
+		self.subtypes.append(subtype)
+
+		# Shouldn't be a problem if Capital cased classnames are used.
+		setattr(self, subtype.__name__, subtype)

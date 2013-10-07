@@ -39,7 +39,7 @@ register = template.Library()
 
 @register.assignment_tag(takes_context=True)
 def cart(context):
-    return modules.cart.get(request=context['request'])
+    return modules.cart.get_cart(request=context['request'])
 
 @register.inclusion_tag('cart/add_to_cart_formset.html', takes_context=True)
 def add_to_cart_formset(context, product, next=None, invalid=None, **kwargs):

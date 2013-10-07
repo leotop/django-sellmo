@@ -25,7 +25,26 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from sellmo import modules
+from sellmo.api.pricing import Price
+from sellmo.api.checkout import ShippingMethod
 
 #
 
-namespace = modules.discount.namespace
+class FlatShippingMethod(ShippingMethod):
+
+	def __init__(self, identifier, description, method, carrier=None):
+		super(FlatShippingMethod, self).__init__(identifier, description)
+		self.method = method
+		self.carrier = carrier
+
+	def get_costs(self, order, currency=None, **kwargs):
+		costs = self.method.rate
+		if self.carrier:
+			costs += self.carrier.extra_costs
+		return modules.pricing.get_price(price=Price(costs, currency=order.price.currency), shipment_method=self)
+		
+	def __unicode__(self):
+		description = self.description
+		if self.carrier:
+			description = u"{0} ({1})".format(description, self.carrier.description)
+		return description

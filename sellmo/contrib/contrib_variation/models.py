@@ -305,6 +305,11 @@ def finalize_model():
             related_name = 'recipe',
         )
         
+        class Meta:
+            app_label = 'variation'
+            verbose_name = _("variation recipe")
+            verbose_name_plural = _("variation recipes")
+        
     modules.variation.VariationRecipe = VariationRecipe
         
     
@@ -314,10 +319,7 @@ class VariationRecipe(models.Model):
         return unicode(self.product)
 
     class Meta:
-        app_label = 'variation'
         abstract = True
-        verbose_name = _("variation recipe")
-        verbose_name_plural = _("variation recipes")
         
 @load(action='finalize_variation_Variation')
 @load(after='finalize_attribute_Value')
@@ -357,6 +359,11 @@ def finalize_model():
             editable = False,
             related_name = '+',
         )
+        
+        class Meta:
+            app_label = 'variation'
+            verbose_name = _("variation")
+            verbose_name_plural = _("variations")
                 
     modules.variation.Variation = Variation
     
@@ -578,10 +585,7 @@ class Variation(models.Model):
         return self.description
 
     class Meta:
-        app_label = 'variation'
         abstract = True
-        verbose_name = _("variation")
-        verbose_name_plural = _("variations")
         ordering = ['id']
     
 @load(after='finalize_store_Purchase')
@@ -630,6 +634,8 @@ def load_model():
         
         class Meta:
             app_label = 'store'
+            verbose_name = _("variation purchase")
+            verbose_name_plural = _("variation purchases")
         
     modules.variation.VariationPurchase = VariationPurchase
         

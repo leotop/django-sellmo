@@ -24,10 +24,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.utils.translation import ugettext_lazy as _
 from django.db import models
 from django.db.models import Q
 from django.db.models.query import QuerySet
+from django.utils.translation import ugettext_lazy as _
 
 #
 
@@ -46,6 +46,7 @@ def finalize_model():
     
     class Product(modules.product.Product):
         class Meta:
+            app_label = 'product'
             verbose_name = _("product")
             verbose_name_plural = _("products")
     
@@ -104,7 +105,6 @@ class Product(PolymorphicModel):
     
     class Meta:
         ordering = ['slug']
-        app_label = 'product'
         abstract = True
         
 class ProductRelatableQuerySet(QuerySet):

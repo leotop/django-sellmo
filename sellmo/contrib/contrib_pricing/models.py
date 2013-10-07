@@ -29,9 +29,7 @@ from decimal import Decimal
 #
 
 from sellmo import modules
-
-# Init modules
-from sellmo.contrib.contrib_pricing.modules import *
+from sellmo.api.decorators import load
 
 #
 
@@ -39,6 +37,23 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 #
+
+@load(after='finalize_product_Product')
+def load_model():
+
+    class ProductQtyPrice(QtyPrice):
+        product = models.ForeignKey(
+            modules.product.Product,
+            related_name = 'qty_prices',
+            verbose_name = _("product"),
+        )
+
+        class Meta:
+            app_label = 'pricing'
+            verbose_name = _("qty price")
+            verbose_name_plural = _("qty prices")
+
+    modules.qty_pricing.ProductQtyPrice = ProductQtyPrice
 
 class QtyPriceBase(models.Model):
     
@@ -52,7 +67,6 @@ class QtyPriceBase(models.Model):
     
     class Meta:
         abstract = True
-        app_label = 'pricing'
 
 
 class QtyPrice(QtyPriceBase):
@@ -63,7 +77,6 @@ class QtyPrice(QtyPriceBase):
     
     class Meta:
         abstract = True
-        app_label = 'pricing'
         
 class QtyPriceRatio(QtyPriceBase):
     
@@ -74,4 +87,6 @@ class QtyPriceRatio(QtyPriceBase):
     
     class Meta:
         abstract = True
-        app_label = 'pricing'
+        
+# Init modules
+from sellmo.contrib.contrib_pricing.modules import *

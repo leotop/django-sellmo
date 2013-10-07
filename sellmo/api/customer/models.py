@@ -78,6 +78,7 @@ def finalize_model():
             )
         
         class Meta:
+            app_label = 'customer'
             verbose_name = _("customer")
             verbose_name_plural = _("customers")
             
@@ -92,7 +93,6 @@ class Customer(models.Model):
         setattr(self, '{0}_address'.format(type), value)
 
     class Meta:
-        app_label = 'customer'
         ordering = ['last_name', 'first_name']
         abstract = True
     
@@ -112,6 +112,7 @@ def load_model():
 def finalize_model():
     class Address(modules.customer.Address):
         class Meta:
+            app_label = 'customer'
             verbose_name = _("address")
             verbose_name_plural = _("addresses")
     
@@ -120,7 +121,6 @@ def finalize_model():
 class Address(models.Model):
 
     class Meta:
-        app_label = 'customer'
         ordering = ['last_name', 'first_name']
         abstract = True
     
@@ -143,9 +143,7 @@ def finalize_model():
     modules.customer.Contactable = Contactable
     
 class Contactable(models.Model):
-    
     class Meta:
-        app_label = 'customer'
         abstract = True
   
 #
@@ -191,5 +189,4 @@ class Addressee(models.Model):
         return u"{0} {1}".format(self.first_name, self.last_name)
     
     class Meta:
-        app_label = 'customer'
         abstract = True

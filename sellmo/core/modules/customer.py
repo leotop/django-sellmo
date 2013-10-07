@@ -82,7 +82,7 @@ class CustomerModule(sellmo.Module):
     # Forms
         
     @chainable()
-    def get_user_form(self, chain, request, prefix=None, data=None, user=None, form=None, **kwargs):
+    def get_user_form(self, chain, prefix=None, data=None, user=None, form=None, **kwargs):
         if form is None:
             form = self.UserCreationForm(data, prefix=prefix, instance=user)
         if chain:
@@ -122,25 +122,36 @@ class CustomerModule(sellmo.Module):
         return form
     
     # CUSTOMER LOGIC
-        
+    
     @chainable()
-    def handle_customer(self, chain, request, prefix=None, data=None, customer=None, **kwargs):
-        
+    def get_customer(self, chain, request, customer=None, **kwargs):
         user = None
         if request.user.is_authenticated():
             user = request.user
-        
+            
         # See if we can relate this user to a customer
         if customer is None and not user is None:
             try:
                 customer = user.customer
             except ObjectDoesNotExist:
                 pass
+        if chain:
+            return chain.execute(request=request, customer=customer, **kwargs)
+        return customer
+        
+        
+    @chainable()
+    def handle_customer(self, chain, request, prefix=None, data=None, customer=None, **kwargs):
+        # Try and get customer from request
+        customer = self.get_customer(request=request)
         
         processed = False
         form = self.get_customer_form(prefix=prefix, data=data, customer=customer)
         if data and form.is_valid():
             customer = form.save(commit=False)
+            user = None
+            if request.user.is_authenticated():
+                user = request.user
             if not user:
                 raise Exception("Need a valid user.")
             customer.user = user
@@ -153,7 +164,7 @@ class CustomerModule(sellmo.Module):
     # CONTACTABLE LOGIC
         
     @chainable()
-    def handle_contactable(self, chain, request, prefix=None, data=None, contactable=None, **kwargs):
+    def handle_contactable(self, chain, prefix=None, data=None, contactable=None, **kwargs):
         
         processed = False
         form = self.get_contactable_form(prefix=prefix, data=data, contactable=contactable)
@@ -169,14 +180,10 @@ class CustomerModule(sellmo.Module):
     # ADDRESS LOGIC
         
     @chainable()
-    def handle_address(self, chain, request, type, prefix=None, data=None, address=None, customer=None, **kwargs):
+    def handle_address(self, chain, type, customer=None, prefix=None, data=None, address=None, **kwargs):
         
         if type not in self.address_types:
             raise ValueError("Invalid address type.")
-        
-        # See if we can relate this request to a customer
-        if customer is None:
-            customer, form, processed = self.handle_customer(request=request)
         
         # See if we can resolve an existing address from customer
         if address is None and customer:
@@ -233,15 +240,15 @@ class CustomerModule(sellmo.Module):
     # REGISTRATION LOGIC
         
     @chainable()
-    def handle_user_registration(self, chain, request, prefix=None, data=None, user=None, **kwargs):
+    def handle_user_registration(self, chain, prefix=None, data=None, user=None, **kwargs):
         processed = False
-        form = self.get_user_form(request=request, prefix=prefix, data=data)
+        form = self.get_user_form(prefix=prefix, data=data)
         if data and form.is_valid():
             user = form.save(commit=False)
             processed = True
         
         if chain:
-            return chain.execute(request=request, prefix=prefix, data=data, user=user, form=form, processed=processed, **kwargs)
+            return chain.execute(prefix=prefix, data=data, user=user, form=form, processed=processed, **kwargs)
         return user, form, processed
     
     @method_decorator(csrf_protect)
@@ -255,7 +262,7 @@ class CustomerModule(sellmo.Module):
         if request.method == 'POST':
             data = request.POST
             
-        user, user_form, processed = self.handle_user_registration(request=request, data=data)
+        user, user_form, processed = self.handle_user_registration(data=data)
         context['user_form'] = user_form
         
         customer, customer_form, processed = self.handle_customer(request=request, data=data)

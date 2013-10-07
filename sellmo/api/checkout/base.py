@@ -31,24 +31,48 @@ from sellmo.api.pricing import Price
 
 class ShippingMethod(object):
     
-    def __init__(self, name, description=None):
-        self.name = name
+    def __init__(self, identifier, description):
+        self.identifier = identifier
         self.description = description
         
-    def calculate_price(self, cart):  
+    def get_costs(self, order, **kwargs):
         raise NotImplementedError()
         
+    def new_shipment(self, order):
+        return modules.checkout.Shipment(identifier=self.identifier)
+        
+    def ship(self, order):
+        shipment = self.new_shipment(order)
+        shipment.price = self.get_costs(order=order)
+        shipment.save()
+        if order.shipment:
+            order.shipment.delete()
+        order.shipment = shipment
+        order.save()
+        
     def __unicode__(self):
-        return self.name
+        return self.description
         
 class PaymentMethod(object):
     
-    def __init__(self, name, description=None):
-        self.name = name
+    def __init__(self, identifier, description):
+        self.identifier = identifier
         self.description = description
         
-    def calculate_price(self, cart):
+    def get_costs(self, order, **kwargs):
         raise NotImplementedError()
         
+    def new_payment(self, order):
+        return modules.checkout.Payment(identifier=self.identifier)
+        
+    def pay(self, order):
+        payment = self.new_payment(order)
+        payment.price = self.get_costs(order=order)
+        payment.save()
+        if order.payment:
+            order.payment.delete()
+        order.payment = payment
+        order.save()
+        
     def __unicode__(self):
-        return self.name
+        return self.description

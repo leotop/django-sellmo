@@ -29,5 +29,19 @@ from django import forms
 
 #
 
-class ShippingMethodForm(forms.Form):
-    pass
+from sellmo import modules
+from sellmo.api.decorators import load
+
+#
+
+@load(action='load_checkout_ShippingMethodForm')
+def load_form():
+    class ShippingMethodForm(forms.Form):
+        pass
+    modules.checkout.ShippingMethodForm = ShippingMethodForm
+    
+@load(action='load_checkout_PaymentMethodForm')
+def load_form():
+    class PaymentMethodForm(forms.Form):
+        pass
+    modules.checkout.PaymentMethodForm = PaymentMethodForm

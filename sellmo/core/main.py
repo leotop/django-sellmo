@@ -60,6 +60,7 @@ class Sellmo(object):
         # Init sellmo modules now to
         self._init_modules()
         
+        self._link_modules()
         self._load_apps(apps)
         self._link_apps(apps)
         self._link_apps(apps, '.links')
@@ -81,6 +82,14 @@ class Sellmo(object):
             
     def _load_apps(self, apps):
         loading.loader.load()
+                        
+    def _link_modules(self):
+        for module in modules:
+            for name in dir(module):
+                attr = getattr(module, name)
+                if hasattr(attr, '_im_linked'):
+                    if not self._link(attr):
+                        logger.warning("Could not link '%s.%s'"  % (module, attr.__name__))
                         
     def _link_apps(self, apps, module='.views'):
         for app in apps:
@@ -104,17 +113,18 @@ class Sellmo(object):
             namespace = link._namespace
         
         if not namespace:
-            raise Exception("Link '%s' does not define a namespace" % link)
+            logger.warning("Link '{0}.{1}' has no target namespace.".format(link.__module__, link.__name__))
+            return False
         
         if not hasattr(modules, namespace):
-            logger.warning("Module '%s' not found"  % namespace)
+            logger.warning("Module '{0}' not found".format(namespace))
             return False
         
         module = getattr(modules, namespace)
         name = link._name
         
         if not hasattr(module, name) or not hasattr(getattr(module, name), '_chain'):
-            logger.warning("Module '%s' has no chainable method '%s'"  % (namespace, link._name))
+            logger.warning("Module '{0}' has no chainable method '{1}'".format(namespace, link._name))
             return False
         
         chain = getattr(module, name)._chain

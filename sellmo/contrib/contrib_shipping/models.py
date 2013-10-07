@@ -25,7 +25,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from sellmo import modules
-from sellmo.api.checkout import ShippingMethod
+from sellmo.api.decorators import load
+from sellmo.utils.polymorphism import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
+from sellmo.api.checkout import ShippingMethod as _ShippingMethod
 
 #
 
@@ -34,58 +36,106 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
-class Method(models.Model):
 
-    carrier = models.CharField(
-        max_length = 30,
+@load(after='finalize_shipping_ShippingCarrier', before='finalize_shipping_ShippingMethod')
+def load_model():
+    class ShippingMethod(modules.shipping.ShippingMethod):
+        
+        carriers = models.ManyToManyField(
+            modules.shipping.ShippingCarrier,
+            blank = True,
+            verbose_name = _("carriers")
+        )
+        
+        class Meta:
+            abstract = True
+        
+    modules.shipping.ShippingMethod = ShippingMethod
+
+@load(action='finalize_shipping_ShippingMethod')
+def finalize_model():
+    class ShippingMethod(modules.shipping.ShippingMethod):
+        class Meta:
+            app_label = 'shipping'
+            verbose_name = _("shipping method")
+            verbose_name_plural = _("shipping methods")
+
+    modules.shipping.ShippingMethod = ShippingMethod
+
+
+class ShippingMethod(PolymorphicModel):
+    
+    active = models.BooleanField(
+        default = True,
+        verbose_name = _("active"),
     )
     
-    description = models.TextField(
-        blank = True,
-        null = True
+    identifier = models.CharField(
+        unique = True,
+        db_index = True,
+        max_length = 20,
+        verbose_name = _("identifier"),
     )
     
-    def to_sellmo_method(self):
+    description = models.CharField(
+        max_length = 80,
+        verbose_name = _("description"),
+    )
+    
+    def get_methods(self):
+        if self.carriers.count() == 0:
+            yield self.get_method()
+        else:
+            for carrier in self.carriers.all():
+                yield self.get_method(carrier)
+
+    def get_method(self, carrier=None):
         raise NotImplementedError()
+        
+    def __unicode__(self):
+        return self.description
 
     class Meta:
         abstract = True
 
 #
 
-class BasicMethod(Method):
+@load(action='finalize_shipping_ShippingCarrier')
+def finalize_model():
+    class ShippingCarrier(modules.shipping.ShippingCarrier):
+        class Meta:
+            app_label = 'shipping'
+            verbose_name = _("shipping carrier")
+            verbose_name_plural = _("shipping carriers")
 
-    def to_sellmo_method(self):
-        return ShippingMethod(self.carrier, description=self.description)
+    modules.shipping.ShippingCarrier = ShippingCarrier
 
-    class Meta:
-        app_label = 'shipping'
-        verbose_name = _("basic shipping method")
-        verbose_name_plural = _("basic shipping methods")
-
-#
-
-class TieredMethod(Method):
-
-    def to_sellmo_method(self):
-        return ShippingMethod(self.carrier, description=self.description)
-
-    class Meta:
-        app_label = 'shipping'
-        verbose_name = _("tiered shipping method")
-        verbose_name_plural = _("tiered shipping methods")
-
-class TieredMethodTier(models.Model):
+class ShippingCarrier(models.Model):
     
-    method = models.ForeignKey(
-        TieredMethod
+    active = models.BooleanField(
+        default = True,
+        verbose_name = _("active"),
     )
     
-    #
-    amount = modules.pricing.construct_decimal_field()
-    tier = modules.pricing.construct_decimal_field()
+    identifier = models.CharField(
+        unique = True,
+        db_index = True,
+        max_length = 20,
+        verbose_name = _("identifier"),
+    )
+    
+    description = models.CharField(
+        max_length = 80,
+        verbose_name = _("description"),
+    )
+    
+    extra_costs = modules.pricing.construct_decimal_field(default=0)
+    
+    def __unicode__(self):
+        return self.description
     
     class Meta:
-        app_label = 'shipping'
-        verbose_name = _("shipping tier")
-        verbose_name_plural = _("shipping tiers")
+        abstract = True
+    
+# Init modules
+from sellmo.contrib.contrib_shipping.modules import *

@@ -51,10 +51,21 @@ class MultiStepCheckoutModule(Module):
 			raise Http404
 	
 	@view()
-	def customer(self, chain, request, context=None, **kwargs):
+	def information(self, chain, request, context=None, **kwargs):
 		if context is None:
 			context = {}
 
+		if chain:
+			return chain.execute(request=request, context=context, **kwargs)
+		else:
+			# We don't render anything
+			raise Http404
+			
+	@view()
+	def payment_method(self, chain, request, context=None, **kwargs):
+		if context is None:
+			context = {}
+	
 		if chain:
 			return chain.execute(request=request, context=context, **kwargs)
 		else:

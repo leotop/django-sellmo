@@ -30,6 +30,7 @@ from django.db import models
 
 from sellmo import modules
 from sellmo.api.decorators import load
+from sellmo.utils.polymorphism import PolymorphicModel
 from sellmo.utils.tracking import TrackingManager
 
 #
@@ -39,7 +40,44 @@ def load_model():
     class Order(modules.checkout.Order, modules.pricing.Stampable):
         class Meta:
             abstract = True
+    modules.checkout.Order = Order
+    
+@load(after='finalize_pricing_Stampable', before='finalize_checkout_Payment')
+def load_model():
+    class Payment(modules.checkout.Payment, modules.pricing.Stampable):
+        class Meta:
+            abstract = True
+    modules.checkout.Payment = Payment
+    
+@load(after='finalize_pricing_Stampable', before='finalize_checkout_Shipment')
+def load_model():
+    class Shipment(modules.checkout.Shipment, modules.pricing.Stampable):
+        class Meta:
+            abstract = True
+    modules.checkout.Shipment = Shipment
+    
+@load(after='finalize_checkout_Payment', before='finalize_checkout_Order')
+@load(after='finalize_checkout_Shipment', before='finalize_checkout_Order')
+def load_model():
+    class Order(modules.checkout.Order):
+        payment = models.OneToOneField(
+            modules.checkout.Payment,
+            related_name = 'order',
+            null = True,
+            blank = True,
+            on_delete = models.SET_NULL
+        )
         
+        shipment = models.OneToOneField(
+            modules.checkout.Shipment,
+            related_name = 'order',
+            null = True,
+            blank = True,
+            on_delete = models.SET_NULL
+        )
+        
+        class Meta:
+            abstract = True
     modules.checkout.Order = Order
     
 @load(after='finalize_customer_Customer', before='finalize_checkout_Order')
@@ -95,13 +133,46 @@ def load_model():
 @load(action='finalize_checkout_Order')
 def finalize_model():
     class Order(modules.checkout.Order):
-        pass
-    
+        class Meta:
+            app_label = 'checkout'
     modules.checkout.Order = Order
+    
+@load(action='finalize_checkout_Shipment')
+def finalize_model():
+    class Shipment(modules.checkout.Shipment):
+        class Meta:
+            app_label = 'checkout'
+    modules.checkout.Shipment = Shipment
+    
+@load(action='finalize_checkout_Payment')
+def finalize_model():
+    class Payment(modules.checkout.Payment):
+        class Meta:
+            app_label = 'checkout'
+    modules.checkout.Payment = Payment
 
 class Order(models.Model):
     
     objects = TrackingManager('sellmo_order')
+    
+    #
+    
+    created = models.DateTimeField(
+        auto_now_add = True,
+        editable = False
+    )
+    
+    modified = models.DateTimeField(
+        auto_now = True,
+        editable = False
+    )
+    
+    # INTERNAL STATES
+    
+    placed = models.BooleanField(
+        default = False,
+        editable = False
+    )
     
     #
     
@@ -113,8 +184,81 @@ class Order(models.Model):
     
     #
     
-    shipping_amount = modules.pricing.construct_decimal_field(default=0)
+    def add(self, purchase, save=True):
+        if self.pk == None:
+            self.save()
+        purchase.order = self
+        if save:
+            purchase.save()
+        
+    def update(self, purchase, save=True):
+        if purchase.order != self:
+            raise Exception("We don't own this purchase")
+        if purchase.qty == 0:
+            self.remove(purchase, save=False)
+        if save:
+            purchase.save()
+        
+    def remove(self, purchase, save=True):
+        if purchase.order != self:
+            raise Exception("We don't own this purchase")
+        purchase.order = None
+        if save:
+            purchase.save()
+        
+    def clear(self):
+        for purchase in self:
+            self.remove(purchase)
+            
+    def invalidate(self):
+        if self.shipment:
+            self.shipment.delete()
+        if self.payment:
+            self.payment.delete()
+        
+    def place(self):
+        self.placed = True
+        self.save()
+        
+    def __contains__(self, purchase):
+        return purchase.order == self
+    
+    def __iter__(self):
+        if hasattr(self, 'items'):
+            for item in self.items.polymorphic().all():
+                yield item
+                
+    def __len__(self):
+        return self.items.count()
+                
+    def __nonzero__(self):
+        return self.items.count() > 0
     
     class Meta:
-        app_label = 'checkout'
+        abstract = True
+        
+class Shipment(PolymorphicModel):
+    
+    identifier = models.CharField(
+        max_length = 80,
+    )
+    
+    def get_method(self):
+        return modules.checkout.get_shipping_methods(order=self.order)[self.identifier]
+    method = property(get_method)
+    
+    class Meta:
+        abstract = True
+        
+class Payment(PolymorphicModel):
+
+    identifier = models.CharField(
+        max_length = 80,
+    )
+    
+    def get_method(self):
+        return modules.checkout.get_payment_methods(order=self.order)[self.identifier]
+    method = property(get_method)
+
+    class Meta:
         abstract = True

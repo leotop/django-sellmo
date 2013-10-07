@@ -25,7 +25,17 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from sellmo import modules
+from sellmo.contrib.contrib_shipping.admin import ShippingMethodAdmin, ShippingMethodAdminBase
 
 #
 
-namespace = modules.discount.namespace
+from django.utils.translation import ugettext_lazy as _
+
+#
+
+class FlatShippingMethodAdmin(ShippingMethodAdminBase):
+	pass
+	
+#
+
+ShippingMethodAdmin.child_models += [(modules.shipping.FlatShippingMethod, FlatShippingMethodAdmin)]

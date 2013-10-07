@@ -28,4 +28,10 @@ from sellmo import modules
 
 #
 
-namespace = modules.discount.namespace
+from django.utils.translation import ugettext_lazy as _
+
+#
+
+namespace = modules.store.namespace
+
+#

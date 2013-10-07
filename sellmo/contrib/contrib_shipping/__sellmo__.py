@@ -29,16 +29,8 @@ from django.utils.translation import ugettext_lazy as _
 #
 
 from sellmo import modules
-from sellmo.contrib.contrib_shipping.models import TieredMethod
 
 #
 
 namespace = modules.checkout.namespace
 
-#
-
-def on_collect(sender, methods, **kwargs):
-    for method in TieredMethod.objects.all():
-        methods.append(method.to_sellmo_method())
-
-modules.checkout.collect_shipping_methods.connect(on_collect)

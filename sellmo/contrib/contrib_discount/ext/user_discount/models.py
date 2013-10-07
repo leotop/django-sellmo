@@ -25,7 +25,21 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from sellmo import modules
+from sellmo.api.decorators import load
+from sellmo.api.pricing import Price
 
 #
 
-namespace = modules.discount.namespace
+from django.db import models
+from django.utils.translation import ugettext_lazy as _
+
+#
+
+@load(before='finalize_discount_Discount')
+def load_model():
+	class Discount(modules.discount.Discount):
+
+		class Meta:
+			abstract = True
+
+	modules.discount.Discount = Discount

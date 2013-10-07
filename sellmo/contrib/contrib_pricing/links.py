@@ -35,10 +35,11 @@ from sellmo import modules
 #
 
 @link()
-def get_price(product, price=None, currency=None, qty=1, **kwargs):
-    q = modules.qty_pricing.ProductQtyPrice.objects.filter(product=product, qty__lte=qty).order_by('-qty')
-    if q:
-        price = Price(amount=q[0].amount, currency=currency)
-    return {
-        'price' : price
-    }
+def get_price(price, product=None, currency=None, qty=1, **kwargs):
+    if product:
+        q = modules.qty_pricing.ProductQtyPrice.objects.filter(product=product, qty__lte=qty).order_by('-qty')
+        if q:
+            price = Price(amount=q[0].amount, currency=currency)
+        return {
+            'price' : price
+        }

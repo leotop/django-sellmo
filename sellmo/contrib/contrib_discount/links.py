@@ -33,12 +33,13 @@ from sellmo.api.pricing import Price
 #
 
 @link()
-def get_price(product, price, **kwargs):
-    try:
-        discount = modules.discount.Discount.objects.best_for_product(product)
-    except modules.discount.Discount.DoesNotExist:
-        pass
-    else:
-        return {
-            'price' : discount.apply(price)
-        }
+def get_price(price, product=None, **kwargs):
+    if product:
+        try:
+            discount = modules.discount.Discount.objects.best_for_product(product)
+        except modules.discount.Discount.DoesNotExist:
+            pass
+        else:
+            return {
+                'price' : discount.apply(price)
+            }

@@ -46,7 +46,7 @@ class LoginStep(CheckoutStep):
 		return not modules.checkout_process.login_required
 		
 	def get_next_step(self):
-		return CustomerStep(order=self.order, request=self.request)
+		return InformationStep(order=self.order, request=self.request)
 		
 	def _contextualize_or_complete(self, request, context, data=None):
 		success = True
@@ -69,27 +69,36 @@ class LoginStep(CheckoutStep):
 		
 		return modules.checkout_process.login(request=request, context=context)
 		
-class CustomerStep(CheckoutStep):
+class InformationStep(CheckoutStep):
 	
 	invalid_context = None
-	key = 'customer'
+	key = 'information'
 	
 	def is_completed(self):
 		for type in modules.checkout.required_address_types:
 			if self.order.get_address(type) is None:
-				return False
+				return False	
+		if self.order.shipment is None:
+			return False
 		return True
+		
+	def get_next_step(self):
+		return PaymentMethodStep(order=self.order, request=self.request)
 		
 	def _contextualize_or_complete(self, request, context, data=None):
 		success = True
 		addresses = {}
 		
-		contactable, form, processed = modules.customer.handle_contactable(request=request, prefix='contactable', contactable=self.order, data=data)
+		contactable, form, processed = modules.customer.handle_contactable(prefix='contactable', contactable=self.order, data=data)
 		context['contactable_form'] = form
 		success &= processed
 		
+		method, form, processed = modules.checkout.handle_shipping_method(order=self.order, prefix='shipping_method', data=data)
+		context['shipping_method_form'] = form
+		success &= processed
+		
 		for type in modules.checkout.required_address_types:
-			address, form, processed = modules.customer.handle_address(request=request, type=type, prefix='{0}_address'.format(type), address=self.order.get_address(type), data=data)
+			address, form, processed = modules.customer.handle_address(type=type, prefix='{0}_address'.format(type), address=self.order.get_address(type), data=data)
 			context['{0}_address_form'.format(type)] = form
 			success &= processed
 			addresses[type] = address
@@ -113,6 +122,40 @@ class CustomerStep(CheckoutStep):
 		else:
 			context.update(self.invalid_context)
 		
-		return modules.checkout_process.customer(request=request, context=context)
+		return modules.checkout_process.information(request=request, context=context)
+		
+class PaymentMethodStep(CheckoutStep):
+
+	invalid_context = None
+	key = 'payment_method'
+
+	def is_completed(self):
+		if self.order.payment is None:
+			return False
+		return True
+
+	def _contextualize_or_complete(self, request, context, data=None):
+		success = True
+		
+		method, form, processed = modules.checkout.handle_payment_method(order=self.order, prefix='payment_method', data=data)
+		context['payment_method_form'] = form
+		success &= processed
+
+		if success:
+			self.order.save()
+		
+		return success
+
+	def complete(self, data):
+		self.invalid_context = {}
+		return self._contextualize_or_complete(self.request, self.invalid_context, data)
+
+	def render(self, request, context):
+		if not self.invalid_context:
+			self._contextualize_or_complete(request, context)
+		else:
+			context.update(self.invalid_context)
+
+		return modules.checkout_process.payment_method(request=request, context=context)
 		
 	

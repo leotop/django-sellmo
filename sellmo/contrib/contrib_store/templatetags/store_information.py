@@ -24,8 +24,48 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from django import template
+from django.contrib.sites.models import get_current_site
+
+#
+
 from sellmo import modules
 
 #
 
-namespace = modules.discount.namespace
+register = template.Library()
+
+#
+
+@register.tag
+def store_information(parser, token):
+	nodelist = parser.parse(('endstore_information',))
+	parser.delete_first_token()
+	return StoreInformationNode(nodelist)
+
+class StoreInformationNode(template.Node):
+	
+	def __init__(self, nodelist):
+		self.nodelist = nodelist
+	
+	def render(self, context):
+		
+		# Get the current request
+		request = context['request']
+		site = get_current_site(request)
+		store_information = None
+		if site:
+			try:
+				store_information =  site.store_information
+			except modules.store.StoreInformation.DoesNotExist:
+				pass
+		
+		if store_information:
+			context.push()
+			for field in modules.store.StoreInformation._meta.fields:
+				context[field.name] = getattr(store_information, field.name)
+			output = self.nodelist.render(context)
+			context.pop()
+			return output
+		else:
+			return ""

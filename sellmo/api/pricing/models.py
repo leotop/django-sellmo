@@ -31,6 +31,7 @@ from sellmo.api.pricing import Price
 #
 
 from django.db import models
+from django.utils.translation import ugettext_lazy as _
 
 #
 
@@ -41,6 +42,14 @@ def load_model():
         modules.pricing.Stampable.add_to_class('%s_amount' % type, modules.pricing.construct_decimal_field(default=0))
 
 class Stampable(models.Model):
+    
+    """
+    ISO 4217
+    """
+    currency_code = models.CharField(
+        max_length = 3,
+        verbose_name = _("currency code")
+    )
     
     @staticmethod
     def get_stampable_fields():

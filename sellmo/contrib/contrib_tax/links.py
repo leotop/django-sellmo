@@ -33,14 +33,15 @@ from sellmo.api.pricing import Price
 #
 
 @link()
-def get_price(product, price, **kwargs):
-    try:
-        taxes = modules.tax.Tax.objects.polymorphic().best_for_product(product)
-    except modules.tax.Tax.DoesNotExist:
-        pass
-    else:
-        for tax in taxes:
-            price = tax.apply(price)
-        return {
-            'price' : price
-        }
+def get_price(price, product=None, **kwargs):
+    if product:
+        try:
+            taxes = modules.tax.Tax.objects.polymorphic().best_for_product(product)
+        except modules.tax.Tax.DoesNotExist:
+            pass
+        else:
+            for tax in taxes:
+                price = tax.apply(price)
+            return {
+                'price' : price
+            }

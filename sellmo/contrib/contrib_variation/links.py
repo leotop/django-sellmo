@@ -88,14 +88,15 @@ def list(request, products, **kwargs):
 
 @link(namespace=modules.pricing.namespace, name='get_price', capture=True)
 def capture_get_price(product=None, **kwargs):
-    out = {}
-    product = product.downcast()
-    if getattr(product, '_is_variant', False):
-        out['variant'] = product
-        product = product.product
-    
-    out['product'] = product
-    return out
+    if product:
+        out = {}
+        product = product.downcast()
+        if getattr(product, '_is_variant', False):
+            out['variant'] = product
+            product = product.product
+        
+        out['product'] = product
+        return out
     
 @link(namespace=modules.store.namespace)
 def make_purchase(purchase, variation=None, **kwargs):

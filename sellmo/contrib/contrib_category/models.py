@@ -73,7 +73,11 @@ def load_model():
 @load(action='finalize_category_Category')
 def finalize_model():
     class Category(modules.category.Category):
-        pass
+        class Meta:
+            app_label = 'category'
+            verbose_name = _("category")
+            verbose_name_plural = _("categories")
+    
     modules.category.Category = Category
     
 @load(after='finalize_product_Product')
@@ -270,9 +274,6 @@ class Category(MPTTModel):
         order_insertion_by = ['sort_order', 'name']
     
     class Meta:
-        app_label = 'category'
-        verbose_name = _("category")
-        verbose_name_plural = _("categories")
         abstract = True
         
 # Init modules
