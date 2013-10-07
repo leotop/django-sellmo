@@ -38,7 +38,7 @@ class FlatShippingMethod(ShippingMethod):
 		self.carrier = carrier
 
 	def get_costs(self, order, currency=None, **kwargs):
-		costs = self.method.rate
+		costs = self.method.costs
 		if self.carrier:
 			costs += self.carrier.extra_costs
 		return modules.pricing.get_price(price=Price(costs, currency=order.price.currency), shipment_method=self)

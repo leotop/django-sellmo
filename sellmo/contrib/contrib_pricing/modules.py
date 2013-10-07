@@ -26,11 +26,14 @@
 
 from sellmo import modules, Module
 from sellmo.api.decorators import chainable
+from sellmo.contrib.contrib_pricing.models import ProductQtyPrice
 
 #
 
 class QtyPricingModule(Module):
     namespace = 'qty_pricing'
+    
+    ProductQtyPrice = ProductQtyPrice
     
     @chainable()
     def get_qty_tiers(self, chain, product, tiers=None, **kwargs):

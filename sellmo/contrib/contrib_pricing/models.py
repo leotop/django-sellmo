@@ -38,10 +38,9 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
-@load(after='finalize_product_Product')
-def load_model():
-
-    class ProductQtyPrice(QtyPrice):
+@load(action='finalize_qty_pricing_ProductQtyPrice', after='finalize_product_Product')
+def finalize_model():
+    class ProductQtyPrice(modules.qty_pricing.ProductQtyPrice):
         product = models.ForeignKey(
             modules.product.Product,
             related_name = 'qty_prices',
@@ -84,6 +83,11 @@ class QtyPriceRatio(QtyPriceBase):
         default = Decimal('1.00'),
         verbose_name = _("ratio"),
     )
+    
+    class Meta:
+        abstract = True
+
+class ProductQtyPrice(QtyPrice):
     
     class Meta:
         abstract = True

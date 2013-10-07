@@ -41,7 +41,7 @@ def load_shipping_subtypes():
 	
 	class FlatShippingMethod(modules.shipping.ShippingMethod):
 
-		rate = modules.pricing.construct_decimal_field(
+		costs = modules.pricing.construct_decimal_field(
 			verbose_name = _("shipping rate"),
 		)
 		

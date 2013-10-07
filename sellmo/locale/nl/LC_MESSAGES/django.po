@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-10-01 10:38-0700\n"
+"POT-Creation-Date: 2013-10-07 07:14-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,11 +18,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: api/cart/models.py:59
+#: api/cart/models.py:62
 msgid "cart"
 msgstr "winkelwagen"
 
-#: api/cart/models.py:60
+#: api/cart/models.py:63
 msgid "carts"
 msgstr "winkelwagens"
 
@@ -30,19 +30,19 @@ msgstr "winkelwagens"
 msgid "user"
 msgstr "gebruiker"
 
-#: api/customer/models.py:81
+#: api/customer/models.py:82
 msgid "customer"
 msgstr "klant"
 
-#: api/customer/models.py:82
+#: api/customer/models.py:83
 msgid "customers"
 msgstr "klanten"
 
-#: api/customer/models.py:115
+#: api/customer/models.py:116
 msgid "address"
 msgstr "adres"
 
-#: api/customer/models.py:116
+#: api/customer/models.py:117
 msgid "addresses"
 msgstr "adressen"
 
@@ -50,33 +50,37 @@ msgstr "adressen"
 msgid "email address"
 msgstr "e-mailadres"
 
-#: api/customer/models.py:162
+#: api/customer/models.py:160
 msgid "company name"
 msgstr "bedrijfsnaam"
 
-#: api/customer/models.py:182
+#: api/customer/models.py:180
 msgid "first name"
 msgstr "voornaam"
 
-#: api/customer/models.py:187
+#: api/customer/models.py:185
 msgid "last name"
 msgstr "achternaam"
 
-#: api/product/models.py:49 contrib/contrib_pricing/__sellmo__.py:53
+#: api/pricing/models.py:51
+msgid "currency code"
+msgstr "valuta code"
+
+#: api/product/models.py:50 contrib/contrib_pricing/models.py:47
 #: contrib/contrib_product/subtypes/simple_product/__sellmo__.py:46
 msgid "product"
 msgstr "product"
 
-#: api/product/models.py:50
+#: api/product/models.py:51
 #: contrib/contrib_product/subtypes/simple_product/__sellmo__.py:47
 msgid "products"
 msgstr "producten"
 
-#: api/product/models.py:82 contrib/contrib_category/models.py:215
+#: api/product/models.py:83 contrib/contrib_category/models.py:219
 msgid "slug"
 msgstr "slug"
 
-#: api/product/models.py:84
+#: api/product/models.py:85
 msgid ""
 "Slug will be used in the address of the product page. It should be URL-"
 "friendly (letters, numbers, hyphens and underscores only) and descriptive "
@@ -86,6 +90,10 @@ msgstr ""
 #: api/product/models.py:136
 msgid "all products"
 msgstr "alle producten"
+
+#: api/store/models.py:56
+msgid "purchase"
+msgstr "aankoop"
 
 #: contrib/contrib_attribute/admin.py:57 contrib/contrib_variation/admin.py:57
 #: contrib/contrib_variation/admin.py:68
@@ -100,74 +108,84 @@ msgstr ""
 
 #: contrib/contrib_attribute/fields.py:71
 msgid "Cannot change attribute type of an attribute that is already in use."
-msgstr ""
+msgstr "Kan attribuut type niet veranderen van een attribuut dat in gebruik is."
 
-#: contrib/contrib_attribute/models.py:74
-#: contrib/contrib_attribute/models.py:287
+#: contrib/contrib_attribute/models.py:45
+msgid "value object"
+msgstr "waarde object"
+
+#: contrib/contrib_attribute/models.py:46
+msgid "value objects"
+msgstr "waarde objecten"
+
+#: contrib/contrib_attribute/models.py:76
+#: contrib/contrib_attribute/models.py:196
 msgid "attribute"
 msgstr "attribuut"
 
-#: contrib/contrib_attribute/models.py:180
+#: contrib/contrib_attribute/models.py:99
 msgid "value"
 msgstr "waarde"
 
-#: contrib/contrib_attribute/models.py:181
+#: contrib/contrib_attribute/models.py:100
 msgid "values"
 msgstr "waardes"
 
-#: contrib/contrib_attribute/models.py:217
-msgid "string"
-msgstr "tekst"
-
-#: contrib/contrib_attribute/models.py:218
-msgid "integer"
-msgstr "nummeriek"
-
-#: contrib/contrib_attribute/models.py:219
-msgid "object"
-msgstr "object"
-
-#: contrib/contrib_attribute/models.py:245
-#: contrib/contrib_category/models.py:196
-msgid "sort order"
-msgstr "sorteervolgorde"
-
-#: contrib/contrib_attribute/models.py:288
+#: contrib/contrib_attribute/models.py:197
 msgid "attributes"
 msgstr "attributen"
 
-#: contrib/contrib_category/admin.py:58 contrib/contrib_category/models.py:146
-#: contrib/contrib_category/models.py:274
+#: contrib/contrib_attribute/models.py:221
+msgid "string"
+msgstr "tekst"
+
+#: contrib/contrib_attribute/models.py:222
+msgid "integer"
+msgstr "nummeriek"
+
+#: contrib/contrib_attribute/models.py:223
+msgid "object"
+msgstr "object"
+
+#: contrib/contrib_attribute/models.py:249
+#: contrib/contrib_category/models.py:200
+msgid "sort order"
+msgstr "sorteervolgorde"
+
+#: contrib/contrib_category/admin.py:58 contrib/contrib_category/models.py:78
+#: contrib/contrib_category/models.py:150
 msgid "category"
 msgstr "categorie"
 
-#: contrib/contrib_category/admin.py:73 contrib/contrib_category/models.py:203
+#: contrib/contrib_category/admin.py:73 contrib/contrib_category/models.py:207
 msgid "parent category"
 msgstr "bovenliggende categorie"
 
-#: contrib/contrib_category/models.py:155
+#: contrib/contrib_category/models.py:79
+msgid "categories"
+msgstr "categorieën"
+
+#: contrib/contrib_category/models.py:159
 msgid "primary category"
 msgstr "hoofdcategorie"
 
-#: contrib/contrib_category/models.py:209
+#: contrib/contrib_category/models.py:213
 #: contrib/contrib_discount/models.py:100 contrib/contrib_tax/models.py:100
 msgid "name"
 msgstr "naam"
 
-#: contrib/contrib_category/models.py:217
+#: contrib/contrib_category/models.py:221
 msgid ""
 "Slug will be used in the address of the category page. It should be URL-"
 "friendly (letters, numbers, hyphens and underscores only) and descriptive "
 "for the SEO needs."
 msgstr ""
 
-#: contrib/contrib_category/models.py:227 contrib/contrib_product/models.py:44
+#: contrib/contrib_category/models.py:231 contrib/contrib_product/models.py:44
+#: contrib/contrib_shipping/models.py:70
+#: contrib/contrib_shipping/models.py:117
 msgid "active"
 msgstr "actief"
-
-#: contrib/contrib_category/models.py:275
-msgid "categories"
-msgstr "categorieën"
 
 #: contrib/contrib_category/templatetags/category.py:94
 #, python-format
@@ -224,41 +242,41 @@ msgstr "korting"
 msgid "discounts"
 msgstr "kortingen"
 
-#: contrib/contrib_discount/subtypes/percent_discount/__sellmo__.py:47
-#: contrib/contrib_tax/subtypes/percent_tax/__sellmo__.py:47
+#: contrib/contrib_discount/subtypes/percent_discount/models.py:43
+#: contrib/contrib_tax/subtypes/percent_tax/models.py:45
 msgid "rate"
 msgstr "tarief"
 
-#: contrib/contrib_discount/subtypes/percent_discount/__sellmo__.py:56
+#: contrib/contrib_discount/subtypes/percent_discount/models.py:52
 msgid "percent discount"
 msgstr "procent korting"
 
-#: contrib/contrib_discount/subtypes/percent_discount/__sellmo__.py:57
+#: contrib/contrib_discount/subtypes/percent_discount/models.py:53
 msgid "percent discounts"
 msgstr "procent kortingen"
 
-#: contrib/contrib_pricing/__sellmo__.py:58
+#: contrib/contrib_pricing/models.py:52
 msgid "qty price"
 msgstr "stukprijs"
 
-#: contrib/contrib_pricing/__sellmo__.py:59
+#: contrib/contrib_pricing/models.py:53
 msgid "qty prices"
 msgstr "stukprijzen"
 
-#: contrib/contrib_pricing/models.py:46
+#: contrib/contrib_pricing/models.py:60
 msgid "quantity"
 msgstr "aantal"
 
-#: contrib/contrib_pricing/models.py:51
+#: contrib/contrib_pricing/models.py:65
 #, python-format
 msgid "%s qty or more"
-msgstr ""
+msgstr "%s stuks of meer"
 
-#: contrib/contrib_pricing/models.py:61
+#: contrib/contrib_pricing/models.py:74
 msgid "amount"
 msgstr "hoeveelheid"
 
-#: contrib/contrib_pricing/models.py:72
+#: contrib/contrib_pricing/models.py:84
 msgid "ratio"
 msgstr "ratio"
 
@@ -266,75 +284,121 @@ msgstr "ratio"
 msgid "featured"
 msgstr "uitgelicht"
 
-#: contrib/contrib_shipping/models.py:63
-msgid "basic shipping method"
+#: contrib/contrib_shipping/models.py:47
+msgid "carriers"
+msgstr "vervoerders"
+
+#: contrib/contrib_shipping/models.py:60
+msgid "shipping method"
+msgstr "verzendmethode"
+
+#: contrib/contrib_shipping/models.py:61
+msgid "shipping methods"
+msgstr "verzendmethoden"
+
+#: contrib/contrib_shipping/models.py:77
+#: contrib/contrib_shipping/models.py:124
+msgid "identifier"
+msgstr "kenmerk"
+
+#: contrib/contrib_shipping/models.py:82
+#: contrib/contrib_shipping/models.py:129
+msgid "description"
+msgstr "omschrijving"
+
+#: contrib/contrib_shipping/models.py:108
+msgid "shipping carrier"
+msgstr "vervoerder"
+
+#: contrib/contrib_shipping/models.py:109
+msgid "shipping carriers"
+msgstr "vervoerders"
+
+#: contrib/contrib_shipping/subtypes/flat_shipping/models.py:45
+msgid "shipping rate"
+msgstr ""
+
+#: contrib/contrib_shipping/subtypes/flat_shipping/models.py:56
+msgid "flat shipping method"
 msgstr "basis verzendmethode"
 
-#: contrib/contrib_shipping/models.py:64
-msgid "basic shipping methods"
+#: contrib/contrib_shipping/subtypes/flat_shipping/models.py:57
+msgid "flat shipping methods"
 msgstr "basis verzendmethoden"
 
-#: contrib/contrib_shipping/models.py:75
-msgid "tiered shipping method"
-msgstr "gestaafde verzendmethode"
+#: contrib/contrib_store/models.py:45 contrib/contrib_store/models.py:46
+msgid "store information"
+msgstr "winkel informatie"
 
-#: contrib/contrib_shipping/models.py:76
-msgid "tiered shipping methods"
-msgstr "gestaafde verzendmethoden"
+#: contrib/contrib_store/models.py:61
+msgid "store name"
+msgstr "winkelnaam"
 
-#: contrib/contrib_shipping/models.py:90
-msgid "shipping tier"
-msgstr ""
+#: contrib/contrib_store/models.py:65
+msgid "contact email address"
+msgstr "contact e-mailadres"
 
-#: contrib/contrib_shipping/models.py:91
-msgid "shipping tiers"
-msgstr ""
+#: contrib/contrib_store/models.py:71
+msgid "contact phone number"
+msgstr "contact telefoonnumer"
+
+#: contrib/contrib_store/models.py:76
+msgid "contact address"
+msgstr "contactadres"
 
 #: contrib/contrib_tax/models.py:59 contrib/contrib_tax/models.py:91
 msgid "tax"
-msgstr ""
+msgstr "belasting"
 
 #: contrib/contrib_tax/models.py:92
 msgid "taxes"
-msgstr ""
+msgstr "belastingen"
 
-#: contrib/contrib_tax/subtypes/percent_tax/__sellmo__.py:56
+#: contrib/contrib_tax/subtypes/percent_tax/models.py:54
 msgid "percent tax"
-msgstr ""
+msgstr "procentuele belasting"
 
-#: contrib/contrib_tax/subtypes/percent_tax/__sellmo__.py:57
+#: contrib/contrib_tax/subtypes/percent_tax/models.py:55
 msgid "percent taxes"
-msgstr ""
+msgstr "procentuele belastingen"
 
 #: contrib/contrib_variation/forms.py:204
 msgid "A variant requires at least one attribute"
-msgstr ""
+msgstr "Een variant vereist minimaal 1 attribuut"
 
 #: contrib/contrib_variation/models.py:137
 #: contrib/contrib_variation/variant.py:135
 msgid "variant"
-msgstr ""
+msgstr "variant"
 
 #: contrib/contrib_variation/models.py:138
 #: contrib/contrib_variation/variant.py:136
 msgid "variants"
-msgstr ""
+msgstr "varianten"
 
-#: contrib/contrib_variation/models.py:319
+#: contrib/contrib_variation/models.py:310
 msgid "variation recipe"
-msgstr ""
+msgstr "variatie-recept"
 
-#: contrib/contrib_variation/models.py:320
+#: contrib/contrib_variation/models.py:311
 msgid "variation recipes"
-msgstr ""
+msgstr "variatie-recepten"
 
-#: contrib/contrib_variation/models.py:583
+#: contrib/contrib_variation/models.py:365
 msgid "variation"
-msgstr ""
+msgstr "variatie"
 
-#: contrib/contrib_variation/models.py:584
+#: contrib/contrib_variation/models.py:366
 msgid "variations"
-msgstr ""
+msgstr "variaties"
+
+#: contrib/contrib_variation/models.py:637
+msgid "variation purchase"
+msgstr "variatie aankoop"
+
+#: contrib/contrib_variation/models.py:638
+msgid "variation purchases"
+msgstr "variatie aankopen"
 
 #: contrib/contrib_variation/variant.py:73
 #, python-format
@@ -343,7 +407,7 @@ msgstr ""
 
 #: contrib/polymorphism/admin.py:36
 msgid "Type"
-msgstr ""
+msgstr "Type"
 
 #: contrib/polymorphism/admin.py:288
 #, python-format
