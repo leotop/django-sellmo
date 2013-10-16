@@ -132,6 +132,12 @@ class PolymorphicModel(models.Model):
             cls = self.__class__
         clone = cls()
         return clone
+    
+    def resolve_content_type(self):
+        if not self.content_type_id is None:
+            return self.content_type
+        else:
+            return ContentType.objects.get_for_model(self.__class__)
         
     class Meta:
         abstract = True
