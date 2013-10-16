@@ -47,30 +47,36 @@ class StoreModule(sellmo.Module):
         pass
     
     @chainable()
-    def merge_purchase(self, chain, purchase, others, result=None, merged=None, **kwargs):
-        
-        if not purchase.pk:
-            raise Exception("Can only merge persistent purchases.")
+    def merge_purchase(self, chain, purchase, existing_purchases, result=None, **kwargs):
             
-        for other in others:
-            if not other.pk:
-                raise Exception("Can only merge persistent purchases.")
+        for existing in existing_purchases:
+            if not existing.pk:
+                raise Exception("Can only merge persistent existing purchases")
         
         purchase = purchase.downcast()
         manager = purchase.__class__.objects
         
-        # Ensure others is a queryset of the given purchase's queryset type
-        others = manager.filter(pk__in=[other.pk for other in others])
+        # Ensure existing_purchases is a queryset of the given purchase's queryset type
+        existing_purchases = manager.filter(pk__in=[existing.pk for existing in existing_purchases])
         
-        # Narrow down
-        others = others.mergeable_with(purchase)
-        if others:
-            merged = manager.filter(pk__in=[other.pk for other in others] + [purchase.pk])
-            result = manager.merge(merged)
-            if result:
-                result = self.make_purchase(purchase=result)
+        # Find an existing purchase 
+        try:
+            result = existing_purchases.mergeable_with(purchase)
+        except self.Purchase.DoesNotExist:
+            return None
         
-        return (result, merged)
+        # Merge this existing purchase with the new purchase
+        result.merge_with(purchase)
+        
+        # Remake the purchase
+        self.make_purchase(purchase=result)
+        
+        if chain:
+            out = chain.execute(purchase=purchase, existing_purchases=existing_purchases, result=result, **kwargs)
+            if out.has_key('result'):
+                result = out['result']
+                
+        return result
         
             
     @chainable()

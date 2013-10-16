@@ -59,7 +59,7 @@ def finalize_model():
     
 class PurchaseQuerySet(PolymorphicQuerySet):
     def mergeable_with(self, purchase):
-        return self.filter(~Q(pk=purchase.pk), content_type=purchase.content_type, product=purchase.product)
+        return self.get(~Q(pk=purchase.pk), content_type=purchase.resolve_content_type(), product=purchase.product)
 
 class PurchaseManager(PolymorphicManager):
     def get_query_set(self):
@@ -67,13 +67,6 @@ class PurchaseManager(PolymorphicManager):
 
     def mergeable_with(self, *args, **kwargs):
         return self.get_query_set().mergeable_with(*args, **kwargs)
-    
-    def merge(self, purchases):
-        purchase = purchases[0]
-        result = modules.store.Purchase(product=purchase.product, qty=0)
-        for purchase in purchases:
-            result.qty += purchase.qty
-        return result
 
 class Purchase(PolymorphicModel):
     
@@ -82,6 +75,9 @@ class Purchase(PolymorphicModel):
     qty = models.PositiveIntegerField(
         default = 1
     )
+    
+    def merge_with(self, purchase):
+        self.qty += purchase.qty
     
     @property
     def description(self):
