@@ -41,5 +41,5 @@ def tiers(product):
     return modules.qty_pricing.get_qty_tiers(product=product)
     
 @register.filter
-def price(product, qty=1):
-    return product.get_price(qty=qty)
+def price(value, qty=1):
+    return value.get_price(qty=qty)

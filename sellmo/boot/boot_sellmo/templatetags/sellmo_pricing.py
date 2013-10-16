@@ -37,5 +37,9 @@ register = template.Library()
 #
 
 @register.filter
-def price(product):
-    return product.get_price()
+def price(value):
+    return value.get_price()
+    
+@register.simple_tag
+def price(**kwargs):
+    return modules.pricing.get_price(**kwargs)

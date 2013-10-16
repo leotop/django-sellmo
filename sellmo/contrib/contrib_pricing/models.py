@@ -61,6 +61,9 @@ class QtyPriceBase(models.Model):
         default = 1,
     )
     
+    def apply(self, price=None):
+        raise NotImplementedError()
+    
     def __unicode__(self):
         return _("%s qty or more") % unicode(self.qty)
     
@@ -74,6 +77,9 @@ class QtyPrice(QtyPriceBase):
         verbose_name = _("amount"),
     )
     
+    def apply(self, price=None):
+        return Price(self.amount)
+    
     class Meta:
         abstract = True
         
@@ -83,6 +89,9 @@ class QtyPriceRatio(QtyPriceBase):
         default = Decimal('1.00'),
         verbose_name = _("ratio"),
     )
+    
+    def apply(self, price=None):
+        return price * self.ratio
     
     class Meta:
         abstract = True

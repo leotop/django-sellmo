@@ -39,7 +39,7 @@ def get_price(price, product=None, currency=None, qty=1, **kwargs):
     if product:
         q = modules.qty_pricing.ProductQtyPrice.objects.filter(product=product, qty__lte=qty).order_by('-qty')
         if q:
-            price = Price(amount=q[0].amount, currency=currency)
+            price = q[0].apply(price)
         return {
             'price' : price
         }
