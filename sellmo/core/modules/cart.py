@@ -298,15 +298,11 @@ class CartModule(sellmo.Module):
         
     @chainable()
     def on_purchase(self, chain, request, cart, purchase=None, **kwargs):
-        # Need to save before trying to merge
-        purchase.save()
         
         # See if we can merge this purchase
-        merged = modules.store.merge_purchase(purchase=purchase, others=list(cart))
-        if merged[0]:
-            for purchase in merged[1]:
-                purchase.delete()
-            purchase = merged[0]
+        merged = modules.store.merge_purchase(purchase=purchase, existing_purchases=list(cart))
+        if merged:
+            purchase = merged
         
         # Add to cart / update cart
         if purchase in cart:
