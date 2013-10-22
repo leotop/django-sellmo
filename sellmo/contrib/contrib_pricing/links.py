@@ -39,7 +39,7 @@ def get_price(price, product=None, currency=None, qty=1, **kwargs):
     if product:
         try:
             qty_price = modules.qty_pricing.ProductQtyPrice.objects.filter(product=product).for_qty(qty)
-        except modules.qty_pricing.PersonalizationOptionQtyPrice.DoesNotExist:
+        except modules.qty_pricing.ProductQtyPrice.DoesNotExist:
             pass
         else:
             price = qty_price.apply(price)
