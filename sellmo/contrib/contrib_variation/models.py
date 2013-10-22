@@ -165,10 +165,10 @@ def on_value_pre_save(sender, instance, *args, **kwargs):
         
 def on_value_post_save(sender, instance, created, update_fields=None, *args, **kwargs):
     if created or update_fields:
-        modules.variation.Variation.objects.deprecate(instance.base_product)
+        modules.variation.Variation.objects.deprecate(instance.base_product if instance.base_product else instance.product)
     
 def on_value_pre_delete(sender, instance, *args, **kwargs):
-    modules.variation.Variation.objects.deprecate(instance.base_product)
+    modules.variation.Variation.objects.deprecate(instance.base_product if instance.base_product else instance.product)
         
 @load(after='finalize_attribute_Value')
 def listen():
@@ -362,6 +362,7 @@ def finalize_model():
         
         class Meta:
             app_label = 'variation'
+            ordering = ['sort_order']
             verbose_name = _("variation")
             verbose_name_plural = _("variations")
                 
@@ -472,8 +473,9 @@ class VariationManager(models.Manager):
             existing.append(id)
         
         # Create variations
+        sort_order = 0
         while map:
-            values = map.pop()
+            values = map.pop(0)
             values = [value for value in values if not value is None]
             
             variant = product
@@ -498,7 +500,7 @@ class VariationManager(models.Manager):
                 except (modules.product.Product.DoesNotExist, modules.product.Product.MultipleObjectsReturned) as ex:
                     variant = product
             
-            # Query values (this will order them)
+            # Query values (this will order them according to attribute order)
             values = list(modules.attribute.Value.objects.filter(pk__in=[value.pk for value in values]).order_by('attribute'))
             
             #
@@ -507,9 +509,11 @@ class VariationManager(models.Manager):
                 description = modules.variation.Variation.generate_description(product, values),
                 product = product,
                 variant = variant,
+                sort_order = sort_order
             )
 
             variation.values.add(*values)
+            sort_order += 1
         
         # Handle grouping
         if group:
@@ -547,7 +551,7 @@ class VariationManager(models.Manager):
     
     def for_product(self, product, *args, **kwargs):
         variations = self.get_query_set().for_product(product, *args, **kwargs)
-        if variations.count() > 0:
+        if False and variations.count() > 0:
             return variations
         else:
             self.build(product)
@@ -571,7 +575,13 @@ class Variation(models.Model):
         editable = False,
     )
     
+    sort_order = models.SmallIntegerField(
+        verbose_name = _("sort order"),
+        editable = False,
+    )
+    
     description = models.CharField(
+        verbose_name = _("description"),
         max_length = 255,
         editable = False,
     )
@@ -586,7 +596,6 @@ class Variation(models.Model):
 
     class Meta:
         abstract = True
-        ordering = ['id']
     
 @load(after='finalize_store_Purchase')
 def load_model():
