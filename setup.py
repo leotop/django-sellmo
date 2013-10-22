@@ -69,7 +69,7 @@ if len(sys.argv) > 1 and sys.argv[1] == 'bdist_wininst':
 
 setup(
     name = "Sellmo",
-    version = '0.0.0.1302',
+    version = '0.0.0.1304',
     url = 'http://www.adaptiv.nl/',
     author = 'Adaptiv Design',
     author_email = 'raymond@adaptiv.nl',
