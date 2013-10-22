@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-10-07 07:14-0700\n"
+"POT-Creation-Date: 2013-10-22 13:20-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -66,7 +66,7 @@ msgstr "achternaam"
 msgid "currency code"
 msgstr "valuta code"
 
-#: api/product/models.py:50 contrib/contrib_pricing/models.py:47
+#: api/product/models.py:50 contrib/contrib_pricing/models.py:152
 #: contrib/contrib_product/subtypes/simple_product/__sellmo__.py:46
 msgid "product"
 msgstr "product"
@@ -86,6 +86,9 @@ msgid ""
 "friendly (letters, numbers, hyphens and underscores only) and descriptive "
 "for the SEO needs."
 msgstr ""
+"Slug wordt gebruikt het adres van de product pagina. Het dient URL-"
+"vriendelijk (alleen letters, nummers, afbreektekens en liggende streepjes) "
+"en omschrijvend voor SEO toepassingen."
 
 #: api/product/models.py:136
 msgid "all products"
@@ -105,10 +108,13 @@ msgid ""
 "Must be all lower case, start with a letter, and contain only letters, "
 "numbers, or underscores."
 msgstr ""
+"Moet bestaan uit kleine letters, beginnen met een letter en mag enkel "
+"letters, nummers of liggende streepjes."
 
 #: contrib/contrib_attribute/fields.py:71
 msgid "Cannot change attribute type of an attribute that is already in use."
-msgstr "Kan attribuut type niet veranderen van een attribuut dat in gebruik is."
+msgstr ""
+"Kan attribuut type niet veranderen van een attribuut dat in gebruik is."
 
 #: contrib/contrib_attribute/models.py:45
 msgid "value object"
@@ -119,36 +125,37 @@ msgid "value objects"
 msgstr "waarde objecten"
 
 #: contrib/contrib_attribute/models.py:76
-#: contrib/contrib_attribute/models.py:196
+#: contrib/contrib_attribute/models.py:197
 msgid "attribute"
 msgstr "attribuut"
 
-#: contrib/contrib_attribute/models.py:99
+#: contrib/contrib_attribute/models.py:100
 msgid "value"
 msgstr "waarde"
 
-#: contrib/contrib_attribute/models.py:100
+#: contrib/contrib_attribute/models.py:101
 msgid "values"
 msgstr "waardes"
 
-#: contrib/contrib_attribute/models.py:197
+#: contrib/contrib_attribute/models.py:198
 msgid "attributes"
 msgstr "attributen"
 
-#: contrib/contrib_attribute/models.py:221
+#: contrib/contrib_attribute/models.py:222
 msgid "string"
 msgstr "tekst"
 
-#: contrib/contrib_attribute/models.py:222
+#: contrib/contrib_attribute/models.py:223
 msgid "integer"
 msgstr "nummeriek"
 
-#: contrib/contrib_attribute/models.py:223
+#: contrib/contrib_attribute/models.py:224
 msgid "object"
 msgstr "object"
 
-#: contrib/contrib_attribute/models.py:249
+#: contrib/contrib_attribute/models.py:250
 #: contrib/contrib_category/models.py:200
+#: contrib/contrib_variation/models.py:579
 msgid "sort order"
 msgstr "sorteervolgorde"
 
@@ -180,17 +187,15 @@ msgid ""
 "friendly (letters, numbers, hyphens and underscores only) and descriptive "
 "for the SEO needs."
 msgstr ""
+"Slug wordt gebruikt het adres van de categorie pagina. Het dient URL-"
+"vriendelijk (alleen letters, nummers, afbreektekens en liggende streepjes) "
+"en omschrijvend voor SEO toepassingen."
 
 #: contrib/contrib_category/models.py:231 contrib/contrib_product/models.py:44
 #: contrib/contrib_shipping/models.py:70
 #: contrib/contrib_shipping/models.py:117
 msgid "active"
 msgstr "actief"
-
-#: contrib/contrib_category/templatetags/category.py:94
-#, python-format
-msgid "%s tag requires a queryset"
-msgstr ""
 
 #: contrib/contrib_customer/addressees/default_addressee/models.py:41
 msgid "sir"
@@ -255,34 +260,46 @@ msgstr "procent korting"
 msgid "percent discounts"
 msgstr "procent kortingen"
 
-#: contrib/contrib_pricing/models.py:52
-msgid "qty price"
-msgstr "stukprijs"
-
-#: contrib/contrib_pricing/models.py:53
-msgid "qty prices"
-msgstr "stukprijzen"
-
-#: contrib/contrib_pricing/models.py:60
+#: contrib/contrib_pricing/models.py:69
 msgid "quantity"
 msgstr "aantal"
 
-#: contrib/contrib_pricing/models.py:65
+#: contrib/contrib_pricing/models.py:77
 #, python-format
 msgid "%s qty or more"
 msgstr "%s stuks of meer"
 
-#: contrib/contrib_pricing/models.py:74
+#: contrib/contrib_pricing/models.py:101
 msgid "amount"
 msgstr "hoeveelheid"
 
-#: contrib/contrib_pricing/models.py:84
+#: contrib/contrib_pricing/models.py:128
 msgid "ratio"
 msgstr "ratio"
+
+#: contrib/contrib_pricing/models.py:139
+msgid "qty price"
+msgstr "stukprijs"
+
+#: contrib/contrib_pricing/models.py:140
+msgid "qty prices"
+msgstr "stukprijzen"
+
+#: contrib/contrib_product/models.py:46
+msgid "Inactive products will be hidden from the site."
+msgstr "Inactieve producten worden niet getoond op de site."
 
 #: contrib/contrib_product/models.py:51
 msgid "featured"
 msgstr "uitgelicht"
+
+#: contrib/contrib_product/models.py:53
+msgid ""
+"Marks this product as featured allowing additional showcasing across the "
+"site."
+msgstr ""
+"Markeert dit product als uitgelicht en kan zorgen voor extra weergave over "
+"de site."
 
 #: contrib/contrib_shipping/models.py:47
 msgid "carriers"
@@ -303,6 +320,7 @@ msgstr "kenmerk"
 
 #: contrib/contrib_shipping/models.py:82
 #: contrib/contrib_shipping/models.py:129
+#: contrib/contrib_variation/models.py:584
 msgid "description"
 msgstr "omschrijving"
 
@@ -316,7 +334,7 @@ msgstr "vervoerders"
 
 #: contrib/contrib_shipping/subtypes/flat_shipping/models.py:45
 msgid "shipping rate"
-msgstr ""
+msgstr "verzendkosten"
 
 #: contrib/contrib_shipping/subtypes/flat_shipping/models.py:56
 msgid "flat shipping method"
@@ -384,19 +402,19 @@ msgstr "variatie-recept"
 msgid "variation recipes"
 msgstr "variatie-recepten"
 
-#: contrib/contrib_variation/models.py:365
+#: contrib/contrib_variation/models.py:366
 msgid "variation"
 msgstr "variatie"
 
-#: contrib/contrib_variation/models.py:366
+#: contrib/contrib_variation/models.py:367
 msgid "variations"
 msgstr "variaties"
 
-#: contrib/contrib_variation/models.py:637
+#: contrib/contrib_variation/models.py:640
 msgid "variation purchase"
 msgstr "variatie aankoop"
 
-#: contrib/contrib_variation/models.py:638
+#: contrib/contrib_variation/models.py:641
 msgid "variation purchases"
 msgstr "variatie aankopen"
 
@@ -412,24 +430,24 @@ msgstr "Type"
 #: contrib/polymorphism/admin.py:288
 #, python-format
 msgid "Add %s"
-msgstr ""
+msgstr "%s toevoegen"
 
 #: contrib/polymorphism/admin.py:357
 msgid "Contents"
-msgstr ""
+msgstr "Inhoud"
 
 #: contrib/polymorphism/templates/admin/polymorphism/add_type_form.html:9
 msgid "Home"
-msgstr ""
+msgstr "Voorpagina"
 
 #: contrib/polymorphism/templates/admin/polymorphism/add_type_form.html:12
 msgid "Add"
-msgstr ""
+msgstr "Toevoegen"
 
 #: contrib/polymorphism/templates/admin/polymorphism/add_type_form.html:24
 #: contrib/polymorphism/templates/admin/polymorphism/add_type_form.html:40
 msgid "Submit"
-msgstr ""
+msgstr "Verzenden"
 
 #: contrib/polymorphism/templates/admin/polymorphism/add_type_form.html:30
 msgid "Please correct the error below."
