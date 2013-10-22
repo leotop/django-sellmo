@@ -26,13 +26,16 @@
 
 from sellmo import modules, Module
 from sellmo.api.decorators import chainable
-from sellmo.contrib.contrib_pricing.models import ProductQtyPrice
+from sellmo.contrib.contrib_pricing.models import QtyPriceBase, QtyPrice, QtyPriceRatio, ProductQtyPrice
 
 #
 
 class QtyPricingModule(Module):
     namespace = 'qty_pricing'
     
+    QtyPriceBase = QtyPriceBase
+    QtyPrice = QtyPrice
+    QtyPriceRatio = QtyPriceRatio
     ProductQtyPrice = ProductQtyPrice
     
     @chainable()

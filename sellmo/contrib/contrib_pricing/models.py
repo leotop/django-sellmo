@@ -30,31 +30,40 @@ from decimal import Decimal
 
 from sellmo import modules
 from sellmo.api.decorators import load
+from sellmo.api.pricing import Price
 
 #
 
 from django.db import models
+from django.db.models.query import QuerySet
 from django.utils.translation import ugettext_lazy as _
 
 #
 
-@load(action='finalize_qty_pricing_ProductQtyPrice', after='finalize_product_Product')
+class QtyPriceQuerySet(QuerySet):
+    def for_qty(self, qty):
+        q = self.filter(qty__lte=qty).order_by('-qty')[:1]
+        if not q:
+            raise self.model.DoesNotExist()
+        return q[0]
+
+class QtyPriceManager(models.Manager):
+    def get_query_set(self):
+        return QtyPriceQuerySet(self.model)
+        
+    def for_qty(self, *args, **kwargs):
+        return self.get_query_set().for_qty(*args, **kwargs)
+
+#
+    
+@load(action='finalize_qty_pricing_QtyPriceBase')
 def finalize_model():
-    class ProductQtyPrice(modules.qty_pricing.ProductQtyPrice):
-        product = models.ForeignKey(
-            modules.product.Product,
-            related_name = 'qty_prices',
-            verbose_name = _("product"),
-        )
-
-        class Meta:
-            app_label = 'pricing'
-            verbose_name = _("qty price")
-            verbose_name_plural = _("qty prices")
-
-    modules.qty_pricing.ProductQtyPrice = ProductQtyPrice
+    # No need to do anything, QtyPriceBase needs to remain abstract, we do need this action
+    pass
 
 class QtyPriceBase(models.Model):
+    
+    objects = QtyPriceManager()
     
     qty = models.PositiveIntegerField(
         verbose_name = _("quantity"),
@@ -69,34 +78,85 @@ class QtyPriceBase(models.Model):
     
     class Meta:
         abstract = True
+        
+@load(after='finalize_qty_pricing_QtyPriceBase', before='finalize_qty_pricing_QtyPrice')
+def load_model():
+    class QtyPrice(modules.qty_pricing.QtyPrice, modules.qty_pricing.QtyPriceBase):
+        
+        def apply(self, price=None):
+            return Price(self.amount)
+        
+        class Meta:
+            abstract =  True
+    modules.qty_pricing.QtyPrice = QtyPrice
+    
+@load(action='finalize_qty_pricing_QtyPrice')
+def finalize_model():
+    # No need to do anything, QtyPriceBase needs to remain abstract, we do need this action
+    pass
 
-
-class QtyPrice(QtyPriceBase):
+class QtyPrice(models.Model):
     
     amount = modules.pricing.construct_decimal_field(
         verbose_name = _("amount"),
     )
     
-    def apply(self, price=None):
-        return Price(self.amount)
-    
     class Meta:
         abstract = True
         
-class QtyPriceRatio(QtyPriceBase):
+@load(after='finalize_qty_pricing_QtyPriceBase', before='finalize_qty_pricing_QtyPriceRatio')
+def load_model():
+    class QtyPriceRatio(modules.qty_pricing.QtyPriceRatio, modules.qty_pricing.QtyPriceBase):
+        
+        def apply(self, price=None):
+            return price * self.ratio
+        
+        class Meta:
+            abstract =  True
+            
+    modules.qty_pricing.QtyPriceRatio = QtyPriceRatio
+    
+@load(action='finalize_qty_pricing_QtyPriceRatio')
+def finalize_model():
+    # No need to do anything, QtyPriceBase needs to remain abstract, we do need this action
+    pass
+        
+class QtyPriceRatio(models.Model):
     
     ratio = modules.pricing.construct_decimal_field(
         default = Decimal('1.00'),
         verbose_name = _("ratio"),
     )
     
-    def apply(self, price=None):
-        return price * self.ratio
-    
     class Meta:
         abstract = True
+        
+@load(action='finalize_qty_pricing_ProductQtyPrice')
+def finalize_model():
+    class ProductQtyPrice(modules.qty_pricing.ProductQtyPrice):
+        class Meta:
+            app_label = 'pricing'
+            verbose_name = _("qty price")
+            verbose_name_plural = _("qty prices")
+    modules.qty_pricing.ProductQtyPrice = ProductQtyPrice
+    
+@load(before='finalize_qty_pricing_ProductQtyPrice')
+@load(after='finalize_qty_pricing_QtyPrice')
+@load(after='finalize_product_Product')
+def load_model():
+    class ProductQtyPrice(modules.qty_pricing.ProductQtyPrice, modules.qty_pricing.QtyPrice):
+        
+        product = models.ForeignKey(
+            modules.product.Product,
+            related_name = 'qty_prices',
+            verbose_name = _("product"),
+        )
+        
+        class Meta:
+            abstract = True
+    modules.qty_pricing.ProductQtyPrice = ProductQtyPrice
 
-class ProductQtyPrice(QtyPrice):
+class ProductQtyPrice(models.Model):
     
     class Meta:
         abstract = True

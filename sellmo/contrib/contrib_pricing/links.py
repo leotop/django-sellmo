@@ -37,9 +37,12 @@ from sellmo import modules
 @link()
 def get_price(price, product=None, currency=None, qty=1, **kwargs):
     if product:
-        q = modules.qty_pricing.ProductQtyPrice.objects.filter(product=product, qty__lte=qty).order_by('-qty')
-        if q:
-            price = q[0].apply(price)
+        try:
+            qty_price = modules.qty_pricing.ProductQtyPrice.objectsfilter(product=product).for_qty(qty)
+        except modules.qty_pricing.PersonalizationOptionQtyPrice.DoesNotExist:
+            pass
+        else:
+            price = qty_price.apply(price)
         return {
             'price' : price
         }
