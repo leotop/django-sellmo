@@ -96,6 +96,7 @@ def finalize_model():
         
         class Meta:
             app_label = 'attribute'
+            ordering = ['attribute', 'value_string', 'value_int', 'value_object']
             verbose_name = _("value")
             verbose_name_plural = _("values")
     
@@ -180,7 +181,6 @@ class Value(models.Model):
     
     class Meta:
         abstract = True
-        ordering = ['attribute', 'value_string', 'value_int', 'value_object']
 
 @load(action='finalize_attribute_Attribute')
 def finalize_model():
@@ -193,6 +193,7 @@ def finalize_model():
         
         class Meta:
             app_label = 'attribute'
+            ordering = ['sort_order', 'name']
             verbose_name = _("attribute")
             verbose_name_plural = _("attributes")
     
@@ -287,7 +288,6 @@ class Attribute(models.Model):
 
     class Meta:
         abstract = True
-        ordering = ['sort_order', 'name']
         
 # Init modules
 from sellmo.contrib.contrib_attribute.modules import *
