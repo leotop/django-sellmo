@@ -91,7 +91,7 @@ class RenderCategoriesNode(template.Node):
 def render_categories(parser, token):
     bits = token.contents.split()
     if len(bits) != 2:
-        raise template.TemplateSyntaxError(_("%s tag requires a queryset") % bits[0])
+        raise template.TemplateSyntaxError("%s tag requires a queryset" % bits[0])
 
     queryset_var = template.Variable(bits[1])
     template_nodes = parser.parse(('endrender_categories',))

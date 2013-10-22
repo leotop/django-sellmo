@@ -42,14 +42,14 @@ def load_model():
         active = models.BooleanField(
             default = True,
             verbose_name = _("active"),
-            help_text = (
+            help_text = _(
                 "Inactive products will be hidden from the site."
             )
         )
         
         featured = models.BooleanField(
             verbose_name = _("featured"),
-            help_text = (
+            help_text = _(
                 "Marks this product as featured allowing additional showcasing across the site."
             )
         )
