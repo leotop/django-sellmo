@@ -26,7 +26,7 @@
 
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable
-from sellmo.contrib.contrib_variation.models import Variation, VariationRecipe
+from sellmo.contrib.contrib_variation.models import Variant, Variation, VariationRecipe
 from sellmo.contrib.contrib_attribute.query import ProductQ
 
 from django.http import Http404
@@ -42,6 +42,7 @@ class VariationModule(Module):
 
     namespace = 'variation'
     batch_buy_enabled = False
+    Variant = Variant
     Variation = Variation
     VariationRecipe = VariationRecipe
     

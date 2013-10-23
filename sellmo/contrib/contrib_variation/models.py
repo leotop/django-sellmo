@@ -129,7 +129,9 @@ def load_model():
                     return modules.variation.Variation.objects.for_product(self.product).filter(variant=self)
                 return modules.variation.Variation.objects.for_product(self)
                 
-@load(action='load_variants', after='setup_variants')
+@load(action='load_variants')
+@load(after='setup_variants')
+@load(after='finalize_variation_Variant')
 def load_variants():
     for subtype in modules.variation.product_subtypes:
         class Meta:
@@ -148,7 +150,7 @@ def load_variants():
             '__module__' : subtype.__module__
         }
         
-        model = type(name, (VariantMixin, subtype,), attr_dict)
+        model = type(name, (VariantMixin, modules.variation.Variant, subtype,), attr_dict)
         for field in model.get_variable_fields():
             descriptor = field.model.__dict__.get(field.name, None)
             setattr(model, field.name, VariantFieldDescriptor(field, descriptor=descriptor))
@@ -156,6 +158,23 @@ def load_variants():
         
         modules.variation.subtypes.append(model)
         setattr(modules.variation, name, model)
+        
+@load(action='finalize_variation_Variant')
+def finalize_model():
+
+    class Variant(modules.variation.Variant):
+        class Meta:
+            abstract = True
+
+    modules.variation.Variant = Variant
+
+        
+class Variant(models.Model):
+    
+    price_adjustment = modules.pricing.construct_decimal_field(default=0)
+    
+    class Meta:
+        abstract = True
                 
 def on_value_pre_save(sender, instance, *args, **kwargs):
     product = instance.product.downcast()

@@ -58,7 +58,10 @@ class VariantMixin(object):
     def get_variable_fields(cls):
         fields = cls._meta.many_to_many + cls._meta.fields
         for field in fields:
-            if not field.auto_created and not field.name in cls.non_variable_fields and not field.__class__ in cls.non_variable_field_types:
+            if (not field.auto_created 
+            and not field.name in cls.non_variable_fields 
+            and not field.__class__ in cls.non_variable_field_types 
+            and not field in modules.variation.Variant._meta.fields):
                 yield field
     
     def get_product(self):

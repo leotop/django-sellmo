@@ -45,7 +45,7 @@ class Currency(object):
         return self._format.format(amount=amount)
 
 class Price(object):
-
+        
     @staticmethod
     def sanity_check(price, other):
         if not isinstance(price, Price) or not isinstance(other, Price):

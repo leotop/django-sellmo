@@ -39,6 +39,7 @@ from django.contrib.contenttypes.models import ContentType
 
 from sellmo import modules
 from sellmo.api.forms import RedirectableFormSet
+from sellmo.api.pricing import Price
 
 #
 @link(namespace=modules.attribute.namespace, name='filter', capture=True)
@@ -97,6 +98,14 @@ def capture_get_price(product=None, **kwargs):
         
         out['product'] = product
         return out
+        
+@link(namespace=modules.pricing.namespace)
+def get_price(price, product=None, variant=None, **kwargs):
+    if variant and variant.price_adjustment != 0:
+        price += Price(variant.price_adjustment)
+    return {
+        'price' : price
+    }
     
 @link(namespace=modules.store.namespace)
 def make_purchase(purchase, variation=None, **kwargs):

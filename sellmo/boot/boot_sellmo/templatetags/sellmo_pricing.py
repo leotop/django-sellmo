@@ -29,6 +29,7 @@ from django import template
 #
 
 from sellmo import modules
+from sellmo.api.pricing import Price
 
 #
 
@@ -39,6 +40,10 @@ register = template.Library()
 @register.filter
 def price(value):
     return value.get_price()
+    
+@register.filter
+def as_price(value):
+    return Price(value)
     
 @register.simple_tag
 def price(**kwargs):
