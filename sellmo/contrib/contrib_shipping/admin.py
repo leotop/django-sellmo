@@ -33,12 +33,11 @@ from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy as _
 
-# Base admin for every shipping method subtype
 class ShippingMethodAdminBase(admin.ModelAdmin):
     pass
 
 # Admin for shipping method
-class ShippingMethodAdmin(PolymorphicParentModelAdmin):
+class ShippingMethodParentAdmin(PolymorphicParentModelAdmin):
     base_model = modules.shipping.ShippingMethod
     child_models = []
     
@@ -50,18 +49,12 @@ class ShippingMethodAdmin(PolymorphicParentModelAdmin):
     def queryset(self, queryset):
         return modules.shipping.ShippingMethod.objects.all()
 
-    def get_child_type_choices(self):
-        choices = []
-        for model, _ in self.child_models:
-            ct = ContentType.objects.get_for_model(model)
-            choices.append((ct.id, model._meta.verbose_name))
-        return choices
-
-admin.site.register(modules.shipping.ShippingMethod, ShippingMethodAdmin)
-
 # Admin for shipping carrier
 class ShippingCarrierAdmin(admin.ModelAdmin):
     pass
     
+
+
+admin.site.register(modules.shipping.ShippingMethod, ShippingMethodParentAdmin)
 admin.site.register(modules.shipping.ShippingCarrier, ShippingCarrierAdmin)
 

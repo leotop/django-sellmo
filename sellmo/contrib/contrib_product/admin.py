@@ -24,61 +24,29 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-
-from django.http import Http404
-from django.shortcuts import redirect
-
-#
-
-from sellmo import modules, Module
-from sellmo.api.decorators import chainable, view
+from sellmo import modules
+from sellmo.contrib.polymorphism.admin import PolymorphicParentModelAdmin
 
 #
 
-class MultiStepCheckoutModule(Module):
-	namespace = 'checkout_process'
-	login_required = False
-	
-	@view()
-	def login(self, chain, request, context=None, **kwargs):
-		if context is None:
-			context = {}
-			
-		if chain:
-			return chain.execute(request=request, context=context, **kwargs)
-		else:
-			# We don't render anything
-			raise Http404
-	
-	@view()
-	def information(self, chain, request, context=None, **kwargs):
-		if context is None:
-			context = {}
+from django.contrib import admin
+from django.contrib.contenttypes.models import ContentType
+from django.utils.translation import ugettext_lazy as _
 
-		if chain:
-			return chain.execute(request=request, context=context, **kwargs)
-		else:
-			# We don't render anything
-			raise Http404
-			
-	@view()
-	def payment_method(self, chain, request, context=None, **kwargs):
-		if context is None:
-			context = {}
-	
-		if chain:
-			return chain.execute(request=request, context=context, **kwargs)
-		else:
-			# We don't render anything
-			raise Http404
-			
-	@view()
-	def summary(self, chain, request, context=None, **kwargs):
-		if context is None:
-			context = {}
-	
-		if chain:
-			return chain.execute(request=request, context=context, **kwargs)
-		else:
-			# We don't render anything
-			raise Http404
+#
+
+class ProductAdminBase(admin.ModelAdmin):
+	pass
+
+class ProductParentAdminBase(PolymorphicParentModelAdmin):
+	base_model = modules.product.Product
+	child_models = []
+
+	polymorphic_list = False
+	list_display = ['slug']
+	list_display_links = ['slug']
+	search_fields = ['slug']
+
+	def queryset(self, queryset):
+		return modules.product.Product.objects.all()
+

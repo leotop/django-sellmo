@@ -171,7 +171,10 @@ def finalize_model():
         
 class Variant(models.Model):
     
-    price_adjustment = modules.pricing.construct_decimal_field(default=0)
+    price_adjustment = modules.pricing.construct_decimal_field(
+        default=0,
+        verbose_name = _("price adjustment")
+    )
     
     class Meta:
         abstract = True

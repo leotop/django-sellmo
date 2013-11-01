@@ -50,6 +50,9 @@ class ShippingMethod(object):
         order.shipment = shipment
         order.save()
         
+    def process(self, request, order, next_step):
+        return next_step
+        
     def __unicode__(self):
         return self.description
         
@@ -73,6 +76,9 @@ class PaymentMethod(object):
             order.payment.delete()
         order.payment = payment
         order.save()
+        
+    def process(self, request, order, next_step):
+        return next_step
         
     def __unicode__(self):
         return self.description

@@ -24,61 +24,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-
-from django.http import Http404
-from django.shortcuts import redirect
+from sellmo import modules
 
 #
 
-from sellmo import modules, Module
-from sellmo.api.decorators import chainable, view
+namespace = modules.payment.namespace
 
 #
 
-class MultiStepCheckoutModule(Module):
-	namespace = 'checkout_process'
-	login_required = False
-	
-	@view()
-	def login(self, chain, request, context=None, **kwargs):
-		if context is None:
-			context = {}
-			
-		if chain:
-			return chain.execute(request=request, context=context, **kwargs)
-		else:
-			# We don't render anything
-			raise Http404
-	
-	@view()
-	def information(self, chain, request, context=None, **kwargs):
-		if context is None:
-			context = {}
 
-		if chain:
-			return chain.execute(request=request, context=context, **kwargs)
-		else:
-			# We don't render anything
-			raise Http404
-			
-	@view()
-	def payment_method(self, chain, request, context=None, **kwargs):
-		if context is None:
-			context = {}
-	
-		if chain:
-			return chain.execute(request=request, context=context, **kwargs)
-		else:
-			# We don't render anything
-			raise Http404
-			
-	@view()
-	def summary(self, chain, request, context=None, **kwargs):
-		if context is None:
-			context = {}
-	
-		if chain:
-			return chain.execute(request=request, context=context, **kwargs)
-		else:
-			# We don't render anything
-			raise Http404

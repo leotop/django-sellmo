@@ -24,61 +24,36 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-
-from django.http import Http404
-from django.shortcuts import redirect
-
-#
-
-from sellmo import modules, Module
-from sellmo.api.decorators import chainable, view
+from sellmo import modules
+from sellmo.api.decorators import load
+from sellmo.api.pricing import Price
+from sellmo.contrib.contrib_shipping.methods.flat_shipping import FlatShippingMethod as _FlatShippingMethod
 
 #
 
-class MultiStepCheckoutModule(Module):
-	namespace = 'checkout_process'
-	login_required = False
-	
-	@view()
-	def login(self, chain, request, context=None, **kwargs):
-		if context is None:
-			context = {}
-			
-		if chain:
-			return chain.execute(request=request, context=context, **kwargs)
-		else:
-			# We don't render anything
-			raise Http404
-	
-	@view()
-	def information(self, chain, request, context=None, **kwargs):
-		if context is None:
-			context = {}
+from django.db import models
+from django.utils.translation import ugettext_lazy as _
 
-		if chain:
-			return chain.execute(request=request, context=context, **kwargs)
-		else:
-			# We don't render anything
-			raise Http404
-			
-	@view()
-	def payment_method(self, chain, request, context=None, **kwargs):
-		if context is None:
-			context = {}
+#
+
+@load(action='load_shipping_subtypes', after='finalize_shipping_ShippingMethod')
+def load_shipping_subtypes():
 	
-		if chain:
-			return chain.execute(request=request, context=context, **kwargs)
-		else:
-			# We don't render anything
-			raise Http404
-			
-	@view()
-	def summary(self, chain, request, context=None, **kwargs):
-		if context is None:
-			context = {}
-	
-		if chain:
-			return chain.execute(request=request, context=context, **kwargs)
-		else:
-			# We don't render anything
-			raise Http404
+	class FlatShippingMethod(modules.shipping.ShippingMethod):
+
+		costs = modules.pricing.construct_decimal_field(
+			verbose_name = _("shipping rate"),
+		)
+		
+		def get_method(self, carrier=None):
+			identifier = self.identifier
+			if carrier:
+				identifier = '{0}_{1}'.format(identifier, carrier.identifier)
+			return _FlatShippingMethod(identifier, self.description, method=self, carrier=carrier)
+
+		class Meta:
+			app_label = 'shipping'
+			verbose_name = _("flat shipping method")
+			verbose_name_plural = _("flat shipping methods")
+
+	modules.shipping.register_subtype(FlatShippingMethod)

@@ -57,8 +57,25 @@ class ProductAttributeMixin(object):
         fieldsets += ((_("Attributes"), {'fields': modules.attribute.Attribute.objects.values_list('key', flat=True)}),)
         return fieldsets
     
-class AttributeAdminMixin(object):
+        
+#
+
+class AttributeAdmin(admin.ModelAdmin):
+    
+    list_display = ['name', 'required']
+    
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         if db_field.name == 'object_choices':
             kwargs['queryset'] = ValueObject.objects.polymorphic().all()
-        return super(AttributeAdminMixin, self).formfield_for_manytomany(db_field, request, **kwargs)
+        return super(AttributeAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
+
+class ValueAdmin(admin.ModelAdmin):
+    
+    list_display = ['product', 'attribute', 'value']
+    
+    def value(self, obj):
+        return obj.get_value()
+
+admin.site.register(modules.attribute.Attribute, AttributeAdmin)
+admin.site.register(modules.attribute.Value, ValueAdmin)
+

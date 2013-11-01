@@ -128,10 +128,15 @@ class Value(models.Model):
         blank = True,
     )
     
-    value_string = models.CharField(
-        max_length = 255,
+    value_float = models.FloatField(
         null = True,
         blank = True,
+    )
+    
+    value_string = models.CharField(
+        max_length = 255,
+        blank = True,
+        default = '',
     )
     
     __value_object = None
@@ -216,11 +221,13 @@ class Attribute(models.Model):
     
     TYPE_STRING = 'string'
     TYPE_INT = 'int'
+    TYPE_FLOAT = 'float'
     TYPE_OBJECT = 'object'
     
     TYPES = (
         (TYPE_STRING, _("string")),
         (TYPE_INT, _("integer")),
+        (TYPE_FLOAT, _("float")),
         (TYPE_OBJECT, _("object")),
     )
     
@@ -258,6 +265,8 @@ class Attribute(models.Model):
                 return int(string)
             except ValueError:
                 pass
+        elif self.type == SELF.TYPE_FLOAT:
+            return float(string)
         raise ValueError("Could not parse '%s' for attribute '%s'." % (string, self))
     
     @property

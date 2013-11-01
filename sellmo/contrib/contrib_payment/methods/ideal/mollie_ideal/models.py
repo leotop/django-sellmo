@@ -27,6 +27,7 @@
 from sellmo import modules
 from sellmo.api.decorators import load
 from sellmo.api.pricing import Price
+from sellmo.contrib.contrib_payment.methods.ideal.mollie_ideal import MollieIdealPaymentMethod as _MollieIdealPaymentMethod
 
 #
 
@@ -35,46 +36,51 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
-@load(after='load_pricing_Stampable', before='finalize_pricing_Stampable')
-def load_model():
-    modules.pricing.Stampable.add_to_class('amount', modules.pricing.construct_decimal_field(default=0))
-    for type in modules.pricing.types:
-        modules.pricing.Stampable.add_to_class('%s_amount' % type, modules.pricing.construct_decimal_field(default=0))
+@load(action='load_payment_subtypes', after='finalize_payment_PaymentMethod')
+def load_payment_subtypes():
 
-def get_default_currency():
-    return modules.pricing.get_currency().code
+	class MollieIdealPaymentMethod(modules.payment.PaymentMethod):
 
-class Stampable(models.Model):
-    
-    """
-    ISO 4217
-    """
-    currency_code = models.CharField(
-        max_length = 3,
-        verbose_name = _("currency code"),
-        default = get_default_currency
-    )
-    
-    @staticmethod
-    def get_stampable_fields():
-        return ['amount'] + ['%s_amount' % type for type in modules.pricing.types]
-    
-    def get_price(self, **kwargs):
-        """
-        Reconstructs the stamped price 
-        """
-        return modules.pricing.retrieve(stampable=self, **kwargs)
-        
-    def set_price(self, value, **kwargs):
-        """
-        Stamps the price 
-        """
-        modules.pricing.stamp(stampable=self, price=value, **kwargs)
-        
-    """
-    Enabled suptypes to store(stamp) a price and retrieve this exact same price
-    """
-    price = property(get_price, set_price)
-    
-    class Meta:
-        abstract = True
+		costs = modules.pricing.construct_decimal_field(
+			verbose_name = _("payment costs"),
+		)
+
+		def get_method(self, carrier=None):
+			identifier = self.identifier
+			return _MollieIdealPaymentMethod(identifier, self.description, method=self)
+
+		class Meta:
+			app_label = 'payment'
+			verbose_name = _("mollie ideal payment method")
+			verbose_name_plural = _("mollie ideal payment methods")
+
+	modules.payment.register_subtype(MollieIdealPaymentMethod)
+	
+@load(action='finalize_mollie_ideal_Payment', after='finalize_checkout_Payment')
+def finalize_model():
+	
+	class MollieIdealPayment(modules.checkout.Payment, modules.mollie_ideal.MollieIdealPayment):
+		class Meta:
+			app_label = 'checkout'
+			verbose_name = _("mollie ideal payment")
+			verbose_name_plural = _("mollie ideal payments")
+		
+	modules.mollie_ideal.MollieIdealPayment = MollieIdealPayment
+	
+class MollieIdealPayment(models.Model):
+	
+	bank_id = models.PositiveIntegerField(
+		blank = True,
+		null = True
+	)
+	
+	bank_name = models.CharField(
+		max_length = 255,
+		blank = True
+	)
+	
+	class Meta:
+		abstract = True
+	
+# Init modules
+from sellmo.contrib.contrib_payment.methods.ideal.mollie_ideal.modules import *

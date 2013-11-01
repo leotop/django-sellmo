@@ -26,6 +26,7 @@
 
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable
+from sellmo.api.pricing import Price
 from sellmo.contrib.contrib_variation.models import Variant, Variation, VariationRecipe
 from sellmo.contrib.contrib_attribute.query import ProductQ
 
@@ -93,7 +94,12 @@ class VariationModule(Module):
     @chainable()
     def get_variation_choice(self, chain, variation, choice=None, **kwargs):
         if choice is None:
-            choice = u", ".join([u"%s: %s" % (value.attribute.name ,unicode(value.value)) for value in variation.values.all().order_by('attribute')])
+            choice = u", ".join([u"%s: %s" % (value.attribute.name, unicode(value.value)) for value in variation.values.all().order_by('attribute')])
+            variant = variation.variant.downcast()
+            if hasattr(variant, '_is_variant') and variant.price_adjustment != 0:
+                prefix = u"+" if variant.price_adjustment > 0 else u"-"
+                choice = u"{0} {2}{1}".format(choice, Price(variant.price_adjustment), prefix)
+            
             
         if chain:
             out = chain.execute(variation=variation, choice=choice, **kwargs)

@@ -53,10 +53,10 @@ class Process(object):
 				step = None
 		else:
 			# When step is none
-			raise ProcessError()
+			raise ProcessError("Step '{0}' was not found.".format(key))
 		
-		if step.is_definitive():
-			raise ProcessError()
+		if step.is_completed() and step.is_definitive():
+			raise ProcessError("Step '{0}' is definitive.".format(key))
 		
 		self.current_step = step
 		

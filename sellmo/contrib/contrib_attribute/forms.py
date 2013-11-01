@@ -48,6 +48,7 @@ class ProductAttributeForm(ModelForm):
     FIELD_CLASSES = {
         modules.attribute.Attribute.TYPE_STRING : forms.CharField,
         modules.attribute.Attribute.TYPE_INT : forms.IntegerField,
+        modules.attribute.Attribute.TYPE_FLOAT : forms.FloatField,
         modules.attribute.Attribute.TYPE_OBJECT : forms.ModelChoiceField,
     }
     

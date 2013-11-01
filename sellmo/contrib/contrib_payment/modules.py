@@ -24,36 +24,25 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo import modules
-from sellmo.api.decorators import load
-from sellmo.api.pricing import Price
-from sellmo.contrib.contrib_shipping.subtypes.flat_shipping import FlatShippingMethod as _FlatShippingMethod
+from django.http import Http404
 
 #
 
-from django.db import models
-from django.utils.translation import ugettext_lazy as _
+from sellmo import modules, Module
+from sellmo.api.decorators import view, chainable
+from sellmo.contrib.contrib_payment.models import PaymentMethod
 
 #
 
-@load(action='load_shipping_subtypes', after='finalize_shipping_ShippingMethod')
-def load_shipping_subtypes():
-	
-	class FlatShippingMethod(modules.shipping.ShippingMethod):
+class PaymentModule(Module):
+	namespace = 'payment'
+	PaymentMethod = PaymentMethod
 
-		costs = modules.pricing.construct_decimal_field(
-			verbose_name = _("shipping rate"),
-		)
-		
-		def get_method(self, carrier=None):
-			identifier = self.identifier
-			if carrier:
-				identifier = '{0}_{1}'.format(identifier, carrier.identifier)
-			return _FlatShippingMethod(identifier, self.description, method=self, carrier=carrier)
+	def __init__(self, *args, **kwargs):
+		self.subtypes = []
 
-		class Meta:
-			app_label = 'shipping'
-			verbose_name = _("flat shipping method")
-			verbose_name_plural = _("flat shipping methods")
+	def register_subtype(self, subtype):
+		self.subtypes.append(subtype)
 
-	modules.shipping.register_subtype(FlatShippingMethod)
+		# Shouldn't be a problem if Capital cased classnames are used.
+		setattr(self, subtype.__name__, subtype)

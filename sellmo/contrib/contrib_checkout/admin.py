@@ -24,4 +24,27 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.contrib.contrib_shipping.subtypes.flat_shipping.base import FlatShippingMethod
+from sellmo import modules
+from sellmo.contrib.admin.reverse import ReverseModelAdmin
+
+
+#
+
+from django.contrib import admin
+from django.contrib.contenttypes.models import ContentType
+from django.utils.translation import ugettext_lazy as _
+
+
+class PurchaseInline(admin.TabularInline):
+	model = modules.store.Purchase
+	extra = 0
+
+class OrderAdmin(ReverseModelAdmin):
+	
+	inlines = [PurchaseInline]
+	
+	inline_type = 'stacked'
+	inline_reverse = ['shipment', 'payment', 'billing_address', 'shipping_address']
+
+admin.site.register(modules.checkout.Order, OrderAdmin)
+

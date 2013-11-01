@@ -38,10 +38,10 @@ from django.contrib.admin.sites import NotRegistered
 
 #
 
-class CategoryBaseAdmin(admin.ModelAdmin):
+class CategoryAdminBase(admin.ModelAdmin):
     def queryset(self, request):
         # optimize the list display.
-        qs = super(CategoryBaseAdmin, self).queryset(request)
+        qs = super(CategoryAdminBase, self).queryset(request)
         
         # always order by (tree_id, left)
         tree_id = qs.model._mptt_meta.tree_id_attr
@@ -83,3 +83,34 @@ class CategoryParentListFilter(admin.SimpleListFilter):
             return queryset.in_parent(category)
         else:
             return queryset.all()
+            
+
+#
+
+class CategoryAdmin(CategoryAdminBase):
+
+    list_display = ['full_name', 'active', 'name', 'parent', 'slug']
+    list_display_links = ['full_name', 'name']
+
+    list_filter = [CategoryParentListFilter, 'active']
+    search_fields = ['name']
+
+    fieldsets = (
+        (None, {
+            'fields': ('name', 'parent', 'slug')
+        }),
+        (_("Display"), {
+            'fields': ('active', 'sort_order')
+        }),
+    )
+
+    raw_id_fields = ['parent']
+    autocomplete_lookup_fields = {
+        'fk': ['parent'],
+    }
+
+    prepopulated_fields = {
+        'slug' : ('name',),
+    }
+
+admin.site.register(modules.category.Category, CategoryAdmin)

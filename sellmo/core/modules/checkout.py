@@ -163,10 +163,6 @@ class CheckoutModule(sellmo.Module):
         except UntrackableError:
             raise Exception("Could not track this order")
             
-        # Make sure this order is not already placed
-        if order.placed:
-            raise Exception("Cannot checkout a placed order")
-            
         # Now make sure this order has some actual purchases
         if not order:
             raise Exception("Nothing to order")
@@ -178,13 +174,13 @@ class CheckoutModule(sellmo.Module):
         if step:
             try:
                 process.step_to(step)
-            except ProcessError:
-                raise Http404
+            except ProcessError as error:
+                raise Http404(error)
         else:
             try:
                 process.step_to_latest()
-            except ProcessError:
-                raise Http404
+            except ProcessError as error:
+                raise Http404(error)
             else:
                 return redirect(reverse('checkout.checkout', kwargs = {'step' : process.current_step.key})) 
                 
@@ -194,7 +190,6 @@ class CheckoutModule(sellmo.Module):
             if process.feed(data):
                 # see if we completed the process
                 if process.completed:
-                    
                     # Now place the order
                     self.place_order(request=request, order=order)
                     
@@ -320,6 +315,13 @@ class CheckoutModule(sellmo.Module):
             if purchase in order:
                 order.remove(purchase)
             self.invalidate_order(request=request, order=order)
+    
+    @chainable()
+    def calculate_order(self, chain, request, order, **kwargs):
+        """
+        Calculate's the order purchase(s) price
+        """
+        order.calculate()
         
     @chainable()
     def invalidate_order(self, chain, request, order, **kwargs):
@@ -333,4 +335,6 @@ class CheckoutModule(sellmo.Module):
         """
         Places the order and destroys the cart.
         """
+        if order.placed:
+            raise Exception("This order is already placed.")
         order.place()

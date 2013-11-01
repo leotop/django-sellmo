@@ -24,61 +24,58 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-
-from django.http import Http404
-from django.shortcuts import redirect
-
-#
-
-from sellmo import modules, Module
-from sellmo.api.decorators import chainable, view
+from sellmo import modules
+from sellmo.api.decorators import load
+from sellmo.utils.polymorphism import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
+from sellmo.api.checkout import PaymentMethod as _PaymentMethod
 
 #
 
-class MultiStepCheckoutModule(Module):
-	namespace = 'checkout_process'
-	login_required = False
-	
-	@view()
-	def login(self, chain, request, context=None, **kwargs):
-		if context is None:
-			context = {}
-			
-		if chain:
-			return chain.execute(request=request, context=context, **kwargs)
-		else:
-			# We don't render anything
-			raise Http404
-	
-	@view()
-	def information(self, chain, request, context=None, **kwargs):
-		if context is None:
-			context = {}
+from django.db import models
+from django.utils.translation import ugettext_lazy as _
 
-		if chain:
-			return chain.execute(request=request, context=context, **kwargs)
-		else:
-			# We don't render anything
-			raise Http404
-			
-	@view()
-	def payment_method(self, chain, request, context=None, **kwargs):
-		if context is None:
-			context = {}
-	
-		if chain:
-			return chain.execute(request=request, context=context, **kwargs)
-		else:
-			# We don't render anything
-			raise Http404
-			
-	@view()
-	def summary(self, chain, request, context=None, **kwargs):
-		if context is None:
-			context = {}
-	
-		if chain:
-			return chain.execute(request=request, context=context, **kwargs)
-		else:
-			# We don't render anything
-			raise Http404
+#
+
+@load(action='finalize_payment_PaymentMethod')
+def finalize_model():
+	class PaymentMethod(modules.payment.PaymentMethod):
+		class Meta:
+			app_label = 'payment'
+			verbose_name = _("payment method")
+			verbose_name_plural = _("payment methods")
+
+	modules.payment.PaymentMethod = PaymentMethod
+
+
+class PaymentMethod(PolymorphicModel):
+
+	active = models.BooleanField(
+		default = True,
+		verbose_name = _("active"),
+	)
+
+	identifier = models.CharField(
+		unique = True,
+		db_index = True,
+		max_length = 20,
+		verbose_name = _("identifier"),
+	)
+
+	description = models.CharField(
+		max_length = 80,
+		verbose_name = _("description"),
+	)
+
+	def get_method(self):
+		raise NotImplementedError()
+
+	def __unicode__(self):
+		return self.description
+
+	class Meta:
+		abstract = True
+
+#
+
+# Init modules
+from sellmo.contrib.contrib_payment.modules import *

@@ -39,6 +39,9 @@ class LoginStep(CheckoutStep):
 	invalid_context = None
 	key = 'login'
 	
+	def is_definitive(self):
+		return self.order.placed
+	
 	def is_completed(self):
 		return self.request.user.is_authenticated()
 		
@@ -82,8 +85,12 @@ class InformationStep(CheckoutStep):
 			return False
 		return True
 		
+	def is_definitive(self):
+		return self.order.placed
+		
 	def get_next_step(self):
-		return PaymentMethodStep(order=self.order, request=self.request)
+		next_step = PaymentMethodStep(order=self.order, request=self.request)
+		return self.order.shipment.method.process(request=self.request, order=self.order, next_step=next_step)
 		
 	def _contextualize_or_complete(self, request, context, data=None):
 		success = True
@@ -133,6 +140,12 @@ class PaymentMethodStep(CheckoutStep):
 		if self.order.payment is None:
 			return False
 		return True
+		
+	def is_definitive(self):
+		return self.order.placed
+		
+	def get_next_step(self):
+		return SummaryStep(order=self.order, request=self.request)
 
 	def _contextualize_or_complete(self, request, context, data=None):
 		success = True
@@ -158,4 +171,33 @@ class PaymentMethodStep(CheckoutStep):
 
 		return modules.checkout_process.payment_method(request=request, context=context)
 		
+class SummaryStep(CheckoutStep):
+	
+	invalid_context = None
+	key = 'summary'
+	
+	def is_completed(self):
+		return self.order.placed
+		
+	def is_definitive(self):
+		return True
+		
+	def get_next_step(self):
+		return self.order.payment.method.process(request=self.request, order=self.order, next_step=None)
+	
+	def _contextualize_or_complete(self, request, context, data=None):
+		success = True
+		return success
+	
+	def complete(self, data):
+		modules.checkout.place_order(request=self.request, order=self.order)
+		return self._contextualize_or_complete(self.request, self.invalid_context, data)
+	
+	def render(self, request, context):
+		modules.checkout.calculate_order(request=self.request, order=self.order)
+		if not self.invalid_context:
+			self._contextualize_or_complete(request, context)
+		else:
+			context.update(self.invalid_context)
+		return modules.checkout_process.summary(request=request, context=context)
 	

@@ -67,3 +67,11 @@ class VariationRecipeInlineMixin(object):
         
         fieldsets += ((_("Attributes"), {'fields': modules.attribute.Attribute.objects.filter(variates=True).values_list('key', flat=True)}),)
         return fieldsets
+        
+#
+
+class VariationAdmin(admin.ModelAdmin):
+    pass
+    
+
+admin.site.register(modules.variation.Variation, VariationAdmin)

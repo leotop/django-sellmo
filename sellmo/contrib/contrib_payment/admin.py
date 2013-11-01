@@ -25,17 +25,32 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from sellmo import modules
-from sellmo.contrib.contrib_shipping.admin import ShippingMethodAdmin, ShippingMethodAdminBase
+from sellmo.contrib.polymorphism.admin import PolymorphicParentModelAdmin
 
 #
 
+from django.contrib import admin
+from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy as _
 
-#
-
-class FlatShippingMethodAdmin(ShippingMethodAdminBase):
+# Base admin for every payment method subtype
+class PaymentMethodAdminBase(admin.ModelAdmin):
 	pass
-	
-#
 
-ShippingMethodAdmin.child_models += [(modules.shipping.FlatShippingMethod, FlatShippingMethodAdmin)]
+# Admin for payment method
+class PaymentMethodParentAdmin(PolymorphicParentModelAdmin):
+	base_model = modules.payment.PaymentMethod
+	child_models = []
+
+	polymorphic_list = True
+	list_display = ['description']
+	list_display_links = ['description']
+	search_fields = ['description']
+
+	def queryset(self, queryset):
+		return modules.payment.PaymentMethod.objects.all()
+
+
+
+admin.site.register(modules.payment.PaymentMethod, PaymentMethodParentAdmin)
+

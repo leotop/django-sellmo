@@ -24,11 +24,20 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
+#
+
+import datetime
+
+#
+
 from django.db import models
+from django.utils.translation import ugettext_lazy as _
 
 #
 
 from sellmo import modules
+from sellmo.api.pricing import Price
 from sellmo.api.decorators import load
 from sellmo.utils.polymorphism import PolymorphicModel
 from sellmo.utils.tracking import TrackingManager
@@ -65,7 +74,8 @@ def load_model():
             related_name = 'order',
             null = True,
             blank = True,
-            on_delete = models.SET_NULL
+            on_delete = models.SET_NULL,
+            verbose_name = _("payment")
         )
         
         shipment = models.OneToOneField(
@@ -73,7 +83,8 @@ def load_model():
             related_name = 'order',
             null = True,
             blank = True,
-            on_delete = models.SET_NULL
+            on_delete = models.SET_NULL,
+            verbose_name = _("shipment")
         )
         
         class Meta:
@@ -90,6 +101,7 @@ def load_model():
              null = not modules.checkout.customer_required,
              blank = not modules.checkout.customer_required,
              related_name = 'orders',
+             verbose_name = _("customer"),
          )
         
         class Meta:
@@ -111,6 +123,7 @@ def load_model():
                 modules.customer.Address,
                 null = True,
                 related_name='+',
+                verbose_name = _("{0} address".format(type)),
             )
         )
         
@@ -123,6 +136,7 @@ def load_model():
             editable = False,
             on_delete = models.SET_NULL,
             related_name = 'items',
+            verbose_name = _("order"),
         )
 
         class Meta:
@@ -135,6 +149,9 @@ def finalize_model():
     class Order(modules.checkout.Order):
         class Meta:
             app_label = 'checkout'
+            verbose_name = _("order")
+            verbose_name_plural = _("orders")
+            
     modules.checkout.Order = Order
     
 @load(action='finalize_checkout_Shipment')
@@ -142,6 +159,9 @@ def finalize_model():
     class Shipment(modules.checkout.Shipment):
         class Meta:
             app_label = 'checkout'
+            verbose_name = _("shipment")
+            verbose_name_plural = _("shipments")
+    
     modules.checkout.Shipment = Shipment
     
 @load(action='finalize_checkout_Payment')
@@ -149,6 +169,9 @@ def finalize_model():
     class Payment(modules.checkout.Payment):
         class Meta:
             app_label = 'checkout'
+            verbose_name = _("payment")
+            verbose_name_plural = _("payments")
+            
     modules.checkout.Payment = Payment
 
 class Order(models.Model):
@@ -167,11 +190,14 @@ class Order(models.Model):
         editable = False
     )
     
-    # INTERNAL STATES
-    
     placed = models.BooleanField(
         default = False,
         editable = False
+    )
+    
+    calculated = models.DateTimeField(
+        editable = False,
+        null = True
     )
     
     #
@@ -210,15 +236,37 @@ class Order(models.Model):
         for purchase in self:
             self.remove(purchase)
             
+    def calculate(self, price=None):
+        if price is None:
+            price = Price()
+            for purchase in self:
+                price += purchase.total
+            price = modules.pricing.get_price(price=price, order=self)
+        self.price = price
+        self.calculated = datetime.datetime.now()
+        self.save()
+            
     def invalidate(self):
+        self.price = Price()
+        self.calculated = None
+        self.save()
         if self.shipment:
             self.shipment.delete()
         if self.payment:
             self.payment.delete()
         
     def place(self):
+        if self.placed:
+            raise Exception("This order is already placed.")
+        if self.calculated is None:
+            raise Exception("This order hasn't been calculated.")   
+        
         self.placed = True
         self.save()
+        
+    @property
+    def total(self):
+        return self.price + self.shipment.price + self.payment.price
         
     def __contains__(self, purchase):
         return purchase.order == self
