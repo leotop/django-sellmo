@@ -25,16 +25,19 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from django.db import models
+from decimal import Decimal
 
 #
 
 import sellmo
 from sellmo import modules
 from sellmo.api.decorators import view, chainable, load
-from sellmo.api.pricing import Price
-from sellmo.api.pricing.models import Stampable
+from sellmo.api.pricing import Price, StampableProperty
 
 #
+
+def get_default_currency():
+    return modules.pricing.get_currency().code
 
 class PricingModule(sellmo.Module):
     """
@@ -44,15 +47,15 @@ class PricingModule(sellmo.Module):
     namespace = 'pricing'
     currency = None
     types = []
-    Stampable = Stampable
     
     #: Configures the max digits for a pricing (decimal) field
     decimal_max_digits = 9
     #: Configures the amount of decimal places for a pricing (decimal) field
     decimal_places = 2
     
-    @staticmethod
-    def construct_decimal_field(**kwargs):
+    
+    @chainable()
+    def construct_decimal_field(self, chain, **kwargs):
         """
         Constructs a decimal field.
         """
@@ -61,50 +64,83 @@ class PricingModule(sellmo.Module):
             decimal_places = modules.pricing.decimal_places,
             **kwargs
         )
-    
-    def __init__(self, *args, **kwargs):
-        pass
-            
+        
     @chainable()
-    def stamp(self, chain, stampable, price, **kwargs):
-        stampable.amount = price.amount
-        stampable.currency_code = price.currency.code
-        for type in self.types:
-            attr = '%s_amount' % type
-            if type in price:
-                amount = price[type].amount
-            else:
-                amount = 0
-            setattr(stampable, attr, amount)
-            
+    def construct_pricing_field(self, chain, **kwargs):
+        """
+        Constructs a pricing (decimal) field.
+        """
+        if not kwargs.has_key('default'):
+            kwargs['default'] = Decimal('0.0')
+        return self.construct_decimal_field(**kwargs)
+        
     @chainable()
-    def retrieve(self, chain, stampable, **kwargs):
-        price = Price(stampable.amount)
-        for type in self.types:
-            attr = '%s_amount' % type
-            price[type] = Price(getattr(stampable, attr))
+    def construct_currency_field(self, chain, **kwargs):
+        """
+        Constructs a currency field.
+        """
+        return models.CharField(
+            max_length = 3,
+            default = get_default_currency
+        )
+        
+    @chainable()
+    def make_stampable(self, chain, cls, properties, **kwargs):
+        
+        class Meta:
+            abstract = True
+        
+        name = cls.__name__
+        attr_dict = {
+            'Meta' : Meta,
+            '__module__' : cls.__module__
+        }
+        
+        for prop in properties:
+            attr_dict[prop] = StampableProperty(prop)
+            attr_dict['{0}_currency'.format(prop)] = self.construct_currency_field()
+            fields = ['{0}_{1}'.format(prop, field) for field in self.types + ['amount']]
+            for field in fields:
+                attr_dict[field] = self.construct_pricing_field()
+            
+        model = type(name, (cls,), attr_dict)
+        return model
+        
+    @chainable()
+    def retrieve(self, chain, stampable, prop, **kwargs):
+        fields = ['{0}_{1}'.format(prop, field) for field in self.types]
+        price = Price(getattr(stampable, '{0}_amount'.format(prop)))
+        for field in self.types:
+            price[field] = Price(getattr(stampable, '{0}_{1}'.format(prop, field)))
         return price
+            
+    @chainable()
+    def stamp(self, chain, stampable, prop, price, **kwargs):
+        setattr(stampable, '{0}_amount'.format(prop), price.amount)
+        setattr(stampable, '{0}_currency'.format(prop), price.currency.code)
+        for field in self.types:
+            if field in price:
+                amount = price[field].amount
+            else:
+                amount = Decimal(0.0)
+            setattr(stampable, '{0}_{1}'.format(prop, field), amount)
         
     @chainable()
     def get_currency(self, chain, request=None, currency=None, **kwargs):
         if currency is None:
             currency = self.currency
-        
         if chain:
             out = chain.execute(request=request, currency=currency, **kwargs)
             if out.has_key('currency'):
                 currency = out['currency']
-        
         return currency
             
     @chainable()
     def get_price(self, chain, currency=None, price=None, **kwargs):
         if currency is None:
             currency = self.get_currency()
-        
         if price is None:
             price = Price(0, currency=currency)
-            
         if chain:
             out = chain.execute(price=price, currency=currency, **kwargs)
             if out.has_key('price'):

@@ -24,6 +24,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from decimal import Decimal
+
+#
+
 from sellmo import modules
 from sellmo.api.decorators import load
 from sellmo.api.pricing import Price
@@ -40,6 +44,7 @@ def load_tax_subtypes():
 	class PercentDiscount(modules.discount.Discount):
 
 		rate = modules.pricing.construct_decimal_field(
+			default = Decimal('0.0'),
 			verbose_name = _("rate"),
 		)
 

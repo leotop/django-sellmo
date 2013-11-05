@@ -306,27 +306,24 @@ class CartModule(sellmo.Module):
         
         # Add to cart / update cart
         if purchase in cart:
-            cart.update(purchase, save=False)
+            cart.update(purchase)
         else:
-            cart.add(purchase, save=False)
+            cart.add(purchase)
         
         if chain:
             chain.execute(request=request, purchase=purchase, cart=cart, **kwargs)
-        
-        # Finally save
-        if purchase:
-            purchase.save()
             
     @chainable()
     def on_remove_purchase(self, chain, request, cart, purchase=None, **kwargs):
         # Remove from cart
         if purchase in cart:
-            cart.remove(purchase, save=False)
+            cart.remove(purchase)
         
         if chain:
             chain.execute(request=request, purchase=purchase, cart=cart, **kwargs)      
         
-        # Finally delete
+        # Now delete
         purchase.delete()
+        
         
        

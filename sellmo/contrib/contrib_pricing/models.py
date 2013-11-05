@@ -83,6 +83,10 @@ class QtyPriceBase(models.Model):
 def load_model():
     class QtyPrice(modules.qty_pricing.QtyPrice, modules.qty_pricing.QtyPriceBase):
         
+        amount = modules.pricing.construct_pricing_field(
+            verbose_name = _("amount"),
+        )
+        
         def apply(self, price=None):
             return Price(self.amount)
         
@@ -92,21 +96,21 @@ def load_model():
     
 @load(action='finalize_qty_pricing_QtyPrice')
 def finalize_model():
-    # No need to do anything, QtyPriceBase needs to remain abstract, we do need this action
+    # No need to do anything, QtyPrice needs to remain abstract, we do need this action
     pass
 
 class QtyPrice(models.Model):
-    
-    amount = modules.pricing.construct_decimal_field(
-        verbose_name = _("amount"),
-    )
-    
     class Meta:
         abstract = True
         
 @load(after='finalize_qty_pricing_QtyPriceBase', before='finalize_qty_pricing_QtyPriceRatio')
 def load_model():
     class QtyPriceRatio(modules.qty_pricing.QtyPriceRatio, modules.qty_pricing.QtyPriceBase):
+        
+        ratio = modules.pricing.construct_decimal_field(
+            default = Decimal('1.0'),
+            verbose_name = _("ratio"),
+        )
         
         def apply(self, price=None):
             return price * self.ratio
@@ -122,12 +126,6 @@ def finalize_model():
     pass
         
 class QtyPriceRatio(models.Model):
-    
-    ratio = modules.pricing.construct_decimal_field(
-        default = Decimal('1.00'),
-        verbose_name = _("ratio"),
-    )
-    
     class Meta:
         abstract = True
         

@@ -91,8 +91,7 @@ class StoreModule(sellmo.Module):
         if not qty is None:
             purchase.qty = qty
         
-        # Always (re) assign price
-        purchase.price = purchase.product.get_price(qty=purchase.qty)
+        purchase.calculate()
             
         if chain:
             out = chain.execute(product=purchase.product, qty=purchase.qty, purchase=purchase, **kwargs)

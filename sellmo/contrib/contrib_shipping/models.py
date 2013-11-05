@@ -103,6 +103,11 @@ class ShippingMethod(PolymorphicModel):
 @load(action='finalize_shipping_ShippingCarrier')
 def finalize_model():
     class ShippingCarrier(modules.shipping.ShippingCarrier):
+        
+        extra_costs = modules.pricing.construct_pricing_field(
+            verbose_name = _("extra costs")
+        )
+        
         class Meta:
             app_label = 'shipping'
             verbose_name = _("shipping carrier")
@@ -128,8 +133,6 @@ class ShippingCarrier(models.Model):
         max_length = 80,
         verbose_name = _("description"),
     )
-    
-    extra_costs = modules.pricing.construct_decimal_field(default=0)
     
     def __unicode__(self):
         return self.description

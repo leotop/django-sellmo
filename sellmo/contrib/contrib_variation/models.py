@@ -163,6 +163,11 @@ def load_variants():
 def finalize_model():
 
     class Variant(modules.variation.Variant):
+        
+        price_adjustment = modules.pricing.construct_pricing_field(
+            verbose_name = _("price adjustment")
+        )
+        
         class Meta:
             abstract = True
 
@@ -170,12 +175,6 @@ def finalize_model():
 
         
 class Variant(models.Model):
-    
-    price_adjustment = modules.pricing.construct_decimal_field(
-        default=0,
-        verbose_name = _("price adjustment")
-    )
-    
     class Meta:
         abstract = True
                 

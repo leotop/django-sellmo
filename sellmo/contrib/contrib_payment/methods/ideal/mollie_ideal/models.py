@@ -41,7 +41,7 @@ def load_payment_subtypes():
 
 	class MollieIdealPaymentMethod(modules.payment.PaymentMethod):
 
-		costs = modules.pricing.construct_decimal_field(
+		costs = modules.pricing.construct_pricing_field(
 			verbose_name = _("payment costs"),
 		)
 

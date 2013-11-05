@@ -31,6 +31,14 @@ from sellmo import modules
 from django.db import models
 from decimal import Decimal
 
+#
+
+__all__ = [
+    'Currency',
+    'StampableProperty',
+    'Price',
+]
+
 class Currency(object):
     
     """
@@ -43,6 +51,17 @@ class Currency(object):
         
     def format(self, amount):
         return self._format.format(amount=amount)
+        
+class StampableProperty(object):
+
+    def __init__(self, prop):
+        self.prop = prop
+        
+    def __get__(self, obj, objtype):
+        return modules.pricing.retrieve(stampable=obj, prop=self.prop)
+    
+    def __set__(self, obj, val):
+        modules.pricing.stamp(stampable=obj, prop=self.prop, price=val)
 
 class Price(object):
         

@@ -114,7 +114,7 @@ class MollieIdealPaymentMethod(PaymentMethod):
 
 	def get_costs(self, order, currency=None, **kwargs):
 		costs = self.method.costs
-		return modules.pricing.get_price(price=Price(costs, currency=order.price.currency), payment_method=self)
+		return modules.pricing.get_price(price=Price(costs), payment_method=self)
 
 	def __unicode__(self):
 		description = self.description

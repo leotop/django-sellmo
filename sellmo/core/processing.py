@@ -75,8 +75,8 @@ class Process(object):
 			# Step found
 			break
 				
-		if step.is_definitive():
-			raise ProcessError()
+		if step.is_completed() and step.is_definitive():
+			raise ProcessError("Step '{0}' is definitive.".format(key))
 		
 		self.current_step = step
 		

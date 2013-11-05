@@ -194,7 +194,6 @@ class SummaryStep(CheckoutStep):
 		return self._contextualize_or_complete(self.request, self.invalid_context, data)
 	
 	def render(self, request, context):
-		modules.checkout.calculate_order(request=self.request, order=self.order)
 		if not self.invalid_context:
 			self._contextualize_or_complete(request, context)
 		else:

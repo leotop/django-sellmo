@@ -43,7 +43,7 @@ class ShippingMethod(object):
         
     def ship(self, order):
         shipment = self.new_shipment(order)
-        shipment.price = self.get_costs(order=order)
+        shipment.costs = self.get_costs(order=order)
         shipment.save()
         if order.shipment:
             order.shipment.delete()
@@ -70,7 +70,7 @@ class PaymentMethod(object):
         
     def pay(self, order):
         payment = self.new_payment(order)
-        payment.price = self.get_costs(order=order)
+        payment.costs = self.get_costs(order=order)
         payment.save()
         if order.payment:
             order.payment.delete()

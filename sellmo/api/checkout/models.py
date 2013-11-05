@@ -44,26 +44,17 @@ from sellmo.utils.tracking import TrackingManager
 
 #
         
-@load(after='finalize_pricing_Stampable', before='finalize_checkout_Order')
+@load(before='finalize_checkout_Order')
 def load_model():
-    class Order(modules.checkout.Order, modules.pricing.Stampable):
-        class Meta:
-            abstract = True
-    modules.checkout.Order = Order
+    modules.checkout.Order = modules.pricing.make_stampable(cls=modules.checkout.Order, properties=['subtotal', 'total'])
     
-@load(after='finalize_pricing_Stampable', before='finalize_checkout_Payment')
+@load(before='finalize_checkout_Payment')
 def load_model():
-    class Payment(modules.checkout.Payment, modules.pricing.Stampable):
-        class Meta:
-            abstract = True
-    modules.checkout.Payment = Payment
+    modules.checkout.Payment = modules.pricing.make_stampable(cls=modules.checkout.Payment, properties=['costs'])
     
-@load(after='finalize_pricing_Stampable', before='finalize_checkout_Shipment')
+@load(before='finalize_checkout_Shipment')
 def load_model():
-    class Shipment(modules.checkout.Shipment, modules.pricing.Stampable):
-        class Meta:
-            abstract = True
-    modules.checkout.Shipment = Shipment
+    modules.checkout.Shipment = modules.pricing.make_stampable(cls=modules.checkout.Shipment, properties=['costs'])
     
 @load(after='finalize_checkout_Payment', before='finalize_checkout_Order')
 @load(after='finalize_checkout_Shipment', before='finalize_checkout_Order')
@@ -190,11 +181,22 @@ class Order(models.Model):
         editable = False
     )
     
+    status = models.PositiveIntegerField(
+        null = True,
+        blank = True
+    )
+    
+    """
+    A placed order can no longer be modified by the customer.
+    """
     placed = models.BooleanField(
         default = False,
         editable = False
     )
     
+    """
+    Timestamp when this order was last calculated.
+    """
     calculated = models.DateTimeField(
         editable = False,
         null = True
@@ -206,67 +208,101 @@ class Order(models.Model):
         return getattr(self, '{0}_address'.format(type))
         
     def set_address(self, type, value):
+        self._not_placed()
         setattr(self, '{0}_address'.format(type), value)
     
     #
     
-    def add(self, purchase, save=True):
+    def add(self, purchase, save=True, calculate=True):
+        self._not_placed()
         if self.pk == None:
             self.save()
         purchase.order = self
         if save:
             purchase.save()
+            if calculate:
+                self.calculate()
         
-    def update(self, purchase, save=True):
+    def update(self, purchase, save=True, calculate=True):
+        self._not_placed()
         if purchase.order != self:
             raise Exception("We don't own this purchase")
         if purchase.qty == 0:
             self.remove(purchase, save=False)
         if save:
             purchase.save()
+            if calculate:
+                self.calculate()
         
-    def remove(self, purchase, save=True):
+    def remove(self, purchase, save=True, calculate=True):
+        self._not_placed()
         if purchase.order != self:
             raise Exception("We don't own this purchase")
         purchase.order = None
         if save:
             purchase.save()
+            if calculate:
+                self.calculate()
         
-    def clear(self):
+    def clear(self, save=True, calculate=True):
+        self._not_placed()
         for purchase in self:
-            self.remove(purchase)
-            
-    def calculate(self, price=None):
-        if price is None:
-            price = Price()
+            self.remove(purchase, save=save, calculate=False)
+        if save:
+            if calculate:
+                self.calculate()
+    
+    def calculate(self, subtotal=None, total=None):
+        if subtotal is None:
+            subtotal = Price()
             for purchase in self:
-                price += purchase.total
-            price = modules.pricing.get_price(price=price, order=self)
-        self.price = price
+                subtotal += purchase.total
+            subotal = modules.pricing.get_price(price=subtotal, order=self, subtotal=True)
+        
+        self.subtotal = subtotal
+        
+        if total is None:
+            total = Price()
+            total += self.subtotal
+            if self.shipment:
+                total += self.shipment.costs
+            if self.payment:
+                total += self.payment.costs
+            total = modules.pricing.get_price(price=total, order=self, total=True)
+        
+        self.total = total
+        
+        # Update calculcated timestamp and save
         self.calculated = datetime.datetime.now()
         self.save()
-            
-    def invalidate(self):
-        self.price = Price()
-        self.calculated = None
-        self.save()
-        if self.shipment:
-            self.shipment.delete()
-        if self.payment:
-            self.payment.delete()
         
     def place(self):
-        if self.placed:
-            raise Exception("This order is already placed.")
+        self._not_placed()
         if self.calculated is None:
             raise Exception("This order hasn't been calculated.")   
         
         self.placed = True
         self.save()
+            
+    def invalidate(self, force=False):
+        if not force:
+            self._not_placed()
+        else:
+            self.placed = False
         
-    @property
-    def total(self):
-        return self.price + self.shipment.price + self.payment.price
+        self.total = Price()
+        self.calculated = None
+        self.status = None
+        self.save()
+        
+        if self.shipment:
+            self.shipment.delete()
+        if self.payment:
+            self.payment.delete()
+        
+    def _not_placed(self):
+        if self.placed:
+            raise Exception("This order is already placed.")
         
     def __contains__(self, purchase):
         return purchase.order == self

@@ -150,12 +150,11 @@ class CheckoutModule(sellmo.Module):
         # Retrieve order from request
         if order is None:
             order = self.get_order(request=request)
-            
-        # If this order is newly created, populate from cart and persist it
-        if not order.pk:
+        
+        # Try initialize order from cart
+        if not order and modules.cart.enabled:
             cart = modules.cart.get_cart(request=request)
-            for item in cart:
-                order.add(item)
+            self.cart_to_order(cart=cart, order=order)
             
         # Try to track the order
         try:
@@ -165,7 +164,7 @@ class CheckoutModule(sellmo.Module):
             
         # Now make sure this order has some actual purchases
         if not order:
-            raise Exception("Nothing to order")
+            raise Http404("Nothing to order")
         
         if process is None:
             process = self.get_process(request=request, order=order)
@@ -253,6 +252,7 @@ class CheckoutModule(sellmo.Module):
             method = form.cleaned_data['method']
             method = methods[method]
             method.ship(order)
+            order.calculate(subtotal=order.subtotal)
             processed = True
         if chain:
             return chain.execute(order=order, prefix=prefix, data=data, method=method, form=form, processed=processed, **kwargs)
@@ -283,6 +283,7 @@ class CheckoutModule(sellmo.Module):
             method = form.cleaned_data['method']
             method = methods[method]
             method.pay(order)
+            order.calculate(subtotal=order.subtotal)
             processed = True
         if chain:
             return chain.execute(order=order, prefix=prefix, data=data, method=method, form=form, processed=processed, **kwargs)
@@ -298,33 +299,38 @@ class CheckoutModule(sellmo.Module):
                 order = out['order']
         return order
         
+    @chainable()
+    def cart_to_order(self, chain, cart, order):
+        if cart:
+            for purchase in cart:
+                order.add(purchase, calculate=False)
+            order.calculate(subtotal=cart.total)
+        
     @link(namespace='cart')
     def on_purchase(self, request, cart, purchase):
         order = self.get_order(request=request)
         if order.pk:
             if not purchase in order:
-                order.add(purchase)
+                order.add(purchase, calculate=False)
             else:
-                order.update(purchase)
-            self.invalidate_order(request=request, order=order)
+                order.update(purchase, calculate=False)
+            
+            order.calculate(subtotal=cart.total)
+            self.on_order_update(request=request, order=order)
+            
         
     @link(namespace='cart')
     def on_remove_purchase(self, request, cart, purchase):
         order = self.get_order(request=request)
         if order.pk:
             if purchase in order:
-                order.remove(purchase)
-            self.invalidate_order(request=request, order=order)
-    
-    @chainable()
-    def calculate_order(self, chain, request, order, **kwargs):
-        """
-        Calculate's the order purchase(s) price
-        """
-        order.calculate()
+                order.remove(purchase, calculate=False)
+            
+            order.calculate(subtotal=cart.total)
+            self.on_order_update(request=request, order=order)
         
     @chainable()
-    def invalidate_order(self, chain, request, order, **kwargs):
+    def on_order_update(self, chain, request, order, **kwargs):
         """
         Invalidates the order after it's purchases have changed
         """

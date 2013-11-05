@@ -24,6 +24,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import datetime
+
+#
+
 from django import dispatch
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -56,6 +60,9 @@ def load_model():
         
 @load(action='finalize_cart_Cart')
 def finalize_model():
+    
+    modules.cart.Cart = modules.pricing.make_stampable(cls=modules.cart.Cart, properties=['total'])
+    
     class Cart(modules.cart.Cart):
         class Meta:
             app_label = 'cart'
@@ -80,32 +87,67 @@ class Cart(models.Model):
     )
     
     #
+    
+    """
+    Timestamp when this cart was last calculated.
+    """
+    calculated = models.DateTimeField(
+        editable = False,
+        null = True
+    )
+    
+    #
        
-    def add(self, purchase, save=True):
+    def add(self, purchase, save=True, calculate=True):
         if self.pk == None:
             self.save()
         purchase.cart = self
         if save:
             purchase.save()
+            if calculate:
+                self.calculate()
         
-    def update(self, purchase, save=True):
+    def update(self, purchase, save=True, calculate=True):
         if purchase.cart != self:
             raise Exception("We don't own this purchase")
         if purchase.qty == 0:
             self.remove(purchase, save=False)
         if save:
             purchase.save()
+            if calculate:
+                self.calculate()
         
-    def remove(self, purchase, save=True):
+    def remove(self, purchase, save=True, calculate=True):
         if purchase.cart != self:
             raise Exception("We don't own this purchase")
         purchase.cart = None
         if save:
             purchase.save()
+            if calculate:
+                self.calculate()
         
-    def clear(self):
+    def clear(self, save=True, calculate=True):
         for purchase in self:
-            self.remove(purchase)
+            self.remove(purchase, save=save, calculate=False)
+        if save:
+            if calculate:
+                self.calculate()
+            
+    def calculate(self, total=None):
+        if total is None:
+            total = Price()
+            for purchase in self:
+                if not purchase.calculated:
+                    # Sanity check
+                    raise Exception("Cannot calculate cart, purchase was not calculated.")
+                total += purchase.total
+            total = modules.pricing.get_price(price=total, cart=self)
+        
+        self.total = total
+        
+        # Update calculcated timestamp and save
+        self.calculated = datetime.datetime.now()
+        self.save()
         
     def __contains__(self, purchase):
         return purchase.cart == self
@@ -120,14 +162,6 @@ class Cart(models.Model):
                 
     def __nonzero__(self):
         return self.items.count() > 0
-            
-    # Pricing
-    @property
-    def total(self):
-        price = Price()
-        for item in self:
-            price += item.total
-        return price
         
     #
     

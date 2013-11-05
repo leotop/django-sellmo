@@ -24,6 +24,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import datetime
+
+#
+
 from django.db import models
 from django.db.models import Q
 from django.db.models.query import QuerySet
@@ -48,9 +52,12 @@ def load_model():
     
     modules.store.Purchase = Purchase
         
-@load(action='finalize_store_Purchase', after='finalize_pricing_Stampable')
+@load(action='finalize_store_Purchase')
 def finalize_model():
-    class Purchase(modules.store.Purchase, modules.pricing.Stampable):
+    
+    modules.store.Purchase = modules.pricing.make_stampable(cls=modules.store.Purchase, properties=['total'])
+    
+    class Purchase(modules.store.Purchase):
         class Meta:
             app_label = 'store'
             verbose_name = _("purchase")
@@ -72,20 +79,37 @@ class Purchase(PolymorphicModel):
     
     objects = PurchaseManager()
     
+    """
+    Timestamp when this purchase was last calculated.
+    """
+    calculated = models.DateTimeField(
+        editable = False,
+        null = True
+    )
+    
     qty = models.PositiveIntegerField(
         default = 1
     )
     
+    def calculate(self, total=None):
+        if total is None:
+            total = self.product.get_price(qty=self.qty) * self.qty
+            total = modules.pricing.get_price(price=total, purhase=self)
+            
+        self.total = total
+        
+        # Update calculcated timestamp and save
+        self.calculated = datetime.datetime.now()
+        self.save()
+    
     def merge_with(self, purchase):
         self.qty += purchase.qty
+        self.total = Price()
+        self.calculated = None
     
     @property
     def description(self):
         return self.describe()
-        
-    @property
-    def total(self):
-        return self.price * self.qty
     
     def describe(self):
         return unicode(self.product)
@@ -94,7 +118,8 @@ class Purchase(PolymorphicModel):
         clone = super(Purchase, self).clone(cls=cls)
         clone.product = self.product
         clone.qty = self.qty
-        clone.price = self.price
+        clone.total = self.total
+        clone.calculated = self.calculated
         return clone
     
     def __unicode__(self):
