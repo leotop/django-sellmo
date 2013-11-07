@@ -91,11 +91,14 @@ class StoreModule(sellmo.Module):
         if not qty is None:
             purchase.qty = qty
         
-        purchase.calculate()
+        purchase.calculate(save=False)
             
         if chain:
             out = chain.execute(product=purchase.product, qty=purchase.qty, purchase=purchase, **kwargs)
             if out.has_key('purchase'):
                 purchase = out['purchase']
         
+        # Now save and return the purchase (could differ from our initially created purchase)
+        purchase.save()
         return purchase
+        

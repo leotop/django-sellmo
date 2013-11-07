@@ -35,7 +35,7 @@ from django.shortcuts import redirect
 
 import sellmo
 from sellmo import modules
-from sellmo.api.decorators import view, chainable
+from sellmo.api.decorators import view, chainable, link
 from sellmo.api.cart.models import Cart
 from sellmo.api.cart.forms import AddToCartForm, EditPurchaseForm
 from sellmo.api.forms import RedirectableFormSet
@@ -182,7 +182,7 @@ class CartModule(sellmo.Module):
             raise Http404
     
     @view(r'^remove/(?P<purchase_id>[0-9]+)$')
-    def remove_purchase(self, chain, request, purchase_id, purchase=None, context=None, **kwargs):
+    def remove_from_cart(self, chain, request, purchase_id, purchase=None, context=None, **kwargs):
         
         target = request.GET.get('next', 'cart.cart')
         
@@ -196,15 +196,15 @@ class CartModule(sellmo.Module):
         cart = self.get_cart(request=request)
         
         # Now remove from cart
-        self.on_remove_purchase(request=request, cart=cart, purchase=purchase)
+        self.remove_purchase(request=request, cart=cart, purchase=purchase)
         
         if chain:
             return chain.execute(request, purchase=purchase, context=context, **kwargs)
         
         return redirect(target)
             
-    @view(r'^edit/(?P<purchase_id>[0-9]+)$')
-    def edit_purchase(self, chain, request, purchase_id, purchase=None, form=None, context=None, **kwargs):
+    @view(r'^update/(?P<purchase_id>[0-9]+)$')
+    def update_cart(self, chain, request, purchase_id, purchase=None, form=None, context=None, **kwargs):
         
         target = request.GET.get('next', 'cart.cart')
         
@@ -227,7 +227,7 @@ class CartModule(sellmo.Module):
         if form.is_valid():
             purchase_args = self.get_edit_purchase_args(purchase=purchase, form=form)
             purchase = modules.store.make_purchase(**purchase_args)
-            self.on_purchase(request=request, purchase=purchase, cart=cart)
+            self.update_purchase(request=request, purchase=purchase, cart=cart)
             
             if chain:
                 return chain.execute(request, purchase=purchase, form=form, context=context, **kwargs)
@@ -270,7 +270,6 @@ class CartModule(sellmo.Module):
             
             # We require a valid formset
             if formset.is_valid():
-                
                 # get data from form
                 for form in formset:
                     purchase_args = self.get_purchase_args(product=product, form=form)
@@ -286,7 +285,7 @@ class CartModule(sellmo.Module):
         if purchases:   
             # Add purchases to cart
             for purchase in purchases:
-                self.on_purchase(request=request, purchase=purchase, cart=cart)
+                self.add_purchase(request=request, purchase=purchase, cart=cart)
         
             # Keep track of our cart 
             cart.track(request)
@@ -297,24 +296,33 @@ class CartModule(sellmo.Module):
         return redirect(target)
         
     @chainable()
-    def on_purchase(self, chain, request, cart, purchase=None, **kwargs):
-        
+    def add_purchase(self, chain, request, cart, purchase=None, **kwargs):
         # See if we can merge this purchase
         merged = modules.store.merge_purchase(purchase=purchase, existing_purchases=list(cart))
         if merged:
             purchase = merged
         
-        # Add to cart / update cart
-        if purchase in cart:
-            cart.update(purchase)
-        else:
-            cart.add(purchase)
+        # Add to cart
+        cart.add(purchase)
         
         if chain:
             chain.execute(request=request, purchase=purchase, cart=cart, **kwargs)
             
     @chainable()
-    def on_remove_purchase(self, chain, request, cart, purchase=None, **kwargs):
+    def update_purchase(self, chain, request, cart, purchase=None, **kwargs):
+        # See if we can merge this purchase
+        merged = modules.store.merge_purchase(purchase=purchase, existing_purchases=list(cart))
+        if merged:
+            purchase = merged
+        
+        # Update cart
+        cart.update(purchase)
+        
+        if chain:
+            chain.execute(request=request, purchase=purchase, cart=cart, **kwargs)
+            
+    @chainable()
+    def remove_purchase(self, chain, request, cart, purchase=None, **kwargs):
         # Remove from cart
         if purchase in cart:
             cart.remove(purchase)
@@ -325,5 +333,10 @@ class CartModule(sellmo.Module):
         # Now delete
         purchase.delete()
         
-        
+    @link(namespace='checkout')
+    def place_order(self, request, order, **kwargs):
+        # Get the cart
+        cart = self.get_cart(request=request)
+        cart.untrack(request)
+        cart.delete()
        

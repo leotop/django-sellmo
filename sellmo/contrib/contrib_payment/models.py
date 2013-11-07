@@ -26,56 +26,46 @@
 
 from sellmo import modules
 from sellmo.api.decorators import load
-from sellmo.utils.polymorphism import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
-from sellmo.api.checkout import PaymentMethod as _PaymentMethod
 
 #
 
 from django.db import models
+from django.contrib.sites.models import Site
 from django.utils.translation import ugettext_lazy as _
 
 #
 
-@load(action='finalize_payment_PaymentMethod')
+@load(action='finalize_payment_PaymentSettings')
 def finalize_model():
-	class PaymentMethod(modules.payment.PaymentMethod):
+	class PaymentSettings(modules.payment.PaymentSettings):
 		class Meta:
 			app_label = 'payment'
-			verbose_name = _("payment method")
-			verbose_name_plural = _("payment methods")
+			verbose_name = _("payment settings")
+			verbose_name_plural = _("payment settings")
 
-	modules.payment.PaymentMethod = PaymentMethod
+	modules.payment.PaymentSettings = PaymentSettings
 
+class PaymentSettings(models.Model):
 
-class PaymentMethod(PolymorphicModel):
-
-	active = models.BooleanField(
-		default = True,
-		verbose_name = _("active"),
+	site = models.OneToOneField(
+		Site,
+		related_name='payment_settings'
 	)
 
-	identifier = models.CharField(
-		unique = True,
-		db_index = True,
-		max_length = 20,
-		verbose_name = _("identifier"),
+	#
+
+	test_mode = models.BooleanField(
+		default=True,
+		verbose_name = _("test mode"),
 	)
-
-	description = models.CharField(
-		max_length = 80,
-		verbose_name = _("description"),
+	
+	accept_payments = models.BooleanField(
+		default=True,
+		verbose_name = _("accept payments"),
 	)
-
-	def get_method(self):
-		raise NotImplementedError()
-
-	def __unicode__(self):
-		return self.description
 
 	class Meta:
 		abstract = True
-
-#
 
 # Init modules
 from sellmo.contrib.contrib_payment.modules import *

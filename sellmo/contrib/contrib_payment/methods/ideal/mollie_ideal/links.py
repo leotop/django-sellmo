@@ -25,17 +25,16 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from sellmo import modules
-from sellmo.contrib.contrib_payment.admin import PaymentMethodParentAdmin, PaymentMethodAdminBase
+from sellmo.api.decorators import link
+from sellmo.api.pricing import Price
+from sellmo.contrib.contrib_payment.methods.ideal.mollie_ideal import MollieIdealPaymentMethod
 
 #
 
-from django.utils.translation import ugettext_lazy as _
-
-#
-
-class MollieIdealPaymentMethodAdmin(PaymentMethodAdminBase):
-	pass
-
-#
-
-PaymentMethodParentAdmin.child_models += [(modules.payment.MollieIdealPaymentMethod, MollieIdealPaymentMethodAdmin)]
+@link()
+def get_payment_methods(order, methods, **kwargs):
+	method = MollieIdealPaymentMethod(identifier='ideal', description="ideal")
+	methods['ideal'] = method
+	return {
+		'methods' : methods
+	}

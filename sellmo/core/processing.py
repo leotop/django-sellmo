@@ -55,9 +55,6 @@ class Process(object):
 			# When step is none
 			raise ProcessError("Step '{0}' was not found.".format(key))
 		
-		if step.is_completed() and step.is_definitive():
-			raise ProcessError("Step '{0}' is definitive.".format(key))
-		
 		self.current_step = step
 		
 	def step_to_latest(self):
@@ -74,9 +71,6 @@ class Process(object):
 			
 			# Step found
 			break
-				
-		if step.is_completed() and step.is_definitive():
-			raise ProcessError("Step '{0}' is definitive.".format(key))
 		
 		self.current_step = step
 		
@@ -84,6 +78,8 @@ class Process(object):
 		"""
 		Tries to complete the current step and if so move on to the next step.
 		"""
+		if self.current_step.is_completed() and self.current_step.is_definitive():
+			raise ProcessError("Step '{0}' is definitive.".format(self.current_step.key))
 		if self.current_step.complete(data, *args, **kwargs):
 			next_step = self.next_step
 			if not next_step is None:
@@ -95,6 +91,8 @@ class Process(object):
 		"""
 		Renders the current step in this process.
 		"""
+		if self.current_step.is_completed() and self.current_step.is_definitive():
+			raise ProcessError("Step '{0}' is definitive.".format(self.current_step.key))
 		return self.current_step.render(request, *args, **kwargs)
 		
 		

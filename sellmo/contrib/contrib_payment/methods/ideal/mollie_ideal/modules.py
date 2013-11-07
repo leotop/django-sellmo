@@ -24,8 +24,11 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.http import Http404
 from django import forms
+from django.http import HttpResponse, Http404
+from django.core.urlresolvers import reverse
+from django.shortcuts import redirect, render_to_response
+from django.contrib.sites.models import Site
 
 #
 
@@ -51,6 +54,7 @@ class MollieIdealModule(Module):
 	#
 	mollie_banklist_url = 'https://secure.mollie.nl/xml/ideal?a=banklist'
 	mollie_fetch_url = 'https://www.mollie.nl//xml/ideal?a=fetch'
+	mollie_check_url = 'https://secure.mollie.nl/xml/ideal?a=check'
 	
 	@view()
 	def bank_select(self, chain, request, context=None, **kwargs):
@@ -62,28 +66,132 @@ class MollieIdealModule(Module):
 			# We don't render anything
 			raise Http404
 			
+	def get_settings(self):
+		site = Site.objects.get_current()
+		settings = None
+		if site:
+			try:
+				settings =  site.payment_settings
+			except modules.payment.PaymentSettings.DoesNotExist:
+				raise Exception()
+				
+		return settings
+		
+	@view(r'^report$')
+	def report(self, chain, request, **kwargs):
+		transaction_id = request.GET['transaction_id']
+		
+		# Find a payment
+		try:
+			payment = self.MollieIdealPayment.objects.get(transaction_id=transaction_id)
+		except self.MollieIdealPayment.DoesNotExist:
+			raise Http404
+			
+		# We received a report, save now
+		payment.transaction_report = True
+		payment.save()
+			
+		# Get the order
+		order = payment.order
+		
+		# Now get status
+		settings = self.get_settings()
+		
+		payload = {
+			'partnerid' : settings.mollie_partner_id,
+			'transaction_id' : payment.transaction_id,
+		}
+		
+		if settings.test_mode:
+			payload['testmode'] = 'true'
+		
+		req = requests.get(self.mollie_check_url, params=payload)
+		if req.status_code != requests.codes.ok:
+			raise Exception()
+		
+		root = objectify.fromstring(req.text)
+		
+		# Verify for order node
+		if not hasattr(root, 'order'):
+			# Something went wrong
+			raise Exception("Mollie returned errorcode {0}: {1}".format(root.item.errorcode, root.item.message))
+		
+		# Verify transaction_id
+		if root.order.transaction_id.text != payment.transaction_id:
+			raise Exception("Transaction id's did not match")
+		
+		# Verify order amount
+		if root.order.amount != int(order.total.amount * 100):
+			raise Exception("Order amount was not correctly transfered")
+	
+		# See if the order is payed
+		if root.order.payed:
+			order.paid = order.total.amount
+			order.save()
+		
+		return HttpResponse('')
+		
+	@view(r'^back$')
+	def back(self, chain, request, **kwargs):
+		transaction_id = request.GET['transaction_id']
+		
+		# Find a payment
+		try:
+			payment = self.MollieIdealPayment.objects.get(transaction_id=transaction_id)
+		except self.MollieIdealPayment.DoesNotExist:
+			raise Http404
+		
+		# Hand over to checkout process
+		return redirect(reverse('checkout.checkout'))
+			
 	@view()
-	def redirect(self, chain, order, **kwargs):
+	def redirect(self, chain, request, order, **kwargs):
+		
+		settings = self.get_settings()
 		
 		payment = order.payment.downcast()
 		payload = {
-			'partnerid' : '0',
-			'amount' : '1000',
+			'partnerid' : settings.mollie_partner_id,
+			'amount' : int(order.total.amount * 100),
 			'bank_id' : payment.bank_id,
-			'description' : 'ordernummer',
-			'returnurl' : 'aaa',
+			'description' : order.id,
+			'reporturl' : request.build_absolute_uri(reverse('mollie_ideal.report')),
+			'returnurl' : request.build_absolute_uri(reverse('mollie_ideal.back')),
 		}
+		
+		if settings.test_mode:
+			payload['testmode'] = 'true'
+			
+		if settings.mollie_profile_key:
+			payload['profile_key'] = settings.mollie_profile_key,
 		
 		req = requests.get(self.mollie_fetch_url, params=payload)
 		if req.status_code != requests.codes.ok:
-			raise Exception("Errr")
+			raise Exception()
 		
-		print req.text
+		root = objectify.fromstring(req.text)
+		
+		# Verify for order node
+		if not hasattr(root, 'order'):
+			# Something went wrong
+			raise Exception("Mollie returned errorcode {0}: {1}".format(root.item.errorcode, root.item.message))
+		
+		# Verify order amount
+		if root.order.amount != int(order.total.amount * 100):
+			raise Exception("Order amount was not correctly transfered")
+			
+		# Get the redirect url
+		url = root.order.URL.text
+		
+		# Keep track of transaction id
+		transaction_id = root.order.transaction_id.text
+		payment.transaction_id = transaction_id
+		payment.save()
 		
 		if chain:
 			return chain.execute(request=request, **kwargs)
 		else:
-			return None
+			return redirect(url)
 			
 	@chainable()
 	def get_bank_select_form(self, chain, prefix=None, data=None, form=None, bank=None, banks=None, **kwargs):
@@ -107,7 +215,17 @@ class MollieIdealModule(Module):
 			
 	@chainable()
 	def get_banks(self, chain):
-		req = requests.get(self.mollie_banklist_url)
+		
+		settings = self.get_settings()
+		
+		payload = {
+			
+		}
+		
+		if settings.test_mode:
+			payload['testmode'] = 'true'
+		
+		req = requests.get(self.mollie_banklist_url, params=payload)
 		root = objectify.fromstring(req.text)
 		banks = {}
 		for bank in root.iterchildren(tag='bank'):

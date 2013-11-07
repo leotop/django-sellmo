@@ -133,7 +133,7 @@ class Cart(models.Model):
             if calculate:
                 self.calculate()
             
-    def calculate(self, total=None):
+    def calculate(self, total=None, save=True):
         if total is None:
             total = Price()
             for purchase in self:
@@ -147,7 +147,8 @@ class Cart(models.Model):
         
         # Update calculcated timestamp and save
         self.calculated = datetime.datetime.now()
-        self.save()
+        if save:
+            self.save()
         
     def __contains__(self, purchase):
         return purchase.cart == self

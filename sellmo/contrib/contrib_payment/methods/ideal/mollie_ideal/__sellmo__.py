@@ -28,8 +28,7 @@ from sellmo import modules
 
 #
 
-namespace = modules.payment.namespace
+namespace = modules.checkout.namespace
 
 #
-
 

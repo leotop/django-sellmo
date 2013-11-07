@@ -32,7 +32,6 @@ from django.forms import formsets
 class RedirectableMixin(object):
     __redirect_key__ = None
     def redirect(self, request):
-        print self.get_redirect_key()
         request.redirection[self.get_redirect_key()] = self.data
     
     def get_redirect_data(self, request):

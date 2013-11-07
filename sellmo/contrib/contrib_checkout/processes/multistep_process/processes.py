@@ -32,7 +32,10 @@ from sellmo.api.checkout.processes import CheckoutProcess, CheckoutStep
 class MultiStepCheckoutProcess(CheckoutProcess):
 	
 	def get_first_step(self):
-		return LoginStep(order=self.order, request=self.request)
+		if self.order.email:
+			return InformationStep(order=self.order, request=self.request)
+		else:
+			return LoginStep(order=self.order, request=self.request)
 	
 class LoginStep(CheckoutStep):
 	

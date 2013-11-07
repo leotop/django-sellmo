@@ -26,8 +26,6 @@
 
 from sellmo import modules
 from sellmo.api.decorators import load
-from sellmo.api.pricing import Price
-from sellmo.contrib.contrib_payment.methods.ideal.mollie_ideal import MollieIdealPaymentMethod as _MollieIdealPaymentMethod
 
 #
 
@@ -35,26 +33,6 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 #
-
-@load(action='load_payment_subtypes', after='finalize_payment_PaymentMethod')
-def load_payment_subtypes():
-
-	class MollieIdealPaymentMethod(modules.payment.PaymentMethod):
-
-		costs = modules.pricing.construct_pricing_field(
-			verbose_name = _("payment costs"),
-		)
-
-		def get_method(self, carrier=None):
-			identifier = self.identifier
-			return _MollieIdealPaymentMethod(identifier, self.description, method=self)
-
-		class Meta:
-			app_label = 'payment'
-			verbose_name = _("mollie ideal payment method")
-			verbose_name_plural = _("mollie ideal payment methods")
-
-	modules.payment.register_subtype(MollieIdealPaymentMethod)
 	
 @load(action='finalize_mollie_ideal_Payment', after='finalize_checkout_Payment')
 def finalize_model():
@@ -67,17 +45,58 @@ def finalize_model():
 		
 	modules.mollie_ideal.MollieIdealPayment = MollieIdealPayment
 	
+@load(before='finalize_payment_PaymentSettings')
+def finalize_model():
+
+	class PaymentSettings(modules.payment.PaymentSettings):
+		
+		mollie_partner_id = models.CharField(
+			max_length = 20,
+			verbose_name = _("mollie partner-id")
+		)
+		
+		mollie_profile_key = models.CharField(
+			max_length = 20,
+			blank = True,
+			verbose_name = _("mollie profile key")
+		)
+		
+		class Meta:
+			abstract = True
+
+	modules.payment.PaymentSettings = PaymentSettings
+	
 class MollieIdealPayment(models.Model):
 	
 	bank_id = models.PositiveIntegerField(
-		blank = True,
-		null = True
+		null = True,
+		editable = False,
 	)
 	
 	bank_name = models.CharField(
 		max_length = 255,
-		blank = True
+		editable = False,
 	)
+	
+	transaction_id = models.CharField(
+		max_length = 32,
+		editable = False,
+	)
+	
+	transaction_report = models.BooleanField(
+		editable = False
+	)
+	
+	transaction_status = models.CharField(
+		max_length = 30,
+		editable = False,
+	)
+	
+	@property
+	def is_pending(self):
+		if self.transaction_id and not self.transaction_report:
+			return True
+		return False
 	
 	class Meta:
 		abstract = True

@@ -29,16 +29,8 @@ from sellmo import modules
 #
 
 from django.contrib import admin
-from django.contrib.sites.models import Site
 from django.utils.translation import ugettext_lazy as _
 
 class StoreInformationInline(admin.StackedInline):
 	model = modules.store.StoreInformation
-
-# Admin for site 
-class SiteAdmin(admin.ModelAdmin):
-	inlines = [StoreInformationInline]
-
-admin.site.unregister(Site)
-admin.site.register(Site, SiteAdmin)
 

@@ -37,6 +37,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from sellmo import modules
 from sellmo.api.decorators import load
+from sellmo.api.pricing import Price
 from sellmo.utils.polymorphism import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
 
 #
@@ -91,7 +92,7 @@ class Purchase(PolymorphicModel):
         default = 1
     )
     
-    def calculate(self, total=None):
+    def calculate(self, total=None, save=True):
         if total is None:
             total = self.product.get_price(qty=self.qty) * self.qty
             total = modules.pricing.get_price(price=total, purhase=self)
@@ -100,7 +101,8 @@ class Purchase(PolymorphicModel):
         
         # Update calculcated timestamp and save
         self.calculated = datetime.datetime.now()
-        self.save()
+        if save:
+            self.save()
     
     def merge_with(self, purchase):
         self.qty += purchase.qty

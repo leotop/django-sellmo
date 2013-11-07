@@ -30,19 +30,10 @@ from django.http import Http404
 
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable
-from sellmo.contrib.contrib_payment.models import PaymentMethod
+from sellmo.contrib.contrib_payment.models import PaymentSettings
 
 #
 
 class PaymentModule(Module):
 	namespace = 'payment'
-	PaymentMethod = PaymentMethod
-
-	def __init__(self, *args, **kwargs):
-		self.subtypes = []
-
-	def register_subtype(self, subtype):
-		self.subtypes.append(subtype)
-
-		# Shouldn't be a problem if Capital cased classnames are used.
-		setattr(self, subtype.__name__, subtype)
+	PaymentSettings = PaymentSettings

@@ -137,7 +137,7 @@ class CheckoutModule(sellmo.Module):
                 choice = out['choice']
         return choice
     
-    @view([r'^(?P<step>[a-z0-9_-]+)/$', r'^$'])
+    @view([r'^step/(?P<step>[a-z0-9_-]+)/$', r'^$'])
     def checkout(self, chain, request, step=None, data=None, order=None, process=None, context=None, **kwargs):
         
         if context is None:
@@ -150,53 +150,63 @@ class CheckoutModule(sellmo.Module):
         # Retrieve order from request
         if order is None:
             order = self.get_order(request=request)
+            
+        # Now make sure this order can be checed out
+        if order.accepted:
+            raise Http404("This order has already been accepted")
         
         # Try initialize order from cart
         if not order and modules.cart.enabled:
             cart = modules.cart.get_cart(request=request)
             self.cart_to_order(cart=cart, order=order)
             
+        # Now make sure this order has some actual purchases
+        if not order:
+            raise Http404("Nothing to order")
+            
         # Try to track the order
         try:
             order.track(request)
         except UntrackableError:
             raise Exception("Could not track this order")
-            
-        # Now make sure this order has some actual purchases
-        if not order:
-            raise Http404("Nothing to order")
         
         if process is None:
             process = self.get_process(request=request, order=order)
         
+        redirection = None
+        
         # Move to the appropiate step
         if step:
             try:
+                # Go to the given step
                 process.step_to(step)
             except ProcessError as error:
                 raise Http404(error)
+                
+            # Feed the process
+            if data:
+                if process.feed(data) and not process.completed:
+                    # Succesfully fed data, redirect to next step
+                    redirection = redirect(reverse('checkout.checkout', kwargs = {'step' : process.current_step.key}))
         else:
             try:
+                # Go to the latest step
                 process.step_to_latest()
             except ProcessError as error:
                 raise Http404(error)
-            else:
-                return redirect(reverse('checkout.checkout', kwargs = {'step' : process.current_step.key})) 
+            
+            if not process.completed:
+              redirection = redirect(reverse('checkout.checkout', kwargs = {'step' : process.current_step.key}))  
                 
-        # Feed the process
-        redirection = None
-        if data:
-            if process.feed(data):
-                # see if we completed the process
-                if process.completed:
-                    # Now place the order
-                    self.place_order(request=request, order=order)
-                    
-                    # Checkout process completed, redirect
-                    redirection = redirect(reverse('checkout.checkout_complete'))
-                else:
-                    # Succesfully fed data, redirect to next step
-                    redirection = redirect(reverse('checkout.checkout', kwargs = {'step' : process.current_step.key})) 
+        # See if we completed the process
+        if process.completed:
+            # Checkout process completed, accept the order
+            if not order.accepted:
+                self.accept_order(request=request, order=order)
+            
+            # Redirect away from this view
+            request.redirection['completed_order'] = order.pk
+            redirection = redirect(reverse('checkout.complete'))
             
         if redirection:
             return redirection
@@ -209,10 +219,24 @@ class CheckoutModule(sellmo.Module):
             return chain.execute(request, step=step, order=order, process=process, context=context, **kwargs)
         return process.render(request, context=context)
         
-    @view(r'^checkout_complete/$')
-    def checkout_complete(self, chain, request, **kwargs):        
+    @view(r'^complete/$')
+    def complete(self, chain, request, order=None, context=None, **kwargs):
+    
+        if context is None:
+            context = {}
+            
+        # Retrieve order from redirection data
+        order = request.redirection.get('completed_order')
+        try:
+            order = self.Order.objects.get(id=order)
+        except self.Order.DoesNotExist:
+            raise Http404("No order has been checked out")
+            
+        # Append to context
+        context['order'] = order
+        
         if chain:
-            return chain.execute(request, **kwargs)
+            return chain.execute(request, order=order, context=context, **kwargs)
         else:
             # We don't render anything
             raise Http404
@@ -292,7 +316,7 @@ class CheckoutModule(sellmo.Module):
     @chainable()
     def get_order(self, chain, request=None, order=None, **kwargs):
         if order is None:
-            order = self.Order.objects.from_request(request)    
+            order = self.Order.objects.from_request(request)
         if chain:
             out = chain.execute(request=request, order=order, **kwargs)
             if out.has_key('order'):
@@ -307,40 +331,55 @@ class CheckoutModule(sellmo.Module):
             order.calculate(subtotal=cart.total)
         
     @link(namespace='cart')
-    def on_purchase(self, request, cart, purchase):
+    def add_purchase(self, request, cart, purchase, **kwargs):
         order = self.get_order(request=request)
-        if order.pk:
-            if not purchase in order:
-                order.add(purchase, calculate=False)
-            else:
-                order.update(purchase, calculate=False)
-            
+        if order.pk and not order.may_change:
+            order.add(purchase, calculate=False)
             order.calculate(subtotal=cart.total)
-            self.on_order_update(request=request, order=order)
+            self.invalidate_order(request=request, order=order)
             
+    @link(namespace='cart')
+    def update_purchase(self, request, cart, purchase, **kwargs):
+        order = self.get_order(request=request)
+        if order.pk and not order.may_change:
+            order.update(purchase, calculate=False)
+            order.calculate(subtotal=cart.total)
+            self.invalidate_order(request=request, order=order)
         
     @link(namespace='cart')
-    def on_remove_purchase(self, request, cart, purchase):
+    def remove_purchase(self, request, cart, purchase, **kwargs):
         order = self.get_order(request=request)
-        if order.pk:
+        if order.pk and order.may_change:
             if purchase in order:
                 order.remove(purchase, calculate=False)
             
             order.calculate(subtotal=cart.total)
-            self.on_order_update(request=request, order=order)
+            self.invalidate_order(request=request, order=order)
         
     @chainable()
-    def on_order_update(self, chain, request, order, **kwargs):
+    def invalidate_order(self, chain, request, order, **kwargs):
         """
         Invalidates the order after it's purchases have changed
         """
         order.invalidate()
+        if chain:
+            chain.execute(request=request, order=order, **kwargs)
+    
+    @chainable()
+    def accept_order(self, chain, request, order, **kwargs):
+        """
+        Accepts the order and untrack it
+        """
+        order.accept()
+        order.untrack(request)
+        if chain:
+            chain.execute(request=request, order=order, **kwargs)
         
     @chainable()
     def place_order(self, chain, request, order, **kwargs):
         """
-        Places the order and destroys the cart.
+        Places the order.
         """
-        if order.placed:
-            raise Exception("This order is already placed.")
         order.place()
+        if chain:
+            chain.execute(request=request, order=order, **kwargs)

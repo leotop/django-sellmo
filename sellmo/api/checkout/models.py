@@ -47,6 +47,14 @@ from sellmo.utils.tracking import TrackingManager
 @load(before='finalize_checkout_Order')
 def load_model():
     modules.checkout.Order = modules.pricing.make_stampable(cls=modules.checkout.Order, properties=['subtotal', 'total'])
+    class Order(modules.checkout.Order):
+        paid = modules.pricing.construct_pricing_field(
+            verbose_name = _("paid")
+        )
+        
+        class Meta:
+            abstract = True
+    modules.checkout.Order = Order
     
 @load(before='finalize_checkout_Payment')
 def load_model():
@@ -187,6 +195,13 @@ class Order(models.Model):
     )
     
     """
+    An accepted order has been successfully checked out.
+    """
+    accepted = models.BooleanField(
+        default = False,
+    )
+    
+    """
     A placed order can no longer be modified by the customer.
     """
     placed = models.BooleanField(
@@ -252,7 +267,7 @@ class Order(models.Model):
             if calculate:
                 self.calculate()
     
-    def calculate(self, subtotal=None, total=None):
+    def calculate(self, subtotal=None, total=None, save=True):
         if subtotal is None:
             subtotal = Price()
             for purchase in self:
@@ -274,7 +289,8 @@ class Order(models.Model):
         
         # Update calculcated timestamp and save
         self.calculated = datetime.datetime.now()
-        self.save()
+        if save:
+            self.save()
         
     def place(self):
         self._not_placed()
@@ -282,6 +298,13 @@ class Order(models.Model):
             raise Exception("This order hasn't been calculated.")   
         
         self.placed = True
+        self.save()
+        
+    def accept(self):
+        if self.accepted:
+            raise Exception("This order has already been accepted.")   
+        
+        self.accepted = True
         self.save()
             
     def invalidate(self, force=False):
@@ -299,6 +322,14 @@ class Order(models.Model):
             self.shipment.delete()
         if self.payment:
             self.payment.delete()
+            
+    @property
+    def may_change(self): 
+        return not self.placed and not self.accepted
+        
+    @property
+    def is_paid(self):
+        return self.placed and self.total.amount == self.paid
         
     def _not_placed(self):
         if self.placed:

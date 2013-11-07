@@ -102,19 +102,30 @@ class MollieIdealRedirectStep(CheckoutStep):
 	
 class MollieIdealPaymentMethod(PaymentMethod):
 
-	def __init__(self, identifier, description, method, carrier=None):
+	def __init__(self, identifier, description):
 		super(MollieIdealPaymentMethod, self).__init__(identifier, description)
-		self.method = method
 		
 	def process(self, order, request, next_step):
+		if order.is_paid:
+			return next_step
+		
+		# Get our payment 
+		payment = order.payment.downcast()
+		
+		# Check status
+		if payment.is_pending:
+			# Did not yet receive a response from mollie
+			return MolliePendingStep(order=order, request=request, next_step=next_step)
+		
+		# Either this is the first time a payment is attempted, or a payment was
+		# not successful thus allow the user to pay (again)
 		return MollieIdealBankSelectStep(order=order, request=request, next_step=next_step)
 		
 	def new_payment(self, order):
 		return modules.mollie_ideal.MollieIdealPayment(identifier=self.identifier)
 
 	def get_costs(self, order, currency=None, **kwargs):
-		costs = self.method.costs
-		return modules.pricing.get_price(price=Price(costs), payment_method=self)
+		return modules.pricing.get_price(price=Price(0), payment_method=self)
 
 	def __unicode__(self):
 		description = self.description

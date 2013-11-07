@@ -31,9 +31,6 @@ from sellmo.api.decorators import link
 
 @link()
 def get_payment_methods(order, methods, **kwargs):
-	for method in modules.payment.PaymentMethod.objects.polymorphic().filter(active=True):
-		method = method.get_method()
-		methods[method.identifier] = method
 	return {
 		'methods' : methods
 	}

@@ -25,32 +25,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from sellmo import modules
-from sellmo.contrib.polymorphism.admin import PolymorphicParentModelAdmin
 
 #
 
 from django.contrib import admin
-from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy as _
 
-# Base admin for every payment method subtype
-class PaymentMethodAdminBase(admin.ModelAdmin):
-	pass
+class PaymentSettingsInline(admin.StackedInline):
+	model = modules.payment.PaymentSettings
 
-# Admin for payment method
-class PaymentMethodParentAdmin(PolymorphicParentModelAdmin):
-	base_model = modules.payment.PaymentMethod
-	child_models = []
-
-	polymorphic_list = True
-	list_display = ['description']
-	list_display_links = ['description']
-	search_fields = ['description']
-
-	def queryset(self, queryset):
-		return modules.payment.PaymentMethod.objects.all()
-
-
-
-admin.site.register(modules.payment.PaymentMethod, PaymentMethodParentAdmin)
 

@@ -41,6 +41,11 @@ def make_trackable(obj, session_key):
             raise UntrackableError("Cannot track non persistent object")
         request.session[session_key] = self.pk
     obj.track = track.__get__(obj, obj.__class__)
+    
+    def untrack(self, request):
+        request.session[session_key] = None
+    obj.untrack = untrack.__get__(obj, obj.__class__)
+    
     return obj
 
 #
