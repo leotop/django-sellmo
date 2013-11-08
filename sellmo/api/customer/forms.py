@@ -36,10 +36,18 @@ from sellmo.api.decorators import load
 
 @load(action='load_customer_CustomerForm', after='finalize_customer_Customer')
 def load_form():
+    
+    _exclude = []
+    if modules.customer.django_auth_enabled:
+        _exclude.append('user')
+        
+    for address in modules.customer.address_types:
+        _exclude.append('{0}_address'.format(address))
+    
     class CustomerForm(forms.ModelForm):
         class Meta:
             model = modules.customer.Customer
-            exclude = ('user',)
+            exclude = _exclude
     
     modules.customer.CustomerForm = CustomerForm
     
@@ -59,5 +67,3 @@ def load_form():
             exclude = ('customer', 'type')
 
     modules.customer.AddressForm = AddressForm
-
-

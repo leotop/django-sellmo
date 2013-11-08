@@ -220,7 +220,10 @@ class Order(models.Model):
     #
     
     def get_address(self, type):
-        return getattr(self, '{0}_address'.format(type))
+        try:
+            return getattr(self, '{0}_address'.format(type))
+        except modules.customer.Address.DoesNotExist:
+            return None
         
     def set_address(self, type, value):
         self._not_placed()

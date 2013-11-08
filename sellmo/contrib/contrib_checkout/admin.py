@@ -45,6 +45,8 @@ class OrderAdmin(ReverseModelAdmin):
 	
 	inline_type = 'stacked'
 	inline_reverse = ['shipment', 'payment', 'billing_address', 'shipping_address']
+	
+	list_display = ['id', 'total_amount', 'paid', 'placed', 'accepted', 'modified']
 
 admin.site.register(modules.checkout.Order, OrderAdmin)
 

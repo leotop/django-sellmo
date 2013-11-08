@@ -24,5 +24,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-REDIRECTION_SESSION_PREFIX = '_sellmo_redirection'
-REDIRECTION_DEBUG = False
+class Cloneable(object):
+	def clone(self, cls=None):
+		if cls is None:
+			cls = self.__class__
+		clone = cls()
+		return clone
+

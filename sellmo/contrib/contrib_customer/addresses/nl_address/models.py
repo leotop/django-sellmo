@@ -57,6 +57,14 @@ def load_model():
 			max_length = 50,
 			verbose_name = _("city")
 		)
+		
+		def clone(self, cls=None):
+			clone = super(Address, self).clone(cls=cls)
+			clone.street_name = self.street_name
+			clone.house_number = self.house_number
+			clone.postal_code = self.postal_code
+			clone.city = self.city
+			return clone
 
 		class Meta:
 			abstract = True

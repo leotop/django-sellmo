@@ -184,7 +184,7 @@ class CartModule(sellmo.Module):
     @view(r'^remove/(?P<purchase_id>[0-9]+)$')
     def remove_from_cart(self, chain, request, purchase_id, purchase=None, context=None, **kwargs):
         
-        target = request.GET.get('next', 'cart.cart')
+        next = request.GET.get('next', 'cart.cart')
         
         if purchase is None:
             try:
@@ -198,15 +198,16 @@ class CartModule(sellmo.Module):
         # Now remove from cart
         self.remove_purchase(request=request, cart=cart, purchase=purchase)
         
+        redirection = redirect(next)
         if chain:
-            return chain.execute(request, purchase=purchase, context=context, **kwargs)
+            return chain.execute(request, purchase=purchase, context=context, redirection=redirection, **kwargs)
         
-        return redirect(target)
+        return redirection
             
     @view(r'^update/(?P<purchase_id>[0-9]+)$')
     def update_cart(self, chain, request, purchase_id, purchase=None, form=None, context=None, **kwargs):
         
-        target = request.GET.get('next', 'cart.cart')
+        next = request.GET.get('next', 'cart.cart')
         
         if purchase is None:
             try:
@@ -228,20 +229,21 @@ class CartModule(sellmo.Module):
             purchase_args = self.get_edit_purchase_args(purchase=purchase, form=form)
             purchase = modules.store.make_purchase(**purchase_args)
             self.update_purchase(request=request, purchase=purchase, cart=cart)
-            
-            if chain:
-                return chain.execute(request, purchase=purchase, form=form, context=context, **kwargs)
         else:
             form.redirect(request)
-            target = request.GET.get('invalid', target)
+            next = request.GET.get('invalid', 'cart.cart')
+          
+        redirection = redirect(next)  
+        if chain:
+            return chain.execute(request, purchase=purchase, form=form, context=context, redirection=redirection, **kwargs)
         
-        return redirect(target)
+        return redirection
      
         
     @view(r'^add/(?P<product_slug>[a-z0-9_-]+)$')
     def add_to_cart(self, chain, request, product_slug, product=None, formset=None, purchases=None, context=None, **kwargs):
         
-        target = request.GET.get('next', 'cart.cart')
+        next = request.GET.get('next', 'cart.cart')
         
         if product is None:
             try:
@@ -277,7 +279,7 @@ class CartModule(sellmo.Module):
                     purchases.append(purchase)
             else:
                 formset.redirect(request)
-                target = request.GET.get('invalid', target)
+                next = request.GET.get('invalid', 'cart.cart')
         
         # Get the cart
         cart = self.get_cart(request=request)
@@ -289,11 +291,12 @@ class CartModule(sellmo.Module):
         
             # Keep track of our cart 
             cart.track(request)
-            
-            if chain:
-                return chain.execute(request, product=product, purchases=purchases, formset=formset, context=context, **kwargs)
         
-        return redirect(target)
+        redirection = redirect(next)
+        if chain:
+            return chain.execute(request, product=product, purchases=purchases, formset=formset, context=context, redirection=redirection, **kwargs)
+        
+        return redirection
         
     @chainable()
     def add_purchase(self, chain, request, cart, purchase=None, **kwargs):

@@ -32,4 +32,9 @@ from sellmo.config import defaults
 
 #
 
+debug = getattr(settings, 'DEBUG', False)
+
+#
+
 REDIRECTION_SESSION_PREFIX = getattr(settings, 'SELLMO_REDIRECTION_SESSION_PREFIX', defaults.REDIRECTION_SESSION_PREFIX)
+REDIRECTION_DEBUG = getattr(settings, 'SELLMO_REDIRECTION_DEBUG', defaults.REDIRECTION_DEBUG and debug)

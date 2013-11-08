@@ -26,6 +26,8 @@
 
 from sellmo.config import settings
 
+#
+
 class RedirectionAccess(object):
     def __init__(self, session):
         self._session = session
@@ -35,8 +37,12 @@ class RedirectionAccess(object):
         keys = self._session.get(settings.REDIRECTION_SESSION_PREFIX, [])
         for key in keys:
             if key in self._session:
-                self._last[key] = self._session.pop(key)
-        self._session[settings.REDIRECTION_SESSION_PREFIX] = []
+                if not settings.REDIRECTION_DEBUG:
+                    self._last[key] = self._session.pop(key)
+                else:
+                    self._last[key] = self._session[key]
+        if not settings.REDIRECTION_DEBUG:
+            self._session[settings.REDIRECTION_SESSION_PREFIX] = []
     
     def __getitem__(self, key):
         return self._last[key]

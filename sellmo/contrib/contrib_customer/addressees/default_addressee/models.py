@@ -58,6 +58,13 @@ def load_model():
 			blank = True,
 			verbose_name = _("suffx"),
 		)
+		
+		def clone(self, cls=None):
+			clone = super(Addressee, self).clone(cls=cls)
+			clone.suffix = self.suffix
+			if getattr(modules.customer, 'prefix_enabled', False):
+				clone.prefix = self.prefix
+			return clone
 
 		class Meta:
 			abstract = True

@@ -205,7 +205,7 @@ class CheckoutModule(sellmo.Module):
                 self.accept_order(request=request, order=order)
             
             # Redirect away from this view
-            request.redirection['completed_order'] = order.pk
+            request.session['completed_order'] = order.pk
             redirection = redirect(reverse('checkout.complete'))
             
         if redirection:
@@ -225,8 +225,8 @@ class CheckoutModule(sellmo.Module):
         if context is None:
             context = {}
             
-        # Retrieve order from redirection data
-        order = request.redirection.get('completed_order')
+        # Retrieve order from session data
+        order = request.session.get('completed_order')
         try:
             order = self.Order.objects.get(id=order)
         except self.Order.DoesNotExist:
@@ -279,7 +279,8 @@ class CheckoutModule(sellmo.Module):
             order.calculate(subtotal=order.subtotal)
             processed = True
         if chain:
-            return chain.execute(order=order, prefix=prefix, data=data, method=method, form=form, processed=processed, **kwargs)
+            out = chain.execute(order=order, prefix=prefix, data=data, method=method, form=form, processed=processed, **kwargs)
+            method, form, processed = out.get('method', method), out.get('form', form), out.get('processed', processed)
         return method, form, processed
         
     # PAYMENT LOGIC
@@ -310,7 +311,8 @@ class CheckoutModule(sellmo.Module):
             order.calculate(subtotal=order.subtotal)
             processed = True
         if chain:
-            return chain.execute(order=order, prefix=prefix, data=data, method=method, form=form, processed=processed, **kwargs)
+            out = chain.execute(order=order, prefix=prefix, data=data, method=method, form=form, processed=processed, **kwargs)
+            method, form, processed = out.get('method', method), out.get('form', form), out.get('processed', processed)
         return method, form, processed
         
     @chainable()
@@ -383,3 +385,23 @@ class CheckoutModule(sellmo.Module):
         order.place()
         if chain:
             chain.execute(request=request, order=order, **kwargs)
+            
+    @link(namespace='customer')
+    def get_customer(self, request, customer=None, **kwargs):
+        if customer is None:
+            # Retrieve order from session data
+            order = request.session.get('completed_order')
+            try:
+                order = self.Order.objects.get(id=order)
+            except self.Order.DoesNotExist:
+                pass
+            else:
+                customer = super(modules.customer.Contactable, order).clone(cls=modules.customer.Customer)
+                for address in modules.customer.address_types:
+                    customer.set_address(address, order.get_address(address).clone())
+        return {
+            'customer' : customer
+        }
+        
+        
+        

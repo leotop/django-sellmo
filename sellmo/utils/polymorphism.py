@@ -35,6 +35,10 @@ from django.contrib.admin.util import quote
 
 #
 
+from sellmo.utils.cloning import Cloneable
+
+#
+
 class PolymorphicQuerySet(QuerySet):
     
     def __init__(self, *args, **kwargs):
@@ -98,7 +102,7 @@ class PolymorphicManager(models.Manager):
     def polymorphic(self):
         return self.get_query_set().polymorphic()
 
-class PolymorphicModel(models.Model):
+class PolymorphicModel(models.Model, Cloneable):
     
     content_type = models.ForeignKey(ContentType, editable=False, related_name='+')
     objects = PolymorphicManager()
@@ -126,12 +130,6 @@ class PolymorphicModel(models.Model):
             else:
                 return downcasted
         return self
-        
-    def clone(self, cls=None):
-        if cls is None:
-            cls = self.__class__
-        clone = cls()
-        return clone
     
     def resolve_content_type(self):
         if not self.content_type_id is None:

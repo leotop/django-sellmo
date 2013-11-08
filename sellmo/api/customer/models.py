@@ -31,6 +31,7 @@ from django.utils.translation import ugettext_lazy as _
 #
 
 from sellmo import modules
+from sellmo.utils.cloning import Cloneable
 from sellmo.api.decorators import load
 
 #
@@ -84,13 +85,22 @@ def finalize_model():
             
     modules.customer.Customer = Customer
     
-class Customer(models.Model):
+class Customer(models.Model, Cloneable):
 
     def get_address(self, type):
-        return getattr(self, '{0}_address'.format(type))
+        try:
+            return getattr(self, '{0}_address'.format(type))
+        except modules.customer.Address.DoesNotExist:
+            return None
 
     def set_address(self, type, value):
         setattr(self, '{0}_address'.format(type), value)
+        
+    def clone(self, cls=None):
+        clone = super(Customer, self).clone(cls=cls)
+        if modules.customer.django_auth_enabled:
+            clone.user = self.user
+        return clone
 
     class Meta:
         ordering = ['last_name', 'first_name']
@@ -118,7 +128,11 @@ def finalize_model():
     
     modules.customer.Address = Address
     
-class Address(models.Model):
+class Address(models.Model, Cloneable):
+
+    def clone(self, cls=None):
+        clone = super(Address, self).clone(cls=cls)
+        return clone
 
     class Meta:
         ordering = ['last_name', 'first_name']
@@ -142,9 +156,14 @@ def finalize_model():
 
     modules.customer.Contactable = Contactable
     
-class Contactable(models.Model):
+class Contactable(models.Model, Cloneable):
     class Meta:
         abstract = True
+        
+    def clone(self, cls=None):
+        clone = super(Contactable, self).clone(cls=cls)
+        clone.email = self.email
+        return clone
   
 #
 # Addressee model
@@ -173,7 +192,7 @@ def finalize_model():
 
     modules.customer.Addressee = Addressee     
 
-class Addressee(models.Model):
+class Addressee(models.Model, Cloneable):
 
     first_name = models.CharField(
         max_length = 30,
@@ -184,6 +203,14 @@ class Addressee(models.Model):
         max_length = 30,
         verbose_name = _("last name")
     )
+    
+    def clone(self, cls=None):
+        clone = super(Addressee, self).clone(cls=cls)
+        clone.first_name = self.first_name
+        clone.last_name = self.last_name
+        if modules.customer.businesses_allowed:
+            clone.company_name = self.company_name
+        return clone
     
     def __unicode__(self):
         return u"{0} {1}".format(self.first_name, self.last_name)
