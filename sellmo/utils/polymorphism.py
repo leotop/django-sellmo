@@ -104,7 +104,7 @@ class PolymorphicManager(models.Manager):
 
 class PolymorphicModel(models.Model, Cloneable):
     
-    content_type = models.ForeignKey(ContentType, editable=False, related_name='+')
+    content_type = models.ForeignKey(ContentType, editable=False)
     objects = PolymorphicManager()
     
     @classmethod

@@ -50,7 +50,7 @@ def load_model():
             null = True,
             editable = False,
             on_delete=models.SET_NULL,
-            related_name = 'items',
+            related_name = 'purchases',
         )
         
         class Meta:
@@ -61,7 +61,12 @@ def load_model():
 @load(action='finalize_cart_Cart')
 def finalize_model():
     
-    modules.cart.Cart = modules.pricing.make_stampable(cls=modules.cart.Cart, properties=['total'])
+    modules.cart.Cart = modules.pricing.make_stampable(
+        cls = modules.cart.Cart,
+        properties = [
+            ('total', _("total"))
+        ]
+    )
     
     class Cart(modules.cart.Cart):
         class Meta:
@@ -78,12 +83,14 @@ class Cart(models.Model):
     
     created = models.DateTimeField(
         auto_now_add = True,
-        editable = False
+        editable = False,
+        verbose_name = _("created at"),
     )
     
     modified = models.DateTimeField(
         auto_now = True,
-        editable = False
+        editable = False,
+        verbose_name = _("modified at"),
     )
     
     #
@@ -93,7 +100,8 @@ class Cart(models.Model):
     """
     calculated = models.DateTimeField(
         editable = False,
-        null = True
+        null = True,
+        verbose_name = _("calculated at"),
     )
     
     #
@@ -154,15 +162,15 @@ class Cart(models.Model):
         return purchase.cart == self
     
     def __iter__(self):
-        if hasattr(self, 'items'):
-            for item in self.items.polymorphic().all():
-                yield item
+        if hasattr(self, 'purchases'):
+            for purchase in self.purchases.polymorphic().all():
+                yield purchase
                 
     def __len__(self):
-        return self.items.count()
+        return self.purchases.count()
                 
     def __nonzero__(self):
-        return self.items.count() > 0
+        return len(self) > 0
         
     #
     

@@ -25,9 +25,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 class Cloneable(object):
-	def clone(self, cls=None):
-		if cls is None:
-			cls = self.__class__
-		clone = cls()
+	def clone(self, cls=None, clone=None):
+		if clone is None:
+			if cls is None:
+				cls = self.__class__
+			clone = cls()
 		return clone
 

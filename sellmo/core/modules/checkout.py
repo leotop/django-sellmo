@@ -163,12 +163,6 @@ class CheckoutModule(sellmo.Module):
         # Now make sure this order has some actual purchases
         if not order:
             raise Http404("Nothing to order")
-            
-        # Try to track the order
-        try:
-            order.track(request)
-        except UntrackableError:
-            raise Exception("Could not track this order")
         
         if process is None:
             process = self.get_process(request=request, order=order)
@@ -185,18 +179,23 @@ class CheckoutModule(sellmo.Module):
                 
             # Feed the process
             if data:
-                if process.feed(data) and not process.completed:
-                    # Succesfully fed data, redirect to next step
-                    redirection = redirect(reverse('checkout.checkout', kwargs = {'step' : process.current_step.key}))
+                if process.feed(data):
+                    # Try to track the order at this point
+                    try:
+                        order.track(request)
+                    except UntrackableError:
+                        pass
+                    
+                    if not process.completed:
+                        redirection = redirect(reverse('checkout.checkout', kwargs = {'step' : process.current_step.key}))  
         else:
             try:
                 # Go to the latest step
                 process.step_to_latest()
             except ProcessError as error:
                 raise Http404(error)
-            
-            if not process.completed:
-              redirection = redirect(reverse('checkout.checkout', kwargs = {'step' : process.current_step.key}))  
+                
+            redirection = redirect(reverse('checkout.checkout', kwargs = {'step' : process.current_step.key}))  
                 
         # See if we completed the process
         if process.completed:
@@ -237,6 +236,40 @@ class CheckoutModule(sellmo.Module):
         
         if chain:
             return chain.execute(request, order=order, context=context, **kwargs)
+        else:
+            # We don't render anything
+            raise Http404
+            
+    @view(r'^cancel/$')
+    def cancel(self, chain, request, order=None, data=None, context=None, **kwargs):
+    
+        if context is None:
+            context = {}
+            
+        # Try resolve data
+        if data is None and request.method == 'POST':
+            data = request.POST
+            
+        # Retrieve order from request
+        if order is None:
+            order = self.get_order(request=request)
+        
+        #
+        if not order:
+            raise Http404("No order to cancel")
+            
+        if not order.may_cancel:
+            raise Http404("Cannot cancel this order")
+            
+        #
+        if data and 'cancel_order' in data:
+            self.cancel_order(request=request, order=order)
+            
+        # Append to context
+        context['order'] = order
+        
+        if chain:
+            return chain.execute(request, order=order, data=data, context=context, **kwargs)
         else:
             # We don't render anything
             raise Http404
@@ -328,14 +361,18 @@ class CheckoutModule(sellmo.Module):
     @chainable()
     def cart_to_order(self, chain, cart, order):
         if cart:
-            for purchase in cart:
-                order.add(purchase, calculate=False)
-            order.calculate(subtotal=cart.total)
+            if order.pk:
+                order.clear()
+                for purchase in cart:
+                    order.add(purchase, calculate=False)
+            else:
+                order.proxy(cart)
+            order.calculate(subtotal=cart.total, save=not order.pk is None)
         
     @link(namespace='cart')
     def add_purchase(self, request, cart, purchase, **kwargs):
         order = self.get_order(request=request)
-        if order.pk and not order.may_change:
+        if order.pk and order.may_change:
             order.add(purchase, calculate=False)
             order.calculate(subtotal=cart.total)
             self.invalidate_order(request=request, order=order)
@@ -343,7 +380,7 @@ class CheckoutModule(sellmo.Module):
     @link(namespace='cart')
     def update_purchase(self, request, cart, purchase, **kwargs):
         order = self.get_order(request=request)
-        if order.pk and not order.may_change:
+        if order.pk and order.may_change:
             order.update(purchase, calculate=False)
             order.calculate(subtotal=cart.total)
             self.invalidate_order(request=request, order=order)
@@ -386,6 +423,16 @@ class CheckoutModule(sellmo.Module):
         if chain:
             chain.execute(request=request, order=order, **kwargs)
             
+    @chainable()
+    def cancel_order(self, chain, request, order, **kwargs):
+        """
+        Cancels the order.
+        """
+        order.cancel()
+        order.untrack(request)
+        if chain:
+            chain.execute(request=request, order=order, **kwargs)
+            
     @link(namespace='customer')
     def get_customer(self, request, customer=None, **kwargs):
         if customer is None:
@@ -396,12 +443,14 @@ class CheckoutModule(sellmo.Module):
             except self.Order.DoesNotExist:
                 pass
             else:
-                customer = super(modules.customer.Contactable, order).clone(cls=modules.customer.Customer)
+                customer = modules.customer.Contactable.clone(order, cls=modules.customer.Customer)
+                if len(modules.customer.address_types) > 0:
+                    address = modules.customer.address_types[0]
+                    address = order.get_address(address)
+                    customer = modules.customer.Addressee.clone(address, clone=customer)
                 for address in modules.customer.address_types:
                     customer.set_address(address, order.get_address(address).clone())
         return {
             'customer' : customer
         }
-        
-        
         

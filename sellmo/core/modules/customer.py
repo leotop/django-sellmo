@@ -27,7 +27,7 @@
 from django.http import Http404
 from django.shortcuts import redirect
 from django.core.exceptions import ObjectDoesNotExist
-from django.contrib.auth import login as auth_login, logout as auth_logout, get_user_model
+from django.contrib.auth import login as auth_login, logout as auth_logout, authenticate, get_user_model
 from django.contrib.auth.forms import AuthenticationForm, PasswordResetForm, SetPasswordForm, PasswordChangeForm, UserCreationForm
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.debug import sensitive_post_parameters
@@ -214,8 +214,6 @@ class CustomerModule(sellmo.Module):
             processed = True
             if user is None:
                 user = form.get_user()
-        if user:
-            auth_login(request, user)
         if chain:
             out = chain.execute(request=request, prefix=prefix, data=data, user=user, form=form, processed=processed, **kwargs)
             user, form, processed = out.get('user', user), out.get('form', form), out.get('processed', processed)
@@ -225,6 +223,9 @@ class CustomerModule(sellmo.Module):
     @method_decorator(never_cache)
     @view(r'^login/$')
     def login(self, chain, request, context=None, **kwargs):
+        
+        next = request.GET.get('next', 'customer.account')
+        
         if context == None:
             context = {}
         
@@ -235,11 +236,39 @@ class CustomerModule(sellmo.Module):
         user, form, processed = self.handle_login(request=request, data=data)
         context['form'] = form
         
+        if self.django_auth_enabled and processed:
+            auth_login(request, user)
+        
+        redirection = redirect(next)
+        
         if chain:
-            return chain.execute(request, user=user, form=form, processed=processed, context=context, **kwargs)
+            return chain.execute(request, user=user, form=form, processed=processed, context=context, redirection=redirection, **kwargs)
+        elif processed:
+            return redirection
         else:
-            # We don't render anything
             raise Http404
+            
+    # LOGOUT LOGIC
+    
+    @method_decorator(csrf_protect)
+    @method_decorator(never_cache)
+    @view(r'^logout/$')
+    def logout(self, chain, request, context=None, **kwargs):
+        
+        next = request.GET.get('next', 'customer.login')
+        
+        if context == None:
+            context = {}
+        
+        if self.django_auth_enabled:
+            auth_logout(request)
+        
+        redirection = redirect(next)
+        
+        if chain:
+            return chain.execute(request, context=context, redirection=redirection, **kwargs)
+        else:
+            return redirection
     
     # REGISTRATION LOGIC
         
@@ -261,11 +290,11 @@ class CustomerModule(sellmo.Module):
     @view(r'^registration/$')
     def registration(self, chain, request, context=None, **kwargs):
         
-        next = request.GET.get('next', 'customer.account')
+        next = request.GET.get('next', 'customer.login')
         redirection = None
         
         customer = self.get_customer(request=request)
-        if customer:
+        if customer and customer.pk:
             raise Http404("Already registered")
         
         if context == None:
@@ -304,10 +333,8 @@ class CustomerModule(sellmo.Module):
                 customer.set_address(type, address)
             customer.save()
             
-            # Login user
-            auth_login(request, user)
-            
             #
+            
             redirection = redirect(next)
         
         if chain:
@@ -339,13 +366,19 @@ class CustomerModule(sellmo.Module):
         else:
             # We don't render anything
             raise Http404
-            
-            
+    
     @link(namespace='checkout')
     def get_order(self, request, order=None, **kwargs):
-        if order:
-            # Fill in blanks
-            pass
+        customer = self.get_customer(request=request)
+        if not order is None and not order.pk:
+            if customer and customer.pk:
+                order = self.Contactable.clone(customer, clone=order)
+                for address in modules.customer.address_types:
+                    order.set_address(address, customer.get_address(address).clone())
+        
+        if customer and customer.pk:
+            order.customer = customer
+        
         return {
             'order' : order
         }

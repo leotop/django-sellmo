@@ -46,7 +46,14 @@ from sellmo.utils.tracking import TrackingManager
         
 @load(before='finalize_checkout_Order')
 def load_model():
-    modules.checkout.Order = modules.pricing.make_stampable(cls=modules.checkout.Order, properties=['subtotal', 'total'])
+    modules.checkout.Order = modules.pricing.make_stampable(
+        cls=modules.checkout.Order,
+        properties=[
+            ('subtotal', _("subtotal")),
+            ('total', _("total")),
+        ]
+    )
+        
     class Order(modules.checkout.Order):
         paid = modules.pricing.construct_pricing_field(
             verbose_name = _("paid")
@@ -58,11 +65,21 @@ def load_model():
     
 @load(before='finalize_checkout_Payment')
 def load_model():
-    modules.checkout.Payment = modules.pricing.make_stampable(cls=modules.checkout.Payment, properties=['costs'])
+    modules.checkout.Payment = modules.pricing.make_stampable(
+        cls=modules.checkout.Payment,
+        properties=[
+            ('costs', _("costs"))
+        ]
+    )
     
 @load(before='finalize_checkout_Shipment')
 def load_model():
-    modules.checkout.Shipment = modules.pricing.make_stampable(cls=modules.checkout.Shipment, properties=['costs'])
+    modules.checkout.Shipment = modules.pricing.make_stampable(
+        cls=modules.checkout.Shipment,
+        properties=[
+            ('costs', _("costs"))
+        ]
+    )
     
 @load(after='finalize_checkout_Payment', before='finalize_checkout_Order')
 @load(after='finalize_checkout_Shipment', before='finalize_checkout_Order')
@@ -134,7 +151,7 @@ def load_model():
             null = True,
             editable = False,
             on_delete = models.SET_NULL,
-            related_name = 'items',
+            related_name = 'purchases',
             verbose_name = _("order"),
         )
 
@@ -175,23 +192,30 @@ def finalize_model():
 
 class Order(models.Model):
     
+    _proxy = None
+    
+    #
+    
     objects = TrackingManager('sellmo_order')
     
     #
     
     created = models.DateTimeField(
         auto_now_add = True,
-        editable = False
+        editable = False,
+        verbose_name = _("created at"),
     )
     
     modified = models.DateTimeField(
         auto_now = True,
-        editable = False
+        editable = False,
+        verbose_name = _("modified at"),
     )
     
     status = models.PositiveIntegerField(
         null = True,
-        blank = True
+        blank = True,
+        verbose_name = _("status"),
     )
     
     """
@@ -199,6 +223,7 @@ class Order(models.Model):
     """
     accepted = models.BooleanField(
         default = False,
+        verbose_name = _("accepted"),
     )
     
     """
@@ -206,7 +231,17 @@ class Order(models.Model):
     """
     placed = models.BooleanField(
         default = False,
-        editable = False
+        editable = False,
+        verbose_name = _("placed"),
+    )
+    
+    """
+    A cancelled order was cancelled by the customer and will not be shown to the customer anymore.
+    """
+    cancelled = models.BooleanField(
+        default = False,
+        editable = False,
+        verbose_name = _("cancelled"),
     )
     
     """
@@ -214,7 +249,8 @@ class Order(models.Model):
     """
     calculated = models.DateTimeField(
         editable = False,
-        null = True
+        null = True,
+        verbose_name = _("calculated at"),
     )
     
     #
@@ -229,6 +265,11 @@ class Order(models.Model):
         self._not_placed()
         setattr(self, '{0}_address'.format(type), value)
     
+    #
+    
+    def proxy(self, purchases):
+        self._proxy = purchases
+        
     #
     
     def add(self, purchase, save=True, calculate=True):
@@ -298,19 +339,21 @@ class Order(models.Model):
     def place(self):
         self._not_placed()
         if self.calculated is None:
-            raise Exception("This order hasn't been calculated.")   
-        
+            raise Exception("This order hasn't been calculated.")
         self.placed = True
         self.save()
         
     def accept(self):
         if self.accepted:
-            raise Exception("This order has already been accepted.")   
-        
+            raise Exception("This order has already been accepted.")
         self.accepted = True
         self.save()
+        
+    def cancel(self): 
+        self.cancelled = True
+        self.save()
             
-    def invalidate(self, force=False):
+    def invalidate(self, force=False, save=True):
         if not force:
             self._not_placed()
         else:
@@ -319,12 +362,17 @@ class Order(models.Model):
         self.total = Price()
         self.calculated = None
         self.status = None
-        self.save()
+        if save:
+            self.save()
         
         if self.shipment:
             self.shipment.delete()
         if self.payment:
             self.payment.delete()
+            
+    @property
+    def may_cancel(self):
+        return self.placed and not self.accepted
             
     @property
     def may_change(self): 
@@ -342,15 +390,24 @@ class Order(models.Model):
         return purchase.order == self
     
     def __iter__(self):
-        if hasattr(self, 'items'):
-            for item in self.items.polymorphic().all():
-                yield item
+        purchases = self._proxy if self._proxy else []
+        if not purchases and hasattr(self, 'purchases'):
+            purchases = self.purchases.polymorphic().all()
+        
+        for purchase in purchases:
+            yield purchase
                 
     def __len__(self):
-        return self.items.count()
+        purchases = self._proxy if self._proxy else []
+        if not purchases and hasattr(self, 'purchases'):
+            return self.purchases.count()
+        return len(purchases)
                 
     def __nonzero__(self):
-        return self.items.count() > 0
+        return len(self) > 0
+        
+    def __unicode__(self):
+        return _("order #{0}").format(unicode(self.pk))
     
     class Meta:
         abstract = True
@@ -365,6 +422,9 @@ class Shipment(PolymorphicModel):
         return modules.checkout.get_shipping_methods(order=self.order)[self.identifier]
     method = property(get_method)
     
+    def __unicode__(self):
+        return unicode(self.order)
+    
     class Meta:
         abstract = True
         
@@ -373,6 +433,9 @@ class Payment(PolymorphicModel):
     identifier = models.CharField(
         max_length = 80,
     )
+    
+    def __unicode__(self):
+        return unicode(self.order)
     
     def get_method(self):
         return modules.checkout.get_payment_methods(order=self.order)[self.identifier]

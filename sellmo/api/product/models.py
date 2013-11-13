@@ -133,6 +133,7 @@ class ProductRelatable(models.Model):
     objects = ProductRelatableManager()
     
     all_products = models.BooleanField(
+        default = False,
         verbose_name = _("all products"),
     )
     

@@ -32,7 +32,7 @@ from sellmo.magic import ModelMixin, ManagerMixinHelper
 from sellmo.utils.polymorphism import PolymorphicModel, PolymorphicManager
 from sellmo.contrib.contrib_variation.variant import VariantFieldDescriptor, VariantMixin, get_differs_field_name
 from sellmo.contrib.contrib_variation.utils import generate_slug
-from sellmo.contrib.contrib_variation.helpers import RecipelessAttributeHelper
+from sellmo.contrib.contrib_variation.helpers import RecipelessAttributeHelper, VariantAttributeHelper
 from sellmo.contrib.contrib_attribute.query import ProductQ
 
 #
@@ -50,7 +50,6 @@ from django.utils.translation import ugettext_lazy as _
 @load(before='finalize_product_Product')
 def load_model():
     class Product(modules.product.Product):
-
         def __init__(self, *args, **kwargs):
             super(Product, self).__init__(*args, **kwargs)
             self.attributes = RecipelessAttributeHelper(self)
@@ -154,7 +153,7 @@ def load_variants():
         for field in model.get_variable_fields():
             descriptor = field.model.__dict__.get(field.name, None)
             setattr(model, field.name, VariantFieldDescriptor(field, descriptor=descriptor))
-            model.add_to_class(get_differs_field_name(field.name), models.BooleanField(editable=False, auto_created=True))
+            model.add_to_class(get_differs_field_name(field.name), models.BooleanField(editable=False, auto_created=True, default=False))
         
         modules.variation.subtypes.append(model)
         setattr(modules.variation, name, model)
@@ -163,6 +162,9 @@ def load_variants():
 def finalize_model():
 
     class Variant(modules.variation.Variant):
+        def __init__(self, *args, **kwargs):
+            super(Variant, self).__init__(*args, **kwargs)
+            self.attributes = VariantAttributeHelper(self)
         
         price_adjustment = modules.pricing.construct_pricing_field(
             verbose_name = _("price adjustment")
@@ -234,11 +236,13 @@ def load_model():
     class Attribute(modules.attribute.Attribute):
         
         variates = models.BooleanField(
-            
+            default = False,
+            verbose_name = _("variates")
         )
         
         groups = models.BooleanField(
-            
+            default = False,
+            verbose_name = _("groups")
         )
         
         class Meta:
@@ -449,7 +453,7 @@ class VariationManager(models.Manager):
         # Mix in variants
         for variant in product.variants.all():
             # Find values related to this variant
-            values = modules.attribute.Value.objects.for_product(variant)
+            values = modules.attribute.Value.objects.for_product(variant).filter(attribute__in=attributes)
                 
             for combination in map:
                 for value in values:
@@ -609,6 +613,7 @@ class Variation(models.Model):
         
     # Flags
     deprecated = models.BooleanField(
+        default = False,
         editable = False,
     )
     
@@ -650,8 +655,8 @@ def load_model():
         def merge_with(self, purchase):
             super(VariationPurchase, self).merge_with(purchase)
             
-        def clone(self, cls=None):
-            clone = super(VariationPurchase, self).clone(cls=cls)
+        def clone(self, cls=None, clone=None):
+            clone = super(VariationPurchase, self).clone(cls=cls, clone=clone)
             clone.variation_key = self.variation_key
             clone.variation_description = self.variation_description
             return clone

@@ -25,6 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from django.contrib import admin
+from sellmo.contrib.admin.reverse import ReverseModelAdmin
 
 #
 
@@ -40,9 +41,14 @@ class AddressInline(admin.StackedInline):
     model = modules.customer.Address
     
     
-class CustomerAdmin(admin.ModelAdmin):
-    pass
+class CustomerAdmin(ReverseModelAdmin):
+    inline_type = 'stacked'
+    inline_reverse = ['billing_address', 'shipping_address']
     
+    raw_id_fields = ['user']
+    autocomplete_lookup_fields = {
+        'fk': ['user'],
+    }
 #
 
 admin.site.register(modules.customer.Customer, CustomerAdmin)

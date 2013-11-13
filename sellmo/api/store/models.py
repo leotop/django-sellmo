@@ -46,7 +46,8 @@ from sellmo.utils.polymorphism import PolymorphicModel, PolymorphicManager, Poly
 def load_model():
     class Purchase(modules.store.Purchase):
         product = models.ForeignKey(
-            modules.product.Product
+            modules.product.Product,
+            verbose_name = _("product"),
         )
         class Meta:
             abstract = True
@@ -56,7 +57,12 @@ def load_model():
 @load(action='finalize_store_Purchase')
 def finalize_model():
     
-    modules.store.Purchase = modules.pricing.make_stampable(cls=modules.store.Purchase, properties=['total'])
+    modules.store.Purchase = modules.pricing.make_stampable(
+        cls = modules.store.Purchase,
+        properties = [
+            ('total', _("total"))
+        ]
+    )
     
     class Purchase(modules.store.Purchase):
         class Meta:
@@ -85,11 +91,13 @@ class Purchase(PolymorphicModel):
     """
     calculated = models.DateTimeField(
         editable = False,
-        null = True
+        null = True,
+        verbose_name = _("calculated at"),
     )
     
     qty = models.PositiveIntegerField(
-        default = 1
+        default = 1,
+        verbose_name = _("qty"),
     )
     
     def calculate(self, total=None, save=True):
@@ -116,8 +124,8 @@ class Purchase(PolymorphicModel):
     def describe(self):
         return unicode(self.product)
         
-    def clone(self, cls=None):
-        clone = super(Purchase, self).clone(cls=cls)
+    def clone(self, cls=None, clone=None):
+        clone = super(Purchase, self).clone(cls=cls, clone=clone)
         clone.product = self.product
         clone.qty = self.qty
         clone.total = self.total

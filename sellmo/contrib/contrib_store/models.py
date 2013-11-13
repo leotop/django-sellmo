@@ -78,7 +78,7 @@ class StoreInformation(models.Model):
 	)
 	
 	def __unicode__(self):
-		return self.name
+		return u""
 
 	class Meta:
 		abstract = True

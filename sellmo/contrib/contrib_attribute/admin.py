@@ -27,7 +27,7 @@
 #
 
 from sellmo import modules
-from sellmo.contrib.contrib_attribute.forms import ProductAttributeForm
+from sellmo.contrib.contrib_attribute.forms import ProductAttributeFormFactory
 from sellmo.contrib.contrib_attribute.models import ValueObject
 
 #
@@ -46,18 +46,16 @@ from django.contrib.contenttypes.models import ContentType
             
 class ProductAttributeMixin(object):
     
-    form = ProductAttributeForm
+    form = ProductAttributeFormFactory()
     
     def get_fieldsets(self, request, obj=None):
-    
         fieldsets = ()
         if self.declared_fieldsets:
             fieldsets = self.declared_fieldsets
         
         fieldsets += ((_("Attributes"), {'fields': modules.attribute.Attribute.objects.values_list('key', flat=True)}),)
         return fieldsets
-    
-        
+
 #
 
 class AttributeAdmin(admin.ModelAdmin):

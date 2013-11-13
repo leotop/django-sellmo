@@ -27,8 +27,9 @@
 #
 
 from sellmo import modules
-from sellmo.contrib.contrib_variation.forms import VariantForm, VariantFormSet, VariationRecipeForm
+from sellmo.contrib.contrib_variation.forms import VariantForm, VariationRecipeForm, VariationRecipeFormFactory
 from sellmo.contrib.contrib_attribute.admin import ProductAttributeMixin
+from sellmo.contrib.contrib_attribute.forms import ProductAttributeFormFactory
 
 #
 
@@ -45,20 +46,10 @@ from django.contrib.contenttypes.models import ContentType
 #
         
 class VariantInlineMixin(ProductAttributeMixin):
-    form = VariantForm
-    formset = VariantFormSet
-    
-    def get_fieldsets(self, request, obj=None):
-    
-        fieldsets = ()
-        if self.declared_fieldsets:
-            fieldsets = self.declared_fieldsets
-        
-        fieldsets += ((_("Attributes"), {'fields': modules.attribute.Attribute.objects.filter(variates=True).values_list('key', flat=True)}),)
-        return fieldsets
+    form = ProductAttributeFormFactory(VariantForm)
     
 class VariationRecipeInlineMixin(object):
-    form = VariationRecipeForm
+    form = VariationRecipeFormFactory(VariationRecipeForm)
     
     def get_fieldsets(self, request, obj=None):
         fieldsets = ()

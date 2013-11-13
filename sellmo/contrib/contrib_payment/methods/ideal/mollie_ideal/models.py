@@ -68,6 +68,18 @@ def finalize_model():
 	
 class MollieIdealPayment(models.Model):
 	
+	SUCCESS = 10
+	FAILED = 20
+	EXPIRED = 30
+	CANCELED = 40
+	
+	STATUS_CODES = (
+		(SUCCESS, _("success")),
+		(FAILED, _("failed")),
+		(EXPIRED, _("expired")),
+		(CANCELED, _("canceled")),
+	)
+	
 	bank_id = models.PositiveIntegerField(
 		null = True,
 		editable = False,
@@ -78,18 +90,47 @@ class MollieIdealPayment(models.Model):
 		editable = False,
 	)
 	
+	def begin_transaction(self, transaction_id, save=True):
+		self.transaction_id = transaction_id
+		self.transaction_status = None
+		self.transaction_report = False
+		if save:
+			self.save()
+		
+	def abort_transaction(self, save=True):
+		self.transaction_id = ''
+		self.transaction_status = None
+		self.transaction_report = False
+		if save:
+			self.save()
+		
+	def retry(self, save=True):
+		self.abort_transaction()
+		self.bank_id = None
+		self.bank_name
+		if save:
+			self.save()
+			
+	def complete_transaction(self, status, save=True):
+		self.transaction_status = status
+		self.transaction_report = True
+		if save:
+			self.save()
+	
 	transaction_id = models.CharField(
 		max_length = 32,
 		editable = False,
 	)
 	
 	transaction_report = models.BooleanField(
+		default = False,
 		editable = False
 	)
 	
-	transaction_status = models.CharField(
-		max_length = 30,
+	transaction_status = models.PositiveIntegerField(
+		null = True,
 		editable = False,
+		choices = STATUS_CODES
 	)
 	
 	@property
@@ -97,6 +138,14 @@ class MollieIdealPayment(models.Model):
 		if self.transaction_id and not self.transaction_report:
 			return True
 		return False
+		
+	@property
+	def is_success(self):
+		return self.transaction_status == self.SUCCESS
+		
+	@property
+	def is_completed(self):
+		return not self.transaction_status is None
 	
 	class Meta:
 		abstract = True

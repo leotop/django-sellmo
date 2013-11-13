@@ -81,9 +81,16 @@ class Process(object):
 		if self.current_step.is_completed() and self.current_step.is_definitive():
 			raise ProcessError("Step '{0}' is definitive.".format(self.current_step.key))
 		if self.current_step.complete(data, *args, **kwargs):
-			next_step = self.next_step
-			if not next_step is None:
-				self.current_step = next_step
+			if not self.current_step.is_completed():
+				raise ProcessError("Step '{0}' was completed but did not change it's state.".format(self.current_step.key))
+			if self.current_step.has_deviated:
+				# Rewind the process
+				self.step_to_latest()
+			else:
+				# Move on to the next step, if no further step; stay at this step
+				next_step = self.next_step
+				if not next_step is None:
+					self.current_step = next_step
 			return True
 		return False
 				
@@ -164,6 +171,13 @@ class ProcessStep(object):
 	@property
 	def url(self):
 		return self.resolve_url()
+		
+	def has_deviated(self):
+		"""
+		Indicates if this step has deviated from the process's path,
+		this will cause the process to rewind after this step has completed.
+		"""
+		return False
 		
 	def is_completed(self):
 		"""

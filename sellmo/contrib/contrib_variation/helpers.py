@@ -38,7 +38,6 @@ from django.utils.text import capfirst
 #
 
 class RecipelessAttributeHelper(AttributeHelper):
-    
     def populate(self):
         if self.__dict__['_populated']:
             return
@@ -59,3 +58,35 @@ class RecipelessAttributeHelper(AttributeHelper):
             else:
                 self._values[attribute.key] = value
         return self._values[attribute.key]
+        
+class VariantAttributeHelper(RecipelessAttributeHelper):    
+    def get_value_value(self, key):
+        value = self.get_value(key)
+        if not value.is_assigned:
+            value = self._product.product.attributes.get_value(key)
+        return value.value
+        
+    def set_value_value(self, key, value):
+        product_value = self._product.product.attributes.get_value(key)
+        if product_value.value == value:
+            # Make sure variant doesn't have this value set
+            self.get_value(key).value = None
+        else:
+            # Make sure we have this value set
+            self.get_value(key).value = value
+            
+    def __iter__(self):
+        values = {}
+        for value in super(VariantAttributeHelper, self).__iter__():
+            values[value.attribute.key] = value
+        for value in self._product.product.attributes:
+            if value.attribute.key not in values:
+                values[value.attribute.key] = value
+        for value in values.values():
+            if value.is_assigned:
+                yield value
+        
+        
+        
+
+    

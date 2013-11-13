@@ -57,7 +57,7 @@ class AttributeHelper(object):
             raise AttributeError(key)
         else:
             return self._attributes[key]
-            
+        
     def get_value(self, key):
         attribute = self.get_attribute(key)
         if not self._values.has_key(attribute.key):
@@ -68,6 +68,12 @@ class AttributeHelper(object):
             else:
                 self._values[attribute.key] = value
         return self._values[attribute.key]
+        
+    def get_value_value(self, key):
+        return self.get_value(key).value
+        
+    def set_value_value(self, key, value):
+        self.get_value(key).value = value
             
     def populate(self):
         if self.__dict__['_populated']:
@@ -79,23 +85,11 @@ class AttributeHelper(object):
             if not self._values.has_key(attribute.key):
                 self._values[attribute.key] = value
         
-    def __getattr__(self, name):
+    def __getitem__(self, key):
+        return self.get_value_value(key)
         
-        try:
-            return super(AttributeHelper, self).__getattr__(self, name)
-        except AttributeError:
-            pass
-        else:
-            return self.get_value(name).value
-        
-    def __setattr__(self, name, value):
-        
-        try:
-            attribute = self.get_attribute(name)
-        except AttributeError:
-            super(AttributeHelper, self).__setattr__(name, value)
-        else:
-            self.get_value(name).value = value
+    def __setitem__(self, key, value):
+        self.set_value_value(key, value)
         
     def __iter__(self):
         self.populate()
@@ -104,11 +98,9 @@ class AttributeHelper(object):
                 yield value
                 
     def __len__(self):
-        self.populate()
         count = 0
-        for value in self._values.values():
-            if value.is_assigned:
-                count += 1
+        for value in self:
+            count += 1
         return count
     
     def save(self):

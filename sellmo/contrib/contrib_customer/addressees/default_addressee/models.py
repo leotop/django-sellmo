@@ -59,8 +59,8 @@ def load_model():
 			verbose_name = _("suffx"),
 		)
 		
-		def clone(self, cls=None):
-			clone = super(Addressee, self).clone(cls=cls)
+		def clone(self, cls=None, clone=None):
+			clone = super(Addressee, self).clone(cls=cls, clone=clone)
 			clone.suffix = self.suffix
 			if getattr(modules.customer, 'prefix_enabled', False):
 				clone.prefix = self.prefix

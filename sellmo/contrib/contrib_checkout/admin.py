@@ -46,7 +46,13 @@ class OrderAdmin(ReverseModelAdmin):
 	inline_type = 'stacked'
 	inline_reverse = ['shipment', 'payment', 'billing_address', 'shipping_address']
 	
-	list_display = ['id', 'total_amount', 'paid', 'placed', 'accepted', 'modified']
+	list_display = ['placed', 'id', 'total_amount', 'paid', 'accepted', 'cancelled', 'modified']
+	list_display_links = ['id']
+	
+	raw_id_fields = ['customer']
+	autocomplete_lookup_fields = {
+		'fk': ['customer'],
+	}
 
 admin.site.register(modules.checkout.Order, OrderAdmin)
 

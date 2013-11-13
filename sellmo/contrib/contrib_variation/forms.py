@@ -46,7 +46,7 @@ from django.core.validators import EMPTY_VALUES
 #
 
 from sellmo.contrib.contrib_attribute.models import ValueObject
-from sellmo.contrib.contrib_attribute.forms import ProductAttributeForm
+from sellmo.contrib.contrib_attribute.forms import ProductAttributeForm, ProductAttributeFormFactory
 from sellmo.contrib.contrib_variation.utils import generate_slug
 
 #
@@ -117,7 +117,7 @@ class ObjectField(forms.ModelMultipleChoiceField, SaveFieldMixin):
     def from_values(self, values):
         return ValueObject.objects.filter(pk__in=[value.get_value().pk for value in values])
 
-class VariationRecipeForm(ModelForm):
+class VariationRecipeFormFactory(ProductAttributeFormFactory):
     
     FIELD_CLASSES = {
         modules.attribute.Attribute.TYPE_STRING : SeperatedCharField,
@@ -125,56 +125,37 @@ class VariationRecipeForm(ModelForm):
         modules.attribute.Attribute.TYPE_OBJECT : ObjectField,
     }
     
-    def __init__(self, delay_build=False, *args, **kwargs):
-        super(VariationRecipeForm, self).__init__(*args, **kwargs)
-        if not delay_build:
-            self.build_attribute_fields()
-            
-    def build_attribute_fields(self, attributes=None):
+    def get_attributes(self):
+        return modules.attribute.Attribute.objects.filter(variates=True)
+
+class VariationRecipeForm(ProductAttributeForm):
         
-        if attributes is None:
-            attributes = modules.attribute.Attribute.objects.filter(variates=True)
-            
-        # Append attribute fields
-        for attribute in attributes:
-            
-            if not self.instance.pk is None:
-                # Get attribute values (if any)
+    def get_values(self, instance):
+        result = {}
+        for attribute in self._attributes:
+            if instance.pk is not None:
                 try:
-                    values = modules.attribute.Value.objects.filter(attribute=attribute, recipe=self.instance)
+                    values = modules.attribute.Value.objects.filter(attribute=attribute, recipe=instance)
                 except modules.attribute.Value.DoesNotExist:
                     values = None
             else:
                 values = None
-                
-            defaults = {
-                'label' : attribute.name.capitalize(),
-                'required' : False,
-                'help_text' : attribute.help_text,
-                'validators' : attribute.validators,
-            }
             
-            field = self.FIELD_CLASSES[attribute.type]
-            if field is ObjectField:
-                field = field(queryset=attribute.get_object_choices(), **defaults)
-            else:
-                field = field(**defaults)
-            
-            self.fields[attribute.key] = field
-            if values:
-                self.initial[attribute.key] = field.from_values(values)
-                    
+            field = self._attribute_fields[attribute.key]
+            result[attribute.key] = field.from_values(values)
+        return result
+        
+    def set_values(self, instance):
+        # Do nothing
+        pass
+    
     def save(self, commit=True):
         instance = super(VariationRecipeForm, self).save(commit=False)
         
         def save_attributes():
-            for attribute in modules.attribute.Attribute.objects.filter(variates=True):
+            for attribute in self._attributes:
                 values = self.cleaned_data.get(attribute.key)
-                field = self.FIELD_CLASSES[attribute.type]
-                if field is ObjectField:
-                    field = field(queryset=attribute.get_object_choices())
-                else:
-                    field = field()
+                field = self._attribute_fields[attribute.key]
                 field.save(self.instance, attribute, values)
         
         if commit:
@@ -186,44 +167,39 @@ class VariationRecipeForm(ModelForm):
         return instance
 
 class VariantForm(ProductAttributeForm):
+    
     def __init__(self, *args, **kwargs):
-        super(VariantForm, self).__init__(delay_build=True, *args, **kwargs)
+        super(VariantForm, self).__init__(*args, **kwargs)
         for field in self.fields:
             self[field].field.required = False
             
     def clean(self):
-        cleaned_data = super(ProductAttributeForm, self).clean()
+        cleaned_data = super(VariantForm, self).clean()
         
-        # Assign attributes
-        for attribute in modules.attribute.Attribute.objects.filter(variates=True):
+        # Update variated attributes
+        for attribute in self._attributes.filter(variates=True):
             value = self.cleaned_data.get(attribute.key)
-            setattr(self.instance.attributes, attribute.key, value)
+            self.instance.attributes[attribute.key] = value
         
-        # Enforce options
-        if not list(self.instance.attributes):
-            raise ValidationError(_("A variant requires at least one attribute"))
+        # Get only the values which variate
+        values = []
+        for value in self.instance.attributes:
+            if value.attribute.variates:
+                values.append(value)
         
-        # Enforce slug
+        # Enforce at least one variated value
+        if not values:
+            raise ValidationError(_("A variant requires at least one variated attribute"))
+        
+        # Generate slug if needed
         if cleaned_data.has_key('slug'):
             if not cleaned_data['slug']:
                 cleaned_data['slug'] = generate_slug(
                     product=cleaned_data['product'],
-                    values=list(self.instance.attributes),
+                    values=values,
                     unique=False
                 )
                 self.data[self.add_prefix('slug')] = cleaned_data['slug']
         
         return cleaned_data
-
-class VariantFormSet(BaseInlineFormSet):
-
-    __attributes = None
-    def get_attributes(self):
-        if self.__attributes is None:
-            self.__attributes = modules.attribute.Attribute.objects.filter(variates=True)
-        return self.__attributes
-
-    def add_fields(self, form, index):
-        super(VariantFormSet, self).add_fields(form, index)
-        form.build_attribute_fields(attributes=self.get_attributes())
                 

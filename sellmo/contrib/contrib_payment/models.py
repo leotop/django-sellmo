@@ -63,6 +63,9 @@ class PaymentSettings(models.Model):
 		default=True,
 		verbose_name = _("accept payments"),
 	)
+	
+	def __unicode__(self):
+		return u""
 
 	class Meta:
 		abstract = True

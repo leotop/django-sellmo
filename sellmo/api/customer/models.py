@@ -73,9 +73,8 @@ def finalize_model():
         if modules.customer.django_auth_enabled:
             user = models.OneToOneField(
                 User,
-                editable = False,
+                related_name = 'customer',
                 verbose_name = _("user"),
-                related_name = 'customer'
             )
         
         class Meta:
@@ -96,8 +95,8 @@ class Customer(models.Model, Cloneable):
     def set_address(self, type, value):
         setattr(self, '{0}_address'.format(type), value)
         
-    def clone(self, cls=None):
-        clone = super(Customer, self).clone(cls=cls)
+    def clone(self, cls=None, clone=None):
+        clone = super(Customer, self).clone(cls=cls, clone=clone)
         if modules.customer.django_auth_enabled:
             clone.user = self.user
         return clone
@@ -130,8 +129,8 @@ def finalize_model():
     
 class Address(models.Model, Cloneable):
 
-    def clone(self, cls=None):
-        clone = super(Address, self).clone(cls=cls)
+    def clone(self, cls=None, clone=None):
+        clone = super(Address, self).clone(cls=cls, clone=clone)
         return clone
 
     class Meta:
@@ -160,8 +159,8 @@ class Contactable(models.Model, Cloneable):
     class Meta:
         abstract = True
         
-    def clone(self, cls=None):
-        clone = super(Contactable, self).clone(cls=cls)
+    def clone(self, cls=None, clone=None):
+        clone = super(Contactable, self).clone(cls=cls, clone=clone)
         clone.email = self.email
         return clone
   
@@ -204,8 +203,8 @@ class Addressee(models.Model, Cloneable):
         verbose_name = _("last name")
     )
     
-    def clone(self, cls=None):
-        clone = super(Addressee, self).clone(cls=cls)
+    def clone(self, cls=None, clone=None):
+        clone = super(Addressee, self).clone(cls=cls, clone=clone)
         clone.first_name = self.first_name
         clone.last_name = self.last_name
         if modules.customer.businesses_allowed:

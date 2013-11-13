@@ -58,8 +58,8 @@ def load_model():
 			verbose_name = _("city")
 		)
 		
-		def clone(self, cls=None):
-			clone = super(Address, self).clone(cls=cls)
+		def clone(self, cls=None, clone=None):
+			clone = super(Address, self).clone(cls=cls, clone=clone)
 			clone.street_name = self.street_name
 			clone.house_number = self.house_number
 			clone.postal_code = self.postal_code

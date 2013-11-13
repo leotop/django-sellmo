@@ -103,6 +103,14 @@ class CategoryAdmin(CategoryAdminBase):
             'fields': ('active', 'sort_order')
         }),
     )
+    
+    def full_name(self, instance):
+        return instance.full_name
+    full_name.short_description = _("full name")
+    
+    def full_slug(self, instance):
+        return instance.full_slug
+    full_slug.short_description = _("full slug")
 
     raw_id_fields = ['parent']
     autocomplete_lookup_fields = {

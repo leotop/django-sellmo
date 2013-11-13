@@ -24,39 +24,26 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import collections
-
-#
-
 from sellmo import modules
-from sellmo.core.chaining import ViewChain
+from sellmo.contrib.admin.reverse import ReverseModelAdmin
+
 
 #
 
-from django.conf.urls import *
+from django.contrib import admin
+from django.contrib.contenttypes.models import ContentType
+from django.utils.translation import ugettext_lazy as _
 
-#
 
-urlpatterns = patterns('sellmo')
-for module in modules:
-    
-    urls = []
-    for name in dir(module):
-        attr = getattr(module, name)
-        if hasattr(attr, '_chain'):
-            chain = attr._chain
-            if isinstance(chain, ViewChain):
-                regex = chain.regex
-                if isinstance(regex, basestring):
-                    regex = [regex]
-                for regex in regex:
-                    urls.append(url(regex, attr, name='%s.%s' % (module.namespace, name)))
-    
-    if urls:
-        prefix = module.prefix
-        if not prefix:
-            prefix = module.namespace
-    
-        urlpatterns += patterns('modules', 
-            ('^%s/' % prefix, include(patterns(module.namespace, *urls))),
-        )
+class PurchaseInline(admin.TabularInline):
+	model = modules.store.Purchase
+	extra = 0
+
+class CartAdmin(admin.ModelAdmin):
+
+	inlines = [PurchaseInline]
+	list_display = ['id', 'total_amount', 'modified']
+	
+
+admin.site.register(modules.cart.Cart, CartAdmin)
+

@@ -66,6 +66,26 @@ class MollieIdealModule(Module):
 			# We don't render anything
 			raise Http404
 			
+	@view()
+	def pending(self, chain, request, context=None, **kwargs):
+		if context is None:
+			context = {}
+		if chain:
+			return chain.execute(request=request, context=context, **kwargs)
+		else:
+			# We don't render anything
+			raise Http404
+			
+	@view()
+	def failure(self, chain, request, context=None, **kwargs):
+		if context is None:
+			context = {}
+		if chain:
+			return chain.execute(request=request, context=context, **kwargs)
+		else:
+			# We don't render anything
+			raise Http404
+			
 	def get_settings(self):
 		site = Site.objects.get_current()
 		settings = None
@@ -79,7 +99,7 @@ class MollieIdealModule(Module):
 		
 	@view(r'^report$')
 	def report(self, chain, request, **kwargs):
-		transaction_id = request.GET['transaction_id']
+		transaction_id = request.GET.get('transaction_id', None)
 		
 		# Find a payment
 		try:
@@ -123,17 +143,23 @@ class MollieIdealModule(Module):
 		# Verify order amount
 		if root.order.amount != int(order.total.amount * 100):
 			raise Exception("Order amount was not correctly transfered")
-	
-		# See if the order is payed
+		
+		# See if the order is payed and update order
 		if root.order.payed:
 			order.paid = order.total.amount
 			order.save()
+			status = self.MollieIdealPayment.SUCCESS
+		else:
+			status = self.MollieIdealPayment.FAILED
+		
+		# Complete the payment, successful or not
+		payment.complete_transaction(status)
 		
 		return HttpResponse('')
 		
 	@view(r'^back$')
 	def back(self, chain, request, **kwargs):
-		transaction_id = request.GET['transaction_id']
+		transaction_id = request.GET.get('transaction_id', None)
 		
 		# Find a payment
 		try:
@@ -185,8 +211,7 @@ class MollieIdealModule(Module):
 		
 		# Keep track of transaction id
 		transaction_id = root.order.transaction_id.text
-		payment.transaction_id = transaction_id
-		payment.save()
+		payment.begin_transaction(transaction_id)
 		
 		if chain:
 			return chain.execute(request=request, **kwargs)

@@ -37,20 +37,31 @@ __all__ = [
     'Currency',
     'StampableProperty',
     'Price',
+    'PriceType',
 ]
 
 class Currency(object):
-    
     """
     ISO 4217
-    """
-    def __init__(self, code, description, format):
+    """        
+    def __init__(self, code, name, format):
         self.code = code
-        self.description = description
+        self.name = name
         self._format = format
+        
+    def __str__(self):
+        return self.code
         
     def format(self, amount):
         return self._format.format(amount=amount)
+        
+class PriceType(object):
+    def __init__(self, key, name):
+        self.key = key
+        self.name = name
+    
+    def __str__(self):
+        return self.key
         
 class StampableProperty(object):
 
@@ -89,15 +100,15 @@ class Price(object):
         
         self.amount = amount
         self.currency = currency
-        self.type = type
+        self.type = str(type) if type else type
         self.context = context.copy()
         
         mutations = {}
-        if type:
-            mutations[type] = amount
+        if self.type:
+            mutations[self.type] = amount
         self.mutations = mutations
         
-    def clone(self, cls=None):
+    def clone(self, cls=None, clone=None):
         if cls is None:
             cls = self.__class__
         price = cls(amount=self.amount, currency=self.currency, type=self.type, context=self.context)
@@ -108,21 +119,21 @@ class Price(object):
         self.context.update(context)
         
     def _addition_mutations(self, mutations):
-        for type, amount in mutations.iteritems():
-            current = self.mutations.get(type, 0)
-            self.mutations[type] = current + amount
+        for key, amount in mutations.iteritems():
+            current = self.mutations.get(key, 0)
+            self.mutations[key] = current + amount
         
     def __invert__(self):
         price = self.clone()
         price.amount = -price.amount
-        price.mutations = {type : -amount for type, amount in price.mutations.iteritems()}
+        price.mutations = {key : -amount for key, amount in price.mutations.iteritems()}
         return price
         
     def __add__(self, other):
         Price.sanity_check(self, other)
         price = self.clone()
         price.amount += other.amount
-        price._addition_mutations({type : amount for type, amount in other.mutations.iteritems()})
+        price._addition_mutations({key : amount for key, amount in other.mutations.iteritems()})
         price._update_context(other.context)
         return price
         
@@ -130,43 +141,41 @@ class Price(object):
         Price.sanity_check(self, other)
         price = self.clone()
         price.amount -= other.amount
-        price._addition_mutations({type : -amount for type, amount in other.mutations.iteritems()})
+        price._addition_mutations({key : -amount for key, amount in other.mutations.iteritems()})
         price._update_context(other.context)
         return price
         
     def __mul__(self, multiplier):
         price = self.clone()
         price.amount *= multiplier
-        price.mutations = {type : amount * multiplier for type, amount in price.mutations.iteritems()}
+        price.mutations = {key : amount * multiplier for key, amount in price.mutations.iteritems()}
         return price
         
     def __div__(self, divider):
         price = self.clone()
         price.amount /= multiplier
-        price.mutations = {type : amount / multiplier for type, amount in price.mutations.iteritems()}
+        price.mutations = {key : amount / multiplier for key, amount in price.mutations.iteritems()}
         return price
         
     def __contains__(self, key):
-        if not isinstance(key, basestring):
+        if not isinstance(key, (basestring, PriceType)):
             raise TypeError()
-        return self.mutations.has_key(key)
+        return self.mutations.has_key(str(key))
     
     def __getitem__(self, key):
-        if not isinstance(key, basestring):
+        if not isinstance(key, (basestring, PriceType)):
             raise TypeError()
+        key = str(key)
         if self.mutations.has_key(key):
             return Price(self.mutations[key], self.currency, key)
         raise KeyError(key)
         
     def __setitem__(self, key, value):
-        if not isinstance(key, basestring):
+        if not isinstance(key, (basestring, PriceType)):
             raise TypeError()
         if not isinstance(value, Price):
             raise TypeError()
-        if key:
-            self.mutations[key] = value.amount
-        else:
-            raise KeyError(key)
+        self.mutations[str(key)] = value.amount
             
     def __nonzero__(self):
         return self.amount > 0

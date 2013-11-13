@@ -24,39 +24,27 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import collections
+from django import template
+from django.core.urlresolvers import reverse
 
 #
 
 from sellmo import modules
-from sellmo.core.chaining import ViewChain
 
 #
 
-from django.conf.urls import *
+register = template.Library()
 
 #
 
-urlpatterns = patterns('sellmo')
-for module in modules:
+@register.assignment_tag(takes_context=True)
+def customer(context):
+    return modules.customer.get_customer(request=context['request'])
     
-    urls = []
-    for name in dir(module):
-        attr = getattr(module, name)
-        if hasattr(attr, '_chain'):
-            chain = attr._chain
-            if isinstance(chain, ViewChain):
-                regex = chain.regex
-                if isinstance(regex, basestring):
-                    regex = [regex]
-                for regex in regex:
-                    urls.append(url(regex, attr, name='%s.%s' % (module.namespace, name)))
-    
-    if urls:
-        prefix = module.prefix
-        if not prefix:
-            prefix = module.namespace
-    
-        urlpatterns += patterns('modules', 
-            ('^%s/' % prefix, include(patterns(module.namespace, *urls))),
-        )
+@register.assignment_tag(takes_context=True)
+def auth_customer(context):
+    if not modules.customer.django_auth_enabled:
+        return None
+    request = context['request']
+    if request.user.is_authenticated() and hasattr(request.user, 'customer'):
+        return request.user.customer

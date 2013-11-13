@@ -30,9 +30,10 @@ from django.utils.translation import ugettext_lazy as _
 #
 
 from sellmo import modules
+from sellmo.api.pricing import PriceType
 
 #
 
 namespace = modules.pricing.namespace
-modules.pricing.types += ['tax']
+modules.pricing.types += [PriceType('tax', _("tax"))]
 

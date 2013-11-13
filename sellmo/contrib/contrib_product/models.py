@@ -48,6 +48,7 @@ def load_model():
         )
         
         featured = models.BooleanField(
+            default = False,
             verbose_name = _("featured"),
             help_text = _(
                 "Marks this product as featured allowing additional showcasing across the site."

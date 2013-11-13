@@ -43,8 +43,43 @@ from django.contrib.contenttypes.models import ContentType
 
 #
 
-class ProductAttributeForm(ModelForm):
+class ProductAttributeForm(forms.ModelForm):
 
+    def __init__(self, *args, **kwargs):
+        initial = {}
+        instance = None
+        if 'initial' in kwargs:
+            initial = kwargs['initial']
+        if 'instance' in kwargs:
+            instance = kwargs['instance']
+        
+        if instance:
+            initial.update(self.get_values(instance))
+        kwargs['initial'] = initial
+        super(ProductAttributeForm, self).__init__(*args, **kwargs)
+
+    def get_values(self, instance):
+        values = {}
+        for attribute in self._attributes:
+            values[attribute.key] = instance.attributes[attribute.key]
+        return values
+        
+    def set_values(self, instance):
+        for attribute in self._attributes:
+            value = self.cleaned_data.get(attribute.key)
+            instance.attributes[attribute.key] = value
+
+    def save(self, commit=True):
+        instance = super(ProductAttributeForm, self).save(commit=False)
+        self.set_values(instance)
+        
+        if commit:
+            instance.save()
+
+        return instance
+
+class ProductAttributeFormFactory(object):
+    
     FIELD_CLASSES = {
         modules.attribute.Attribute.TYPE_STRING : forms.CharField,
         modules.attribute.Attribute.TYPE_INT : forms.IntegerField,
@@ -52,50 +87,44 @@ class ProductAttributeForm(ModelForm):
         modules.attribute.Attribute.TYPE_OBJECT : forms.ModelChoiceField,
     }
     
-    def __init__(self, *args, **kwargs):
-        delay_build = False
-        if kwargs.has_key('delay_build'):
-            delay_build = kwargs.pop('delay_build')
+    form = ProductAttributeForm
+    
+    def __init__(self, form=None):
+        if form:
+            self.form = form
         
-        super(ProductAttributeForm, self).__init__(*args, **kwargs)
+    def get_attributes(self):
+        return modules.attribute.Attribute.objects.all()
         
-        if not delay_build:
-            self.build_attribute_fields()
-            
-    def build_attribute_fields(self, attributes=None):
+    def get_attribute_field(self, attribute):
+        field = self.FIELD_CLASSES[attribute.type]
         
-        if attributes is None:
-            attributes = modules.attribute.Attribute.objects.all()
-            
-        # Append attribute fields
+        defaults = {
+            'label' : attribute.name.capitalize(),
+            'required' : attribute.required,
+            'help_text' : attribute.help_text,
+            'validators' : attribute.validators,
+        }
+        
+        if field is forms.ModelChoiceField:
+            field = field(queryset=attribute.get_object_choices(), **defaults)
+        else:
+            field = field(**defaults)
+        return field
+        
+    def factory(self):
+        attributes = self.get_attributes()
+        fields = {}
+        attr_dict = {
+            '_attributes' : attributes,
+            '_attribute_fields' : fields
+        }
         for attribute in attributes:
-            value = self.instance.attributes.get_value(attribute.key)
-                
-            defaults = {
-                'label' : attribute.name.capitalize(),
-                'required' : attribute.required,
-                'help_text' : attribute.help_text,
-                'validators' : attribute.validators,
-            }
-            
-            field = self.FIELD_CLASSES[attribute.type]
-            if field is forms.ModelChoiceField:
-                field = field(queryset=attribute.get_object_choices(), **defaults)
-            else:
-                field = field(**defaults)
-            
-            self.fields[attribute.key] = field
-            self.initial[attribute.key] = value.value
-                
-    def save(self, commit=True):
-        instance = super(ProductAttributeForm, self).save(commit=False)
+            field = self.get_attribute_field(attribute)
+            fields[attribute.key] = field
+            attr_dict[attribute.key] = field
         
-        # Assign attributes
-        for attribute in modules.attribute.Attribute.objects.all():
-            value = self.cleaned_data.get(attribute.key)
-            setattr(instance.attributes, attribute.key, value)
+        return type('ProductAttributeForm', (self.form,), attr_dict)
         
-        if commit:
-            instance.save()
-            
-        return instance
+    def __get__(self, obj, objtype):
+        return self.factory()
