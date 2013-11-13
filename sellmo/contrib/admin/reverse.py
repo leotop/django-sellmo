@@ -16,7 +16,11 @@ class ReverseInlineFormSet(BaseModelFormSet):
 	model = None
 	parent_fk_name = None
 	def __init__(self, data=None, files=None, instance=None, prefix=None, queryset=None, save_as_new=False):
-		obj = getattr(instance, self.parent_fk_name)
+		try:
+			obj = getattr(instance, self.parent_fk_name)
+		except self.model.DoesNotExist:
+			obj = None
+		
 		if obj:
 			queryset = self.model.objects.filter(pk=obj.id)
 		else:

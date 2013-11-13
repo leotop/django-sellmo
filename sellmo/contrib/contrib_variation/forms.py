@@ -113,6 +113,10 @@ class SeperatedIntegerField(SeperatedInputField, SaveFieldMixin):
     def __init__(self, **kwargs):
         super(SeperatedIntegerField, self).__init__(field=forms.IntegerField, **kwargs)
         
+class SeperatedFloatField(SeperatedInputField, SaveFieldMixin):
+    def __init__(self, **kwargs):
+        super(SeperatedFloatField, self).__init__(field=forms.FloatField, **kwargs)
+        
 class ObjectField(forms.ModelMultipleChoiceField, SaveFieldMixin):
     def from_values(self, values):
         return ValueObject.objects.filter(pk__in=[value.get_value().pk for value in values])
@@ -122,6 +126,7 @@ class VariationRecipeFormFactory(ProductAttributeFormFactory):
     FIELD_CLASSES = {
         modules.attribute.Attribute.TYPE_STRING : SeperatedCharField,
         modules.attribute.Attribute.TYPE_INT : SeperatedIntegerField,
+        modules.attribute.Attribute.TYPE_FLOAT : SeperatedFloatField,
         modules.attribute.Attribute.TYPE_OBJECT : ObjectField,
     }
     
