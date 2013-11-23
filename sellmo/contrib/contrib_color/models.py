@@ -137,6 +137,9 @@ class ColorMapping(models.Model):
         editable = False
     )
     
+    def __unicode__(self):
+        return u"{0} - {1} : {2}".format(self.product, self.attribute, self.color)
+    
     class Meta:
         abstract = True
         

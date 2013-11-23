@@ -184,19 +184,23 @@ class VariantForm(ProductAttributeForm):
         super(VariantForm, self).__init__(*args, **kwargs)
         for field in self.fields:
             self[field].field.required = False
+        
+    def set_values(self, instance):
+        instance.product = self.cleaned_data['product']
+        for attribute in self._attributes.filter(variates=True):
+            value = self.cleaned_data.get(attribute.key)
+            instance.attributes[attribute.key] = value
             
     def clean(self):
         cleaned_data = super(VariantForm, self).clean()
         
-        # Update variated attributes
-        for attribute in self._attributes.filter(variates=True):
-            value = self.cleaned_data.get(attribute.key)
-            self.instance.attributes[attribute.key] = value
-        
+        # Temporary collect values to generate slug
         # Get only the values which variate
         values = []
-        for value in self.instance.attributes:
-            if value.attribute.variates:
+        for attribute in self._attributes.filter(variates=True):
+            value = modules.attribute.Value(attribute=attribute)
+            value.value = self.cleaned_data.get(attribute.key)
+            if value.is_assigned:
                 values.append(value)
         
         # Enforce at least one variated value

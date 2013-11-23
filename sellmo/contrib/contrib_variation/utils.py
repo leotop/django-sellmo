@@ -35,9 +35,9 @@ def generate_slug(product, values=None, unique=False, full=False, short=False):
         
     sequences = []
     if not full:
-        sequences.append('-'.join([unicode(value.get_value()) for value in values]))
+        sequences.append('-'.join([unicode(value.value) for value in values]))
     if not short:
-        sequences.append('_'.join([u'%s-%s' % (value.attribute.key, unicode(value.get_value())) for value in values]))
+        sequences.append('_'.join([u'%s-%s' % (value.attribute.key, unicode(value.value)) for value in values]))
     
      
     for attributes in sequences:

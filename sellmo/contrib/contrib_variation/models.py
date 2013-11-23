@@ -360,6 +360,7 @@ def finalize_model():
             db_index = True,
             editable = False,
             related_name = '+',
+            verbose_name = _("product"),
         )
         
         # The variant we are based on (can be product)
@@ -368,6 +369,7 @@ def finalize_model():
             db_index = True,
             editable = False,
             related_name = '+',
+            verbose_name = _("variant"),
         )
         
         # The variant we are based on and which is common across every variation in the group (can be a product)
@@ -377,6 +379,7 @@ def finalize_model():
             editable = False,
             null = True,
             related_name = '+',
+            verbose_name = _("group variant"),
         )
         
         #
@@ -384,6 +387,7 @@ def finalize_model():
             modules.attribute.Value,
             editable = False,
             related_name = '+',
+            verbose_name = _("values"),
         )
         
         class Meta:

@@ -147,7 +147,7 @@ class Value(models.Model):
         return self.__value_object
     
     def __unicode__(self):
-        return u"%s -> %s : %s" % (self.product, self.attribute, self.get_value())
+        return u"{0} - {1} : {2}".format(self.product, self.attribute, self.get_value())
         
     def get_value(self):
         field = self.attribute.value_field
