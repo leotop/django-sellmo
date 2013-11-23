@@ -79,7 +79,4 @@ setup(
     cmdclass = cmdclasses,
     data_files = data_files,
     scripts = [],
-    install_requires = [
-        'decorator>=3.4.0'
-    ],
 )
