@@ -42,7 +42,7 @@ from sellmo.api.pricing import Price, PriceType, StampableProperty
 #
 
 def get_default_currency():
-    return modules.pricing.get_currency()
+    return str(modules.pricing.get_currency())
 
 class PricingModule(sellmo.Module):
     """

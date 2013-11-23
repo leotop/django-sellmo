@@ -25,39 +25,25 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from sellmo.core.loading import loader
-from sellmo.core.chaining import Chain, ViewChain
+from sellmo.core.chaining import Chain, ViewChain, link_func, wrapped_chain
 
 def load(action=None, after=None, before=None, directly=False):
     def decorator(func):
         loader.register(func, action=action, after=after, before=before, directly=directly)
         return func
-    
     return decorator
     
 def link(name=None, namespace=None, capture=False):
     def decorator(func):
-        func._name = name if name else func.func_name
-        func._namespace = namespace
-        func._capture = capture
-        func._im_linked = True
-        return func
-    
+        return link_func(func, name=name, namespace=namespace, capture=capture)
     return decorator
     
 def view(regex=None):
     def decorator(func):
-        chain = ViewChain(func, regex=regex)
-        def wrapper(self, request, **kwargs):
-            return chain.handle(module=self, request=request, **kwargs)
-        wrapper._chain = chain
-        return wrapper
+        return wrapped_chain(ViewChain(func, regex=regex))
     return decorator
     
 def chainable():
     def decorator(func):
-        chain = Chain(func)
-        def wrapper(self, **kwargs):
-            return chain.handle(module=self, **kwargs)
-        wrapper._chain = chain
-        return wrapper
+        return wrapped_chain(Chain(func))
     return decorator

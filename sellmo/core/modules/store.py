@@ -98,7 +98,5 @@ class StoreModule(sellmo.Module):
             if out.has_key('purchase'):
                 purchase = out['purchase']
         
-        # Now save and return the purchase (could differ from our initially created purchase)
-        purchase.save()
         return purchase
         

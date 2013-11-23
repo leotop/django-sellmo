@@ -24,21 +24,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import sys, logging
+from sellmo.caching.base import *
 
 #
-
-from sellmo.core.main import Sellmo
-from sellmo.config import settings
-
-#
-
-if settings.CACHING_ENABLED:
-    import sellmo.caching.boot
-
-# Wrap all exceptions because Django does not capture ImportErrors
-try:
-    # !! THIS INITS SELLMO
-    sellmo = Sellmo()
-except Exception as exception:
-    raise Exception(str(exception)), None, sys.exc_info()[2]

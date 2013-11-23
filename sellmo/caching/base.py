@@ -24,21 +24,60 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import sys, logging
-
-#
-
-from sellmo.core.main import Sellmo
+from sellmo.core.chaining import link_func
+from sellmo.signals.core import post_init
 from sellmo.config import settings
+from django.core.cache import cache
 
 #
 
-if settings.CACHING_ENABLED:
-    import sellmo.caching.boot
-
-# Wrap all exceptions because Django does not capture ImportErrors
-try:
-    # !! THIS INITS SELLMO
-    sellmo = Sellmo()
-except Exception as exception:
-    raise Exception(str(exception)), None, sys.exc_info()[2]
+class CacheHandler(object):
+	
+	_im_linked = True
+	_links = []
+	
+	#
+	timeout = True
+	prefix = settings.CACHING_PREFIX
+	
+	def __init__(self, name, namespace=None, timeout=True):
+		post_init.connect(self._on_post_init)
+		self._links = [
+			link_func(self.capture, name=name, namespace=namespace, capture=True),
+			link_func(self.finalize, name=name, namespace=namespace)
+		]
+		
+		self.timeout = timeout
+		
+	def resolve_key(self, key):
+		if self.prefix:
+			return '_'.join([self.prefix, key])
+		
+	def set(self, key, value):
+		key = self.resolve_key(key)
+		args = [key, value]
+		if self.timeout is not True:
+			args += [self.timeout]
+		cache.set(*args)
+	
+	def get(self, key, default=None):
+		key = self.resolve_key(key)
+		return cache.get(key, default)
+		
+	def delete(self, *keys):
+		if len(keys) > 1:
+			cache.delete_many([self.resolve_key(key) for key in keys])
+		elif len(keys) == 1:
+			cache.delete(self.resolve_key(keys[0]))
+		
+	def capture(self, *args, **kwargs):
+		pass
+		
+	def finalize(self, *args, **kwargs):
+		pass
+		
+	def hookup(self):
+		pass
+		
+	def _on_post_init(self, sender, **kwargs):
+		self.hookup()

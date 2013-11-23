@@ -55,51 +55,66 @@ class VariationModule(Module):
         self.product_subtypes.append(subtype)
     
     @chainable()
-    def get_variations(self, chain, product, grouped=False, **kwargs):
-        variations = modules.variation.Variation.objects.for_product(product)
+    def get_variations(self, chain, product, grouped=False, variations=None, **kwargs):
+        if variations is None:
+            variations = modules.variation.Variation.objects.for_product(product)
+            if grouped:
+                attributes = modules.attribute.Attribute.objects.which_variates(product=product)
+                try:
+                    group = attributes.get(groups=True)
+                except modules.attribute.Attribute.DoesNotExist:
+                    return None
+                else:
+                    result = []
+                    for value in modules.attribute.Value.objects.for_product_or_variant(product).for_attribute(attribute=group, distinct=True):
+                        
+                        # Get variations for this grouped attribute / value combination
+                        qargs = {
+                            'values__attribute' : group,
+                            'values__%s' % group.value_field : value.get_value(),
+                            'product' : product,
+                        }
+                        
+                        variations = modules.variation.Variation.objects.filter(**qargs)
+                        if not variations:
+                            continue
+                        
+                        # Build grouped result
+                        result += [{
+                            'attribute' : group,
+                            'value' : value,
+                            'variations' : variations,
+                            'variant' : variations[0].group_variant,
+                        }]
+                    variations = result
         
-        if grouped:
-            attributes = modules.attribute.Attribute.objects.which_variates(product=product)
-            
-            try:
-                group = attributes.get(groups=True)
-            except modules.attribute.Attribute.DoesNotExist:
-                return None
-            else:
-                result = ()
-                for value in modules.attribute.Value.objects.for_product_or_variant(product).for_attribute(attribute=group, distinct=True):
-                    
-                    # Get variations for this grouped attribute / value combination
-                    qargs = {
-                        'values__attribute' : group,
-                        'values__%s' % group.value_field : value.get_value(),
-                        'product' : product,
-                    }
-                    
-                    variations = modules.variation.Variation.objects.filter(**qargs)
-                    if not variations:
-                        continue
-                    
-                    # Build grouped result
-                    result += ({
-                        'attribute' : group,
-                        'value' : value,
-                        'variations' : variations,
-                        'variant' : variations[0].group_variant,
-                    },)
-                variations = result
+        if chain:
+            out = chain.execute(product=product, grouped=grouped, variations=variations, **kwargs)
+            if out.has_key('variations'):
+                variations = out['variations']
         
         return variations
+    
+    @chainable()
+    def get_variation_choice(self, chain, variation, choice=None, **kwargs):   
+        if choice is None:
+            choice = self.generate_variation_choice(variation=variation, choice=choice)
+        
+        if chain:
+             out = chain.execute(variation=variation, choice=choice, **kwargs)
+             if out.has_key('choice'):
+                 choice = out['choice']
+                 
+        return choice 
         
     @chainable()
-    def get_variation_choice(self, chain, variation, choice=None, **kwargs):
+    def generate_variation_choice(self, chain, variation, choice=None, **kwargs):
         if choice is None:
             choice = u", ".join([u"%s: %s" % (value.attribute.name, unicode(value.value)) for value in variation.values.all().order_by('attribute')])
             variant = variation.variant.downcast()
             if hasattr(variant, '_is_variant') and variant.price_adjustment != 0:
                 prefix = u"+" if variant.price_adjustment > 0 else u"-"
                 choice = u"{0} {2}{1}".format(choice, Price(variant.price_adjustment), prefix)
-            
             
         if chain:
             out = chain.execute(variation=variation, choice=choice, **kwargs)

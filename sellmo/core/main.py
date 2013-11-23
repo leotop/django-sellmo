@@ -31,8 +31,9 @@ from django.utils.module_loading import module_has_submodule
 #
 
 from sellmo import modules
-from sellmo.core import chaining, loading
 from sellmo.magic import singleton
+from sellmo.core import chaining, loading
+from sellmo.signals.core import pre_init, post_init
 
 #
 
@@ -52,30 +53,55 @@ class NotLinkedException(Exception):
 @singleton
 class Sellmo(object):
     
+    links = ['views', 'links']
+    
     def __init__(self):
     
+        pre_init.send(self)
+        
         # Init sellmo apps before initing modules allowing them to configure the class based modules
         apps = list(self._init_apps())
         
-        # Init sellmo modules now to
+        # 
         self._init_modules()
-        
         self._link_modules()
+        
+        #
         self._load_apps(apps)
-        self._link_apps(apps)
-        self._link_apps(apps, '.links')
+        for link in self.links:
+            self._link_apps(apps, link)
+            
+        post_init.send(self)
     
     def _init_apps(self):
         for app in settings.INSTALLED_APPS:
-            mod = import_module(app)
-            try:
-                sellmo = import_module('%s.__sellmo__' % app)
-            except Exception as exception:
-                if module_has_submodule(mod, '__sellmo__'):
-                    raise Exception(str(exception)), None, sys.exc_info()[2]
-            else:
-                sellmo.path = app
-                yield sellmo
+            sellmo_module = self._load_app_module(app, '__sellmo__')
+            if sellmo_module:
+                sellmo_module.path = app
+                yield sellmo_module
+                
+    def _link_apps(self, apps, module_name):
+        for app in apps:
+            app_module = self._load_app_module(app.path, module_name)
+            if app_module:
+                kwargs = {
+                    'namespace' : getattr(app, 'namespace', None),
+                }
+                for name in dir(app_module):
+                    attr = getattr(app_module, name)
+                    if hasattr(attr, '_im_linked'):
+                        self._handle_linked_attr(attr, **kwargs)
+                
+                        
+    def _load_app_module(self, app, module_name):
+        app_module = import_module(app)
+        try:
+            module = import_module('{0}.{1}'.format(app, module_name))
+        except Exception as exception:
+            if module_has_submodule(app_module, module_name):
+                raise Exception(str(exception)), None, sys.exc_info()[2]
+        else:
+            return module
                 
     def _init_modules(self):
         modules.init_pending_modules()
@@ -88,24 +114,13 @@ class Sellmo(object):
             for name in dir(module):
                 attr = getattr(module, name)
                 if hasattr(attr, '_im_linked'):
-                    if not self._link(attr):
-                        logger.warning("Could not link '%s.%s'"  % (module, attr.__name__))
-                        
-    def _link_apps(self, apps, module='.views'):
-        for app in apps:
-            try:
-                imported = import_module(module, app.path)
-            except ImportError:
-                continue
-            else:
-                kwargs = {
-                    'namespace' : getattr(app, 'namespace', None),
-                }
-                for name in dir(imported):
-                    attr = getattr(imported, name)
-                    if hasattr(attr, '_im_linked'):
-                        if not self._link(attr, **kwargs):
-                            logger.warning("Could not link '%s.%s'"  % (attr.__module__, attr.__name__))
+                    self._handle_linked_attr(attr)
+    
+    def _handle_linked_attr(self, attr, **kwargs):
+        links = getattr(attr, '_links', [attr])
+        for link in links:
+            if not self._link(link, **kwargs):
+                logger.warning("Could not link '{0}.{1}'".format(link.__module__, link.__name__))
     
     def _link(self, link, namespace=None):
         if link._namespace:

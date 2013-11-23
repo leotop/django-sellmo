@@ -76,14 +76,13 @@ class AttributeHelper(object):
         self.get_value(key).value = value
             
     def populate(self):
-        if self.__dict__['_populated']:
-            return
-        self.__dict__['_populated'] = True
-        for value in modules.attribute.Value.objects.filter(product=self._product):
-            attribute = value.attribute
-            self._attributes[attribute.key] = attribute
-            if not self._values.has_key(attribute.key):
-                self._values[attribute.key] = value
+        if not self.__dict__['_populated']:
+            self.__dict__['_populated'] = True
+            for value in modules.attribute.Value.objects.filter(product=self._product):
+                attribute = value.attribute
+                self._attributes[attribute.key] = attribute
+                if not self._values.has_key(attribute.key):
+                    self._values[attribute.key] = value
         
     def __getitem__(self, key):
         return self.get_value_value(key)

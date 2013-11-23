@@ -98,19 +98,29 @@ class ProductAttributeFormFactory(object):
         
     def get_attribute_field(self, attribute):
         field = self.FIELD_CLASSES[attribute.type]
+        field = field(
+            *self.get_attribute_field_args(attribute, field),
+            **self.get_attribute_field_kwargs(attribute, field)
+        )
         
-        defaults = {
+        return field
+        
+    def get_attribute_field_kwargs(self, attribute, field):
+        kwargs = {
             'label' : attribute.name.capitalize(),
             'required' : attribute.required,
             'help_text' : attribute.help_text,
             'validators' : attribute.validators,
         }
         
+        return kwargs
+        
+    def get_attribute_field_args(self, attribute, field):
+        args = []
         if field is forms.ModelChoiceField:
-            field = field(queryset=attribute.get_object_choices(), **defaults)
-        else:
-            field = field(**defaults)
-        return field
+            args.append(attribute.get_object_choices())
+        
+        return args
         
     def factory(self):
         attributes = self.get_attributes()

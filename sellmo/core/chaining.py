@@ -26,7 +26,30 @@
 
 from django.http import HttpResponse
 from inspect import isfunction, isgeneratorfunction
+import functools
 
+#
+
+def wrapped_chain(chain):
+    def wrapper(self, *args, **kwargs):
+        return chain.handle(self, *args, **kwargs)
+    wrapper._chain = chain
+    wrapper = functools.update_wrapper(wrapper, chain._func)
+    return wrapper
+
+def link_func(func, name=None, namespace=None, capture=False):
+    target = func
+    if hasattr(target, '__func__'):
+        target = target.__func__
+    _setup_link(target, name, namespace, capture)
+    return func
+    
+def _setup_link(func, name, namespace, capture):
+    func._name = name if name else func.func_name
+    func._namespace = namespace
+    func._capture = capture
+    func._im_linked = True
+    
 #
 
 class Chain(object):
@@ -35,14 +58,13 @@ class Chain(object):
         self._queue = []
         self._capture_queue = []
         self._func = func
-        
-    def __nonzero__(self):
-        return self.can_execute
     
     def link(self, func):
         if func._capture:
-            self._capture_queue.append(func)
+            # Last link is captured first
+            self._capture_queue.insert(0, func)
         else:
+            # Last link is executed last
             self._queue.append(func)
             
     def handle(self, module, **kwargs):
@@ -105,6 +127,12 @@ class Chain(object):
         
     def should_return(self, response):
         return isfunction(response)
+        
+    def __nonzero__(self):
+        return self.can_execute
+        
+    def __repr__(self):
+        return repr(self._func)
         
 class ViewChain(Chain):
     

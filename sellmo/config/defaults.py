@@ -26,3 +26,8 @@
 
 REDIRECTION_SESSION_PREFIX = '_sellmo_redirection'
 REDIRECTION_DEBUG = False
+
+#
+
+CACHING_PREFIX = '_sellmo'
+CACHING_ENABLED = True

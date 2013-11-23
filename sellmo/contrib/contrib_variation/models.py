@@ -32,6 +32,7 @@ from sellmo.magic import ModelMixin, ManagerMixinHelper
 from sellmo.utils.polymorphism import PolymorphicModel, PolymorphicManager
 from sellmo.contrib.contrib_variation.variant import VariantFieldDescriptor, VariantMixin, get_differs_field_name
 from sellmo.contrib.contrib_variation.utils import generate_slug
+from sellmo.contrib.contrib_variation.signals import variations_deprecated
 from sellmo.contrib.contrib_variation.helpers import RecipelessAttributeHelper, VariantAttributeHelper
 from sellmo.contrib.contrib_attribute.query import ProductQ
 
@@ -569,7 +570,9 @@ class VariationManager(models.Manager):
                 
     
     def deprecate(self, product):
-        self.select_for_update().filter(product=product).update(deprecated=True)
+        variations = self.filter(product=product)
+        variations.select_for_update().update(deprecated=True)
+        variations_deprecated.send(self, product=product, variations=variations)
         
     def get_query_set(self):
         return VariationQuerySet(self.model)

@@ -41,8 +41,9 @@ from sellmo.utils.cloning import Cloneable
 
 class PolymorphicQuerySet(QuerySet):
     
+    _downcast = False
+    
     def __init__(self, *args, **kwargs):
-        self._downcast = False
         if kwargs.has_key('downcast'):
             self._downcast = kwargs.pop('downcast')
         super(PolymorphicQuerySet, self).__init__(*args, **kwargs)
@@ -54,8 +55,8 @@ class PolymorphicQuerySet(QuerySet):
             content_types = {}
             content_types_elements = {}
             order = []
-            result = []
             downcasts = {}
+            result = []
             
             for el in super(PolymorphicQuerySet, self).iterator():
                 if not content_types.has_key(el.content_type_id):
@@ -77,13 +78,6 @@ class PolymorphicQuerySet(QuerySet):
                     result.append(downcasts[pk])
                     
             return result
-    
-    def __iter__(self):
-        if self._downcast:
-            elements = self.prefetch_related('content_type')
-        else:
-            elements = self
-        return super(PolymorphicQuerySet, elements).__iter__()
                 
     def _clone(self, *args, **kwargs):
         clone = super(PolymorphicQuerySet, self)._clone(*args, **kwargs)
@@ -91,8 +85,9 @@ class PolymorphicQuerySet(QuerySet):
         return clone
             
     def polymorphic(self):
-        self._downcast = True
-        return self
+        clone = self.prefetch_related('content_type')
+        clone._downcast = True
+        return clone
             
 class PolymorphicManager(models.Manager):
     

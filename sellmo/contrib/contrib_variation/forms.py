@@ -132,6 +132,13 @@ class VariationRecipeFormFactory(ProductAttributeFormFactory):
     
     def get_attributes(self):
         return modules.attribute.Attribute.objects.filter(variates=True)
+        
+    def get_attribute_field_args(self, attribute, field):
+        args = []
+        if field is ObjectField:
+            args.append(attribute.get_object_choices())
+        
+        return args
 
 class VariationRecipeForm(ProductAttributeForm):
         
