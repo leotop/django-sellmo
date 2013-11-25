@@ -85,9 +85,10 @@ class CategoryModule(Module):
                 if not parents:
                     break
                     
-            if categories.count() == 0:
+            count = categories.count()
+            if count == 0:
                 raise Http404("""Category '%s' not found.""" % full_slug)
-            elif categories.count() > 1:
+            elif count > 1:
                 raise Http404("""Category '%s' could not be resolved.""" % full_slug)
         
             category = categories[0]

@@ -29,6 +29,11 @@ from django.core.urlresolvers import reverse
 
 #
 
+from classytags.core import Tag, Options
+from classytags.arguments import Argument, MultiKeywordArgument
+
+#
+
 from sellmo import modules
 
 #
@@ -36,10 +41,25 @@ from sellmo import modules
 register = template.Library()
 
 #
+    
+class Cart(Tag):
+    options = Options(
+        MultiKeywordArgument('kwargs', required=False),
+        'as',
+        Argument('varname', default='cart', required=False, resolve=False),
+        blocks = [('endcart', 'nodelist')],
+        true_values = ['yes', 'true'],
+    )
 
-@register.assignment_tag(takes_context=True)
-def cart(context):
-    return modules.cart.get_cart(request=context['request'])
+    def render_tag(self, context, kwargs, varname, nodelist):
+        cart = modules.cart.get_cart(request=context['request'], **kwargs)
+        context.push()
+        context[varname] = cart
+        output = nodelist.render(context)
+        context.pop()
+        return output
+
+register.tag(Cart)
 
 @register.inclusion_tag('cart/add_to_cart_formset.html', takes_context=True)
 def add_to_cart_formset(context, product, next=None, invalid=None, **kwargs):

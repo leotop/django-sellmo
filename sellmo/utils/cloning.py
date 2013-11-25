@@ -31,4 +31,4 @@ class Cloneable(object):
 				cls = self.__class__
 			clone = cls()
 		return clone
-
+		

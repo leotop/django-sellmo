@@ -29,6 +29,11 @@ from django.core.urlresolvers import reverse
 
 #
 
+from classytags.core import Tag, Options
+from classytags.arguments import Argument, MultiKeywordArgument, Flag
+
+#
+
 from sellmo import modules
 
 #
@@ -37,14 +42,30 @@ register = template.Library()
 
 #
 
-@register.assignment_tag(takes_context=True)
-def customer(context):
-    return modules.customer.get_customer(request=context['request'])
-    
-@register.assignment_tag(takes_context=True)
-def auth_customer(context):
-    if not modules.customer.django_auth_enabled:
-        return None
-    request = context['request']
-    if request.user.is_authenticated() and hasattr(request.user, 'customer'):
-        return request.user.customer
+class Customer(Tag):
+    options = Options(
+        Flag('authenticated', default=False, true_values=['authenticated']),
+        MultiKeywordArgument('kwargs', required=False),
+        'as',
+        Argument('varname', default='customer', required=False, resolve=False),
+        blocks = [('endcustomer', 'nodelist')],
+    )
+
+    def render_tag(self, context, authenticated, kwargs, varname, nodelist):
+        customer = None
+        if authenticated:
+            if not modules.customer.django_auth_enabled:
+                raise Exception("Customer authentication not enabled.")
+            request = context['request']
+            if request.user.is_authenticated() and hasattr(request.user, 'customer'):
+                customer = request.user.customer
+        else:
+            customer = modules.customer.get_customer(request=context['request'], **kwargs)
+        
+        context.push()
+        context[varname] = customer
+        output = nodelist.render(context)
+        context.pop()
+        return output
+
+register.tag(Customer)

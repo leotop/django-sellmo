@@ -28,6 +28,11 @@ from django import template
 
 #
 
+from classytags.core import Tag, Options
+from classytags.arguments import Argument, MultiKeywordArgument
+
+#
+
 from sellmo import modules
 from sellmo.api.pricing import Price
 
@@ -44,7 +49,21 @@ def price(value):
 @register.filter
 def as_price(value):
     return Price(value)
-    
-@register.simple_tag
-def price(**kwargs):
-    return modules.pricing.get_price(**kwargs)
+
+class Price(Tag):
+    options = Options(
+        MultiKeywordArgument('kwargs', required=False),
+        'as',
+        Argument('varname', default='price', required=False, resolve=False),
+        blocks = [('endprice', 'nodelist')],
+    )
+
+    def render_tag(self, context, kwargs, varname, nodelist):
+        price = modules.pricing.get_price(**kwargs)
+        context.push()
+        context[varname] = price
+        output = nodelist.render(context)
+        context.pop()
+        return output
+
+register.tag(Price)

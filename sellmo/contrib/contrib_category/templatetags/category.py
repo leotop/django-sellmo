@@ -37,63 +37,85 @@ from mptt.templatetags.mptt_tags import cache_tree_children
 
 #
 
+from classytags.core import Tag, Options
+from classytags.arguments import Argument, MultiKeywordArgument, KeywordArgument, Flag
+
+#
+
 register = template.Library()
 
 #
 
-@register.assignment_tag
-def categories(parent=None):
-    return modules.category.list(parent=parent)
+class Categories(Tag):
+    options = Options(
+        Flag('nested', default=False, true_values=['nested']),
+        MultiKeywordArgument('kwargs', required=False),
+        'as',
+        Argument('varname', default='categories', required=False, resolve=False),
+        blocks = [
+            ('node', 'pre_node'),
+            ('endnode', 'node'),
+            ('endcategories', 'post_node')
+        ],
+    )
     
-@register.assignment_tag
-def nested_categories(parent=None):
-    return modules.category.list(parent=parent, nested=True)
-        
-@register.assignment_tag
-def is_current_category(category, current_category=None):
-    if not current_category:
-        return False
-    if current_category == category:
-        return 'exact'
-    if category.is_ancestor_of(current_category):
-        return True
-    return False
-    
-class RenderCategoriesNode(template.Node):
-    def __init__(self, template_nodes, queryset_var):
-        self.template_nodes = template_nodes
-        self.queryset_var = queryset_var
-
-    def _render_node(self, context, node, ancestors):
-        bits = []
+    def _render_category_node(self, category, ancestors, current, context, nodelist):
         context.push()
-        for child in node.get_children():
-            bits.append(self._render_node(context, child, ancestors + [node]))
         
-        context['node'] = node
+        current_match = False
+        if current:
+            if current == category:
+                current_match = 'exact'
+            elif category.is_ancestor_of(current):
+                current_match = True
+        
+        bits = []
+        for child in category.get_children():
+            _ancestors = ancestors + [category]
+            _current = current if current_match else None
+            bits.append(self._render_category_node(
+                child,
+                _ancestors,
+                _current,
+                context,
+                nodelist
+            ))
+        
+        context['node'] = category
         context['children'] = mark_safe(''.join(bits))
+        context['current'] = current_match
         context['ancestors'] = ancestors
-        context['absolute_url'] = node.get_absolute_url(slug=node.get_full_slug(ancestors=ancestors))
-        context['path'] = ancestors + [node]
+        context['absolute_url'] = category.get_absolute_url(slug=category.get_full_slug(ancestors=ancestors))
+        context['path'] = ancestors + [category]
+        output = nodelist.render(context)
         
-        rendered = self.template_nodes.render(context)
         context.pop()
-        return rendered
+        return output
+
+    def render_tag(self, context, nested, kwargs, varname, pre_node, node, post_node):
+        current = None
+        if 'current' in kwargs:
+            current = kwargs.pop('current')
+        
+        categories = modules.category.list(nested=nested, **kwargs)
+        if nested:
+            categories = cache_tree_children(categories)
+        
+        context.push()
+        context[varname] = categories
     
-    def render(self, context):
-        queryset = self.queryset_var.resolve(context)
-        roots = cache_tree_children(queryset)
-        bits = [self._render_node(context, node, []) for node in roots]
-        return ''.join(bits)
+        nodes = []
+        if node:
+            nodes = [self._render_category_node(category, [], current, context, node) for category in categories]
+            
+        bits = [
+            pre_node.render(context),
+            mark_safe(''.join(nodes)),
+            post_node.render(context)
+        ]
+        
+        output = mark_safe(''.join(bits))
+        context.pop()
+        return output
 
-
-@register.tag
-def render_categories(parser, token):
-    bits = token.contents.split()
-    if len(bits) != 2:
-        raise template.TemplateSyntaxError("%s tag requires a queryset" % bits[0])
-
-    queryset_var = template.Variable(bits[1])
-    template_nodes = parser.parse(('endrender_categories',))
-    parser.delete_first_token()
-    return RenderCategoriesNode(template_nodes, queryset_var)
+register.tag(Categories)

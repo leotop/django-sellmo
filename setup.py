@@ -1,4 +1,11 @@
-from distutils.core import setup
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
+    using_dist = True
+else:
+    using_dist = False
+
 from distutils.command.install_data import install_data
 from distutils.command.install import INSTALL_SCHEMES
 from distutils.sysconfig import get_python_lib
@@ -67,9 +74,17 @@ if len(sys.argv) > 1 and sys.argv[1] == 'bdist_wininst':
     for file_info in data_files:
         file_info[0] = '\\PURELIB\\%s' % file_info[0]
 
+install_requires = [
+    'django-classy-tags',
+]
+
+kwargs = {}
+if not using_dist:
+    kwargs['install_requires'] = install_requires
+
 setup(
     name = "Sellmo",
-    version = '0.0.0.1425',
+    version = '0.0.1.1000',
     url = 'http://www.adaptiv.nl/',
     author = 'Adaptiv Design',
     author_email = 'raymond@adaptiv.nl',
@@ -79,4 +94,5 @@ setup(
     cmdclass = cmdclasses,
     data_files = data_files,
     scripts = [],
+    **kwargs
 )
