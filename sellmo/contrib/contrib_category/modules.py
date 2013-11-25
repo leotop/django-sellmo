@@ -39,7 +39,7 @@ class CategoryModule(Module):
     Category = Category
     
     @chainable()
-    def list(self, chain, parent=None, categories=None, nested=False):
+    def list(self, chain, parent=None, categories=None, nested=False, **kwargs):
         if categories is None:
             if parent:
                 categories = parent.children.all()

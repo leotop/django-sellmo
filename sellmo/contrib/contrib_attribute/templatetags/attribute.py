@@ -39,7 +39,6 @@ register = template.Library()
 
 @register.simple_tag()
 def render_value(value, **kwargs):
-	print 'omg'
 	template = loader.get_template(value.template)
 	context = {
 		'value' : value.value,
