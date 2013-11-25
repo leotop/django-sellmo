@@ -75,7 +75,8 @@ if len(sys.argv) > 1 and sys.argv[1] == 'bdist_wininst':
         file_info[0] = '\\PURELIB\\%s' % file_info[0]
 
 install_requires = [
-    'django-classy-tags',
+    'django>=1.6.0',
+    'django-classy-tags'
 ]
 
 kwargs = {}
