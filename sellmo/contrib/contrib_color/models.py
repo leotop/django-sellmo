@@ -192,12 +192,9 @@ def finalize_model():
 def load_model():
     class Product(modules.product.Product):
 
-        def get_colors(self, attribute=None):
-            colors = modules.color.ColorMapping.objects.for_product(self)
-            if attribute:
-                colors = colors.for_attribute(attribute)
-            return modules.color.Color.objects.filter(pk__in=colors.values_list('color', flat=True))
-            
+        def get_colors(self, **kwargs):
+            return modules.color.get_colors(product=product, **kwargs)
+        
         colors = property(get_colors)
 
         class Meta:

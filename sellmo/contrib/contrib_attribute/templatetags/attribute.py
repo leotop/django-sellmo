@@ -25,7 +25,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from django import template
-from django.template import loader, Context
 
 #
 
@@ -37,12 +36,32 @@ register = template.Library()
 
 #
 
-@register.simple_tag()
-def render_value(value, **kwargs):
-	template = loader.get_template(value.template)
-	context = {
-		'value' : value.value,
-		'attribute' : value.attribute,
-	}
-	context.update(kwargs)
-	return template.render(Context(context))
+from classytags.core import Options
+from classytags.arguments import Argument
+from classytags.helpers import InclusionTag
+
+#
+
+class RenderValue(InclusionTag):
+	name = 'rendervalue'
+	template = True
+	
+	options = Options(
+		Argument('value'),
+		'with',
+		Argument('template', required=False, resolve=False),
+	)
+	
+	def get_template(self, context, value, template):
+		if template:
+			return template
+		else:
+			return value.template
+	
+	def get_context(self, context, value, template):
+		return {
+			'value' : value.value,
+			'attribute' : value.attribute 
+		}
+
+register.tag(RenderValue)

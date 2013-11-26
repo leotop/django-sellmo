@@ -29,6 +29,11 @@ from django.contrib.sites.models import get_current_site
 
 #
 
+from classytags.core import Tag, Options
+from classytags.arguments import Argument, MultiKeywordArgument
+
+#
+
 from sellmo import modules
 
 #
@@ -37,18 +42,16 @@ register = template.Library()
 
 #
 
-@register.tag
-def store_information(parser, token):
-	nodelist = parser.parse(('endstore_information',))
-	parser.delete_first_token()
-	return StoreInformationNode(nodelist)
+class StoreInformation(Tag):
+	name = 'storeinformation'
+	options = Options(
+		MultiKeywordArgument('kwargs', required=False),
+		'as',
+		Argument('varname', default='info', required=False, resolve=False),
+		blocks = [('endstoreinformation', 'nodelist')],
+	)
 
-class StoreInformationNode(template.Node):
-	
-	def __init__(self, nodelist):
-		self.nodelist = nodelist
-	
-	def render(self, context):
+	def render_tag(self, context, kwargs, varname, nodelist):
 		
 		# Get the current request
 		request = context['request']
@@ -60,12 +63,10 @@ class StoreInformationNode(template.Node):
 			except modules.store.StoreInformation.DoesNotExist:
 				pass
 		
-		if store_information:
-			context.push()
-			for field in modules.store.StoreInformation._meta.fields:
-				context[field.name] = getattr(store_information, field.name)
-			output = self.nodelist.render(context)
-			context.pop()
-			return output
-		else:
-			return ""
+		context.push()
+		context[varname] = store_information
+		output = nodelist.render(context)
+		context.pop()
+		return output
+
+register.tag(StoreInformation)

@@ -42,3 +42,21 @@ class ColorModule(Module):
 
     def __init__(self):
         pass
+     
+    @chainable()
+    def get_colors(self, chain, product=None, attribute=None, colors=None, **kwargs):
+        if colors is None:
+            if product:
+                mappings = self.ColorMapping.objects.for_product(product)
+            else:
+                mappings = self.ColorMapping.objects.none()
+            if attribute:
+                mappings = mappings.for_attribute(attribute)
+            colors = self.Color.objects.filter(pk__in=mappings.values_list('color', flat=True))
+        
+        if chain:
+            out = chain.execute(product=product, attribute=attribute, colors=colors, **kwargs)
+            if out.has_key('colors'):
+                colors = out['colors']
+        
+        return colors

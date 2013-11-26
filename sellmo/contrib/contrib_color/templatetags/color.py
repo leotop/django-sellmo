@@ -28,6 +28,11 @@ from django import template
 
 #
 
+from classytags.core import Tag, Options
+from classytags.arguments import Argument, MultiKeywordArgument
+
+#
+
 from sellmo import modules
 
 #
@@ -36,13 +41,20 @@ register = template.Library()
 
 #
 
-@register.filter
-def colors(product, attribute=None):
-    return product.get_colors(attribute=attribute)
-    
-@register.inclusion_tag('attribute/color.html')
-def render_color(color, **kwargs):
-    context = {
-        'value' : color,
-    }
-    return context
+class Colors(Tag):
+    options = Options(
+        MultiKeywordArgument('kwargs', required=False),
+        'as',
+        Argument('varname', default='colors', required=False, resolve=False),
+        blocks = [('endcolors', 'nodelist')],
+    )
+
+    def render_tag(self, context, kwargs, varname, nodelist):
+        colors = modules.color.get_colors(**kwargs)
+        context.push()
+        context[varname] = colors
+        output = nodelist.render(context)
+        context.pop()
+        return output
+
+register.tag(Colors)

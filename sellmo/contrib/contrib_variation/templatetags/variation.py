@@ -28,6 +28,11 @@ from django import template
 
 #
 
+from classytags.core import Tag, Options
+from classytags.arguments import Argument, MultiKeywordArgument, Flag
+
+#
+
 from sellmo import modules
 
 #
@@ -36,6 +41,21 @@ register = template.Library()
 
 #
 
-@register.filter
-def variations(product, grouped=False):
-    return modules.variation.get_variations(product=product, grouped=grouped)
+class Variations(Tag):
+    options = Options(
+        Flag('grouped', default=False, true_values=['grouped']),
+        MultiKeywordArgument('kwargs', required=False),
+        'as',
+        Argument('varname', default='variations', required=False, resolve=False),
+        blocks = [('endvariations', 'nodelist')],
+    )
+
+    def render_tag(self, context, grouped, kwargs, varname, nodelist):
+        variations = modules.variation.get_variations(grouped=grouped, **kwargs)
+        context.push()
+        context[varname] = variations
+        output = nodelist.render(context)
+        context.pop()
+        return output
+
+register.tag(Variations)

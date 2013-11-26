@@ -28,7 +28,13 @@ from django import template
 
 #
 
+from classytags.core import Tag, Options
+from classytags.arguments import Argument, MultiKeywordArgument
+
+#
+
 from sellmo import modules
+from sellmo.api.pricing import Price
 
 #
 
@@ -36,6 +42,20 @@ register = template.Library()
 
 #
 
-@register.filter
-def tiers(product):
-    return modules.qty_pricing.get_qty_tiers(product=product)
+class Tiers(Tag):
+    options = Options(
+        MultiKeywordArgument('kwargs', required=False),
+        'as',
+        Argument('varname', default='tiers', required=False, resolve=False),
+        blocks = [('endtiers', 'nodelist')],
+    )
+
+    def render_tag(self, context, kwargs, varname, nodelist):
+        tiers = modules.qty_pricing.get_qty_tiers(**kwargs)
+        context.push()
+        context[varname] = tiers
+        output = nodelist.render(context)
+        context.pop()
+        return output
+
+register.tag(Tiers)
