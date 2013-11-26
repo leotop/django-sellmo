@@ -29,29 +29,29 @@ from django.db.models.signals import post_save
 #
 
 from sellmo import modules
-from sellmo.caching import CacheHandler
+from sellmo.caching import Cache, cached
 from sellmo.utils.querying import list_from_pks
 from sellmo.contrib.contrib_variation.signals import variations_deprecated
 
 #
 
-class ProductVariationsCache(CacheHandler):
+class ProductVariationsCache(Cache):
 	
-	def _on_variations_deprecated(self, sender, product, variations, **kwargs):
+	def on_variations_deprecated(self, sender, product, variations, **kwargs):
 		keys = [
-			self._get_variations_key(product.pk, grouped=True),
-			self._get_variations_key(product.pk, grouped=False)
+			self.get_variations_key(product.pk, grouped=True),
+			self.get_variations_key(product.pk, grouped=False)
 		]
 		self.delete(*keys)
 	
-	def _get_variations_key(self, product_pk, grouped=False):
+	def get_variations_key(self, product_pk, grouped=False):
 		if not grouped:
 			return 'product_{0}_variations'.format(product_pk)
 		else:
 			return 'product_{0}_grouped_variations'.format(product_pk)
 	
 	def capture(self, product, grouped=False, **kwargs):
-		variations = self.get(self._get_variations_key(product.pk, grouped))
+		variations = self.get(self.get_variations_key(product.pk, grouped))
 		variations_hit = variations is not None
 		if variations_hit:
 			cache = variations
@@ -117,23 +117,23 @@ class ProductVariationsCache(CacheHandler):
 						'variant' : variation['variant'].pk,
 					})
 					
-			self.set(self._get_variations_key(product.pk, grouped), cache)
+			self.set(self.get_variations_key(product.pk, grouped), cache)
 			
 	def hookup(self):
-		variations_deprecated.connect(self._on_variations_deprecated)
+		variations_deprecated.connect(self.on_variations_deprecated)
 
 
-class VariationChoiceCache(CacheHandler):
+class VariationChoiceCache(Cache):
 	
-	def _on_variant_post_save(self, sender, instance, **kwargs):
-		keys = [self._get_choice_key(pk) for pk in instance.variations.values_list('pk', flat=True)]
+	def on_variant_post_save(self, sender, instance, **kwargs):
+		keys = [self.get_choice_key(pk) for pk in instance.variations.values_list('pk', flat=True)]
 		self.delete(*keys)
 		
-	def _get_choice_key(self, pk):
+	def get_choice_key(self, pk):
 		return 'variation_{0}_choice'.format(pk)
 		
 	def capture(self, variation, choice=None, **kwargs):
-		choice = self.get(self._get_choice_key(variation.pk))
+		choice = self.get(self.get_choice_key(variation.pk))
 		return {
 			'choice' : choice,
 			'choice_hit' : choice is not None
@@ -141,12 +141,13 @@ class VariationChoiceCache(CacheHandler):
 		
 	def finalize(self, variation, choice, choice_hit):
 		if not choice_hit:
-			self.set(self._get_choice_key(variation.pk), choice)
+			self.set(self.get_choice_key(variation.pk), choice)
 		
 	def hookup(self):
 		for subtype in modules.variation.subtypes:
-			post_save.connect(self._on_variant_post_save, sender=subtype)
+			post_save.connect(self.on_variant_post_save, sender=subtype)
 
 
-get_variations = ProductVariationsCache('get_variations', timeout=None)
-get_variation_choice = VariationChoiceCache('get_variation_choice', timeout=None)
+get_variations = cached(ProductVariationsCache, 'get_variations', timeout=None)
+get_variation_choice = cached(VariationChoiceCache, 'get_variation_choice', timeout=None)
+

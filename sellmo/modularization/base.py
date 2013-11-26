@@ -62,22 +62,22 @@ modules = MountPoint()
 
 class _ModuleMeta(SingletonMeta):
     
-    def __new__(meta, name, bases, dict):
-        cls = super(_ModuleMeta, meta).__new__(meta, name, bases, dict)
+    def __new__(cls, name, bases, dict):
+        out = super(_ModuleMeta, cls).__new__(cls, name, bases, dict)
         
         # Threat the actual 'Module' class not as a module
-        if cls.__ignore__:
-            cls.__ignore__ = False
-            return cls
+        if out.__ignore__:
+            out.__ignore__ = False
+            return out
         
         # Validate the module
-        if not cls.namespace:
-            raise Exception("No namespace defined for module '%s'" % cls)
+        if not out.namespace:
+            raise Exception("No namespace defined for module '%s'" % out)
         
-        # Signal mountpoint
-        modules.on_module_creation(cls)
+        # Notify mountpoint
+        modules.on_module_creation(out)
         
-        return cls
+        return out
 
 class Module(object):
     

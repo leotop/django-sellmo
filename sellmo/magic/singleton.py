@@ -72,11 +72,11 @@ class OneTimeInitAccess(object):
         
 # Usage option 1: __metaclass__ assignment
 class SingletonMeta(type):
-    def __new__(meta, name, bases, dict):
-        cls = type.__new__(meta, name, bases, dict)
-        cls.__new__ = SingletonAccess(cls, cls.__new__)
-        cls.__init__ = OneTimeInitAccess(cls, cls.__init__)
-        return cls
+    def __new__(cls, name, bases, dict):
+        out = super(SingletonMeta, cls).__new__(cls, name, bases, dict)
+        out.__new__ = SingletonAccess(out, out.__new__)
+        out.__init__ = OneTimeInitAccess(out, out.__init__)
+        return out
         
 # Usage option 2: decorator usage
 def singleton(cls):

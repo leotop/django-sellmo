@@ -24,14 +24,20 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.core.chaining import link_func
-from sellmo.signals.core import post_init
-from sellmo.config import settings
 from django.core.cache import cache
 
 #
 
-class CacheHandler(object):
+from sellmo.core.chaining import link_func
+from sellmo.signals.core import post_init
+from sellmo.config import settings
+
+#
+
+def cached(cache, name, namespace=None, timeout=True):
+	return cache(name, namespace, timeout)
+
+class Cache(object):
 	
 	_im_linked = True
 	_links = []
