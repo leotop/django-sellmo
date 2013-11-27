@@ -55,7 +55,7 @@ class MountPoint(object):
 		self._modules.append(instance)
 		
 		# Signal
-		module_init.send(sender=self, module=module)
+		module_init.send(sender=self, module=instance)
 
 	def init_pending_modules(self):
 		while self._pending:

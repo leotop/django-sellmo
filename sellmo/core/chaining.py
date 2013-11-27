@@ -47,22 +47,40 @@ class Chainer(object):
     def __init__(self):
         self._links = {}
         self._chains = {}
+        self._modules = []
         module_created.connect(self.on_module_created)
         module_init.connect(self.on_module_init)
         
     def hookup(self):
+        
+        # Fix bound links
+        for module in self._modules:
+            for name in dir(module):
+                attr = getattr(module, name)
+                if hasattr(attr, '_linked'):
+                    path = attr._link_path
+                    links = self._links[path]
+                    link = filter(lambda el : el['func'] == attr.__func__, links)[0]
+                    link['func'] = attr
+        
+        # Hookup links
         for path, links in self._links.iteritems():
             # Find chain for this path
             if path not in self._chains:
                 for link in links:
-                    func = link[0]
+                    func = link['func']
                     logger.warning("Could not link '{0}.{1}' to '{2}'".format(func.__module__, func.__name__, path))
                 continue
             
             # Hookup links to chain
             chain = self._chains[path]
             for link in links:
-                chain.hookup(link[0], capture=link[1])
+                chain.hookup(link['func'], capture=link['capture'])
+                
+        # Cleanup
+        self._links = None
+        self._chains = None
+        self._modules = None
         
     def link(self, func, name=None, namespace=None, capture=False):
         if namespace is None:
@@ -81,7 +99,16 @@ class Chainer(object):
         path = '{0}.{1}'.format(namespace, name)
         if not path in self._links:
             self._links[path] = []
-        self._links[path].append((func, capture))
+        self._links[path].append({
+            'func' : func,
+            'capture' : capture
+        })
+        
+        # Flag this function so we can find it again and see if't a module's
+        # instancemethod
+        if inspect.isfunction(func):
+            func._linked = True
+            func._link_path = path
         
         return func
         
@@ -94,11 +121,12 @@ class Chainer(object):
         return wrapper
         
     def on_module_init(self, sender, module, **kwargs):
-        pass
+        self._modules.append(module)
         
     def on_module_created(self, sender, module, **kwargs):
         for key in module.__dict__:
             attr = module.__dict__[key]
+            # Handle chain
             if hasattr(attr, '_chain'):
                 chain = attr._chain
                 
