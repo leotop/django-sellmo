@@ -29,6 +29,8 @@ from sellmo.api.decorators import link
 
 #
 
+namespace = modules.checkout.namespace
+
 @link()
 def get_shipping_methods(order, methods, **kwargs):
 	for method in modules.shipping.ShippingMethod.objects.polymorphic().filter(active=True):

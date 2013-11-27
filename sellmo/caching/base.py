@@ -28,31 +28,25 @@ from django.core.cache import cache
 
 #
 
-from sellmo.core.chaining import link_func
+from sellmo.core.chaining import chainer
 from sellmo.signals.core import post_init
 from sellmo.config import settings
 
 #
 
-def cached(cache, name, namespace=None, timeout=True):
+def cached(cache, name, namespace, timeout=True):
 	return cache(name, namespace, timeout)
 
 class Cache(object):
-	
-	_im_linked = True
-	_links = []
 	
 	#
 	timeout = True
 	prefix = settings.CACHING_PREFIX
 	
-	def __init__(self, name, namespace=None, timeout=True):
+	def __init__(self, name, namespace, timeout=True):
 		post_init.connect(self._on_post_init)
-		self._links = [
-			link_func(self.capture, name=name, namespace=namespace, capture=True),
-			link_func(self.finalize, name=name, namespace=namespace)
-		]
-		
+		chainer.link(self.capture, name=name, namespace=namespace, capture=True),
+		chainer.link(self.finalize, name=name, namespace=namespace)
 		self.timeout = timeout
 		
 	def resolve_key(self, key):

@@ -32,6 +32,8 @@ from sellmo.api.pricing import Price
 
 #
 
+namespace = modules.pricing.namespace
+
 @link()
 def get_price(price, product=None, **kwargs):
     if product:

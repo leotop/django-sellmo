@@ -24,8 +24,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+#
+
 from sellmo.core.loading import loader
-from sellmo.core.chaining import Chain, ViewChain, link_func, wrapped_chain
+from sellmo.core.chaining import chainer, Chain, ViewChain
 
 def load(action=None, after=None, before=None, directly=False):
     def decorator(func):
@@ -35,15 +37,17 @@ def load(action=None, after=None, before=None, directly=False):
     
 def link(name=None, namespace=None, capture=False):
     def decorator(func):
-        return link_func(func, name=name, namespace=namespace, capture=capture)
+        return chainer.link(func, name, namespace, capture)
     return decorator
     
 def view(regex=None):
     def decorator(func):
-        return wrapped_chain(ViewChain(func, regex=regex))
+        chain = ViewChain(func, regex)
+        return chainer.chain(chain)
     return decorator
     
 def chainable():
     def decorator(func):
-        return wrapped_chain(Chain(func))
+        chain = Chain(func)
+        return chainer.chain(chain)
     return decorator

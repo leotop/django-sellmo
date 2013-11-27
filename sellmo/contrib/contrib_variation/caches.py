@@ -148,6 +148,6 @@ class VariationChoiceCache(Cache):
 			post_save.connect(self.on_variant_post_save, sender=subtype)
 
 
-get_variations = cached(ProductVariationsCache, 'get_variations', timeout=None)
-get_variation_choice = cached(VariationChoiceCache, 'get_variation_choice', timeout=None)
+get_variations = cached(ProductVariationsCache, 'get_variations', 'variation', timeout=None)
+get_variation_choice = cached(VariationChoiceCache, 'get_variation_choice', 'variation', timeout=None)
 

@@ -32,7 +32,6 @@ from django.db.models.query import QuerySet
 import sellmo
 from sellmo import modules
 from sellmo.api.decorators import view, chainable
-from sellmo.modularization import Module
 from sellmo.api.store.models import Purchase
 
 

@@ -38,8 +38,6 @@ from sellmo.signals.core import pre_init, post_init
 #
 
 import sys, logging
-from collections import deque
-from copy import copy
 
 #
 
@@ -53,24 +51,27 @@ class NotLinkedException(Exception):
 @singleton
 class Sellmo(object):
     
-    links = ['views', 'links']
+    module_names = ['views', 'links']
     
     def __init__(self):
     
         pre_init.send(self)
         
-        # Init sellmo apps before initing modules allowing them to configure the class based modules
+        # 1. First init & collect each django app which defines a __sellmo__ python module.
         apps = list(self._init_apps())
         
-        # 
-        self._init_modules()
-        self._link_modules()
+        # 2. Make sure every sellmo module registered to the mountpoint is instanciated.
+        modules.init_pending_modules()
         
-        #
+        # 3. Begin the loading process as declared in all of the sellmo apps.
+        loading.loader.load()
+        
+        # 4. Load additional app modules
         self._load_apps(apps)
-        for link in self.links:
-            self._link_apps(apps, link)
-            
+        
+        # 5. Hookup links
+        chaining.chainer.hookup()
+    
         post_init.send(self)
     
     def _init_apps(self):
@@ -80,19 +81,11 @@ class Sellmo(object):
                 sellmo_module.path = app
                 yield sellmo_module
                 
-    def _link_apps(self, apps, module_name):
+    def _load_apps(self, apps):
         for app in apps:
-            app_module = self._load_app_module(app.path, module_name)
-            if app_module:
-                kwargs = {
-                    'namespace' : getattr(app, 'namespace', None),
-                }
-                for name in dir(app_module):
-                    attr = getattr(app_module, name)
-                    if hasattr(attr, '_im_linked'):
-                        self._handle_linked_attr(attr, **kwargs)
-                
-                        
+            for module_name in self.module_names:
+                self._load_app_module(app.path, module_name)
+                      
     def _load_app_module(self, app, module_name):
         app_module = import_module(app)
         try:
@@ -102,47 +95,3 @@ class Sellmo(object):
                 raise Exception(str(exception)), None, sys.exc_info()[2]
         else:
             return module
-                
-    def _init_modules(self):
-        modules.init_pending_modules()
-            
-    def _load_apps(self, apps):
-        loading.loader.load()
-                        
-    def _link_modules(self):
-        for module in modules:
-            for name in dir(module):
-                attr = getattr(module, name)
-                if hasattr(attr, '_im_linked'):
-                    self._handle_linked_attr(attr)
-    
-    def _handle_linked_attr(self, attr, **kwargs):
-        links = getattr(attr, '_links', [attr])
-        for link in links:
-            if not self._link(link, **kwargs):
-                logger.warning("Could not link '{0}.{1}'".format(link.__module__, link.__name__))
-    
-    def _link(self, link, namespace=None):
-        if link._namespace:
-            # override default namespace
-            namespace = link._namespace
-        
-        if not namespace:
-            logger.warning("Link '{0}.{1}' has no target namespace.".format(link.__module__, link.__name__))
-            return False
-        
-        if not hasattr(modules, namespace):
-            logger.warning("Module '{0}' not found".format(namespace))
-            return False
-        
-        module = getattr(modules, namespace)
-        name = link._name
-        
-        if not hasattr(module, name) or not hasattr(getattr(module, name), '_chain'):
-            logger.warning("Module '{0}' has no chainable method '{1}'".format(namespace, link._name))
-            return False
-        
-        chain = getattr(module, name)._chain
-        chain.link(link)
-        return True
-        

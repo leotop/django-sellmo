@@ -28,9 +28,12 @@ from django.http import HttpResponse, Http404
 
 #
 
+from sellmo import modules
 from sellmo.api.decorators import link
 
 #
+
+namespace = modules.product.namespace
 
 @link()
 def details(request, product, context, **kwargs):

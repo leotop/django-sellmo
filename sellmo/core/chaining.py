@@ -24,32 +24,91 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.http import HttpResponse
-from inspect import isfunction, isgeneratorfunction
+import inspect
 import functools
+import logging
 
 #
 
-def wrapped_chain(chain):
-    def wrapper(self, *args, **kwargs):
-        return chain.handle(self, *args, **kwargs)
-    wrapper._chain = chain
-    wrapper = functools.update_wrapper(wrapper, chain._func)
-    return wrapper
+from sellmo.magic import singleton
+from sellmo.signals.core import module_created, module_init
 
-def link_func(func, name=None, namespace=None, capture=False):
-    target = func
-    if hasattr(target, '__func__'):
-        target = target.__func__
-    _setup_link(target, name, namespace, capture)
-    return func
-    
-def _setup_link(func, name, namespace, capture):
-    func._name = name if name else func.func_name
-    func._namespace = namespace
-    func._capture = capture
-    func._im_linked = True
-    
+#
+
+from django.http import HttpResponse
+
+#
+
+logger = logging.getLogger('sellmo')
+
+@singleton
+class Chainer(object):
+
+    def __init__(self):
+        self._links = {}
+        self._chains = {}
+        module_created.connect(self.on_module_created)
+        module_init.connect(self.on_module_init)
+        
+    def hookup(self):
+        for path, links in self._links.iteritems():
+            # Find chain for this path
+            if path not in self._chains:
+                for link in links:
+                    func = link[0]
+                    logger.warning("Could not link '{0}.{1}' to '{2}'".format(func.__module__, func.__name__, path))
+                continue
+            
+            # Hookup links to chain
+            chain = self._chains[path]
+            for link in links:
+                chain.hookup(link[0], capture=link[1])
+        
+    def link(self, func, name=None, namespace=None, capture=False):
+        if namespace is None:
+            # Resolve namespace from func
+            module = inspect.getmodule(func)
+            if not module or not hasattr(module, 'namespace'):
+                raise Exception("Link '{0}.{1}' has no target namespace.".format(func.__module__, func.__name__))
+            
+            namespace = module.namespace
+            
+        if name is None:
+            # Resolve name from func
+            name = func.__name__
+        
+        # Map link
+        path = '{0}.{1}'.format(namespace, name)
+        if not path in self._links:
+            self._links[path] = []
+        self._links[path].append((func, capture))
+        
+        return func
+        
+    def chain(self, chain):
+        def wrapper(*args, **kwargs):
+            return chain.handle(*args, **kwargs)
+        wrapper = functools.update_wrapper(wrapper, chain._func)
+        # Assign chain to wrapper, this allows us to map later on
+        wrapper._chain = chain
+        return wrapper
+        
+    def on_module_init(self, sender, module, **kwargs):
+        pass
+        
+    def on_module_created(self, sender, module, **kwargs):
+        for key in module.__dict__:
+            attr = module.__dict__[key]
+            if hasattr(attr, '_chain'):
+                chain = attr._chain
+                
+                # Map chain
+                path = '{0}.{1}'.format(module.namespace, chain._func.__name__)
+                self._chains[path] = chain
+        
+
+chainer = Chainer()
+
 #
 
 class Chain(object):
@@ -59,13 +118,13 @@ class Chain(object):
         self._capture_queue = []
         self._func = func
     
-    def link(self, func):
-        if func._capture:
+    def hookup(self, link, capture=False):
+        if capture:
             # Last link is captured first
-            self._capture_queue.insert(0, func)
+            self._capture_queue.insert(0, link)
         else:
             # Last link is executed last
-            self._queue.append(func)
+            self._queue.append(link)
             
     def handle(self, module, **kwargs):
         func = self._func
@@ -73,7 +132,7 @@ class Chain(object):
         # Capture
         out = self._loop(reversed(self._capture_queue), **kwargs)
         if not out[1] is None:
-            if isfunction(out[1]):
+            if inspect.isfunction(out[1]):
                 func = out[1]
             else:
                 return out[1]
@@ -84,7 +143,7 @@ class Chain(object):
     def _loop(self, queue, **kwargs):
         for func in queue:
             # We allow for yieldable output
-            if isgeneratorfunction(func):
+            if inspect.isgeneratorfunction(func):
                 responses = list(func(**kwargs))
             else:
                 responses = [func(**kwargs)]
@@ -126,7 +185,7 @@ class Chain(object):
         return len(self._capture_queue) > 0
         
     def should_return(self, response):
-        return isfunction(response)
+        return inspect.isfunction(response)
         
     def __nonzero__(self):
         return self.can_execute

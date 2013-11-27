@@ -29,7 +29,6 @@ from sellmo.api.decorators import link
 
 #
 
-
 @link(namespace='store')
 def make_purchase(purchase, product, **kwargs):
     pass

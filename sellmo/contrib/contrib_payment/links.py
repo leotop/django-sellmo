@@ -29,6 +29,8 @@ from sellmo.api.decorators import link
 
 #
 
+namespace = modules.checkout.namespace
+
 @link()
 def get_payment_methods(order, methods, **kwargs):
 	return {
