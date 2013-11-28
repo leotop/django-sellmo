@@ -24,4 +24,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.boot.boot_modules import boot
+import sys, logging
+
+# !! THIS INITS THE SELLMO CORE MODULES
+from sellmo.core.modules import *

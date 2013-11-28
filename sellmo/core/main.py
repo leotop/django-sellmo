@@ -24,6 +24,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from django.db.models.loading import get_apps
 from django.conf import settings
 from django.utils.importlib import import_module
 from django.utils.module_loading import module_has_submodule
@@ -56,6 +57,7 @@ class Sellmo(object):
     def __init__(self):
     
         pre_init.send(self)
+        logger.info("Sellmo initializing...")
         
         # 1. First init & collect each django app which defines a __sellmo__ python module.
         apps = list(self._init_apps())
@@ -72,9 +74,16 @@ class Sellmo(object):
         # 5. Hookup links
         chaining.chainer.hookup()
     
+        logger.info("Sellmo initialized")
         post_init.send(self)
+        
     
     def _init_apps(self):
+        
+        # We need to make sure every app's models in INSTALLED_APPS is loaded.
+        get_apps()
+        
+        # 
         for app in settings.INSTALLED_APPS:
             sellmo_module = self._load_app_module(app, '__sellmo__')
             if sellmo_module:
