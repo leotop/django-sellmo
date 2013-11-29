@@ -109,6 +109,4 @@ class Tax(PolymorphicModel):
     def __unicode__(self):
         return self.name
         
-# Init modules
-from sellmo.contrib.contrib_tax.modules import *
             

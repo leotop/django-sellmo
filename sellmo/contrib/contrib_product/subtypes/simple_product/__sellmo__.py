@@ -23,27 +23,3 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-
-from sellmo import modules
-from sellmo.api.decorators import load
-
-#
-
-from django.db import models
-from django.utils.translation import ugettext_lazy as _
-
-#
-
-namespace = modules.product.namespace
-
-#
-
-@load(action='load_product_subtypes', after='finalize_product_Product')
-def load_product_subtypes():
-    class SimpleProduct(modules.product.Product):
-        class Meta:
-            app_label = 'product'
-            verbose_name = _("product")
-            verbose_name_plural = _("products")
-    
-    modules.product.register_subtype(SimpleProduct)

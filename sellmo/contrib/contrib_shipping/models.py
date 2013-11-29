@@ -139,6 +139,4 @@ class ShippingCarrier(models.Model):
     
     class Meta:
         abstract = True
-    
-# Init modules
-from sellmo.contrib.contrib_shipping.modules import *
+

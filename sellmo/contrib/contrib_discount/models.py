@@ -104,8 +104,4 @@ class Discount(PolymorphicModel):
         abstract = True
     
     def __unicode__(self):
-        return self.name
-        
-# Init modules
-from sellmo.contrib.contrib_discount.modules import *
-            
+        return self.name            

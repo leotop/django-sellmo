@@ -201,6 +201,3 @@ def load_model():
             abstract = True
 
     modules.product.Product = Product
-        
-# Init modules
-from sellmo.contrib.contrib_color.modules import *

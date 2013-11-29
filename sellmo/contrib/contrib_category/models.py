@@ -276,5 +276,3 @@ class Category(MPTTModel):
     class Meta:
         abstract = True
         
-# Init modules
-from sellmo.contrib.contrib_category.modules import *

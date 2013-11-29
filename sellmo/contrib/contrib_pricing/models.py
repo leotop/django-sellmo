@@ -159,5 +159,3 @@ class ProductQtyPrice(models.Model):
     class Meta:
         abstract = True
         
-# Init modules
-from sellmo.contrib.contrib_pricing.modules import *

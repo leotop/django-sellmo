@@ -69,6 +69,3 @@ class PaymentSettings(models.Model):
 
 	class Meta:
 		abstract = True
-
-# Init modules
-from sellmo.contrib.contrib_payment.modules import *

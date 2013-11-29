@@ -24,13 +24,50 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from decimal import Decimal
-
-#
-
 from sellmo import modules
+from sellmo.api.decorators import load
 
 #
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+
+#
+
+@load(action='finalize_bank_transfer_Payment', after='finalize_checkout_Payment')
+def finalize_model():
+
+	class BankTransferPayment(modules.checkout.Payment, modules.bank_transfer.BankTransferPayment):
+		class Meta:
+			app_label = 'checkout'
+			verbose_name = _("bank transfer payment")
+			verbose_name_plural = _("bank transfers payments")
+
+	modules.bank_transfer.BankTransferPayment = BankTransferPayment
+
+@load(before='finalize_payment_PaymentSettings')
+def finalize_model():
+
+	class PaymentSettings(modules.payment.PaymentSettings):
+		
+		bank_transfer_description = models.CharField(
+			max_length = 80,
+			default = _("Bank transfer"),
+			verbose_name = _("bank transfer description")
+		)
+		
+		bank_transfer_additional_text = models.TextField(
+			blank = True,
+			verbose_name = _("bank transfer additional text")
+		)
+		
+		class Meta:
+			abstract = True
+
+	modules.payment.PaymentSettings = PaymentSettings
+
+class BankTransferPayment(models.Model):
+	
+	class Meta:
+		abstract = True
+		

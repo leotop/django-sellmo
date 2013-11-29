@@ -52,7 +52,7 @@ class NotLinkedException(Exception):
 @singleton
 class Sellmo(object):
     
-    module_names = ['views', 'links']
+    links = ['views', 'links']
     
     def __init__(self):
     
@@ -62,16 +62,23 @@ class Sellmo(object):
         # 1. First init & collect each django app which defines a __sellmo__ python module.
         apps = list(self._init_apps())
         
-        # 2. Make sure every sellmo module registered to the mountpoint is instanciated.
+        # 2. Find additional modules in each app
+        self._load_apps(apps, 'modules')
+        
+        # 3. Make sure every sellmo module registered to the mountpoint is instanciated.
         modules.init_pending_modules()
         
-        # 3. Begin the loading process as declared in all of the sellmo apps.
+        # 4. Allow every app to configure modules
+        self._load_apps(apps, 'configure')
+        
+        # 5. Begin the loading process as declared in all of the sellmo apps.
         loading.loader.load()
         
-        # 4. Load additional app modules
-        self._load_apps(apps)
+        # 6. Load link modules
+        for module_name in self.links:
+            self._load_apps(apps, module_name)
         
-        # 5. Hookup links
+        # 7. Hookup links
         chaining.chainer.hookup()
     
         logger.info("Sellmo initialized")
@@ -90,10 +97,9 @@ class Sellmo(object):
                 sellmo_module.path = app
                 yield sellmo_module
                 
-    def _load_apps(self, apps):
+    def _load_apps(self, apps, module_name):
         for app in apps:
-            for module_name in self.module_names:
-                self._load_app_module(app.path, module_name)
+            self._load_app_module(app.path, module_name)
                       
     def _load_app_module(self, app, module_name):
         app_module = import_module(app)

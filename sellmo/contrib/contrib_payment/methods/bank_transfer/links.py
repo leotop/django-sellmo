@@ -24,13 +24,25 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from decimal import Decimal
+from django.utils.translation import ugettext_lazy as _
 
 #
 
 from sellmo import modules
+from sellmo.api.decorators import link
+from sellmo.api.pricing import Price
+from sellmo.contrib.contrib_payment.methods.bank_transfer import BankTransferPaymentMethod
 
 #
 
-from django.db import models
-from django.utils.translation import ugettext_lazy as _
+namespace = modules.checkout.namespace
+
+#
+
+@link()
+def get_payment_methods(order, methods, **kwargs):
+	method = BankTransferPaymentMethod(identifier='bank_transfer', description=_("Bank transfer"))
+	methods['bank_transfer'] = method
+	return {
+		'methods' : methods
+	}

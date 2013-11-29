@@ -297,6 +297,3 @@ class Attribute(models.Model):
 
     class Meta:
         abstract = True
-        
-# Init modules
-from sellmo.contrib.contrib_attribute.modules import *

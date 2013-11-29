@@ -50,6 +50,17 @@ def finalize_model():
 
 	class PaymentSettings(modules.payment.PaymentSettings):
 		
+		mollie_ideal_description = models.CharField(
+			max_length = 80,
+			default = _("iDeal"),
+			verbose_name = _("mollie ideal description")
+		)
+		
+		mollie_ideal_additional_text = models.TextField(
+			blank = True,
+			verbose_name = _("mollie ideal additional text")
+		)
+		
 		mollie_partner_id = models.CharField(
 			max_length = 20,
 			verbose_name = _("mollie partner-id")
@@ -149,6 +160,4 @@ class MollieIdealPayment(models.Model):
 	
 	class Meta:
 		abstract = True
-	
-# Init modules
-from sellmo.contrib.contrib_payment.methods.ideal.mollie_ideal.modules import *
+		

@@ -24,15 +24,3 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo import modules
-from sellmo.api.decorators import load
-from sellmo.magic import ModelMixin
-
-#
-
-from django.db import models
-from django.utils.translation import ugettext_lazy as _
-
-#
-    
-namespace = modules.category.namespace

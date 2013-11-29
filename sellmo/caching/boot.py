@@ -29,4 +29,4 @@ from sellmo.config import settings
 
 #
 
-Sellmo.module_names += ['caches']
+Sellmo.links += ['caches']

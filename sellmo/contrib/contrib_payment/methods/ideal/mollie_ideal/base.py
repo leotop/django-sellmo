@@ -30,7 +30,6 @@ from sellmo.api.checkout import PaymentMethod
 
 #
 
-from sellmo.api.checkout.processes import CheckoutProcess, CheckoutStep
 from sellmo.contrib.contrib_payment.methods.ideal.mollie_ideal.process import *
 
 #
@@ -64,6 +63,5 @@ class MollieIdealPaymentMethod(PaymentMethod):
 		return modules.pricing.get_price(price=Price(0), payment_method=self)
 
 	def __unicode__(self):
-		description = self.description
-		return description
+		return unicode(self.description)
 		

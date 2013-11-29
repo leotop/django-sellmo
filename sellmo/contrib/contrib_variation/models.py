@@ -48,6 +48,10 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
+@load(action='setup_variants', after='load_product_subtypes')
+def setup_variants():
+    pass
+
 @load(before='finalize_product_Product')
 def load_model():
     class Product(modules.product.Product):
@@ -675,5 +679,3 @@ def load_model():
         
     modules.variation.VariationPurchase = VariationPurchase
         
-# Init modules
-from sellmo.contrib.contrib_variation.modules import *
