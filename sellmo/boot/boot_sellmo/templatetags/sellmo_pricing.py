@@ -50,7 +50,8 @@ def price(value):
 def as_price(value):
     return Price(value)
 
-class Price(Tag):
+class PriceTag(Tag):
+    name = 'price'
     options = Options(
         MultiKeywordArgument('kwargs', required=False),
         'as',
@@ -66,4 +67,4 @@ class Price(Tag):
         context.pop()
         return output
 
-register.tag(Price)
+register.tag(PriceTag)

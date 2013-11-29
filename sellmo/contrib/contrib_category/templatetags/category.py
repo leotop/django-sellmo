@@ -46,7 +46,8 @@ register = template.Library()
 
 #
 
-class Categories(Tag):
+class CategoriesTag(Tag):
+    name = 'categories'
     options = Options(
         Flag('nested', default=False, true_values=['nested']),
         MultiKeywordArgument('kwargs', required=False),
@@ -118,4 +119,4 @@ class Categories(Tag):
         context.pop()
         return output
 
-register.tag(Categories)
+register.tag(CategoriesTag)

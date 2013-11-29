@@ -42,7 +42,8 @@ register = template.Library()
 
 #
     
-class Cart(Tag):
+class CartTag(Tag):
+    name = 'cart'
     options = Options(
         MultiKeywordArgument('kwargs', required=False),
         'as',
@@ -59,7 +60,7 @@ class Cart(Tag):
         context.pop()
         return output
 
-register.tag(Cart)
+register.tag(CartTag)
 
 @register.inclusion_tag('cart/add_to_cart_formset.html', takes_context=True)
 def add_to_cart_formset(context, product, next=None, invalid=None, **kwargs):

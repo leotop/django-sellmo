@@ -42,7 +42,8 @@ register = template.Library()
 
 #
 
-class Customer(Tag):
+class CustomerTag(Tag):
+    name = 'customer'
     options = Options(
         Flag('authenticated', default=False, true_values=['authenticated']),
         MultiKeywordArgument('kwargs', required=False),
@@ -68,4 +69,4 @@ class Customer(Tag):
         context.pop()
         return output
 
-register.tag(Customer)
+register.tag(CustomerTag)

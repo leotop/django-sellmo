@@ -41,7 +41,8 @@ register = template.Library()
 
 #
 
-class Variations(Tag):
+class VariationsTag(Tag):
+    name = 'variations'
     options = Options(
         Flag('grouped', default=False, true_values=['grouped']),
         MultiKeywordArgument('kwargs', required=False),
@@ -58,4 +59,4 @@ class Variations(Tag):
         context.pop()
         return output
 
-register.tag(Variations)
+register.tag(VariationsTag)

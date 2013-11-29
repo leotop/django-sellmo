@@ -42,7 +42,7 @@ register = template.Library()
 
 #
 
-class StoreInformation(Tag):
+class StoreInformationTag(Tag):
 	name = 'storeinformation'
 	options = Options(
 		MultiKeywordArgument('kwargs', required=False),
@@ -69,4 +69,4 @@ class StoreInformation(Tag):
 		context.pop()
 		return output
 
-register.tag(StoreInformation)
+register.tag(StoreInformationTag)

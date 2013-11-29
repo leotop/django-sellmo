@@ -41,7 +41,8 @@ register = template.Library()
 
 #
 
-class Colors(Tag):
+class ColorsTag(Tag):
+    name = 'colors'
     options = Options(
         MultiKeywordArgument('kwargs', required=False),
         'as',
@@ -57,4 +58,4 @@ class Colors(Tag):
         context.pop()
         return output
 
-register.tag(Colors)
+register.tag(ColorsTag)

@@ -42,7 +42,8 @@ register = template.Library()
 
 #
 
-class Tiers(Tag):
+class TiersTag(Tag):
+    name = 'tiers'
     options = Options(
         MultiKeywordArgument('kwargs', required=False),
         'as',
@@ -58,4 +59,4 @@ class Tiers(Tag):
         context.pop()
         return output
 
-register.tag(Tiers)
+register.tag(TiersTag)
