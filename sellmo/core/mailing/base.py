@@ -24,23 +24,40 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.conf import settings as django_settings
+from django.utils.module_loading import import_by_path
 
 #
 
-REDIRECTION_SESSION_PREFIX = '_sellmo_redirection'
-REDIRECTION_DEBUG = False
+from sellmo.magic import singleton
+from sellmo.config import settings
 
 #
 
-CACHING_PREFIX = '_sellmo'
-CACHING_ENABLED = True
+@singleton
+class Mailer(object):
 
-#
+	handler = None
+	writers = {}
 
-CELERY_ENABLED = False
+	def __init__(self):
+		self.handler = import_by_path(settings.MAIL_HANDLER)
 
-#
-
-MAIL_HANDLER = 'sellmo.core.mailing.handlers.DefaultMailHandler'
-MAIL_FROM = django_settings.DEFAULT_FROM_EMAIL
+	def send_mail(self, message_type, context=None):
+		if context is None:
+			context = {}
+		
+		# Find writer
+		if not message_type in self.writers:
+			raise Exception("No writer for message type '{0}'".format(message_type))
+		writer = self.writers[message_type]
+		
+		# Create a new handler with the given writer
+		handler = self.handler(writer)
+		
+		# Handle the email
+		handler.handle_mail(context)
+		
+	def register(self, message_type, writer):
+		self.writers[message_type] = writer
+		
+mailer = Mailer()

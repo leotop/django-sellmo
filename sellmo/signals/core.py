@@ -28,10 +28,16 @@ import django.dispatch
 
 #
 
-pre_init = django.dispatch.Signal()
-post_init = django.dispatch.Signal()
+__all__ = [
+	'pre_init',
+	'post_init',
+	'module_created',
+	'module_init',
+]
 
 #
 
+pre_init = django.dispatch.Signal()
+post_init = django.dispatch.Signal()
 module_created = django.dispatch.Signal()
 module_init = django.dispatch.Signal()

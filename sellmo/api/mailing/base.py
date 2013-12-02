@@ -24,23 +24,58 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.conf import settings as django_settings
+from sellmo.config import settings
 
 #
 
-REDIRECTION_SESSION_PREFIX = '_sellmo_redirection'
-REDIRECTION_DEBUG = False
+class MailHandler(object):
 
-#
+	def __init__(self, writer):
+		self.writer = writer
 
-CACHING_PREFIX = '_sellmo'
-CACHING_ENABLED = True
+	def handle_mail(self, context):
+		raise NotImplementedError()
 
-#
-
-CELERY_ENABLED = False
-
-#
-
-MAIL_HANDLER = 'sellmo.core.mailing.handlers.DefaultMailHandler'
-MAIL_FROM = django_settings.DEFAULT_FROM_EMAIL
+class MailWriter(object):
+	
+	@classmethod
+	def open(cls, context):
+		return cls(**context)
+	
+	def __init__(self, **context):
+		self.context = context
+	
+	def __enter__(self):
+		self.setup()
+		return self
+	
+	def __exit__(self, type, value, traceback):
+		self.teardown()
+	
+	def setup(self):
+		pass
+		
+	def teardown(self):
+		pass
+	
+	def get_to(self):
+		raise NotImplementedError()
+		
+	def get_subject(self):
+		raise NotImplementedError()
+	
+	def get_body(self):
+		raise NotImplementedError()
+		
+	def get_bcc(self):
+		return []
+		
+	def get_from(self):
+		return settings.MAIL_FROM
+		
+	def get_attachments(self):
+		return []
+		
+	def get_headers(self):
+		return {}
+		

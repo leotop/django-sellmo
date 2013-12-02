@@ -39,6 +39,7 @@ from django.utils.decorators import method_decorator
 
 import sellmo
 from sellmo import modules
+from sellmo.core.mailing import mailer
 from sellmo.api.decorators import view, chainable, link
 from sellmo.api.customer.models import Addressee, Address, Contactable, Customer
 
@@ -177,7 +178,6 @@ class CustomerModule(sellmo.Module):
             out = chain.execute(prefix=prefix, data=data, contactable=contactable, form=form, processed=processed, **kwargs)
             contactable, form, processed = out.get('contactable', contactable), out.get('form', form), out.get('processed', processed)
         return contactable, form, processed
-        
         
     # ADDRESS LOGIC
         
@@ -347,6 +347,7 @@ class CustomerModule(sellmo.Module):
         
         
     # ACCOUNT LOGIC
+    
     @view(r'^account/$')
     def account(self, chain, request, customer=None, context=None, **kwargs):
         
@@ -382,4 +383,4 @@ class CustomerModule(sellmo.Module):
         return {
             'order' : order
         }
-    
+        

@@ -24,23 +24,22 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.conf import settings as django_settings
+from sellmo.signals.core import post_init
+from sellmo.signals.checkout import order_accepted
+from sellmo.core.mailing import mailer
+from sellmo.contrib.contrib_checkout.mailing import OrderAcceptedWriter
 
 #
 
-REDIRECTION_SESSION_PREFIX = '_sellmo_redirection'
-REDIRECTION_DEBUG = False
+mailer.register('order_accepted', OrderAcceptedWriter)
 
 #
 
-CACHING_PREFIX = '_sellmo'
-CACHING_ENABLED = True
+def on_order_accepted(sender, **kwargs):
+	mailer.send_mail('order_accepted', context={
+		'order' : None,
+	})
 
 #
 
-CELERY_ENABLED = False
-
-#
-
-MAIL_HANDLER = 'sellmo.core.mailing.handlers.DefaultMailHandler'
-MAIL_FROM = django_settings.DEFAULT_FROM_EMAIL
+post_init.connect(on_order_accepted)

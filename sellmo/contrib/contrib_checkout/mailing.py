@@ -24,23 +24,25 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.conf import settings as django_settings
+from sellmo import modules
+from sellmo.api.mailing import MailWriter
 
 #
 
-REDIRECTION_SESSION_PREFIX = '_sellmo_redirection'
-REDIRECTION_DEBUG = False
+from django.utils.translation import ugettext_lazy as _
 
 #
 
-CACHING_PREFIX = '_sellmo'
-CACHING_ENABLED = True
-
-#
-
-CELERY_ENABLED = False
-
-#
-
-MAIL_HANDLER = 'sellmo.core.mailing.handlers.DefaultMailHandler'
-MAIL_FROM = django_settings.DEFAULT_FROM_EMAIL
+class OrderAcceptedWriter(MailWriter):
+	
+	def __init__(self, order):
+		self.order = order
+		
+	def get_subject(self):
+		return _("Order completed")
+		
+	def get_body(self):
+		raise NotImplementedError()
+	
+	def get_to(self):
+		return self.order.email

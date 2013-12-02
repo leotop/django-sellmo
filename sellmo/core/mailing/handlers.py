@@ -24,23 +24,34 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.conf import settings as django_settings
+from sellmo.api.mailing import MailHandler
 
 #
 
-REDIRECTION_SESSION_PREFIX = '_sellmo_redirection'
-REDIRECTION_DEBUG = False
+from django.core import mail
 
 #
 
-CACHING_PREFIX = '_sellmo'
-CACHING_ENABLED = True
+class MailHandlerBase(MailHandler):
 
-#
+	def send_mail(self, context, connection=None):
+		# Open the writer and close it afterwards
+		with self.writer.open(context) as writer:
+			# Construct the message
+			message = mail.EmailMessage(
+				writer.get_subject(),
+				writer.get_body(),
+				writer.get_from(),
+				writer.get_to(),
+				writer.get_bcc()
+			)
+			# If a connection is passed, assign it
+			if connection:
+				message.connection = connection
+			
+			# Now actualy send
+			message.send()
 
-CELERY_ENABLED = False
-
-#
-
-MAIL_HANDLER = 'sellmo.core.mailing.handlers.DefaultMailHandler'
-MAIL_FROM = django_settings.DEFAULT_FROM_EMAIL
+class DefaultMailHandler(MailHandlerBase):
+	def handle_mail(self, context):
+		self.send_mail(context)

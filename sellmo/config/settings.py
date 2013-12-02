@@ -43,3 +43,12 @@ REDIRECTION_DEBUG = getattr(settings, 'SELLMO_REDIRECTION_DEBUG', defaults.REDIR
 
 CACHING_ENABLED = getattr(settings, 'SELLMO_CACHING_ENABLED', defaults.CACHING_ENABLED)
 CACHING_PREFIX = getattr(settings, 'SELLMO_CACHING_PREFIX', defaults.CACHING_PREFIX)
+
+#
+
+CELERY_ENABLED = getattr(settings, 'SELLMO_CELERY_ENABLED', defaults.CELERY_ENABLED)
+
+#
+
+MAIL_HANDLER = getattr(settings, 'SELLMO_MAIL_HANDLER', defaults.MAIL_HANDLER)
+MAIL_FROM = getattr(settings, 'SELLMO_MAIL_FROM', defaults.MAIL_FROM)

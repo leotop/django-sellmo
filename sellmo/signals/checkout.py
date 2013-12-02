@@ -24,23 +24,20 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.conf import settings as django_settings
+import django.dispatch
 
 #
 
-REDIRECTION_SESSION_PREFIX = '_sellmo_redirection'
-REDIRECTION_DEBUG = False
+__all__ = [
+	'order_placed',
+	'order_accepted',
+	'order_canceled',
+	'order_status_change',
+]
 
 #
 
-CACHING_PREFIX = '_sellmo'
-CACHING_ENABLED = True
-
-#
-
-CELERY_ENABLED = False
-
-#
-
-MAIL_HANDLER = 'sellmo.core.mailing.handlers.DefaultMailHandler'
-MAIL_FROM = django_settings.DEFAULT_FROM_EMAIL
+order_placed = django.dispatch.Signal()
+order_accepted = django.dispatch.Signal()
+order_canceled = django.dispatch.Signal()
+order_status_change = django.dispatch.Signal()

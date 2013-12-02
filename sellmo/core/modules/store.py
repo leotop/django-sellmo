@@ -76,8 +76,7 @@ class StoreModule(sellmo.Module):
                 result = out['result']
                 
         return result
-        
-            
+       
     @chainable()
     def make_purchase(self, chain, product=None, qty=None, purchase=None, **kwargs):
         

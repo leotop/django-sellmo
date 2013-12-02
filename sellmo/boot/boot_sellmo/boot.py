@@ -35,6 +35,9 @@ from sellmo.config import settings
 
 if settings.CACHING_ENABLED:
 	import sellmo.caching.boot
+	
+if settings.CELERY_ENABLED:
+	import sellmo.celery.boot
 
 # Wrap all exceptions because Django does not capture ImportErrors
 try:

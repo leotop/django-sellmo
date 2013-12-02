@@ -37,6 +37,7 @@ from django import dispatch
 
 import sellmo
 from sellmo import modules
+from sellmo.signals.checkout import *
 from sellmo.core.processing import ProcessError
 from sellmo.utils.tracking import UntrackableError
 from sellmo.api.decorators import view, chainable, link
@@ -398,7 +399,7 @@ class CheckoutModule(sellmo.Module):
     @chainable()
     def invalidate_order(self, chain, request, order, **kwargs):
         """
-        Invalidates the order after it's purchases have changed
+        Invalidates the order after it's purchases have changed.
         """
         order.invalidate()
         if chain:
@@ -407,12 +408,14 @@ class CheckoutModule(sellmo.Module):
     @chainable()
     def accept_order(self, chain, request, order, **kwargs):
         """
-        Accepts the order and untrack it
+        Accepts the order and untracks it.
         """
         order.accept()
         order.untrack(request)
         if chain:
             chain.execute(request=request, order=order, **kwargs)
+        
+        order_accepted.send(sender=self, order=order)
         
     @chainable()
     def place_order(self, chain, request, order, **kwargs):
@@ -422,6 +425,8 @@ class CheckoutModule(sellmo.Module):
         order.place()
         if chain:
             chain.execute(request=request, order=order, **kwargs)
+        
+        order_placed.send(sender=self, order=order)
             
     @chainable()
     def cancel_order(self, chain, request, order, **kwargs):
@@ -432,6 +437,8 @@ class CheckoutModule(sellmo.Module):
         order.untrack(request)
         if chain:
             chain.execute(request=request, order=order, **kwargs)
+        
+        order_cancelled.send(sender=self, order=order)
             
     @link(namespace='customer')
     def get_customer(self, request, customer=None, **kwargs):

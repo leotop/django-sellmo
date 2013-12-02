@@ -24,23 +24,24 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.conf import settings as django_settings
+from celery import Celery
 
 #
 
-REDIRECTION_SESSION_PREFIX = '_sellmo_redirection'
-REDIRECTION_DEBUG = False
+from django.conf import settings
 
 #
 
-CACHING_PREFIX = '_sellmo'
-CACHING_ENABLED = True
+from sellmo.core.main import Sellmo
+from sellmo.signals.core import post_init
 
 #
 
-CELERY_ENABLED = False
+sellmo_tasks = Celery()
+sellmo_tasks.config_from_object(settings)
 
-#
-
-MAIL_HANDLER = 'sellmo.core.mailing.handlers.DefaultMailHandler'
-MAIL_FROM = django_settings.DEFAULT_FROM_EMAIL
+def on_post_init(sender, **kwargs):
+	# Will load tasks.py after sellmo has been initialized
+	sellmo_tasks.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
+	
+post_init.connect(on_post_init)
