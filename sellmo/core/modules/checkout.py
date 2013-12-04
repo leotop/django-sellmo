@@ -24,14 +24,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django import forms
+from django import forms, dispatch
 from django.http import Http404
 from django.core.urlresolvers import reverse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
-from django.db import models
-
-from django import dispatch
+from django.db import models, transaction
 
 #
 
@@ -138,6 +136,7 @@ class CheckoutModule(sellmo.Module):
                 choice = out['choice']
         return choice
     
+    @transaction.atomic
     @view([r'^step/(?P<step>[a-z0-9_-]+)/$', r'^$'])
     def checkout(self, chain, request, step=None, data=None, order=None, process=None, context=None, **kwargs):
         
