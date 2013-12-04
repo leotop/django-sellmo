@@ -41,7 +41,7 @@ class InvoiceWriter(ReportWriter):
 		self.order = order
 		
 	def get_name(self):
-		return "invoice"
+		return "invoice_{0}".format(self.order.pk)
 		
 	def get_data(self, **params):
 		return modules.checkout_reporting.render_invoice(order=self.order)

@@ -27,18 +27,18 @@
 from sellmo.signals.checkout import order_accepted
 from sellmo.core.mailing import mailer
 from sellmo.core.reporting import reporter
-from sellmo.contrib.contrib_checkout.mailing import OrderAcceptedWriter
+from sellmo.contrib.contrib_checkout.mailing import OrderConfirmationWriter
 from sellmo.contrib.contrib_checkout.reporting import InvoiceWriter
 
 #
 
-mailer.register('order_accepted', OrderAcceptedWriter)
+mailer.register('order_confirmation', OrderConfirmationWriter)
 reporter.register('invoice', InvoiceWriter)
 
 #
 
 def on_order_accepted(sender, order, **kwargs):
-	mailer.send_mail('order_accepted', context={
+	mailer.send_mail('order_confirmation', context={
 		'order' : order,
 	})
 

@@ -26,6 +26,7 @@
 
 from sellmo import modules
 from sellmo.api.mailing import MailWriter
+from sellmo.core.reporting import reporter
 
 #
 
@@ -33,7 +34,7 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
-class OrderAcceptedWriter(MailWriter):
+class OrderConfirmationWriter(MailWriter):
 	
 	formats = ['html', 'text']
 	
@@ -41,10 +42,16 @@ class OrderAcceptedWriter(MailWriter):
 		self.order = order
 		
 	def get_subject(self):
-		return _("Order completed")
+		return _("Order confirmation")
 		
 	def get_body(self, format):
-		return modules.checkout_mailing.render_order_completed(format=format, order=self.order)
+		return modules.checkout_mailing.render_order_confirmation(format=format, order=self.order)
 	
 	def get_to(self):
 		return self.order.email
+		
+	def get_attachments(self):
+		report = reporter.get_report('invoice')
+		return [
+			(report.filename, report.data, report.mimetype)
+		]

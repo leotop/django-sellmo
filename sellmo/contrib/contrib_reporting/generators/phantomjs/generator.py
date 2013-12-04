@@ -61,4 +61,4 @@ class PhantomJSReportGenerator(ReportGeneratorBase):
 		return '.' + format
 	
 	def get_mimetype(self, format):
-		return 'text/' + format
+		return 'application/pdf'

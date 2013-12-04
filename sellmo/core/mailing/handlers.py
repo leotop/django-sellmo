@@ -56,7 +56,19 @@ class MailHandlerBase(MailHandler):
 			# Further construct the message
 			message.subject = writer.get_subject()
 			message.from_email = writer.get_from()
-			message.to = writer.get_to()
+			
+			# Make sure to is a list
+			to = writer.get_to()
+			if to and not isinstance(to, (list, tuple)):
+				to = [to]
+			message.to = to
+			
+			# Make sure bcc is a list
+			bcc = writer.get_bcc()
+			if bcc and not isinstance(bcc, (list, tuple)):
+				bcc = [bcc]
+			message.bcc = bcc
+			
 			message.bcc = writer.get_bcc()
 			message.header = writer.get_headers()
 			message.attachments = writer.get_attachments()

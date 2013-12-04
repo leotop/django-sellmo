@@ -25,10 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from sellmo import modules, Module
-from sellmo.api.decorators import view, chainable, link
-
-from django.http import Http404
-from django.utils.translation import ugettext_lazy as _
+from sellmo.api.decorators import chainable
 
 #
 
@@ -36,6 +33,15 @@ class CheckoutMailingModule(Module):
 
 	namespace = 'checkout_mailing'
 
+	@chainable()
+	def render_order_confirmation(self, chain, format, order, data=None, **kwargs):
+		if chain:
+			out = chain.execute(format=format, order=order, data=data, **kwargs)
+			if 'data' in out:
+				data = out['data']
+		
+		return data
+	
 	def __init__(self):
 		pass
 		
@@ -47,10 +53,10 @@ class CheckoutReportingModule(Module):
 		pass
 		
 	@chainable()
-	def render_invoice(self, chain, order, html=None, **kwargs):
+	def render_invoice(self, chain, order, data=None, **kwargs):
 		if chain:
-			out = chain.execute(order=order, html=html, **kwargs)
-			if 'html' in out:
-				html = out['html']
+			out = chain.execute(order=order, data=data, **kwargs)
+			if 'data' in out:
+				data = out['data']
 		
-		return html
+		return data
