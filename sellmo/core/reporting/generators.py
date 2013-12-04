@@ -24,50 +24,41 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.api.mailing import MailHandler
+import os.path
 
 #
 
-from django.core import mail
+from sellmo.api.reporting import ReportGenerator, Report
 
 #
 
-class MailHandlerBase(MailHandler):
-
-	def send_mail(self, context, connection=None):
-		# Open the writer and close it afterwards
-		with self.writer.open(context) as writer:
+class ReportGeneratorBase(ReportGenerator):
+	def generate_report(self, format, context=None):
+		with self.writer.open(format, context) as writer:
+			return Report(
+				self.get_filename(writer, format),
+				self.get_data(writer, format),
+				self.get_mimetype(format)
+			)
 			
-			# See if this writer supports both html and text
-			if set(['html', 'text']) == set(writer.formats):
-				message = mail.EmailMultiAlternatives()
-				message.body = writer.get_body('text')
-				message.attach_alternative(writer.get_body('html'), 'text/html')
-			else:
-				message = mail.EmailMessage()
-				if 'html' in writer.formats:
-					message.content_subtype = 'html'
-					message.body = writer.get_body('html')
-				elif 'text' in writer.formats:
-					message.body = writer.get_body('text')
-				else:
-					raise Exception("Invalid email formats '{0}'".format(writer.formats))
-				
-			# Further construct the message
-			message.subject = writer.get_subject()
-			message.from_email = writer.get_from()
-			message.to = writer.get_to()
-			message.bcc = writer.get_bcc()
-			message.header = writer.get_headers()
-			message.attachments = writer.get_attachments()
+	def get_params(self, writer, format):
+		return {}
 			
-			# If a connection is passed, assign it
-			if connection:
-				message.connection = connection
+	def get_data(self, writer, format):
+		params = self.get_params(writer, format)
+		if params is None:
+			params = {}
+		return writer.get_data(**params)
+		
+	def get_filename(self, writer, format):
+		ext = self.get_extension(format)
+		if not ext or not ext.startswith('.'):
+			raise Exception("Invalid extension")
+		return writer.get_name() + ext
 			
-			# Now actualy send
-			message.send()
-
-class DefaultMailHandler(MailHandlerBase):
-	def handle_mail(self, context):
-		self.send_mail(context)
+	def get_extension(self, format):
+		raise NotImplementedError()
+		
+	def get_mimetype(self, format):
+		raise NotImplementedError()
+	

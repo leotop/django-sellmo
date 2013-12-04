@@ -40,9 +40,13 @@ class Mailer(object):
 	writers = {}
 
 	def __init__(self):
-		self.handler = import_by_path(settings.MAIL_HANDLER)
+		if settings.MAIL_HANDLER:
+			self.handler = import_by_path(settings.MAIL_HANDLER)
 
 	def send_mail(self, message_type, context=None):
+		if not self.handler:
+			raise Exception("Mailer has no MailHandler configured")
+		
 		if context is None:
 			context = {}
 		

@@ -24,50 +24,27 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.api.mailing import MailHandler
+
+import os
+import subprocess
 
 #
 
-from django.core import mail
+class PipeError(Exception):
+	pass
 
-#
 
-class MailHandlerBase(MailHandler):
+def pipe(command, input=None, cwd=None, *args, **kwargs):
+	handle = subprocess.Popen(command, shell=True, cwd=cwd, stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE, *args, **kwargs)
+	out, err = handle.communicate(input=input)
 
-	def send_mail(self, context, connection=None):
-		# Open the writer and close it afterwards
-		with self.writer.open(context) as writer:
-			
-			# See if this writer supports both html and text
-			if set(['html', 'text']) == set(writer.formats):
-				message = mail.EmailMultiAlternatives()
-				message.body = writer.get_body('text')
-				message.attach_alternative(writer.get_body('html'), 'text/html')
-			else:
-				message = mail.EmailMessage()
-				if 'html' in writer.formats:
-					message.content_subtype = 'html'
-					message.body = writer.get_body('html')
-				elif 'text' in writer.formats:
-					message.body = writer.get_body('text')
-				else:
-					raise Exception("Invalid email formats '{0}'".format(writer.formats))
-				
-			# Further construct the message
-			message.subject = writer.get_subject()
-			message.from_email = writer.get_from()
-			message.to = writer.get_to()
-			message.bcc = writer.get_bcc()
-			message.header = writer.get_headers()
-			message.attachments = writer.get_attachments()
-			
-			# If a connection is passed, assign it
-			if connection:
-				message.connection = connection
-			
-			# Now actualy send
-			message.send()
+	if handle.returncode != 0:
+		error = err
+		if not error:
+			error = out
 
-class DefaultMailHandler(MailHandlerBase):
-	def handle_mail(self, context):
-		self.send_mail(context)
+		if not error:
+			error = """Command '%s' failed to run.""" % command
+
+		raise PipeError(error)
+	return out

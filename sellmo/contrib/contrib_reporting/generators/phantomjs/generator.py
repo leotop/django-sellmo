@@ -24,50 +24,41 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.api.mailing import MailHandler
+import os.path
 
 #
 
-from django.core import mail
+from django.conf import settings
 
 #
 
-class MailHandlerBase(MailHandler):
+from sellmo.core.reporting.generators import ReportGeneratorBase
+from sellmo.contrib.contrib_reporting.piping import pipe, PipeError
 
-	def send_mail(self, context, connection=None):
-		# Open the writer and close it afterwards
-		with self.writer.open(context) as writer:
-			
-			# See if this writer supports both html and text
-			if set(['html', 'text']) == set(writer.formats):
-				message = mail.EmailMultiAlternatives()
-				message.body = writer.get_body('text')
-				message.attach_alternative(writer.get_body('html'), 'text/html')
-			else:
-				message = mail.EmailMessage()
-				if 'html' in writer.formats:
-					message.content_subtype = 'html'
-					message.body = writer.get_body('html')
-				elif 'text' in writer.formats:
-					message.body = writer.get_body('text')
-				else:
-					raise Exception("Invalid email formats '{0}'".format(writer.formats))
-				
-			# Further construct the message
-			message.subject = writer.get_subject()
-			message.from_email = writer.get_from()
-			message.to = writer.get_to()
-			message.bcc = writer.get_bcc()
-			message.header = writer.get_headers()
-			message.attachments = writer.get_attachments()
-			
-			# If a connection is passed, assign it
-			if connection:
-				message.connection = connection
-			
-			# Now actualy send
-			message.send()
+#
 
-class DefaultMailHandler(MailHandlerBase):
-	def handle_mail(self, context):
-		self.send_mail(context)
+class PhantomJSReportGenerator(ReportGeneratorBase):
+
+	input_formats = ['html']
+	output_formats = ['pdf']
+	
+	def get_params(self, writer, format):
+		params = super(PhantomJSReportGenerator, self).get_params(writer, format)
+		# Suggest A4 paper size
+		size = writer.negotiate_param('size', 'a4', **params)
+	
+	def get_data(self, writer, format):
+		html = super(PhantomJSReportGenerator, self).get_data(writer, format)
+		phantomjs = getattr(settings, 'PHANTOMJS_EXECUTABLE', 'phantomjs')
+		script = os.path.join(os.path.dirname(__file__), 'scripts/pdf.js')
+		
+		try:
+			return pipe('{0} {1}'.format(phantomjs, script), input=html)
+		except PipeError as error:
+			raise
+	
+	def get_extension(self, format):
+		return '.' + format
+	
+	def get_mimetype(self, format):
+		return 'text/' + format

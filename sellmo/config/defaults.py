@@ -44,3 +44,8 @@ CELERY_ENABLED = False
 
 MAIL_HANDLER = 'sellmo.core.mailing.handlers.DefaultMailHandler'
 MAIL_FROM = django_settings.DEFAULT_FROM_EMAIL
+
+# 
+
+REPORT_GENERATORS = []
+REPORT_FORMAT = 'pdf'

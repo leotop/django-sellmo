@@ -38,8 +38,13 @@ class MailHandler(object):
 
 class MailWriter(object):
 	
+	# Can be either text, html or both
+	formats = ['text']
+	
 	@classmethod
-	def open(cls, context):
+	def open(cls, context=None):
+		if context is None:
+			context = {}
 		return cls(**context)
 	
 	def __init__(self, **context):
@@ -64,7 +69,7 @@ class MailWriter(object):
 	def get_subject(self):
 		raise NotImplementedError()
 	
-	def get_body(self):
+	def get_body(self, format):
 		raise NotImplementedError()
 		
 	def get_bcc(self):

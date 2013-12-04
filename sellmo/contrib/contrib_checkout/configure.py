@@ -24,22 +24,24 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.signals.core import post_init
 from sellmo.signals.checkout import order_accepted
 from sellmo.core.mailing import mailer
+from sellmo.core.reporting import reporter
 from sellmo.contrib.contrib_checkout.mailing import OrderAcceptedWriter
+from sellmo.contrib.contrib_checkout.reporting import InvoiceWriter
 
 #
 
 mailer.register('order_accepted', OrderAcceptedWriter)
+reporter.register('invoice', InvoiceWriter)
 
 #
 
-def on_order_accepted(sender, **kwargs):
+def on_order_accepted(sender, order, **kwargs):
 	mailer.send_mail('order_accepted', context={
-		'order' : None,
+		'order' : order,
 	})
 
 #
 
-post_init.connect(on_order_accepted)
+order_accepted.connect(on_order_accepted)

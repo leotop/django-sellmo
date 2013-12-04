@@ -52,3 +52,8 @@ CELERY_ENABLED = getattr(settings, 'SELLMO_CELERY_ENABLED', defaults.CELERY_ENAB
 
 MAIL_HANDLER = getattr(settings, 'SELLMO_MAIL_HANDLER', defaults.MAIL_HANDLER)
 MAIL_FROM = getattr(settings, 'SELLMO_MAIL_FROM', defaults.MAIL_FROM)
+
+#
+
+REPORT_GENERATORS = getattr(settings, 'SELLMO_REPORT_GENERATORS', defaults.REPORT_GENERATORS)
+REPORT_FORMAT = getattr(settings, 'SELLMO_REPORT_FORMAT', defaults.REPORT_FORMAT)

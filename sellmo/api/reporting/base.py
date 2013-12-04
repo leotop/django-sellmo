@@ -24,50 +24,71 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.api.mailing import MailHandler
+from sellmo.config import settings
 
 #
 
-from django.core import mail
+class Report(object):
+	def __init__(self, filename, data, mimetype):
+		self.filename = filename
+		self.data = data
+		self.mimetype = mimetype
 
-#
+class ReportGenerator(object):
 
-class MailHandlerBase(MailHandler):
+	output_formats = []
+	input_formats = []
 
-	def send_mail(self, context, connection=None):
-		# Open the writer and close it afterwards
-		with self.writer.open(context) as writer:
-			
-			# See if this writer supports both html and text
-			if set(['html', 'text']) == set(writer.formats):
-				message = mail.EmailMultiAlternatives()
-				message.body = writer.get_body('text')
-				message.attach_alternative(writer.get_body('html'), 'text/html')
-			else:
-				message = mail.EmailMessage()
-				if 'html' in writer.formats:
-					message.content_subtype = 'html'
-					message.body = writer.get_body('html')
-				elif 'text' in writer.formats:
-					message.body = writer.get_body('text')
-				else:
-					raise Exception("Invalid email formats '{0}'".format(writer.formats))
-				
-			# Further construct the message
-			message.subject = writer.get_subject()
-			message.from_email = writer.get_from()
-			message.to = writer.get_to()
-			message.bcc = writer.get_bcc()
-			message.header = writer.get_headers()
-			message.attachments = writer.get_attachments()
-			
-			# If a connection is passed, assign it
-			if connection:
-				message.connection = connection
-			
-			# Now actualy send
-			message.send()
-
-class DefaultMailHandler(MailHandlerBase):
-	def handle_mail(self, context):
-		self.send_mail(context)
+	def __init__(self, writer):
+		self.writer = writer
+	
+	def generate_report(self, format, context=None):
+		"""
+		Returns a Report instance
+		"""
+		raise NotImplementedError()
+ 
+class ReportWriter(object):
+	
+	"""
+	The format this writer will output
+	"""
+	format = None
+	
+	@classmethod
+	def open(cls, output_format, context=None):
+		if context is None:
+			context = {}
+		return cls(output_format, **context)
+	
+	def __init__(self, output_format,  **context):
+		self.output_format = output_format
+		self.context = context
+	
+	def __enter__(self):
+		self.setup()
+		return self
+	
+	def __exit__(self, type, value, traceback):
+		self.teardown()
+	
+	def setup(self):
+		pass
+		
+	def teardown(self):
+		pass
+		
+	def get_name(self):
+		raise NotImplementedError()
+		
+	def get_data(self, **params):
+		raise NotImplementedError()
+		
+	def negotiate_param(self, key, value, **params):
+		"""
+		False if we don't understand. The same value if we accept or a
+		different value if we want to change.
+		"""
+		return False
+		
+		

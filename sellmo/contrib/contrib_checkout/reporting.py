@@ -24,50 +24,24 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.api.mailing import MailHandler
+from sellmo import modules
+from sellmo.api.reporting import ReportWriter
 
 #
 
-from django.core import mail
+from django.utils.translation import ugettext_lazy as _
 
 #
 
-class MailHandlerBase(MailHandler):
+class InvoiceWriter(ReportWriter):
 
-	def send_mail(self, context, connection=None):
-		# Open the writer and close it afterwards
-		with self.writer.open(context) as writer:
-			
-			# See if this writer supports both html and text
-			if set(['html', 'text']) == set(writer.formats):
-				message = mail.EmailMultiAlternatives()
-				message.body = writer.get_body('text')
-				message.attach_alternative(writer.get_body('html'), 'text/html')
-			else:
-				message = mail.EmailMessage()
-				if 'html' in writer.formats:
-					message.content_subtype = 'html'
-					message.body = writer.get_body('html')
-				elif 'text' in writer.formats:
-					message.body = writer.get_body('text')
-				else:
-					raise Exception("Invalid email formats '{0}'".format(writer.formats))
-				
-			# Further construct the message
-			message.subject = writer.get_subject()
-			message.from_email = writer.get_from()
-			message.to = writer.get_to()
-			message.bcc = writer.get_bcc()
-			message.header = writer.get_headers()
-			message.attachments = writer.get_attachments()
-			
-			# If a connection is passed, assign it
-			if connection:
-				message.connection = connection
-			
-			# Now actualy send
-			message.send()
-
-class DefaultMailHandler(MailHandlerBase):
-	def handle_mail(self, context):
-		self.send_mail(context)
+	format = 'html'
+	
+	def __init__(self, order):
+		self.order = order
+		
+	def get_name(self):
+		return "invoice"
+		
+	def get_data(self, **params):
+		return modules.checkout_reporting.render_invoice(order=self.order)

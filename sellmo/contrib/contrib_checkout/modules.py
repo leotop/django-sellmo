@@ -24,50 +24,33 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.api.mailing import MailHandler
+from sellmo import modules, Module
+from sellmo.api.decorators import view, chainable, link
+
+from django.http import Http404
+from django.utils.translation import ugettext_lazy as _
 
 #
 
-from django.core import mail
+class CheckoutMailingModule(Module):  
 
-#
+	namespace = 'checkout_mailing'
 
-class MailHandlerBase(MailHandler):
+	def __init__(self):
+		pass
+		
+class CheckoutReportingModule(Module):  
 
-	def send_mail(self, context, connection=None):
-		# Open the writer and close it afterwards
-		with self.writer.open(context) as writer:
-			
-			# See if this writer supports both html and text
-			if set(['html', 'text']) == set(writer.formats):
-				message = mail.EmailMultiAlternatives()
-				message.body = writer.get_body('text')
-				message.attach_alternative(writer.get_body('html'), 'text/html')
-			else:
-				message = mail.EmailMessage()
-				if 'html' in writer.formats:
-					message.content_subtype = 'html'
-					message.body = writer.get_body('html')
-				elif 'text' in writer.formats:
-					message.body = writer.get_body('text')
-				else:
-					raise Exception("Invalid email formats '{0}'".format(writer.formats))
-				
-			# Further construct the message
-			message.subject = writer.get_subject()
-			message.from_email = writer.get_from()
-			message.to = writer.get_to()
-			message.bcc = writer.get_bcc()
-			message.header = writer.get_headers()
-			message.attachments = writer.get_attachments()
-			
-			# If a connection is passed, assign it
-			if connection:
-				message.connection = connection
-			
-			# Now actualy send
-			message.send()
+	namespace = 'checkout_reporting'
 
-class DefaultMailHandler(MailHandlerBase):
-	def handle_mail(self, context):
-		self.send_mail(context)
+	def __init__(self):
+		pass
+		
+	@chainable()
+	def render_invoice(self, chain, order, html=None, **kwargs):
+		if chain:
+			out = chain.execute(order=order, html=html, **kwargs)
+			if 'html' in out:
+				html = out['html']
+		
+		return html

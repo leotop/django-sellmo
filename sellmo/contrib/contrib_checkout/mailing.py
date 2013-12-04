@@ -35,14 +35,16 @@ from django.utils.translation import ugettext_lazy as _
 
 class OrderAcceptedWriter(MailWriter):
 	
+	formats = ['html', 'text']
+	
 	def __init__(self, order):
 		self.order = order
 		
 	def get_subject(self):
 		return _("Order completed")
 		
-	def get_body(self):
-		raise NotImplementedError()
+	def get_body(self, format):
+		return modules.checkout_mailing.render_order_completed(format=format, order=self.order)
 	
 	def get_to(self):
 		return self.order.email
