@@ -37,7 +37,8 @@ class InvoiceWriter(ReportWriter):
 
 	format = 'html'
 	
-	def __init__(self, order):
+	def __init__(self, output_format, order):
+		self.output_format = output_format
 		self.order = order
 		
 	def get_name(self):

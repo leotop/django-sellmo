@@ -37,7 +37,7 @@ from sellmo.contrib.contrib_variation.signals import variations_deprecated
 
 class ProductVariationsCache(Cache):
 	
-	def on_variations_deprecated(self, sender, product, variations, **kwargs):
+	def on_variations_deprecated(self, sender, product, **kwargs):
 		keys = [
 			self.get_variations_key(product.pk, grouped=True),
 			self.get_variations_key(product.pk, grouped=False)

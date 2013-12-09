@@ -136,7 +136,6 @@ class CheckoutModule(sellmo.Module):
                 choice = out['choice']
         return choice
     
-    @transaction.atomic
     @view([r'^step/(?P<step>[a-z0-9_-]+)/$', r'^$'])
     def checkout(self, chain, request, step=None, data=None, order=None, process=None, context=None, **kwargs):
         
@@ -169,37 +168,40 @@ class CheckoutModule(sellmo.Module):
         
         redirection = None
         
-        # Move to the appropiate step
-        if step:
-            try:
-                # Go to the given step
-                process.step_to(step)
-            except ProcessError as error:
-                raise Http404(error)
-                
-            # Feed the process
-            if data:
-                if process.feed(data):
-                    # Try to track the order at this point
-                    try:
-                        order.track(request)
-                    except UntrackableError:
-                        pass
+        # Perform atomic transactions at this point
+        with transaction.atomic():
+            # Move to the appropiate step
+            if step:
+                try:
+                    # Go to the given step
+                    process.step_to(step)
+                except ProcessError as error:
+                    raise Http404(error)
                     
-                    if not process.completed:
-                        redirection = redirect(reverse('checkout.checkout', kwargs = {'step' : process.current_step.key}))  
-        else:
-            try:
-                # Go to the latest step
-                process.step_to_latest()
-            except ProcessError as error:
-                raise Http404(error)
-                
-            redirection = redirect(reverse('checkout.checkout', kwargs = {'step' : process.current_step.key}))  
+                # Feed the process
+                if data:
+                    if process.feed(data):
+                        # Try to track the order at this point
+                        try:
+                            order.track(request)
+                        except UntrackableError:
+                            pass
+                        
+                        if not process.completed:
+                            redirection = redirect(reverse('checkout.checkout', kwargs = {'step' : process.current_step.key}))  
+            else:
+                try:
+                    # Go to the latest step
+                    process.step_to_latest()
+                except ProcessError as error:
+                    raise Http404(error)
+                    
+                redirection = redirect(reverse('checkout.checkout', kwargs = {'step' : process.current_step.key}))  
                 
         # See if we completed the process
         if process.completed:
             # Checkout process completed, accept the order
+            # This is done outside the atomic block on purpose
             if not order.accepted:
                 self.accept_order(request=request, order=order)
             
@@ -403,6 +405,8 @@ class CheckoutModule(sellmo.Module):
         order.invalidate()
         if chain:
             chain.execute(request=request, order=order, **kwargs)
+            
+        order_invalidated.send(sender=self, order=order)
     
     @chainable()
     def accept_order(self, chain, request, order, **kwargs):

@@ -38,7 +38,7 @@ from sellmo.contrib.contrib_attribute.query import ProductQ
 
 #
 
-from django.db import models
+from django.db import models, transaction, IntegrityError
 from django.db.models import Q, F, Count
 from django.db.models.query import QuerySet
 from django.db.models.signals import pre_save, post_save, pre_delete
@@ -101,6 +101,7 @@ def load_manager():
     class Product(ModelMixin):
         model = modules.product.Product
         objects = ProductManager()
+
                 
 @load(after='load_variants')
 def load_model():
@@ -404,11 +405,14 @@ def finalize_model():
     
 class VariationQuerySet(QuerySet):
     def for_product(self, product):
-        return self.filter(product=product, deprecated=False)
+        return self.filter(product=product)
     
 class VariationManager(models.Manager):
     
+    @transaction.atomic
     def build(self, product):
+        
+        product = product.downcast()
         
         # Delete any existing variations (always)
         existing = self.filter(product=product)
@@ -576,22 +580,41 @@ class VariationManager(models.Manager):
         
                 variations.update(group_variant=variant)
                 
+        # Finally update product
+        product.variations_deprecated = False
     
     def deprecate(self, product):
-        variations = self.filter(product=product)
-        variations.select_for_update().update(deprecated=True)
-        variations_deprecated.send(self, product=product, variations=variations)
+        if not product.variations_deprecated:
+            product.variations_deprecated = True
+            variations_deprecated.send(self, product=product)
         
     def get_query_set(self):
         return VariationQuerySet(self.model)
     
-    def for_product(self, product, *args, **kwargs):
-        variations = self.get_query_set().for_product(product, *args, **kwargs)
-        if False and variations.count() > 0:
-            return variations
-        else:
-            self.build(product)
-        return self.get_query_set().for_product(product, *args, **kwargs)
+    def for_product(self, product, deprecated=False):
+        product = product.downcast()
+        
+        # Capture IntegrityError's as these are caused by concurrency.
+        # Output will always be valid due to transactions.
+        def build():
+            try:
+                self.build(product)
+            except IntegrityError as ex:
+                pass
+        
+        if not deprecated and product.variations_deprecated:
+            # Variations deprecated, rebuild
+            build()
+            
+        # Get variations
+        variations = self.get_query_set().for_product(product)
+        
+        if variations.count() == 0:
+            # No variations, build
+            build()
+            variations = self.get_query_set().for_product(product)
+            
+        return variations
         
 class Variation(models.Model):
 
@@ -621,18 +644,72 @@ class Variation(models.Model):
         max_length = 255,
         editable = False,
     )
-        
-    # Flags
-    deprecated = models.BooleanField(
-        default = False,
-        editable = False,
-    )
     
     def __unicode__(self):
         return self.description
 
     class Meta:
         abstract = True
+        
+@load(action='finalize_variation_VariationsState')
+@load(after='finalize_product_Product')
+def finalize_model():
+    
+    class VariationsState(modules.variation.VariationsState):
+        
+        product = models.OneToOneField(
+            modules.product.Product,
+            editable = False,
+            related_name = 'variations_state'
+        )
+        
+        class Meta:
+            app_label = 'variation'
+            verbose_name = _("variations state")
+            verbose_name_plural = _("variations states")
+        
+    modules.variation.VariationsState = VariationsState
+        
+
+@load(before='finalize_product_Product')
+def load_model():
+    
+    class Product(modules.product.Product):
+        
+        def get_variations_deprecated(self):
+            try:
+                variations_state = self.variations_state
+            except modules.variation.VariationsState.DoesNotExist:
+                variations_state = modules.variation.VariationsState.objects.create(product=self)
+            return variations_state.deprecated
+            
+        def set_variations_deprecated(self, value):
+            try:
+                variations_state = self.variations_state
+            except modules.variation.VariationsState.DoesNotExist:
+                variations_state = modules.variation.VariationsState.objects.create(product=self)
+            variations_state.deprecated = value
+            variations_state.save()
+            
+        variations_deprecated = property(get_variations_deprecated, set_variations_deprecated)
+        
+        class Meta:
+            abstract = True
+            
+    modules.product.Product = Product
+
+class VariationsState(models.Model):
+    
+    deprecated = models.BooleanField(
+        default = True,
+        editable = False,
+    )
+    
+    class Meta:
+        abstract = True
+    
+    def __unicode__(self):
+        return unicode(self.product)
     
 @load(after='finalize_store_Purchase')
 def load_model():

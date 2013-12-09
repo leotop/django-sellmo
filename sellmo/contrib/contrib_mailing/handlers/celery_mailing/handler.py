@@ -24,26 +24,11 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import sys, logging
+from sellmo.core.mailing.handlers import MailHandlerBase
+from sellmo.contrib.contrib_mailing.handlers.celery_mailing import tasks
 
 #
 
-from sellmo.core.main import Sellmo
-from sellmo.config import settings
-
-#
-
-if settings.CACHING_ENABLED:
-	import sellmo.caching.boot
-	
-if settings.CELERY_ENABLED:
-	from sellmo.celery.boot import app as celery_app
-else:
-	celery_app = None
-
-# Wrap all exceptions because Django does not capture ImportErrors
-try:
-	# !! THIS INITS SELLMO
-	sellmo = Sellmo()
-except Exception as exception:
-	raise Exception(str(exception)), None, sys.exc_info()[2]
+class CeleryMailHandler(MailHandlerBase):
+	def handle_mail(self, context):
+		tasks.send_mail(context)

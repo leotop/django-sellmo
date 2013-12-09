@@ -24,4 +24,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.contrib.contrib_reporting.generators.phantomjs.generator import PhantomJSReportGenerator
+from sellmo import boot
+boot.model_boot = False
+
+from sellmo.boot.boot_modules import boot
+from sellmo.boot.boot_sellmo.boot import celery_app as app

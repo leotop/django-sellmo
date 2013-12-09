@@ -76,7 +76,9 @@ if len(sys.argv) > 1 and sys.argv[1] == 'bdist_wininst':
 
 install_requires = [
     'django>=1.6.0',
-    'django-classy-tags'
+    'django-mptt>=0.6.0',
+    'django-classy-tags',
+    'celery>=3.1.0',
 ]
 
 kwargs = {}

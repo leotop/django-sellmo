@@ -25,8 +25,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 def list_from_pks(queryset, pks):
-	out = list(queryset)
-	out.sort(key=lambda el : pks.index(el.pk))
+	mapping = {}
+	out = []
+	for el in queryset:
+		mapping[el.pk] = el
+	for el in pks:
+		out.append(mapping[el])
 	return out
 	
 def queryset_from_pks(queryset, pks):

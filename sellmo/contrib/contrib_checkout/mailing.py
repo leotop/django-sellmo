@@ -51,7 +51,9 @@ class OrderConfirmationWriter(MailWriter):
 		return self.order.email
 		
 	def get_attachments(self):
-		report = reporter.get_report('invoice')
+		report = reporter.get_report('invoice', context={
+			'order' : self.order
+		})
 		return [
 			(report.filename, report.data, report.mimetype)
 		]

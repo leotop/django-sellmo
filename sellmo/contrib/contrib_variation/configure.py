@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -24,26 +24,14 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import sys, logging
-
-#
-
-from sellmo.core.main import Sellmo
 from sellmo.config import settings
+from sellmo.contrib.contrib_variation.signals import variations_deprecated
+from sellmo.contrib.contrib_variation import tasks
 
 #
 
-if settings.CACHING_ENABLED:
-	import sellmo.caching.boot
-	
-if settings.CELERY_ENABLED:
-	from sellmo.celery.boot import app as celery_app
-else:
-	celery_app = None
+def on_variations_deprecated(sender, product, **kwargs):
+	tasks.build_variations.apply_async((product,), countdown=60)
 
-# Wrap all exceptions because Django does not capture ImportErrors
-try:
-	# !! THIS INITS SELLMO
-	sellmo = Sellmo()
-except Exception as exception:
-	raise Exception(str(exception)), None, sys.exc_info()[2]
+if settings.CELERY_ENABLED:
+	variations_deprecated.connect(on_variations_deprecated)
