@@ -28,6 +28,13 @@ from celery import shared_task
 
 #
 
+from sellmo.core.mailing.handlers import MailHandlerBase
+from sellmo.core.mailing import mailer
+
+#
+
 @shared_task
-def send_mail(context):
-	print context
+def send_mail(message_type, context):
+	writer = mailer.writers[message_type]
+	handler = MailHandlerBase(writer)
+	handler.send_mail(context)

@@ -23,25 +23,3 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-
-from sellmo.signals.checkout import order_paid
-from sellmo.core.mailing import mailer
-from sellmo.core.reporting import reporter
-from sellmo.contrib.contrib_checkout.mailing import OrderConfirmationWriter
-from sellmo.contrib.contrib_checkout.reporting import InvoiceWriter
-
-#
-
-mailer.register('order_confirmation', OrderConfirmationWriter)
-reporter.register('invoice', InvoiceWriter)
-
-#
-
-def on_order_paid(sender, order, **kwargs):
-	mailer.send_mail('order_confirmation', context={
-		'order' : order,
-	})
-
-#
-
-order_paid.connect(on_order_paid)

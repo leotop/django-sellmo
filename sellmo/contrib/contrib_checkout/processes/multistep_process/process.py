@@ -43,7 +43,7 @@ class LoginStep(CheckoutStep):
 	key = 'login'
 	
 	def is_definitive(self):
-		return self.order.placed
+		return self.order.is_pending
 	
 	def is_completed(self):
 		return self.request.user.is_authenticated()
@@ -89,7 +89,7 @@ class InformationStep(CheckoutStep):
 		return True
 		
 	def is_definitive(self):
-		return self.order.placed
+		return self.order.is_pending
 		
 	def get_next_step(self):
 		next_step = PaymentMethodStep(order=self.order, request=self.request)
@@ -145,7 +145,7 @@ class PaymentMethodStep(CheckoutStep):
 		return True
 		
 	def is_definitive(self):
-		return self.order.placed
+		return self.order.is_pending
 		
 	def get_next_step(self):
 		return SummaryStep(order=self.order, request=self.request)
@@ -180,7 +180,7 @@ class SummaryStep(CheckoutStep):
 	key = 'summary'
 	
 	def is_completed(self):
-		return self.order.placed
+		return self.order.is_pending
 		
 	def is_definitive(self):
 		return True
@@ -193,7 +193,7 @@ class SummaryStep(CheckoutStep):
 		return success
 	
 	def complete(self, data):
-		modules.checkout.place_order(request=self.request, order=self.order)
+		self.order.place()
 		return self._contextualize_or_complete(self.request, self.invalid_context, data)
 	
 	def render(self, request, context):

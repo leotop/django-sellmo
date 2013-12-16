@@ -36,11 +36,21 @@ from sellmo.config import settings
 @singleton
 class Reporter(object):
 
-	input_format_mapping = {}
-	output_format_mapping = {}
+	input_format_mapping = None
+	output_format_mapping = None
 	writers = {}
 
 	def __init__(self):
+		pass
+		
+	def map_generators(self):
+		
+		if self.input_format_mapping is not None:
+			return
+		
+		self.input_format_mapping = {}
+		self.output_format_mapping = {}
+		
 		# Map generators
 		for generator in settings.REPORT_GENERATORS:
 			generator = import_by_path(generator)
@@ -59,6 +69,9 @@ class Reporter(object):
 				self.output_format_mapping[format].add(generator)
 
 	def get_report(self, report_type, format=None, context=None):
+		
+		self.map_generators()
+		
 		# Assign defaults
 		if context is None:
 			context = {}	

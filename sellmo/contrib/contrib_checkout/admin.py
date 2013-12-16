@@ -38,6 +38,11 @@ from django.utils.translation import ugettext_lazy as _
 class PurchaseInline(admin.TabularInline):
 	model = modules.store.Purchase
 	extra = 0
+	
+	raw_id_fields = ['product']
+	autocomplete_lookup_fields = {
+		'fk': ['product'],
+	}
 
 class OrderAdmin(ReverseModelAdmin):
 	
@@ -46,7 +51,7 @@ class OrderAdmin(ReverseModelAdmin):
 	inline_type = 'stacked'
 	inline_reverse = ['shipment', 'payment', 'billing_address', 'shipping_address']
 	
-	list_display = ['placed', 'id', 'total_amount', 'paid', 'accepted', 'cancelled', 'modified']
+	list_display = ['id', 'status', 'total_amount', 'paid', 'modified']
 	list_display_links = ['id']
 	
 	raw_id_fields = ['customer']

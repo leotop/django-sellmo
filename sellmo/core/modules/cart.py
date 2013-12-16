@@ -53,7 +53,7 @@ class CartModule(sellmo.Module):
     AddToCartForm = AddToCartForm
     EditPurchaseForm = EditPurchaseForm    
     
-    def __init__(self, *args, **kwargs):        
+    def __init__(self, *args, **kwargs):
         pass
         
     @chainable()
@@ -160,7 +160,6 @@ class CartModule(sellmo.Module):
     def get_cart(self, chain, request=None, cart=None, **kwargs):
         if cart is None:
             cart = self.Cart.objects.from_request(request)
-        
         if chain:
             out = chain.execute(cart=cart, request=request, **kwargs)
             if out.has_key('cart'):
@@ -335,11 +334,4 @@ class CartModule(sellmo.Module):
         
         # Now delete
         purchase.delete()
-        
-    @link(namespace='checkout')
-    def place_order(self, request, order, **kwargs):
-        # Get the cart
-        cart = self.get_cart(request=request)
-        cart.untrack(request)
-        cart.delete()
        

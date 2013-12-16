@@ -81,5 +81,5 @@ class MailHandlerBase(MailHandler):
 			message.send()
 
 class DefaultMailHandler(MailHandlerBase):
-	def handle_mail(self, context):
+	def handle_mail(self, message_type, context):
 		self.send_mail(context)

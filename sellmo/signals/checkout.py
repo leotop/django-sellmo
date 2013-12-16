@@ -29,17 +29,22 @@ import django.dispatch
 #
 
 __all__ = [
-	'order_placed',
-	'order_accepted',
+	'order_pending',
+	'order_paid',
+	'order_completed',
+	'order_closed',
 	'order_canceled',
-	'order_invalidated',
-	'order_status_change',
+	'order_state_changed',
+	'order_status_changed',
 ]
 
 #
 
-order_placed = django.dispatch.Signal()
-order_accepted = django.dispatch.Signal()
+order_pending = django.dispatch.Signal()
+order_paid = django.dispatch.Signal()
+order_completed = django.dispatch.Signal()
+order_closed = django.dispatch.Signal()
 order_canceled = django.dispatch.Signal()
-order_invalidated = django.dispatch.Signal()
-order_status_change = django.dispatch.Signal()
+
+order_state_changed = django.dispatch.Signal()
+order_status_changed = django.dispatch.Signal()

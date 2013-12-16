@@ -38,7 +38,7 @@ from django.utils.translation import ugettext_lazy as _
 from sellmo import modules
 from sellmo.api.decorators import load
 from sellmo.api.pricing import Price
-from sellmo.utils.tracking import TrackingManager
+from sellmo.utils.tracking import trackable
 
 #
 
@@ -75,11 +75,7 @@ def finalize_model():
             verbose_name_plural = _("carts")
     modules.cart.Cart = Cart
 
-class Cart(models.Model):
-    
-    objects = TrackingManager('sellmo_cart')
-    
-    #
+class Cart(trackable('sellmo_cart')):
     
     created = models.DateTimeField(
         auto_now_add = True,

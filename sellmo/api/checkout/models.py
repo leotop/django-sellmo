@@ -32,15 +32,25 @@ import datetime
 #
 
 from django.db import models
+from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
 #
 
 from sellmo import modules
+from sellmo.signals.checkout import *
 from sellmo.api.pricing import Price
 from sellmo.api.decorators import load
 from sellmo.utils.polymorphism import PolymorphicModel
-from sellmo.utils.tracking import TrackingManager
+from sellmo.utils.tracking import trackable
+
+#
+
+ORDER_NEW = 'new'
+ORDER_PENDING = 'pending'
+ORDER_COMPLETED = 'completed'
+ORDER_CLOSED = 'closed'
+ORDER_CANCELED = 'canceled'
 
 #
         
@@ -110,15 +120,24 @@ def load_model():
 @load(after='finalize_customer_Customer', before='finalize_checkout_Order')
 @load(after='finalize_customer_Contactable', before='finalize_checkout_Order')
 def load_model():
+    
     class Order(modules.checkout.Order):
         
         customer =  models.ForeignKey(
-             modules.customer.Customer,
-             null = not modules.checkout.customer_required,
-             blank = not modules.checkout.customer_required,
-             related_name = 'orders',
-             verbose_name = _("customer"),
-         )
+            modules.customer.Customer,
+            null = not modules.checkout.customer_required,
+            blank = not modules.checkout.customer_required,
+            related_name = 'orders',
+            verbose_name = _("customer"),
+        )
+         
+        status = models.CharField(
+            max_length = 40,
+            default = modules.checkout.initial_order_status,
+            choices = modules.checkout.order_status_choices,
+            blank = False,
+            verbose_name = _("status"),
+        )
         
         class Meta:
             abstract = True
@@ -190,13 +209,9 @@ def finalize_model():
             
     modules.checkout.Payment = Payment
 
-class Order(models.Model):
+class Order(trackable('sellmo_order')):
     
     _proxy = None
-    
-    #
-    
-    objects = TrackingManager('sellmo_order')
     
     #
     
@@ -212,36 +227,10 @@ class Order(models.Model):
         verbose_name = _("modified at"),
     )
     
-    status = models.PositiveIntegerField(
-        null = True,
-        blank = True,
-        verbose_name = _("status"),
-    )
-    
-    """
-    An accepted order has been successfully checked out.
-    """
-    accepted = models.BooleanField(
-        default = False,
-        verbose_name = _("accepted"),
-    )
-    
-    """
-    A placed order can no longer be modified by the customer.
-    """
-    placed = models.BooleanField(
-        default = False,
+    state = models.CharField(
+        max_length = 20,
         editable = False,
-        verbose_name = _("placed"),
-    )
-    
-    """
-    A cancelled order was cancelled by the customer and will not be shown to the customer anymore.
-    """
-    cancelled = models.BooleanField(
-        default = False,
-        editable = False,
-        verbose_name = _("cancelled"),
+        default = ORDER_NEW,
     )
     
     """
@@ -262,7 +251,7 @@ class Order(models.Model):
             return None
         
     def set_address(self, type, value):
-        self._not_placed()
+        self.ensure_state(ORDER_NEW)
         setattr(self, '{0}_address'.format(type), value)
     
     #
@@ -273,7 +262,7 @@ class Order(models.Model):
     #
     
     def add(self, purchase, save=True, calculate=True):
-        self._not_placed()
+        self.ensure_state(ORDER_NEW)
         if self.pk == None:
             self.save()
         purchase.order = self
@@ -283,7 +272,7 @@ class Order(models.Model):
                 self.calculate()
         
     def update(self, purchase, save=True, calculate=True):
-        self._not_placed()
+        self.ensure_state(ORDER_NEW)
         if purchase.order != self:
             raise Exception("We don't own this purchase")
         if purchase.qty == 0:
@@ -294,7 +283,7 @@ class Order(models.Model):
                 self.calculate()
         
     def remove(self, purchase, save=True, calculate=True):
-        self._not_placed()
+        self.ensure_state(ORDER_NEW)
         if purchase.order != self:
             raise Exception("We don't own this purchase")
         purchase.order = None
@@ -304,7 +293,7 @@ class Order(models.Model):
                 self.calculate()
         
     def clear(self, save=True, calculate=True):
-        self._not_placed()
+        self.ensure_state(ORDER_NEW)
         for purchase in self:
             self.remove(purchase, save=save, calculate=False)
         if save:
@@ -312,6 +301,7 @@ class Order(models.Model):
                 self.calculate()
     
     def calculate(self, subtotal=None, total=None, save=True):
+        self.ensure_state(ORDER_NEW)
         if subtotal is None:
             subtotal = Price()
             for purchase in self:
@@ -337,54 +327,150 @@ class Order(models.Model):
             self.save()
         
     def place(self):
-        self._not_placed()
+        self.ensure_state(ORDER_NEW)
         if self.calculated is None:
             raise Exception("This order hasn't been calculated.")
-        self.placed = True
+        self.state = ORDER_PENDING
         self.save()
         
-    def accept(self):
-        if self.accepted:
-            raise Exception("This order has already been accepted.")
-        self.accepted = True
-        self.save()
-        
-    def cancel(self): 
-        self.cancelled = True
+    def cancel(self):
+        self.state = ORDER_CANCELED
         self.save()
             
-    def invalidate(self, force=False, save=True):
+    def invalidate(self, force=False):
         if not force:
-            self._not_placed()
+            self.ensure_state(ORDER_NEW)
         else:
-            self.placed = False
+            self.state = ORDER_NEW
         
         self.total = Price()
         self.calculated = None
-        self.status = None
-        if save:
-            self.save()
+        self.save()
         
         if self.shipment:
             self.shipment.delete()
         if self.payment:
             self.payment.delete()
             
+    # States
+    
+    @property
+    def is_new(self):
+        return self.state == ORDER_NEW
+    
+    @property
+    def is_pending(self):
+        return self.state == ORDER_PENDING
+        
+    @property
+    def is_completed(self):
+        return self.state == ORDER_COMPLETED
+        
+    @property
+    def is_closed(self):
+        return self.state == ORDER_CLOSED
+        
+    @property
+    def is_canceled(self):
+        return self.state == ORDER_CANCELED
+        
+    def ensure_state(self, state):
+        if self.state != state:
+            raise Exception("Not in state '{0}'".format(state))
+        
+    # Flags
+            
     @property
     def may_cancel(self):
-        return self.placed and not self.accepted
+        return self.state == ORDER_PENDING and not self.paid
             
     @property
     def may_change(self): 
-        return not self.placed and not self.accepted
+        return self.state == ORDER_NEW
         
     @property
     def is_paid(self):
-        return self.placed and self.total.amount == self.paid
+        return self.state != ORDER_NEW and self.total.amount == self.paid
         
-    def _not_placed(self):
-        if self.placed:
-            raise Exception("This order is already placed.")
+    # Cleaning & saving
+    
+    def clean(self):
+        old = None
+        if self.pk:
+            old = modules.checkout.Order.objects.get(pk=self.pk)
+        if old is not None:
+            if self.status != old.status:
+                if not modules.checkout.can_change_order_status(order=old, status=self.status):
+                    raise ValidationError("Cannot transition order status from '{0}' to '{1}'".format(old.status, self.status))    
+            
+    def save(self, *args, **kwargs):
+        old = None
+        if self.pk:
+            old = modules.checkout.Order.objects.get(pk=self.pk)
+        
+        # See if status is explicitly changed
+        if old is not None and self.status != old.status:
+            # Make sure this change is a valid flow
+            if not modules.checkout.can_change_order_status(order=old, status=self.status):
+                raise Exception("Cannot transition order status from '{0}' to '{1}'".format(old.status, self.status))
+                
+        # Check for new status
+        status_changed = (
+            old is None and self.status != modules.checkout.initial_order_status
+            or old is not None and self.status != old.status
+        )
+        
+        # Check for new state
+        state_changed = (
+            old is None and self.state != ORDER_NEW 
+            or old is not None and self.state != old.state
+        )
+        
+        # Check for now paid
+        now_paid = (old is None or not old.is_paid) and self.is_paid
+        
+        # Get new status from new state
+        if not status_changed and state_changed and 'on_{0}'.format(self.state) in modules.checkout.order_status_events:
+            self.status = modules.checkout.order_status_events['on_{0}'.format(self.state)]
+        
+        # Get new status from on_paid
+        if not status_changed and now_paid and 'on_paid' in modules.checkout.order_status_events:
+            self.status = modules.checkout.order_status_events['on_paid']
+                    
+        # Get new state from new status
+        if not state_changed and status_changed and self.status in modules.checkout.order_status_states:
+            self.state = modules.checkout.order_status_states[self.status]
+            
+        # Check for new status (again)
+        status_changed = old is None or self.status != old.status
+        
+        # Check for new state (again)
+        state_changed = old is None or self.state != old.state
+        
+        # At this point we save
+        super(Order, self).save(*args, **kwargs)
+        
+        # Finally signal
+        if status_changed:
+            order_status_changed.send(sender=self, order=self, status=self.status)
+            
+        if state_changed:
+            order_state_changed.send(sender=self, order=self, new_state=self.state, old_state=old.state if old is not None else None)
+            # Handle shortcuts
+            if self.state == ORDER_PENDING:
+                order_pending.send(sender=self, order=self)
+            elif self.state == ORDER_COMPLETED:
+                order_completed.send(sender=self, order=self)
+            elif self.state == ORDER_CANCELED:
+                order_canceled.send(sender=self, order=self)
+            elif self.state == ORDER_CLOSED:
+                order_closed.send(sender=self, order=self)
+                
+        if now_paid:
+            order_paid.send(sender=self, order=self)
+    
+            
+    # Overrides
         
     def __contains__(self, purchase):
         return purchase.order == self

@@ -25,6 +25,55 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from django.conf import settings as django_settings
+from django.utils.translation import ugettext_lazy as _
+
+#
+
+CUSTOMER_REQUIRED = False
+REQUIRED_ADDRESS_TYPES = ['shipping', 'billing']
+ORDER_STATUSES = {
+	'new' : (_("New"), {
+		'initial' : True,
+		'flow' : ['awaiting_payment', 'processing', 'completed', 'canceled'],
+		'state' : 'new',
+	}),
+	'awaiting_payment' : (_("Awaiting payment"), {
+		'flow' : ['canceled', 'payment_received'],
+		'on_pending' : True,
+		'state' : 'pending',
+	}),
+	'payment_received' : (_("Payment received"), {
+		'flow' : ['processing'],
+		'on_paid' : True,
+		'state' : 'pending',
+	}),
+	'processing' : (_("Processing"), {
+		'flow' : ['canceled', 'completed', 'on_hold'],
+		'state' : 'pending',
+	}),
+	'on_hold' : (_("On hold"), {
+		'flow' : ['processing', 'completed'],
+		'state' : 'pending',
+	}),
+	'completed' : (_("Completed"), {
+		'flow' : ['closed', 'shipped'],
+		'state' : 'completed',
+		'on_completed' : True,
+	}),
+	'shipped' : (_("Shipped"), {
+		'flow' : ['closed'],
+		'state' : 'completed',
+	}),
+	'canceled' : (_("Canceled"), {
+		'state' : 'canceled',
+		'on_canceled' : True,
+	}),
+	'closed' : (_("Closed"), {
+		'state' : 'closed',
+		'on_closed' : True,
+	}),
+}
+
 
 #
 

@@ -35,12 +35,13 @@ from django.db import models, transaction
 
 import sellmo
 from sellmo import modules
-from sellmo.signals.checkout import *
+from sellmo.config import settings
 from sellmo.core.processing import ProcessError
 from sellmo.utils.tracking import UntrackableError
 from sellmo.api.decorators import view, chainable, link
-from sellmo.api.checkout.models import Order, Shipment, Payment
+from sellmo.api.checkout.models import Order, Shipment, Payment, ORDER_NEW
 from sellmo.api.checkout.processes import CheckoutProcess
+from sellmo.signals.checkout import order_state_changed
 
 #
 
@@ -57,15 +58,58 @@ class CheckoutModule(sellmo.Module):
     Payment = Payment
     CheckoutProcess = CheckoutProcess
     
-    required_address_types = ['shipping', 'billing']
-    customer_required = False
+    required_address_types = settings.REQUIRED_ADDRESS_TYPES
+    order_statuses = settings.ORDER_STATUSES
+    customer_required = settings.CUSTOMER_REQUIRED
     
     ShippingMethodForm = None
     PaymentMethodForm = None
     
+    initial_order_status = None
+    order_status_choices = []
+    order_status_events = {}
+    order_status_states = {}
+    
     def __init__(self, *args, **kwargs):
-        pass
-        
+        # Validate order statuses and hookup events
+        events = ['on_pending', 'on_completed', 'on_canceled', 'on_closed', 'on_paid']
+        for status, entry in self.order_statuses.iteritems():
+            config = entry[1] if len(entry) == 2 else {}
+            if 'initial' in config and config['initial']:
+                if self.initial_order_status is not None:
+                    raise Exception("Only one order status can be defined as initial.")
+                self.initial_order_status = status
+            if 'state' in config:
+                self.order_status_states[status] = config['state'] 
+            if 'flow' in config:
+                # Check flow
+                for allowed in config['flow']:
+                    if allowed not in self.order_statuses:
+                        raise Exception("Order status '{0}' does not exist.".format(allowed))
+            for event in events:
+                if event in config:
+                    if event in self.order_status_events:
+                       raise Exception("Can only have one status responding to '{0}'.".format(event))
+                    self.order_status_events[event] = status
+                        
+            self.order_status_choices.append((status, entry[0]))
+            
+        # Validate
+        if not self.initial_order_status:
+            raise Exception("No initial order status configured.")
+            
+        # Hookup signals
+        order_state_changed.connect(self.on_order_state_changed)
+    
+    def on_order_state_changed(self, sender, order, new_state, old_state=None, **kwargs):
+        if old_state == ORDER_NEW:
+            # Try find cart for this order
+            purchases = order.purchases.filter(cart__isnull=False)[:1]
+            if purchases:
+                cart = purchases[0].cart
+                # Cart won't be needed anymore
+                cart.delete()
+    
     # FORMS
     
     @chainable()
@@ -149,10 +193,6 @@ class CheckoutModule(sellmo.Module):
         # Retrieve order from request
         if order is None:
             order = self.get_order(request=request)
-            
-        # Now make sure this order can be checed out
-        if order.accepted:
-            raise Http404("This order has already been accepted")
         
         # Try initialize order from cart
         if not order and modules.cart.enabled:
@@ -200,10 +240,9 @@ class CheckoutModule(sellmo.Module):
                 
         # See if we completed the process
         if process.completed:
-            # Checkout process completed, accept the order
-            # This is done outside the atomic block on purpose
-            if not order.accepted:
-                self.accept_order(request=request, order=order)
+            
+            # Untrack the order at this point
+            order.untrack(request)
             
             # Redirect away from this view
             request.session['completed_order'] = order.pk
@@ -265,7 +304,8 @@ class CheckoutModule(sellmo.Module):
             
         #
         if data and 'cancel_order' in data:
-            self.cancel_order(request=request, order=order)
+            order.cancel()
+            order.untrack(request)
             
         # Append to context
         context['order'] = order
@@ -354,6 +394,9 @@ class CheckoutModule(sellmo.Module):
     def get_order(self, chain, request=None, order=None, **kwargs):
         if order is None:
             order = self.Order.objects.from_request(request)
+            if not order.is_new and not order.is_pending:
+                order.untrack(request)
+                order = self.Order.objects.from_request(request)
         if chain:
             out = chain.execute(request=request, order=order, **kwargs)
             if out.has_key('order'):
@@ -377,7 +420,7 @@ class CheckoutModule(sellmo.Module):
         if order.pk and order.may_change:
             order.add(purchase, calculate=False)
             order.calculate(subtotal=cart.total)
-            self.invalidate_order(request=request, order=order)
+            order.invalidate()
             
     @link(namespace='cart')
     def update_purchase(self, request, cart, purchase, **kwargs):
@@ -385,7 +428,7 @@ class CheckoutModule(sellmo.Module):
         if order.pk and order.may_change:
             order.update(purchase, calculate=False)
             order.calculate(subtotal=cart.total)
-            self.invalidate_order(request=request, order=order)
+            order.invalidate()
         
     @link(namespace='cart')
     def remove_purchase(self, request, cart, purchase, **kwargs):
@@ -393,55 +436,29 @@ class CheckoutModule(sellmo.Module):
         if order.pk and order.may_change:
             if purchase in order:
                 order.remove(purchase, calculate=False)
-            
             order.calculate(subtotal=cart.total)
-            self.invalidate_order(request=request, order=order)
-        
+            order.invalidate()
+
     @chainable()
-    def invalidate_order(self, chain, request, order, **kwargs):
-        """
-        Invalidates the order after it's purchases have changed.
-        """
-        order.invalidate()
+    def can_change_order_status(self, chain, order, status, can_change=False, **kwargs):
+        # Verify new status
+        if status not in self.order_statuses:
+            raise Exception("Invalid order status '{0}'".format(status))
+        
+        # Lookup current status
+        entry = self.order_statuses[order.status]
+        config = entry[1] if len(entry) == 2 else {}
+        if 'flow' in config:
+            # Check against flow
+            if status in config['flow']:
+                can_change = True
+        
         if chain:
-            chain.execute(request=request, order=order, **kwargs)
-            
-        order_invalidated.send(sender=self, order=order)
+            out = chain.execute(order=order, status=status, can_change=can_change, **kwargs)
+            if 'can_change' in out:
+                can_change = out['can_change']
+        return can_change
     
-    @chainable()
-    def accept_order(self, chain, request, order, **kwargs):
-        """
-        Accepts the order and untracks it.
-        """
-        order.accept()
-        order.untrack(request)
-        if chain:
-            chain.execute(request=request, order=order, **kwargs)
-        
-        order_accepted.send(sender=self, order=order)
-        
-    @chainable()
-    def place_order(self, chain, request, order, **kwargs):
-        """
-        Places the order.
-        """
-        order.place()
-        if chain:
-            chain.execute(request=request, order=order, **kwargs)
-        
-        order_placed.send(sender=self, order=order)
-            
-    @chainable()
-    def cancel_order(self, chain, request, order, **kwargs):
-        """
-        Cancels the order.
-        """
-        order.cancel()
-        order.untrack(request)
-        if chain:
-            chain.execute(request=request, order=order, **kwargs)
-        
-        order_cancelled.send(sender=self, order=order)
             
     @link(namespace='customer')
     def get_customer(self, request, customer=None, **kwargs):

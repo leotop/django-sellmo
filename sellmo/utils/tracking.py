@@ -35,20 +35,25 @@ from django.db import models
 class UntrackableError(Exception):
     pass
 
-def make_trackable(obj, session_key):
-    def track(self, request):
-        if self.pk is None:
-            raise UntrackableError("Cannot track non persistent object")
-        request.session[session_key] = self.pk
-    obj.track = track.__get__(obj, obj.__class__)
+def trackable(session_key):
     
-    def untrack(self, request):
-        request.session[session_key] = None
-    obj.untrack = untrack.__get__(obj, obj.__class__)
+    class TrackableModel(models.Model):
+        
+        objects = TrackingManager(session_key)
     
-    return obj
-
-#
+        def track(self, request):
+            if self.pk is None:
+                raise UntrackableError("Cannot track non persistent object")
+            request.session[session_key] = self.pk
+    
+        def untrack(self, request):
+            request.session[session_key] = None
+            
+        class Meta:
+            abstract = True
+            
+    return TrackableModel
+    
 
 class TrackingManager(models.Manager):
     
@@ -56,24 +61,19 @@ class TrackingManager(models.Manager):
         self._session_key = session_key
         super(TrackingManager, self).__init__(*args, **kwargs)
     
-    def _exists(self, request):
+    def exists(self, request):
         return request.session.get(self._session_key, False) != False
-            
-    def _new(self, request):
-        obj = self.model()
-        return make_trackable(obj, self._session_key)
 
-    def _existing(self, request):
+    def existing(self, request):
         try:
             obj = self.get(pk=request.session.get(self._session_key))
-            obj.is_tracked = True
         except self.model.DoesNotExist:
-            obj = self._new(request)
-        return make_trackable(obj, self._session_key)
+            obj = self.model()
+        return obj
     
     def from_request(self, request):
-        if self._exists(request):
-            return self._existing(request)
+        if self.exists(request):
+            return self.existing(request)
         else:
-            return self._new(request)
+            return self.model()
     
