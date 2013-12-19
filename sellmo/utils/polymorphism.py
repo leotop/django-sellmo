@@ -40,14 +40,14 @@ from sellmo.utils.cloning import Cloneable
 #
 
 class PolymorphicQuerySet(QuerySet):
-    
+
     _downcast = False
-    
+
     def __init__(self, *args, **kwargs):
         if kwargs.has_key('downcast'):
             self._downcast = kwargs.pop('downcast')
         super(PolymorphicQuerySet, self).__init__(*args, **kwargs)
-    
+
     def iterator(self):
         if not self._downcast:
             return super(PolymorphicQuerySet, self).iterator()
@@ -57,62 +57,72 @@ class PolymorphicQuerySet(QuerySet):
             order = []
             downcasts = {}
             result = []
-            
+
             for el in super(PolymorphicQuerySet, self).iterator():
                 if not content_types.has_key(el.content_type_id):
                     content_types[el.content_type_id] = el.content_type
                     content_types_elements[el.content_type_id] = []
                 content_types_elements[el.content_type_id].append(el)
                 order.append(el.pk)
-                    
+
             if self._downcast:
                 for content_type in content_types.values():
                     model = content_type.model_class()
                     elements = content_types_elements[content_type.pk]
                     pks = [element.pk for element in elements]
-                    
-                    for el in model.objects.filter(pk__in=pks):
+
+                    for el in QuerySet(model).filter(pk__in=pks):
                         downcasts[el.pk] = el
-                        
+
                 for pk in order:
                     result.append(downcasts[pk])
-                    
+
             return result
-                
+
     def _clone(self, *args, **kwargs):
         clone = super(PolymorphicQuerySet, self)._clone(*args, **kwargs)
         clone._downcast = self._downcast
         return clone
-            
+
     def polymorphic(self):
         clone = self.prefetch_related('content_type')
         clone._downcast = True
         return clone
-            
+
 class PolymorphicManager(models.Manager):
-    
+
+    use_for_related_fields = True
+
+    def __init__(self, cls=PolymorphicQuerySet, polymorphic=False):
+        self._downcast = polymorphic
+        self._cls = cls
+        super(PolymorphicManager, self).__init__()
+
     def get_query_set(self):
-        return PolymorphicQuerySet(self.model)
-        
+        qs = self._cls(self.model)
+        if self._downcast:
+            qs = qs.polymorphic()
+        return qs
+
     def polymorphic(self):
         return self.get_query_set().polymorphic()
 
 class PolymorphicModel(models.Model, Cloneable):
-    
+
     content_type = models.ForeignKey(ContentType, editable=False)
     objects = PolymorphicManager()
-    
+
     @classmethod
     def get_admin_url(cls, content_type, object_id):
         if cls._meta.parents.keys():
             content_type = ContentType.objects.get_for_model(cls._meta.parents.keys()[-1])
         return "%s/%s/%s/" % (content_type.app_label, content_type.model, quote(object_id))
-    
+
     def save(self, *args, **kwargs):
         if self.content_type_id is None:
             self.content_type = ContentType.objects.get_for_model(self.__class__)
         super(PolymorphicModel, self).save(*args, **kwargs)
-        
+
     def downcast(self):
         if not self.content_type_id is None:
             model = self.content_type.model_class()
@@ -125,12 +135,12 @@ class PolymorphicModel(models.Model, Cloneable):
             else:
                 return downcasted
         return self
-    
+
     def resolve_content_type(self):
         if not self.content_type_id is None:
             return self.content_type
         else:
             return ContentType.objects.get_for_model(self.__class__)
-        
+
     class Meta:
         abstract = True

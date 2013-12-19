@@ -49,7 +49,7 @@ register = template.Library()
 class CategoriesTag(Tag):
     name = 'categories'
     options = Options(
-        Flag('nested', default=False, true_values=['nested']),
+        Flag('nested', true_values=['nested'], false_values=['flat']),
         MultiKeywordArgument('kwargs', required=False),
         'as',
         Argument('varname', default='categories', required=False, resolve=False),
