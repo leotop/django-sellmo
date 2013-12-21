@@ -1,7 +1,3 @@
-# Copyright (c) 2012, Adaptiv Design
-# All rights reserved.
-# 
-# Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
 #     * Redistributions of source code must retain the above copyright notice, this
@@ -24,11 +20,41 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.core.mailing.handlers import MailHandlerBase
-from sellmo.contrib.contrib_mailing.handlers.celery_mailing import tasks
+import uuid
+import logging
+import datetime
 
 #
 
-class CeleryMailHandler(MailHandlerBase):
-	def handle_mail(self, message_type, message_reference, context):
-		tasks.send_mail.delay(message_type=message_type, message_reference=message_reference, context=context)
+from sellmo.signals.mailing import mail_init, mail_send, mail_failed
+
+#
+
+def on_mail_init(sender, message_type, message_reference, **kwargs):
+	logger.info("Mail message {0} initialized.".format(message_reference))
+	status = MailStatus.objects.get_or_create(message_reference=message_reference)
+
+def on_mail_send(sender, message_type, message_reference, **kwargs):
+	logger.info("Mail message {0} send successfully.".format(message_reference))
+	try:
+		status = MailStatus.objects.get(message_reference=message_reference)
+	except MailStatus.DoesNotExist:
+		pass
+	else:
+		status.delivered = datetime.datetime.now()
+		status.save()
+
+def on_mail_failed(sender, message_type, message_reference, reason='', **kwargs):
+	logger.warning("Mail message {0} failed to send. Reason: {1}".format(message_reference, reason))
+	try:
+		status = MailStatus.objects.get(message_reference=message_reference)
+	except MailStatus.DoesNotExist:
+		pass
+	else:
+		status.failed = datetime.datetime.now()
+		status.failure_message = reason
+		status.save()
+
+mail_init.connect(on_mail_init)
+mail_send.connect(on_mail_send)
+mail_failed.connect(on_mail_send)

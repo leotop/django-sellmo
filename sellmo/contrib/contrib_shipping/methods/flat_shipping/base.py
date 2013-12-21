@@ -31,9 +31,19 @@ from sellmo.api.checkout import ShippingMethod
 #
 
 class FlatShippingMethod(ShippingMethod):
+	
+	identifier = None
+	name = None
+	
+	def new_shipment(self, order):
+		return modules.shipping.Shipment(
+			method=self.method,
+			carrier=self.carrier,
+		)
 
-	def __init__(self, identifier, description, method, carrier=None):
-		super(FlatShippingMethod, self).__init__(identifier, description)
+	def __init__(self, identifier, name, method, carrier=None):
+		self.identifier = identifier
+		self.name = name
 		self.method = method
 		self.carrier = carrier
 
@@ -42,9 +52,3 @@ class FlatShippingMethod(ShippingMethod):
 		if self.carrier:
 			costs += self.carrier.extra_costs
 		return modules.pricing.get_price(price=Price(costs), shipment_method=self)
-		
-	def __unicode__(self):
-		description = self.description
-		if self.carrier:
-			description = u"{0} ({1})".format(description, self.carrier.description)
-		return description

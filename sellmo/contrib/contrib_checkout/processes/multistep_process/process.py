@@ -93,7 +93,7 @@ class InformationStep(CheckoutStep):
 		
 	def get_next_step(self):
 		next_step = PaymentMethodStep(order=self.order, request=self.request)
-		return self.order.shipment.method.process(request=self.request, order=self.order, next_step=next_step)
+		return self.order.shipment.get_method().process(request=self.request, order=self.order, next_step=next_step)
 		
 	def _contextualize_or_complete(self, request, context, data=None):
 		success = True
@@ -186,7 +186,7 @@ class SummaryStep(CheckoutStep):
 		return True
 		
 	def get_next_step(self):
-		return self.order.payment.method.process(request=self.request, order=self.order, next_step=None)
+		return self.order.payment.get_method().process(request=self.request, order=self.order, next_step=None)
 	
 	def _contextualize_or_complete(self, request, context, data=None):
 		success = True

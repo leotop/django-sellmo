@@ -93,8 +93,8 @@ class PolymorphicManager(models.Manager):
 
     use_for_related_fields = True
 
-    def __init__(self, cls=PolymorphicQuerySet, polymorphic=False):
-        self._downcast = polymorphic
+    def __init__(self, cls=PolymorphicQuerySet, downcast=False):
+        self._downcast = downcast
         self._cls = cls
         super(PolymorphicManager, self).__init__()
 

@@ -26,12 +26,15 @@
 
 from sellmo import modules, Module
 from sellmo.api.decorators import chainable
+from sellmo.contrib.contrib_checkout.models import OrderMail
 
 #
 
 class CheckoutMailingModule(Module):  
 
 	namespace = 'checkout_mailing'
+	
+	OrderMail = OrderMail
 
 	@chainable()
 	def render_order_confirmation(self, chain, format, order, data=None, **kwargs):

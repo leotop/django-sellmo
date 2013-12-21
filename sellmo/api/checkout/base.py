@@ -29,17 +29,36 @@ from sellmo.api.pricing import Price
 
 #
 
-class ShippingMethod(object):
+__all__ = [
+    'ShippingMethod',
+    'PaymentMethod',
+]
+
+#
+
+class MethodBase(object):
     
-    def __init__(self, identifier, description):
-        self.identifier = identifier
-        self.description = description
+    def get_name(self):
+        raise NotImplementedError()
+    name = property(get_name)
+    
+    def get_identifier(self):
+        raise NotImplementedError()
+    identifier = property(get_identifier)
         
     def get_costs(self, order, **kwargs):
         raise NotImplementedError()
         
+    def process(self, request, order, next_step):
+        return next_step
+        
+    def __unicode__(self):
+        return unicode(self.name)
+
+class ShippingMethod(MethodBase):
+        
     def new_shipment(self, order):
-        return modules.checkout.Shipment(identifier=self.identifier)
+        raise NotImplementedError()
         
     def ship(self, order):
         shipment = self.new_shipment(order)
@@ -50,23 +69,10 @@ class ShippingMethod(object):
         order.shipment = shipment
         order.save()
         
-    def process(self, request, order, next_step):
-        return next_step
-        
-    def __unicode__(self):
-        return self.description
-        
-class PaymentMethod(object):
-    
-    def __init__(self, identifier, description):
-        self.identifier = identifier
-        self.description = description
-        
-    def get_costs(self, order, **kwargs):
-        raise NotImplementedError()
+class PaymentMethod(MethodBase):
         
     def new_payment(self, order):
-        return modules.checkout.Payment(identifier=self.identifier)
+        raise NotImplementedError()
         
     def pay(self, order):
         payment = self.new_payment(order)
@@ -76,9 +82,3 @@ class PaymentMethod(object):
             order.payment.delete()
         order.payment = payment
         order.save()
-        
-    def process(self, request, order, next_step):
-        return next_step
-        
-    def __unicode__(self):
-        return self.description

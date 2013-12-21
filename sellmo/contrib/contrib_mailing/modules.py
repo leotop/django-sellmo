@@ -24,11 +24,16 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.core.mailing.handlers import MailHandlerBase
-from sellmo.contrib.contrib_mailing.handlers.celery_mailing import tasks
+from sellmo import modules, Module
+from sellmo.api.decorators import chainable
+from sellmo.contrib.contrib_mailing.models import MailStatus
 
 #
 
-class CeleryMailHandler(MailHandlerBase):
-	def handle_mail(self, message_type, message_reference, context):
-		tasks.send_mail.delay(message_type=message_type, message_reference=message_reference, context=context)
+class MailingModule(Module):  
+
+	namespace = 'mailing'
+	MailStatus = MailStatus
+
+	def __init__(self):
+		pass

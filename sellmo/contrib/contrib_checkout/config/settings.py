@@ -24,11 +24,16 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.core.mailing.handlers import MailHandlerBase
-from sellmo.contrib.contrib_mailing.handlers.celery_mailing import tasks
+from django.conf import settings
 
 #
 
-class CeleryMailHandler(MailHandlerBase):
-	def handle_mail(self, message_type, message_reference, context):
-		tasks.send_mail.delay(message_type=message_type, message_reference=message_reference, context=context)
+from sellmo.contrib.contrib_checkout.config import defaults
+
+#
+
+debug = getattr(settings, 'DEBUG', False)
+
+#
+
+CHECKOUT_MAILS = getattr(settings, 'SELLMO_CHECKOUT_MAILS', defaults.CHECKOUT_MAILS)

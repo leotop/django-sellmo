@@ -46,10 +46,12 @@ def load_shipping_subtypes():
 		)
 		
 		def get_method(self, carrier=None):
+			name = self.name
 			identifier = self.identifier
 			if carrier:
+				name = _(u"{0} by {1}").format(name, carrier.name)
 				identifier = '{0}_{1}'.format(identifier, carrier.identifier)
-			return _FlatShippingMethod(identifier, self.description, method=self, carrier=carrier)
+			return _FlatShippingMethod(identifier, name, method=self, carrier=carrier)
 
 		class Meta:
 			app_label = 'shipping'

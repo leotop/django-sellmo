@@ -27,12 +27,33 @@
 from sellmo import modules
 from sellmo.api.mailing import MailWriter
 from sellmo.core.reporting import reporter
+from sellmo.contrib.contrib_checkout.config import settings
 
 #
 
 from django.utils.translation import ugettext_lazy as _
 
 #
+
+def send_order_mails(order, event_signature):
+	for mail, config in settings.CHECKOUT_MAILS.iteritems():
+		for event in config['send_events']:
+			for key, value in event.iteritems():
+				if key == 'payment_methods':
+					# Make sure payment metod is a match
+					break
+				elif key == 'shipping_methods':
+					# Make sure shipping metod is a match
+					break
+				else:
+					# Make sure signature is a match
+					if not key in event_signature or not event_signature[key] == value:
+						break
+			else:
+				# No match
+				pass
+				
+				
 
 class OrderConfirmationWriter(MailWriter):
 	

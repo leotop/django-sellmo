@@ -34,7 +34,7 @@ from sellmo.core.mailing import mailer
 #
 
 @shared_task
-def send_mail(message_type, context):
+def send_mail(message_type, message_reference, context):
 	writer = mailer.writers[message_type]
 	handler = MailHandlerBase(writer)
-	handler.send_mail(context)
+	handler.send_mail(message_type, message_reference, context)

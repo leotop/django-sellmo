@@ -30,7 +30,7 @@ from django.http import Http404
 
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable
-from sellmo.contrib.contrib_shipping.models import ShippingMethod, ShippingCarrier
+from sellmo.contrib.contrib_shipping.models import ShippingMethod, ShippingCarrier, Shipment
 
 #
 
@@ -38,6 +38,7 @@ class ShippingModule(Module):
 	namespace = 'shipping'
 	ShippingMethod = ShippingMethod
 	ShippingCarrier = ShippingCarrier
+	Shipment = Shipment
 
 	def __init__(self, *args, **kwargs):
 		self.subtypes = []

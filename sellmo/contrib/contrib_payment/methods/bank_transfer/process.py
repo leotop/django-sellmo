@@ -24,11 +24,52 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.core.mailing.handlers import MailHandlerBase
-from sellmo.contrib.contrib_mailing.handlers.celery_mailing import tasks
+from sellmo import modules
+from sellmo.api.pricing import Price
+from sellmo.api.checkout import PaymentMethod
 
 #
 
-class CeleryMailHandler(MailHandlerBase):
-	def handle_mail(self, message_type, message_reference, context):
-		tasks.send_mail.delay(message_type=message_type, message_reference=message_reference, context=context)
+from sellmo.api.checkout.processes import CheckoutProcess, CheckoutStep
+
+#
+
+class BankTransferInstructionsStep(CheckoutStep):
+
+	invalid_context = None
+	key = 'bank_transfer_instructions'
+
+	def __init__(self, order, request, next_step):
+		super(BankTransferInstructionsStep, self).__init__(order=order, request=request)
+		self.next_step = next_step
+		self.payment = self.order.payment.downcast()
+
+	def is_completed(self):
+		return False
+
+	def can_skip(self):
+		return False
+
+	def get_next_step(self):
+		return self.next_step
+
+	def _contextualize_or_complete(self, request, context, data=None):
+		success = True
+		return success
+
+	def complete(self, data):
+		self.invalid_context = {}
+		return self._contextualize_or_complete(self.request, self.invalid_context, data)
+
+	def render(self, request, context):
+		if not self.invalid_context:
+			self._contextualize_or_complete(request, context)
+		else:
+			context.update(self.invalid_context)
+
+		return modules.bank_transfer.instructions(request=request, order=self.order, context=context)
+
+
+
+
+

@@ -44,6 +44,6 @@ else:
 # Wrap all exceptions because Django does not capture ImportErrors
 try:
 	# !! THIS INITS SELLMO
-	sellmo = Sellmo()
+	sellmo = Sellmo()	
 except Exception as exception:
 	raise Exception(str(exception)), None, sys.exc_info()[2]

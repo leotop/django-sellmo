@@ -26,6 +26,7 @@
 
 from sellmo import modules
 from sellmo.api.decorators import load
+from sellmo.contrib.contrib_payment.methods.bank_transfer import BankTransferPaymentMethod
 
 #
 
@@ -38,6 +39,13 @@ from django.utils.translation import ugettext_lazy as _
 def finalize_model():
 
 	class BankTransferPayment(modules.checkout.Payment, modules.bank_transfer.BankTransferPayment):
+		
+		def get_method(self):
+			return BankTransferPaymentMethod()
+			
+		def __unicode__(self):
+			return unicode(self.get_method())
+		
 		class Meta:
 			app_label = 'checkout'
 			verbose_name = _("bank transfer payment")

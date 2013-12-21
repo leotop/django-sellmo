@@ -41,7 +41,7 @@ from sellmo import modules
 from sellmo.signals.checkout import *
 from sellmo.api.pricing import Price
 from sellmo.api.decorators import load
-from sellmo.utils.polymorphism import PolymorphicModel
+from sellmo.utils.polymorphism import PolymorphicModel, PolymorphicManager
 from sellmo.utils.tracking import trackable
 
 #
@@ -452,7 +452,7 @@ class Order(trackable('sellmo_order')):
         
         # Finally signal
         if status_changed:
-            order_status_changed.send(sender=self, order=self, status=self.status)
+            order_status_changed.send(sender=self, order=self, new_status=self.status, old_status=old.status if old is not None else None)
             
         if state_changed:
             order_state_changed.send(sender=self, order=self, new_state=self.state, old_state=old.state if old is not None else None)
@@ -500,13 +500,10 @@ class Order(trackable('sellmo_order')):
         
 class Shipment(PolymorphicModel):
     
-    identifier = models.CharField(
-        max_length = 80,
-    )
+    objects = PolymorphicManager(downcast=True)
     
     def get_method(self):
-        return modules.checkout.get_shipping_methods(order=self.order)[self.identifier]
-    method = property(get_method)
+        raise NotImplementedError()
     
     def __unicode__(self):
         return unicode(self.order)
@@ -515,17 +512,14 @@ class Shipment(PolymorphicModel):
         abstract = True
         
 class Payment(PolymorphicModel):
-
-    identifier = models.CharField(
-        max_length = 80,
-    )
+    
+    objects = PolymorphicManager(downcast=True)
+    
+    def get_method(self):
+        raise NotImplementedError()
     
     def __unicode__(self):
         return unicode(self.order)
-    
-    def get_method(self):
-        return modules.checkout.get_payment_methods(order=self.order)[self.identifier]
-    method = property(get_method)
 
     class Meta:
         abstract = True

@@ -24,7 +24,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from smtplib import SMTPException
+
+#
+
 from sellmo.api.mailing import MailHandler
+from sellmo.signals.mailing import mail_send, mail_failed
 
 #
 
@@ -34,7 +39,7 @@ from django.core import mail
 
 class MailHandlerBase(MailHandler):
 
-	def send_mail(self, context, connection=None):
+	def send_mail(self, message_type, message_reference, context, connection=None):
 		# Open the writer and close it afterwards
 		with self.writer.open(context) as writer:
 			
@@ -78,8 +83,25 @@ class MailHandlerBase(MailHandler):
 				message.connection = connection
 			
 			# Now actualy send
-			message.send()
+			try:
+				message.send()
+			except SMTPException as exception:
+				mail_failed.send(
+					sender=self,
+					message_type=message_type,
+					message_reference=message_reference,
+					context=context,
+					reason=str(exception),
+				)
+				raise
+			else:
+				mail_send.send(
+					sender=self,
+					message_type=message_type,
+					message_reference=message_reference,
+					context=context
+				)
 
 class DefaultMailHandler(MailHandlerBase):
-	def handle_mail(self, message_type, context):
-		self.send_mail(context)
+	def handle_mail(self, message_type, message_reference, context):
+		self.send_mail(message_type, message_reference, context)

@@ -36,6 +36,74 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
+@load(action='finalize_shipping_Shipment')
+@load(after='finalize_checkout_Shipment')
+@load(after='finalize_shipping_ShippingCarrier')
+@load(after='finalize_shipping_ShippingMethod')
+def finalize_model():
+    class Shipment(modules.checkout.Shipment, modules.shipping.Shipment):
+        
+        carrier = models.ForeignKey(
+            modules.shipping.ShippingCarrier,
+            on_delete=models.SET_NULL,
+            null = True,
+            blank = True,
+            verbose_name = _("carrier"),
+        )
+        
+        method = models.ForeignKey(
+            modules.shipping.ShippingMethod,
+            on_delete=models.SET_NULL,
+            null = True,
+            blank = True,
+            verbose_name = _("carrier"),
+        )
+        
+        def save(self, *args, **kwargs):
+            if not self.description and self.method:
+                self.description = self.method.name
+                if self.carrier:
+                    self.description = _(u"{0} by {1}").format(self.description, self.carrier.name)
+                    
+            super(Shipment, self).save(*args, **kwargs)
+        
+        def get_method(self):
+            if not self.method:
+                raise Exception("This shipment no longer has a shipping method.")
+            for method in self.method.get_methods():
+                if method.carrier == self.carrier:
+                    return method
+            raise Exception("Shipping method could not be resolved.")
+            
+        def __unicode__(self):
+            try:
+                method = self.get_method()
+            except Exception:
+                pass
+            else:
+                return unicode(method)
+            return super(Shipment, self).__unicode__()
+        
+        class Meta:
+            app_label = 'shipping'
+            verbose_name = _("shipment")
+            verbose_name_plural = _("shipments")
+
+    modules.shipping.Shipment = Shipment
+    
+class Shipment(models.Model):
+    
+    description = models.CharField(
+        max_length = 120,
+        blank = True,
+        verbose_name = _("description"),
+    )
+    
+    def __unicode__(self):
+        return self.description
+    
+    class Meta:
+        abstract = True
 
 @load(after='finalize_shipping_ShippingCarrier', before='finalize_shipping_ShippingMethod')
 def load_model():
@@ -65,6 +133,8 @@ def finalize_model():
 
 class ShippingMethod(PolymorphicModel):
     
+    objects = PolymorphicManager(downcast=True)
+    
     active = models.BooleanField(
         default = True,
         verbose_name = _("active"),
@@ -77,9 +147,9 @@ class ShippingMethod(PolymorphicModel):
         verbose_name = _("identifier"),
     )
     
-    description = models.CharField(
+    name = models.CharField(
         max_length = 80,
-        verbose_name = _("description"),
+        verbose_name = _("name"),
     )
     
     def get_methods(self):
@@ -93,7 +163,7 @@ class ShippingMethod(PolymorphicModel):
         raise NotImplementedError()
         
     def __unicode__(self):
-        return self.description
+        return self.name
 
     class Meta:
         abstract = True
@@ -129,13 +199,13 @@ class ShippingCarrier(models.Model):
         verbose_name = _("identifier"),
     )
     
-    description = models.CharField(
+    name = models.CharField(
         max_length = 80,
-        verbose_name = _("description"),
+        verbose_name = _("name"),
     )
     
     def __unicode__(self):
-        return self.description
+        return self.name
     
     class Meta:
         abstract = True

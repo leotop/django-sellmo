@@ -30,19 +30,24 @@ from sellmo.api.checkout import PaymentMethod
 
 #
 
+from sellmo.contrib.contrib_payment.methods.bank_transfer.process import *
+
+#
+
+from django.utils.translation import ugettext_lazy as _
+
+#
+
 class BankTransferPaymentMethod(PaymentMethod):
 
-	def __init__(self, identifier, description):
-		super(BankTransferPaymentMethod, self).__init__(identifier, description)
-
+	identifier = 'bank_transfer'
+	name = _("bank transfer")
+	
 	def process(self, order, request, next_step):
-		return next_step
+		return BankTransferInstructionsStep(order=order, request=request, next_step=next_step)
 
 	def new_payment(self, order):
-		return modules.bank_transfer.BankTransferPayment(identifier=self.identifier)
+		return modules.bank_transfer.BankTransferPayment()
 
 	def get_costs(self, order, currency=None, **kwargs):
 		return modules.pricing.get_price(price=Price(0), payment_method=self)
-
-	def __unicode__(self):
-		return unicode(self.description)

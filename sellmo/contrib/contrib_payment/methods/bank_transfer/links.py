@@ -41,8 +41,8 @@ namespace = modules.checkout.namespace
 
 @link()
 def get_payment_methods(order, methods, **kwargs):
-	method = BankTransferPaymentMethod(identifier='bank_transfer', description=_("Bank transfer"))
-	methods['bank_transfer'] = method
+	method = BankTransferPaymentMethod()
+	methods[method.identifier] = method
 	return {
 		'methods' : methods
 	}

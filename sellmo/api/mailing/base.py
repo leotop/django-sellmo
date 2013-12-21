@@ -33,7 +33,7 @@ class MailHandler(object):
 	def __init__(self, writer):
 		self.writer = writer
 
-	def handle_mail(self, message_type, context):
+	def handle_mail(self, message_type, message_reference, context):
 		raise NotImplementedError()
 
 class MailWriter(object):

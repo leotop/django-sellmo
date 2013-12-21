@@ -24,11 +24,69 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.core.mailing.handlers import MailHandlerBase
-from sellmo.contrib.contrib_mailing.handlers.celery_mailing import tasks
+from django.db import models
+from django.utils.translation import ugettext_lazy as _
 
 #
 
-class CeleryMailHandler(MailHandlerBase):
-	def handle_mail(self, message_type, message_reference, context):
-		tasks.send_mail.delay(message_type=message_type, message_reference=message_reference, context=context)
+from sellmo import modules
+from sellmo.api.decorators import load
+
+#
+
+@load(action='finalize_mailing_MailStatus')
+def finalize_model():
+	class MailStatus(modules.mailing.MailStatus):
+		class Meta:
+			app_label = 'mailing'
+			verbose_name = _("mail status")
+			verbose_name_plural = _("mail statuses")
+	
+	modules.mailing.MailStatus = MailStatus
+
+class MailStatus(models.Model):
+
+	message_reference = models.CharField(
+		max_length = 32,
+		editable = False,
+		unique = True,
+		db_index = True,
+	)
+
+	message_type = models.CharField(
+		max_length = 80,
+		editable = False,
+		db_index = True,
+	)
+
+	created = models.DateTimeField(
+		auto_now_add = True,
+		editable = False,
+		verbose_name = _("created at"),
+	)
+
+	modified = models.DateTimeField(
+		auto_now = True,
+		editable = False,
+		verbose_name = _("modified at"),
+	)
+
+	delivered = models.DateTimeField(
+		null = True,
+		editable = False,
+		verbose_name = _("delivered at"),
+	)
+
+	failed = models.DateTimeField(
+		null = True,
+		editable = False,
+		verbose_name = _("failed at"),
+	)
+
+	failure_message = models.TextField(
+		editable = False,
+		verbose_name = _("failure message"),
+	)
+
+	class Meta:
+		abstract = True

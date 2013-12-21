@@ -41,6 +41,23 @@ from django.http import HttpResponse
 
 logger = logging.getLogger('sellmo')
 
+#
+
+def validate_func(func):
+    if not callable(func):
+        logger.warning("Link '{0}.{1}' must be callable".format(func.__module__, func.__name__))
+    
+    try:
+        argspec = inspect.getargspec(func)
+    except TypeError:
+        try:
+            argspec = inspect.getargspec(func.__call__)
+        except (TypeError, AttributeError):
+            argspec = None
+    if argspec:
+        if argspec[2] is None:
+            logger.warning("Link '{0}.{1}' must accept **kwargs".format(func.__module__, func.__name__))
+
 @singleton
 class Chainer(object):
 
@@ -75,6 +92,7 @@ class Chainer(object):
             # Hookup links to chain
             chain = self._chains[path]
             for link in links:
+                validate_func(link['func'])
                 chain.hookup(link['func'], capture=link['capture'])
                 
         # Cleanup

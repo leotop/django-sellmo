@@ -33,11 +33,15 @@ from sellmo.api.checkout import PaymentMethod
 from sellmo.contrib.contrib_payment.methods.ideal.mollie_ideal.process import *
 
 #
+
+from django.utils.translation import ugettext_lazy as _
+
+#
 	
 class MollieIdealPaymentMethod(PaymentMethod):
 
-	def __init__(self, identifier, description):
-		super(MollieIdealPaymentMethod, self).__init__(identifier, description)
+	identifier = 'ideal'
+	name = _("iDeal")
 		
 	def process(self, order, request, next_step):
 		if order.is_paid:
@@ -57,11 +61,8 @@ class MollieIdealPaymentMethod(PaymentMethod):
 		return MollieIdealBankSelectStep(order=order, request=request, next_step=next_step)
 		
 	def new_payment(self, order):
-		return modules.mollie_ideal.MollieIdealPayment(identifier=self.identifier)
+		return modules.mollie_ideal.MollieIdealPayment()
 
 	def get_costs(self, order, currency=None, **kwargs):
 		return modules.pricing.get_price(price=Price(0), payment_method=self)
-
-	def __unicode__(self):
-		return unicode(self.description)
 		

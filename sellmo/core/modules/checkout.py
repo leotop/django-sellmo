@@ -257,7 +257,11 @@ class CheckoutModule(sellmo.Module):
         
         if chain:
             return chain.execute(request, step=step, order=order, process=process, context=context, **kwargs)
-        return process.render(request, context=context)
+        
+        try:
+            return process.render(request, context=context)
+        except ProcessError as error:
+            raise Http404(error) 
         
     @view(r'^complete/$')
     def complete(self, chain, request, order=None, context=None, **kwargs):
@@ -344,7 +348,7 @@ class CheckoutModule(sellmo.Module):
         processed = False
         initial = None
         if order.shipment:
-            initial = order.shipment.method
+            initial = order.shipment.get_method()
         form = self.get_shipping_method_form(order=order, prefix=prefix, data=data, methods=methods, method=initial)
         if data and form.is_valid():
             # Resolve shipping method
@@ -376,7 +380,8 @@ class CheckoutModule(sellmo.Module):
         processed = False
         initial = None
         if order.payment:
-            initial = order.payment.method
+            print order.payment.__class__
+            initial = order.payment.get_method()
         form = self.get_payment_method_form(order=order, prefix=prefix, data=data, methods=methods, method=initial)
         if data and form.is_valid():
             # Resolve payment method

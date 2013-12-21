@@ -24,6 +24,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from django.http import Http404
+
+#
+
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable
 from sellmo.contrib.contrib_payment.methods.bank_transfer.models import BankTransferPayment
@@ -34,3 +38,12 @@ class BankTransferModule(Module):
 	namespace = 'bank_transfer'
 	BankTransferPayment = BankTransferPayment
 
+	@view()
+	def instructions(self, chain, request, context=None, **kwargs):
+		if context is None:
+			context = {}
+		if chain:
+			return chain.execute(request=request, context=context, **kwargs)
+		else:
+			# We don't render anything
+			raise Http404

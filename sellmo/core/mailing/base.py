@@ -30,6 +30,7 @@ from django.utils.module_loading import import_by_path
 
 from sellmo.magic import singleton
 from sellmo.config import settings
+from sellmo.signals.mailing import mail_init
 
 #
 
@@ -53,6 +54,17 @@ class Mailer(object):
 
 	def send_mail(self, message_type, context=None):
 		
+		# Create unique message reference for internal usages
+		message_reference = uuid.uuid1().hex
+		
+		# Notify
+		mail_init.send(
+			sender=self,
+			message_type=message_type,
+			message_reference=message_reference,
+			context=context
+		)
+		
 		if context is None:
 			context = {}
 		
@@ -65,9 +77,16 @@ class Mailer(object):
 		handler = self.get_handler()(writer)
 		
 		# Handle the email
-		handler.handle_mail(message_type, context)
+		handler.handle_mail(message_type, message_reference, context)
+		return message_reference
 		
 	def register(self, message_type, writer):
+		if isinstance(writer, (str, unicode)):
+			writer = import_by_path(writer)
 		self.writers[message_type] = writer
 		
 mailer = Mailer()
+
+
+	
+	

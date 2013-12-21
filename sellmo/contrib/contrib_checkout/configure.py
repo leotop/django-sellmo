@@ -24,24 +24,53 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.signals.checkout import order_paid
+from sellmo.signals.checkout import order_paid, order_state_changed, order_status_changed
+from sellmo.signals.mailing import mail_init
 from sellmo.core.mailing import mailer
 from sellmo.core.reporting import reporter
-from sellmo.contrib.contrib_checkout.mailing import OrderConfirmationWriter
+from sellmo.contrib.contrib_checkout.mailing import send_order_mails
 from sellmo.contrib.contrib_checkout.reporting import InvoiceWriter
+from sellmo.contrib.contrib_checkout.config import settings
 
-#
+# Validate & Register mail writers
+for message_type, config in settings.CHECKOUT_MAILS.iteritems():
+	if 'writer' not in config:
+		raise Exception("{0} has no writer configured.".format(message_type))
+	if 'send_events' not in config or not config['send_events']:
+		raise Exception("{0} has no send_events configured.".format(message_type))
+	mailer.register(message_type, config['writer'])
 
-mailer.register('order_confirmation', OrderConfirmationWriter)
+# Register report writers
 reporter.register('invoice', InvoiceWriter)
-
+	
 #
+
+def on_mail_init(sender, message_type, message_reference, context, **kwargs):
+	pass
 
 def on_order_paid(sender, order, **kwargs):
-	mailer.send_mail('order_confirmation', context={
-		'order' : order,
+	send_order_mails(order, {
+		'on_paid' : True,
 	})
-
+	
+def on_order_state_changed(sender, order, new_state, old_state=None, **kwargs):
+	send_order_mails(order, {
+		'state' : new_state,
+	})
+	
+def on_order_status_changed(sender, order, new_status, old_status=None, **kwargs):
+	send_order_mails(order, {
+		'status' : new_status,
+	})
+	
 #
 
+mail_init.connect(on_mail_init)
+
 order_paid.connect(on_order_paid)
+order_state_changed.connect(on_order_state_changed)
+order_status_changed.connect(on_order_status_changed)
+
+
+
+#

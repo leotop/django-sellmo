@@ -26,6 +26,7 @@
 
 from sellmo import modules
 from sellmo.api.decorators import load
+from sellmo.contrib.contrib_payment.methods.ideal.mollie_ideal import MollieIdealPaymentMethod
 
 #
 
@@ -38,6 +39,13 @@ from django.utils.translation import ugettext_lazy as _
 def finalize_model():
 	
 	class MollieIdealPayment(modules.checkout.Payment, modules.mollie_ideal.MollieIdealPayment):
+		
+		def get_method(self):
+			return MollieIdealPaymentMethod()
+			
+		def __unicode__(self):
+			return unicode(self.get_method())
+		
 		class Meta:
 			app_label = 'checkout'
 			verbose_name = _("mollie ideal payment")

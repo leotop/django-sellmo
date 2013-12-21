@@ -34,8 +34,8 @@ namespace = modules.checkout.namespace
 @link()
 def get_shipping_methods(order, methods, **kwargs):
 	for method in modules.shipping.ShippingMethod.objects.polymorphic().filter(active=True):
-		for el in method.get_methods():
-			methods[el.identifier] = el
+		for sub_method in method.get_methods():
+			methods[sub_method.identifier] = sub_method
 	return {
 		'methods' : methods
 	}

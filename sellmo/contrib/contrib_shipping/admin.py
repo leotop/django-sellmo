@@ -42,9 +42,9 @@ class ShippingMethodParentAdmin(PolymorphicParentModelAdmin):
     child_models = []
     
     polymorphic_list = True
-    list_display = ['description']
-    list_display_links = ['description']
-    search_fields = ['description']
+    list_display = ['name']
+    list_display_links = ['name']
+    search_fields = ['name']
 
     def queryset(self, queryset):
         return modules.shipping.ShippingMethod.objects.all()
