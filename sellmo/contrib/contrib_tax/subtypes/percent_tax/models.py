@@ -51,7 +51,11 @@ def load_tax_subtypes():
 		)
 
 		def apply(self, price):
-			tax = Price(price.amount * self.rate, currency=price.currency, type='tax', context={'tax' : self})
+			settings = modules.tax.get_settings()
+			if settings.calculate_inclusive:
+				price /= (1 + self.rate)
+			amount = price.amount * self.rate
+			tax = Price(amount, currency=price.currency, type='tax', context={'tax' : self})
 			return price + tax
 
 		class Meta:

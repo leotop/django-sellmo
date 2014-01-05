@@ -24,52 +24,18 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo import modules
-from sellmo.api.pricing import Price
-from sellmo.api.checkout import PaymentMethod
+from django.utils.translation import ugettext_lazy as _
 
 #
 
-from sellmo.api.checkout.processes import CheckoutProcess, CheckoutStep
-
-#
-
-class BankTransferInstructionsStep(CheckoutStep):
-
-	invalid_context = None
-	key = 'bank_transfer_instructions'
-
-	def __init__(self, order, request, next_step):
-		super(BankTransferInstructionsStep, self).__init__(order=order, request=request)
-		self.next_step = next_step
-		self.payment = self.order.payment.downcast()
-
-	def is_completed(self):
-		return False
-
-	def can_skip(self):
-		return False
-
-	def get_next_step(self):
-		return self.next_step
-
-	def _contextualize_or_complete(self, request, context, data=None):
-		success = True
-		return success
-
-	def complete(self, data):
-		self.invalid_context = {}
-		return self._contextualize_or_complete(self.request, self.invalid_context, data)
-
-	def render(self, request, context):
-		if not self.invalid_context:
-			self._contextualize_or_complete(request, context)
-		else:
-			context.update(self.invalid_context)
-
-		return modules.bank_transfer.instructions(request=request, order=self.order, context=context)
-
-
-
-
-
+REPORTING_PARAMS = {
+	'pdf' : {
+		'size' : 'A4',
+		'orientation' : 'portrait',
+		'margin' : '1cm',
+		'zoom' : 1.0,
+	},
+	'png' : {
+		'viewport' : '800x800'
+	}
+}

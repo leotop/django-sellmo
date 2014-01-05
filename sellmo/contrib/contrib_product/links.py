@@ -24,11 +24,16 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+#
+
 from sellmo import modules
 from sellmo.api.decorators import link
 
 #
 
-@link(namespace='store')
-def make_purchase(purchase, product, **kwargs):
-    pass
+@link(namespace=modules.product.namespace)
+def list(request, products, **kwargs):
+    products = products.filter(active=True)
+    return {
+        'products' : products
+    }

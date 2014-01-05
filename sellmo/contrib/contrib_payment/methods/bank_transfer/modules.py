@@ -29,7 +29,7 @@ from django.http import Http404
 #
 
 from sellmo import modules, Module
-from sellmo.api.decorators import view, chainable
+from sellmo.api.decorators import view, chainable, link
 from sellmo.contrib.contrib_payment.methods.bank_transfer.models import BankTransferPayment
 
 #
@@ -39,7 +39,7 @@ class BankTransferModule(Module):
 	BankTransferPayment = BankTransferPayment
 
 	@view()
-	def instructions(self, chain, request, context=None, **kwargs):
+	def instructions(self, chain, request, order=None, context=None, **kwargs):
 		if context is None:
 			context = {}
 		if chain:
@@ -47,3 +47,7 @@ class BankTransferModule(Module):
 		else:
 			# We don't render anything
 			raise Http404
+			
+	@link(namespace='checkout')
+	def complete(self, request, order=None, context=None, **kwargs):
+		return self.instructions(request, order=order, context=context)

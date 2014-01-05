@@ -103,6 +103,9 @@ class Reporter(object):
 		return generator.generate_report(format, context)
 		
 	def register(self, report_type, writer):
+		if isinstance(writer, (str, unicode)):
+			writer = import_by_path(writer)
+		
 		if not writer.format:
 			raise Exception("Writer needs format")
 		

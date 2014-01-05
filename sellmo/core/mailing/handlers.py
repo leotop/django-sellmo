@@ -92,14 +92,15 @@ class MailHandlerBase(MailHandler):
 					message_reference=message_reference,
 					context=context,
 					reason=str(exception),
+					message=message,
 				)
-				raise
 			else:
 				mail_send.send(
 					sender=self,
 					message_type=message_type,
 					message_reference=message_reference,
-					context=context
+					context=context,
+					message=message
 				)
 
 class DefaultMailHandler(MailHandlerBase):

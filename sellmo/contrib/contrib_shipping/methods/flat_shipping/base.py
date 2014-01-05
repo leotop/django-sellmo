@@ -51,4 +51,4 @@ class FlatShippingMethod(ShippingMethod):
 		costs = self.method.costs
 		if self.carrier:
 			costs += self.carrier.extra_costs
-		return modules.pricing.get_price(price=Price(costs), shipment_method=self)
+		return modules.pricing.get_price(price=Price(costs), shipping_method=self)

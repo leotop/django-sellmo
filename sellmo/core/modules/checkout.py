@@ -58,46 +58,10 @@ class CheckoutModule(sellmo.Module):
     Payment = Payment
     CheckoutProcess = CheckoutProcess
     
-    required_address_types = settings.REQUIRED_ADDRESS_TYPES
-    order_statuses = settings.ORDER_STATUSES
-    customer_required = settings.CUSTOMER_REQUIRED
-    
     ShippingMethodForm = None
     PaymentMethodForm = None
     
-    initial_order_status = None
-    order_status_choices = []
-    order_status_events = {}
-    order_status_states = {}
-    
     def __init__(self, *args, **kwargs):
-        # Validate order statuses and hookup events
-        events = ['on_pending', 'on_completed', 'on_canceled', 'on_closed', 'on_paid']
-        for status, entry in self.order_statuses.iteritems():
-            config = entry[1] if len(entry) == 2 else {}
-            if 'initial' in config and config['initial']:
-                if self.initial_order_status is not None:
-                    raise Exception("Only one order status can be defined as initial.")
-                self.initial_order_status = status
-            if 'state' in config:
-                self.order_status_states[status] = config['state'] 
-            if 'flow' in config:
-                # Check flow
-                for allowed in config['flow']:
-                    if allowed not in self.order_statuses:
-                        raise Exception("Order status '{0}' does not exist.".format(allowed))
-            for event in events:
-                if event in config:
-                    if event in self.order_status_events:
-                       raise Exception("Can only have one status responding to '{0}'.".format(event))
-                    self.order_status_events[event] = status
-                        
-            self.order_status_choices.append((status, entry[0]))
-            
-        # Validate
-        if not self.initial_order_status:
-            raise Exception("No initial order status configured.")
-            
         # Hookup signals
         order_state_changed.connect(self.on_order_state_changed)
     
@@ -380,7 +344,6 @@ class CheckoutModule(sellmo.Module):
         processed = False
         initial = None
         if order.payment:
-            print order.payment.__class__
             initial = order.payment.get_method()
         form = self.get_payment_method_form(order=order, prefix=prefix, data=data, methods=methods, method=initial)
         if data and form.is_valid():
@@ -422,10 +385,13 @@ class CheckoutModule(sellmo.Module):
     @link(namespace='cart')
     def add_purchase(self, request, cart, purchase, **kwargs):
         order = self.get_order(request=request)
-        if order.pk and order.may_change:
-            order.add(purchase, calculate=False)
-            order.calculate(subtotal=cart.total)
-            order.invalidate()
+        if order.pk:
+            if order.may_change:
+                order.add(purchase, calculate=False)
+                order.calculate(subtotal=cart.total)
+                order.invalidate()
+            else:
+                order.untrack(request)
             
     @link(namespace='cart')
     def update_purchase(self, request, cart, purchase, **kwargs):
@@ -447,11 +413,11 @@ class CheckoutModule(sellmo.Module):
     @chainable()
     def can_change_order_status(self, chain, order, status, can_change=False, **kwargs):
         # Verify new status
-        if status not in self.order_statuses:
+        if status not in settings.ORDER_STATUSES:
             raise Exception("Invalid order status '{0}'".format(status))
         
         # Lookup current status
-        entry = self.order_statuses[order.status]
+        entry = settings.ORDER_STATUSES[order.status]
         config = entry[1] if len(entry) == 2 else {}
         if 'flow' in config:
             # Check against flow
@@ -476,11 +442,11 @@ class CheckoutModule(sellmo.Module):
                 pass
             else:
                 customer = modules.customer.Contactable.clone(order, cls=modules.customer.Customer)
-                if len(modules.customer.address_types) > 0:
-                    address = modules.customer.address_types[0]
+                if len(settings.ADDRESS_TYPES) > 0:
+                    address = settings.ADDRESS_TYPES[0]
                     address = order.get_address(address)
                     customer = modules.customer.Addressee.clone(address, clone=customer)
-                for address in modules.customer.address_types:
+                for address in settings.ADDRESS_TYPES:
                     customer.set_address(address, order.get_address(address).clone())
         return {
             'customer' : customer

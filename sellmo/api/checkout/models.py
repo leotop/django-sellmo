@@ -38,9 +38,11 @@ from django.utils.translation import ugettext_lazy as _
 #
 
 from sellmo import modules
+from sellmo.config import settings
 from sellmo.signals.checkout import *
 from sellmo.api.pricing import Price
 from sellmo.api.decorators import load
+from sellmo.api.checkout import statuses
 from sellmo.utils.polymorphism import PolymorphicModel, PolymorphicManager
 from sellmo.utils.tracking import trackable
 
@@ -51,7 +53,7 @@ ORDER_PENDING = 'pending'
 ORDER_COMPLETED = 'completed'
 ORDER_CLOSED = 'closed'
 ORDER_CANCELED = 'canceled'
-
+    
 #
         
 @load(before='finalize_checkout_Order')
@@ -125,16 +127,16 @@ def load_model():
         
         customer =  models.ForeignKey(
             modules.customer.Customer,
-            null = not modules.checkout.customer_required,
-            blank = not modules.checkout.customer_required,
+            null = not settings.CUSTOMER_REQUIRED,
+            blank = not settings.CUSTOMER_REQUIRED,
             related_name = 'orders',
             verbose_name = _("customer"),
         )
          
         status = models.CharField(
             max_length = 40,
-            default = modules.checkout.initial_order_status,
-            choices = modules.checkout.order_status_choices,
+            default = statuses.initial_status,
+            choices = statuses.status_choices,
             blank = False,
             verbose_name = _("status"),
         )
@@ -142,7 +144,7 @@ def load_model():
         class Meta:
             abstract = True
             
-    if not modules.checkout.customer_required:
+    if not settings.CUSTOMER_REQUIRED:
         class Order(Order, modules.customer.Contactable):
             class Meta:
                 abstract = True
@@ -151,7 +153,7 @@ def load_model():
     
 @load(after='finalize_customer_Address', before='finalize_checkout_Order')
 def load_model():
-    for type in modules.checkout.required_address_types:
+    for type in settings.ADDRESS_TYPES:
         name = '{0}_address'.format(type)
         modules.checkout.Order.add_to_class(name,
             models.ForeignKey(
@@ -259,6 +261,15 @@ class Order(trackable('sellmo_order')):
     def proxy(self, purchases):
         self._proxy = purchases
         
+    #
+    
+    @property
+    def needs_shipping(self):
+        for purchase in self:
+            if getattr(purchase.product.downcast(), 'needs_shipping', True):
+                return True
+        return False
+    
     #
     
     def add(self, purchase, save=True, calculate=True):
@@ -416,7 +427,7 @@ class Order(trackable('sellmo_order')):
                 
         # Check for new status
         status_changed = (
-            old is None and self.status != modules.checkout.initial_order_status
+            old is None and self.status != statuses.initial_status
             or old is not None and self.status != old.status
         )
         
@@ -430,16 +441,16 @@ class Order(trackable('sellmo_order')):
         now_paid = (old is None or not old.is_paid) and self.is_paid
         
         # Get new status from new state
-        if not status_changed and state_changed and 'on_{0}'.format(self.state) in modules.checkout.order_status_events:
-            self.status = modules.checkout.order_status_events['on_{0}'.format(self.state)]
+        if not status_changed and state_changed and 'on_{0}'.format(self.state) in statuses.status_events:
+            self.status = statuses.status_events['on_{0}'.format(self.state)]
         
         # Get new status from on_paid
-        if not status_changed and now_paid and 'on_paid' in modules.checkout.order_status_events:
-            self.status = modules.checkout.order_status_events['on_paid']
+        if not status_changed and now_paid and 'on_paid' in statuses.status_events:
+            self.status = statuses.status_events['on_paid']
                     
         # Get new state from new status
-        if not state_changed and status_changed and self.status in modules.checkout.order_status_states:
-            self.state = modules.checkout.order_status_states[self.status]
+        if not state_changed and status_changed and self.status in statuses.status_states:
+            self.state = statuses.status_states[self.status]
             
         # Check for new status (again)
         status_changed = old is None or self.status != old.status
@@ -514,6 +525,9 @@ class Shipment(PolymorphicModel):
 class Payment(PolymorphicModel):
     
     objects = PolymorphicManager(downcast=True)
+    
+    # Flags
+    instant = True
     
     def get_method(self):
         raise NotImplementedError()

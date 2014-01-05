@@ -85,17 +85,6 @@ class MollieIdealModule(Module):
 		else:
 			# We don't render anything
 			raise Http404
-			
-	def get_settings(self):
-		site = Site.objects.get_current()
-		settings = None
-		if site:
-			try:
-				settings =  site.payment_settings
-			except modules.payment.PaymentSettings.DoesNotExist:
-				raise Exception()
-				
-		return settings
 		
 	@view(r'^report$')
 	def report(self, chain, request, **kwargs):
@@ -115,7 +104,7 @@ class MollieIdealModule(Module):
 		order = payment.order
 		
 		# Now get status
-		settings = self.get_settings()
+		settings = modules.payment.get_settings()
 		
 		payload = {
 			'partnerid' : settings.mollie_partner_id,
@@ -173,14 +162,14 @@ class MollieIdealModule(Module):
 	@view()
 	def redirect(self, chain, request, order, **kwargs):
 		
-		settings = self.get_settings()
+		settings = modules.payment.get_settings()
 		
 		payment = order.payment.downcast()
 		payload = {
 			'partnerid' : settings.mollie_partner_id,
 			'amount' : int(order.total.amount * 100),
 			'bank_id' : payment.bank_id,
-			'description' : order.id,
+			'description' : unicode(order),
 			'reporturl' : request.build_absolute_uri(reverse('mollie_ideal.report')),
 			'returnurl' : request.build_absolute_uri(reverse('mollie_ideal.back')),
 		}
@@ -241,7 +230,7 @@ class MollieIdealModule(Module):
 	@chainable()
 	def get_banks(self, chain):
 		
-		settings = self.get_settings()
+		settings = modules.payment.get_settings()
 		
 		payload = {
 			
@@ -254,7 +243,8 @@ class MollieIdealModule(Module):
 		root = objectify.fromstring(req.text)
 		banks = {}
 		for bank in root.iterchildren(tag='bank'):
-			banks[str(bank.bank_id)] = (bank.bank_id, bank.bank_name)
+			bank_id = str(bank.bank_id)
+			banks[bank_id] = (bank_id, bank.bank_name)
 		return banks
 	
 	@chainable()
@@ -269,7 +259,7 @@ class MollieIdealModule(Module):
 			# Resolve bank
 			bank = form.cleaned_data['bank']
 			bank = banks[str(bank)]
-			payment.bank_id = bank[0]
+			payment.bank_id = bank[0].zfill(4)
 			payment.bank_name = bank[1]
 			processed = True
 		if chain:

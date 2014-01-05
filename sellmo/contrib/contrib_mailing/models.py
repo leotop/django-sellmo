@@ -65,28 +65,29 @@ class MailStatus(models.Model):
 		verbose_name = _("created at"),
 	)
 
-	modified = models.DateTimeField(
-		auto_now = True,
-		editable = False,
-		verbose_name = _("modified at"),
-	)
-
-	delivered = models.DateTimeField(
+	send = models.DateTimeField(
 		null = True,
 		editable = False,
-		verbose_name = _("delivered at"),
+		verbose_name = _("send at"),
 	)
-
-	failed = models.DateTimeField(
-		null = True,
+	
+	send_to = models.TextField(
 		editable = False,
-		verbose_name = _("failed at"),
+		verbose_name = _("send to"),
+	)
+	
+	delivered = models.BooleanField(
+		default = False,
+		editable = False,
 	)
 
 	failure_message = models.TextField(
 		editable = False,
 		verbose_name = _("failure message"),
 	)
+	
+	def __unicode__(self):
+		return u"{0} - {1}".format(self.message_type, self.message_reference)
 
 	class Meta:
 		abstract = True

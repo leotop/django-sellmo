@@ -52,8 +52,11 @@ class Currency(object):
     def __str__(self):
         return self.code
         
-    def format(self, amount):
-        return self._format.format(amount=amount)
+    def format(self, amount, align=-1):
+        if callable(self._format):
+            return self._format(amount=amount, align=align)
+        else:
+            return self._format.format(amount=amount, align=align)
         
 class PriceType(object):
     def __init__(self, key, name):
@@ -153,8 +156,8 @@ class Price(object):
         
     def __div__(self, divider):
         price = self.clone()
-        price.amount /= multiplier
-        price.mutations = {key : amount / multiplier for key, amount in price.mutations.iteritems()}
+        price.amount /= divider
+        price.mutations = {key : amount / divider for key, amount in price.mutations.iteritems()}
         return price
         
     def __contains__(self, key):

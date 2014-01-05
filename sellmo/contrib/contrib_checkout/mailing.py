@@ -27,6 +27,7 @@
 from sellmo import modules
 from sellmo.api.mailing import MailWriter
 from sellmo.core.reporting import reporter
+from sellmo.core.mailing import mailer
 from sellmo.contrib.contrib_checkout.config import settings
 
 #
@@ -35,24 +36,41 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
-def send_order_mails(order, event_signature):
+def send_order_mails(order, event_signature=None):
+	# Update event_signature
+	if event_signature is None:
+		event_signature = {}
+	if order.payment:
+		event_signature['instant_payment'] = order.payment.instant
+	
 	for mail, config in settings.CHECKOUT_MAILS.iteritems():
 		for event in config['send_events']:
 			for key, value in event.iteritems():
-				if key == 'payment_methods':
-					# Make sure payment metod is a match
+				# Make sure signature is a match
+				if not key in event_signature or not event_signature[key] == value:
 					break
-				elif key == 'shipping_methods':
-					# Make sure shipping metod is a match
-					break
-				else:
-					# Make sure signature is a match
-					if not key in event_signature or not event_signature[key] == value:
-						break
 			else:
-				# No match
-				pass
-				
+				# Did have a match
+				break
+		else:
+			# Did not found a match
+			continue
+		# Did have a match
+		
+		send_once = config.get('send_once', False)
+		if send_once:
+			send_mails = modules.checkout_mailing.OrderMail.objects.filter(
+				order=order,
+				status__message_type=mail,
+				status__delivered=True
+			)
+			if send_mails.count() > 0:
+				# Do not send
+				continue
+			
+		mailer.send_mail(mail, {
+			'order' : order
+		})
 				
 
 class OrderConfirmationWriter(MailWriter):

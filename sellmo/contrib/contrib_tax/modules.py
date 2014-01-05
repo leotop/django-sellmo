@@ -24,25 +24,41 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.http import Http404
+from django.db.models.signals import post_save
+from django.contrib.sites.models import Site
 
 #
 
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable
-from sellmo.contrib.contrib_tax.models import Tax
+from sellmo.contrib.contrib_tax.models import Tax, TaxSettings
 
 #
 
 class TaxModule(Module):
     namespace = 'tax'
     Tax = Tax
+    TaxSettings = TaxSettings
+    subtypes = []
     
     def __init__(self, *args, **kwargs):
-        self.subtypes = []
+        self._settings = None
+        post_save.connect(self.on_settings_post_save, sender=self.TaxSettings)
+        
+    def on_settings_post_save(self, sender, instance, **kwargs):
+        self._settings = None
     
+    @classmethod
     def register_subtype(self, subtype):
         self.subtypes.append(subtype)
         
         # Shouldn't be a problem if Capital cased classnames are used.
         setattr(self, subtype.__name__, subtype)
+    
+    def get_settings(self):
+        if self._settings is None:
+            try:
+                self._settings = Site.objects.get_current().tax_settings
+            except self.TaxSettings.DoesNotExist:
+                self._settings = self.TaxSettings()
+        return self._settings

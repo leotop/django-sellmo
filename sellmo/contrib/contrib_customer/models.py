@@ -23,3 +23,36 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+
+from sellmo import modules
+from sellmo.api.decorators import load
+from sellmo.contrib.contrib_customer.config import settings
+
+#
+
+from django.db import models
+from django.utils.translation import ugettext_lazy as _
+
+#
+
+@load(before='finalize_customer_Contactable')
+def load_model():
+	class Contactable(modules.customer.Contactable):
+
+		if settings.PHONE_NUMBER_ENABLED:
+			phone_number = models.CharField(
+				max_length = 20,
+				blank = not settings.PHONE_NUMBER_REQUIRED,
+				verbose_name = _("phone number"),
+			)
+			
+		def clone(self, cls=None, clone=None):
+			clone = super(Contactable, self).clone(cls=cls, clone=clone)
+			if settings.PHONE_NUMBER_ENABLED:
+				clone.phone_number = self.phone_number
+			return clone
+
+		class Meta:
+			abstract = True
+
+	modules.customer.Contactable = Contactable

@@ -30,10 +30,7 @@ from sellmo.contrib.admin.reverse import ReverseModelAdmin
 #
 
 from sellmo import modules
-
-#
-
-from sellmo.contrib.contrib_customer.models import *
+from sellmo.config import settings
 
 #
     
@@ -43,12 +40,13 @@ class AddressInline(admin.StackedInline):
     
 class CustomerAdmin(ReverseModelAdmin):
     inline_type = 'stacked'
-    inline_reverse = ['billing_address', 'shipping_address']
+    inline_reverse = ['{0}_address'.format(address) for address in settings.ADDRESS_TYPES]
     
-    raw_id_fields = ['user']
-    autocomplete_lookup_fields = {
-        'fk': ['user'],
-    }
+    if settings.AUTH_ENABLED:
+        raw_id_fields = ['user']
+        autocomplete_lookup_fields = {
+            'fk': ['user'],
+        }
 #
 
 admin.site.register(modules.customer.Customer, CustomerAdmin)

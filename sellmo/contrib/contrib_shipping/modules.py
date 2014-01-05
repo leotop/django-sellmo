@@ -39,10 +39,9 @@ class ShippingModule(Module):
 	ShippingMethod = ShippingMethod
 	ShippingCarrier = ShippingCarrier
 	Shipment = Shipment
+	subtypes = []
 
-	def __init__(self, *args, **kwargs):
-		self.subtypes = []
-
+	@classmethod
 	def register_subtype(self, subtype):
 		self.subtypes.append(subtype)
 

@@ -35,7 +35,7 @@ from sellmo.api.forms import RedirectableForm
 
 class AddToCartForm(RedirectableForm):
     product = forms.IntegerField(widget = forms.HiddenInput)
-    qty = forms.IntegerField(min_value=1)
+    qty = forms.IntegerField(min_value=1, initial=1)
     
 class EditPurchaseForm(RedirectableForm):
     purchase = forms.IntegerField(widget = forms.HiddenInput)

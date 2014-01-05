@@ -25,14 +25,16 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import os.path
+import codecs
 
 #
 
-from django.conf import settings
+from django.conf import settings as django_settings
 
 #
 
 from sellmo.core.reporting.generators import ReportGeneratorBase
+from sellmo.contrib.contrib_reporting.config import settings
 from sellmo.contrib.contrib_reporting.piping import pipe, PipeError
 
 #
@@ -40,25 +42,45 @@ from sellmo.contrib.contrib_reporting.piping import pipe, PipeError
 class PhantomJSReportGenerator(ReportGeneratorBase):
 
 	input_formats = ['html']
-	output_formats = ['pdf']
+	output_formats = ['pdf', 'png']
 	
 	def get_params(self, writer, format):
 		params = super(PhantomJSReportGenerator, self).get_params(writer, format)
-		# Suggest A4 paper size
-		size = writer.negotiate_param('size', 'a4', **params)
+		suggest_params = settings.REPORTING_PARAMS.get(format, {})
+		
+		for param, suggest in suggest_params.iteritems():
+			value = writer.negotiate_param(param, suggest, **params)
+			params[param] = value if not value is False else suggest
+		
+		return params
 	
 	def get_data(self, writer, format):
 		html = super(PhantomJSReportGenerator, self).get_data(writer, format)
-		phantomjs = getattr(settings, 'PHANTOMJS_EXECUTABLE', 'phantomjs')
-		script = os.path.join(os.path.dirname(__file__), 'scripts/pdf.js')
+		params = self.get_params(writer, format)
+		
+		# Create command
+		phantomjs = getattr(django_settings, 'PHANTOMJS_EXECUTABLE', 'phantomjs')
+		script = os.path.join(os.path.dirname(__file__), 'scripts/render.js')
+		arguments = ['format={0}'.format(format)]
+		
+		# Create command arguments
+		for param, value in params.iteritems():
+			arguments += ['{0}={1}'.format(param, params[param])]
+		arguments = ' '.join(arguments)
+		
+		# Encode as UTF8
+		html = codecs.encode(html, 'utf8')
 		
 		try:
-			return pipe('{0} {1}'.format(phantomjs, script), input=html)
-		except PipeError as error:
+			return pipe('{0} {1} {2}'.format(phantomjs, script, arguments), input=html)
+		except PipeError:
 			raise
 	
 	def get_extension(self, format):
 		return '.' + format
 	
 	def get_mimetype(self, format):
-		return 'application/pdf'
+		if format == 'pdf':
+			return 'application/pdf'
+		elif format == 'png':
+			return 'image/png';

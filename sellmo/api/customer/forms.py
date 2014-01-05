@@ -29,6 +29,7 @@ from django import forms
 #
 
 from sellmo import modules
+from sellmo.config import settings
 from sellmo.api.decorators import load
 
 #
@@ -38,10 +39,10 @@ from sellmo.api.decorators import load
 def load_form():
     
     _exclude = []
-    if modules.customer.django_auth_enabled:
+    if settings.AUTH_ENABLED:
         _exclude.append('user')
         
-    for address in modules.customer.address_types:
+    for address in settings.ADDRESS_TYPES:
         _exclude.append('{0}_address'.format(address))
     
     class CustomerForm(forms.ModelForm):

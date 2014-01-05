@@ -24,6 +24,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from sellmo import modules
 from sellmo.signals.checkout import order_paid, order_state_changed, order_status_changed
 from sellmo.signals.mailing import mail_init
 from sellmo.core.mailing import mailer
@@ -41,12 +42,25 @@ for message_type, config in settings.CHECKOUT_MAILS.iteritems():
 	mailer.register(message_type, config['writer'])
 
 # Register report writers
-reporter.register('invoice', InvoiceWriter)
+reporter.register('invoice', settings.INVOICE_WRITER)
 	
 #
 
 def on_mail_init(sender, message_type, message_reference, context, **kwargs):
-	pass
+	if message_type in settings.CHECKOUT_MAILS:
+		try:
+			status = modules.mailing.MailStatus.objects.get(message_reference=message_reference)
+		except modules.mailing.MailStatus.DoesNotExist:
+			logger.warning("Mail message {0} could not be linked to order {1}.".format(message_reference, context['order']))
+		else:
+			modules.checkout_mailing.OrderMail.objects.create(
+				status=status,
+				order=context['order'],
+			)
+
+mail_init.connect(on_mail_init)
+
+#
 
 def on_order_paid(sender, order, **kwargs):
 	send_order_mails(order, {
@@ -56,6 +70,7 @@ def on_order_paid(sender, order, **kwargs):
 def on_order_state_changed(sender, order, new_state, old_state=None, **kwargs):
 	send_order_mails(order, {
 		'state' : new_state,
+		'on_{0}'.format(new_state) : True,
 	})
 	
 def on_order_status_changed(sender, order, new_status, old_status=None, **kwargs):
@@ -63,14 +78,8 @@ def on_order_status_changed(sender, order, new_status, old_status=None, **kwargs
 		'status' : new_status,
 	})
 	
-#
-
-mail_init.connect(on_mail_init)
 
 order_paid.connect(on_order_paid)
 order_state_changed.connect(on_order_state_changed)
 order_status_changed.connect(on_order_status_changed)
 
-
-
-#

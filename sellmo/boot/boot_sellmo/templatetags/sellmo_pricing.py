@@ -47,6 +47,10 @@ def price(value):
     return value.get_price()
     
 @register.filter
+def price_format(price, align=-1):
+    return price.currency.format(price.amount, align=align)
+    
+@register.filter
 def as_price(value):
     return Price(value)
 

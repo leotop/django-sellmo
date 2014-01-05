@@ -39,6 +39,7 @@ from django.utils.decorators import method_decorator
 
 import sellmo
 from sellmo import modules
+from sellmo.config import settings
 from sellmo.core.mailing import mailer
 from sellmo.api.decorators import view, chainable, link
 from sellmo.api.customer.models import Addressee, Address, Contactable, Customer
@@ -53,13 +54,6 @@ class CustomerModule(sellmo.Module):
     namespace = 'customer'
     prefix = 'customer'
     enabled = True
-    
-    # Model configuration
-    address_types = ['shipping', 'billing']
-    email_required = True
-    businesses_allowed = True
-    businesses_only = False
-    django_auth_enabled = True
     
     Addressee = Addressee
     Address = Address
@@ -132,15 +126,16 @@ class CustomerModule(sellmo.Module):
     @chainable()
     def get_customer(self, chain, request, customer=None, **kwargs):
         user = None
-        if request.user.is_authenticated():
-            user = request.user
-            
-        # See if we can relate this user to a customer
-        if customer is None and not user is None:
-            try:
-                customer = user.customer
-            except ObjectDoesNotExist:
-                pass
+        
+        if settings.AUTH_ENABLED:
+            if request.user.is_authenticated():
+                user = request.user
+            # See if we can relate this user to a customer
+            if customer is None and not user is None:
+                try:
+                    customer = user.customer
+                except ObjectDoesNotExist:
+                    pass
         if chain:
             out = chain.execute(request=request, customer=customer, **kwargs)
             customer = out.get('customer', customer)
@@ -184,7 +179,7 @@ class CustomerModule(sellmo.Module):
     @chainable()
     def handle_address(self, chain, type, customer=None, prefix=None, data=None, address=None, **kwargs):
         
-        if type not in self.address_types:
+        if type not in settings.ADDRESS_TYPES:
             raise ValueError("Invalid address type.")
         
         # See if we can resolve an existing address from customer
@@ -236,7 +231,7 @@ class CustomerModule(sellmo.Module):
         user, form, processed = self.handle_login(request=request, data=data)
         context['form'] = form
         
-        if self.django_auth_enabled and processed:
+        if settings.AUTH_ENABLED and processed:
             auth_login(request, user)
         
         redirection = redirect(next)
@@ -260,7 +255,7 @@ class CustomerModule(sellmo.Module):
         if context == None:
             context = {}
         
-        if self.django_auth_enabled:
+        if settings.AUTH_ENABLED:
             auth_logout(request)
         
         redirection = redirect(next)
@@ -306,7 +301,7 @@ class CustomerModule(sellmo.Module):
         
         processed = True
             
-        if self.django_auth_enabled:
+        if settings.AUTH_ENABLED:
             user, user_form, user_processed = self.handle_user_registration(data=data)
             context['user_form'] = user_form
             processed &= user_processed
@@ -316,7 +311,7 @@ class CustomerModule(sellmo.Module):
         processed &= customer_processed
         
         addresses = {}
-        for type in self.address_types:
+        for type in settings.ADDRESS_TYPES:
             address, form, address_processed = self.handle_address(request=request, type=type, prefix='{0}_address'.format(type), customer=customer, data=data)
             context['{0}_address_form'.format(type)] = form
             processed &= address_processed
@@ -324,10 +319,10 @@ class CustomerModule(sellmo.Module):
             
         if processed:
             # Create user, customer and addresses
-            if self.django_auth_enabled:
+            if settings.AUTH_ENABLED:
                 user.save()
                 customer.user = user
-            for type in self.address_types:
+            for type in settings.ADDRESS_TYPES:
                 address = addresses[type]
                 address.save()
                 customer.set_address(type, address)
@@ -374,7 +369,7 @@ class CustomerModule(sellmo.Module):
         if not order is None and not order.pk:
             if customer and customer.pk:
                 order = self.Contactable.clone(customer, clone=order)
-                for address in modules.customer.address_types:
+                for address in settings.ADDRESS_TYPES:
                     order.set_address(address, customer.get_address(address).clone())
         
         if customer and customer.pk:

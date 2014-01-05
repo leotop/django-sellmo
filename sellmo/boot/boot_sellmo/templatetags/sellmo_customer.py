@@ -35,6 +35,7 @@ from classytags.arguments import Argument, MultiKeywordArgument, Flag
 #
 
 from sellmo import modules
+from sellmo.config import settings
 
 #
 
@@ -55,7 +56,7 @@ class CustomerTag(Tag):
     def render_tag(self, context, authenticated, kwargs, varname, nodelist):
         customer = None
         if authenticated:
-            if not modules.customer.django_auth_enabled:
+            if not settings.AUTH_ENABLED:
                 raise Exception("Customer authentication not enabled.")
             request = context['request']
             if request.user.is_authenticated() and hasattr(request.user, 'customer'):

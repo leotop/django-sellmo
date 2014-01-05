@@ -35,9 +35,6 @@ from sellmo.api.pricing import Price
 from django import forms
 from django.forms.formsets import formset_factory
 
-
-from sellmo import modules
-
 #
 
 @link(namespace=modules.product.namespace)

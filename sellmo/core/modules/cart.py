@@ -34,10 +34,11 @@ from django.shortcuts import redirect
 #
 
 import sellmo
+from sellmo.config import settings
 from sellmo import modules
 from sellmo.api.decorators import view, chainable, link
 from sellmo.api.cart.models import Cart
-from sellmo.api.cart.forms import AddToCartForm, EditPurchaseForm
+from django.utils.module_loading import import_by_path
 from sellmo.api.forms import RedirectableFormSet
 
 #
@@ -50,11 +51,9 @@ class CartModule(sellmo.Module):
     
     Cart = Cart
     
-    AddToCartForm = AddToCartForm
-    EditPurchaseForm = EditPurchaseForm    
-    
     def __init__(self, *args, **kwargs):
-        pass
+        self.AddToCartForm = import_by_path(settings.ADD_TO_CART_FORM)
+        self.EditPurchaseForm = import_by_path(settings.EDIT_PURCHASE_FORM)
         
     @chainable()
     def get_edit_purchase_form(self, chain, form=None, cls=None, purchase=None, initial=None, data=None, **kwargs):
@@ -96,7 +95,6 @@ class CartModule(sellmo.Module):
             if not data and not initial:
                 initial = [{
                     'product' : product.pk,
-                    'qty' : 1
                 }]
             
             AddToCartFormSet = formset_factory(cls, extra=0, formset=RedirectableFormSet)
@@ -240,9 +238,9 @@ class CartModule(sellmo.Module):
      
         
     @view(r'^add/(?P<product_slug>[a-z0-9_-]+)$')
-    def add_to_cart(self, chain, request, product_slug, product=None, formset=None, purchases=None, context=None, **kwargs):
+    def add_to_cart(self, chain, request, product_slug, product=None, formset=None, purchases=None, context=None, next='cart.cart', **kwargs):
         
-        next = request.GET.get('next', 'cart.cart')
+        next = request.GET.get('next', next)
         
         if product is None:
             try:

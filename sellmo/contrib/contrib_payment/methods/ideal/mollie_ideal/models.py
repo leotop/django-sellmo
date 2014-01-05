@@ -99,8 +99,8 @@ class MollieIdealPayment(models.Model):
 		(CANCELED, _("canceled")),
 	)
 	
-	bank_id = models.PositiveIntegerField(
-		null = True,
+	bank_id = models.CharField(
+		max_length = 4,
 		editable = False,
 	)
 	
@@ -125,7 +125,7 @@ class MollieIdealPayment(models.Model):
 		
 	def retry(self, save=True):
 		self.abort_transaction()
-		self.bank_id = None
+		self.bank_id = ''
 		self.bank_name
 		if save:
 			self.save()

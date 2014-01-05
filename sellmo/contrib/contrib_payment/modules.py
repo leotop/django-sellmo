@@ -24,7 +24,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.http import Http404
+from django.db.models.signals import post_save
+from django.contrib.sites.models import Site
 
 #
 
@@ -37,3 +38,18 @@ from sellmo.contrib.contrib_payment.models import PaymentSettings
 class PaymentModule(Module):
 	namespace = 'payment'
 	PaymentSettings = PaymentSettings
+	
+	def __init__(self, *args, **kwargs):
+		self._settings = None
+		post_save.connect(self.on_settings_post_save, sender=self.PaymentSettings)
+		
+	def on_settings_post_save(self, sender, instance, **kwargs):
+		self._settings = None
+		
+	def get_settings(self):
+		if self._settings is None:
+			try:
+				self._settings = Site.objects.get_current().payment_settings
+			except self.PaymentSettings.DoesNotExist:
+				self._settings = self.TaxSettings()
+		return self._settings

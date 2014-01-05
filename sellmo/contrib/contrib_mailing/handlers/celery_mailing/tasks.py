@@ -24,17 +24,27 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from celery import shared_task
+from celery import shared_task, Task
 
 #
 
+from sellmo.contrib.contrib_mailing.config import settings
 from sellmo.core.mailing.handlers import MailHandlerBase
 from sellmo.core.mailing import mailer
 
-#
+# 
 
 @shared_task
 def send_mail(message_type, message_reference, context):
 	writer = mailer.writers[message_type]
 	handler = MailHandlerBase(writer)
-	handler.send_mail(message_type, message_reference, context)
+	try:
+		handler.send_mail(message_type, message_reference, context)
+	except Exception as exc:
+		if settings.SEND_MAIL_RETRY_ENABLED:
+			raise send_mail.retry(
+				countdown=settings.SEND_MAIL_RETRY_DELAY,
+				max_retries=settings.SEND_MAIL_RETRY_LIMIT,
+				exc=exc
+			)
+		raise

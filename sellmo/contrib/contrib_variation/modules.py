@@ -47,11 +47,10 @@ class VariationModule(Module):
     Variation = Variation
     VariationsState = VariationsState
     VariationRecipe = VariationRecipe
-    
-    def __init__(self):
-        self.product_subtypes = []
-        self.subtypes = []
+    product_subtypes = []
+    subtypes = []
         
+    @classmethod
     def register_product_subtype(self, subtype):
         self.product_subtypes.append(subtype)
     

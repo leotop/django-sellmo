@@ -31,6 +31,7 @@ from django.utils.translation import ugettext_lazy as _
 #
 
 from sellmo import modules
+from sellmo.config import settings
 from sellmo.utils.cloning import Cloneable
 from sellmo.api.decorators import load
 
@@ -42,7 +43,7 @@ from sellmo.api.decorators import load
 
 @load(before='finalize_customer_Customer', after='finalize_customer_Address')
 def load_model():
-    for type in modules.customer.address_types:
+    for type in settings.ADDRESS_TYPES:
         name = '{0}_address'.format(type)
         modules.customer.Customer.add_to_class(name, 
             models.ForeignKey(
@@ -70,7 +71,7 @@ def load_model():
 def finalize_model():
     class Customer(modules.customer.Customer):
         
-        if modules.customer.django_auth_enabled:
+        if settings.AUTH_ENABLED:
             user = models.OneToOneField(
                 User,
                 related_name = 'customer',
@@ -97,7 +98,7 @@ class Customer(models.Model, Cloneable):
         
     def clone(self, cls=None, clone=None):
         clone = super(Customer, self).clone(cls=cls, clone=clone)
-        if modules.customer.django_auth_enabled:
+        if settings.AUTH_ENABLED:
             clone.user = self.user
         return clone
 
@@ -146,7 +147,7 @@ def finalize_model():
     class Contactable(modules.customer.Contactable):
         
         email = models.EmailField(
-            blank = not modules.customer.email_required,
+            blank = not settings.EMAIL_REQUIRED,
             verbose_name = _("email address"),
         )
         
@@ -172,11 +173,11 @@ class Contactable(models.Model, Cloneable):
 def finalize_model():
     class Addressee(modules.customer.Addressee):
         
-        if modules.customer.businesses_allowed:
+        if settings.BUSINESSES_ALLOWED:
             company_name = models.CharField(
                 max_length = 50,
                 verbose_name = _("company name"),
-                blank = not modules.customer.businesses_only,
+                blank = not settings.BUSINESSES_ONLY,
             )
             @property
             def is_business(self):
@@ -207,7 +208,7 @@ class Addressee(models.Model, Cloneable):
         clone = super(Addressee, self).clone(cls=cls, clone=clone)
         clone.first_name = self.first_name
         clone.last_name = self.last_name
-        if modules.customer.businesses_allowed:
+        if settings.BUSINESSES_ALLOWED:
             clone.company_name = self.company_name
         return clone
     

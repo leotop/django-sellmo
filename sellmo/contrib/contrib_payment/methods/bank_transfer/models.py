@@ -40,6 +40,8 @@ def finalize_model():
 
 	class BankTransferPayment(modules.checkout.Payment, modules.bank_transfer.BankTransferPayment):
 		
+		instant = False
+		
 		def get_method(self):
 			return BankTransferPaymentMethod()
 			

@@ -36,4 +36,8 @@ debug = getattr(settings, 'DEBUG', False)
 
 #
 
+INVOICE_WRITER = getattr(settings, 'SELLMO_INVOICE_WRITER', defaults.INVOICE_WRITER)
 CHECKOUT_MAILS = getattr(settings, 'SELLMO_CHECKOUT_MAILS', defaults.CHECKOUT_MAILS)
+ACCEPT_TERMS_ENABLED = getattr(settings, 'SELLMO_ACCEPT_TERMS_ENABLED', defaults.ACCEPT_TERMS_ENABLED)
+
+#

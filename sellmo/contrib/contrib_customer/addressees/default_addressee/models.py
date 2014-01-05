@@ -26,6 +26,7 @@
 
 from sellmo import modules
 from sellmo.api.decorators import load
+from sellmo.contrib.contrib_customer.config import settings
 
 #
 
@@ -36,21 +37,16 @@ from django.utils.translation import ugettext_lazy as _
 
 @load(before='finalize_customer_Addressee')
 def load_model():
-	
-	prefix_choices = (
-		('sir', _("sir")),
-		('madame', _("madam")),
-	) if not getattr(modules.customer, 'prefixes', False) else getattr(modules.customer, 'prefixes') 
-	
+		
 	class Addressee(modules.customer.Addressee):
 		
-		if getattr(modules.customer, 'prefix_enabled', False):
+		if settings.NAME_PREFIX_ENABLED:
 			prefix = models.CharField(
 				max_length = 20,
 				verbose_name = _("prefix"),
-				blank = not getattr(modules.customer, 'prefix_required', True),
-				choices = prefix_choices,
-				default = prefix_choices[0][0]
+				blank = not settings.NAME_PREFIX_REQUIRED,
+				choices = settings.NAME_PREFIX_CHOICES,
+				default = settings.NAME_PREFIX_CHOICES[0][0]
 			)
 		
 		suffix = models.CharField(
@@ -62,7 +58,7 @@ def load_model():
 		def clone(self, cls=None, clone=None):
 			clone = super(Addressee, self).clone(cls=cls, clone=clone)
 			clone.suffix = self.suffix
-			if getattr(modules.customer, 'prefix_enabled', False):
+			if settings.NAME_PREFIX_ENABLED:
 				clone.prefix = self.prefix
 			return clone
 

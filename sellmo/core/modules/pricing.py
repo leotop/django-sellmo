@@ -66,8 +66,8 @@ class PricingModule(sellmo.Module):
             self.currencies = [self.currency]
         pass
     
-    @chainable()
-    def construct_decimal_field(self, chain, **kwargs):
+    @classmethod
+    def construct_decimal_field(self, **kwargs):
         """
         Constructs a decimal field.
         """
@@ -77,8 +77,8 @@ class PricingModule(sellmo.Module):
             **kwargs
         )
         
-    @chainable()
-    def construct_pricing_field(self, chain, **kwargs):
+    @classmethod
+    def construct_pricing_field(self, **kwargs):
         """
         Constructs a pricing (decimal) field.
         """
@@ -86,8 +86,8 @@ class PricingModule(sellmo.Module):
             kwargs['default'] = Decimal('0.0')
         return self.construct_decimal_field(**kwargs)
         
-    @chainable()
-    def construct_currency_field(self, chain, **kwargs):
+    @classmethod
+    def construct_currency_field(self, **kwargs):
         """
         Constructs a currency field.
         """
@@ -99,8 +99,8 @@ class PricingModule(sellmo.Module):
             **kwargs
         )
         
-    @chainable()
-    def make_stampable(self, chain, cls, properties, **kwargs):
+    @classmethod
+    def make_stampable(self, cls, properties, **kwargs):
         
         class Meta:
             abstract = True

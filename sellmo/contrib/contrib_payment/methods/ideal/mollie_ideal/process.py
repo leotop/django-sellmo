@@ -45,7 +45,7 @@ class MollieIdealBankSelectStep(CheckoutStep):
 		self.payment = self.order.payment.downcast()
 
 	def is_completed(self):
-		return not self.payment.bank_id is None
+		return self.payment.bank_id
 
 	def can_skip(self):
 		return False
@@ -70,7 +70,7 @@ class MollieIdealBankSelectStep(CheckoutStep):
 		return self._contextualize_or_complete(self.request, self.invalid_context, data)
 
 	def render(self, request, context):
-		if not self.invalid_context:
+		if self.invalid_context is None:
 			self._contextualize_or_complete(request, context)
 		else:
 			context.update(self.invalid_context)
@@ -134,7 +134,7 @@ class MollieIdealPendingStep(CheckoutStep):
 		return self._contextualize_or_complete(self.request, self.invalid_context, data)
 	
 	def render(self, request, context):
-		if not self.invalid_context:
+		if self.invalid_context is None:
 			self._contextualize_or_complete(request, context)
 		else:
 			context.update(self.invalid_context)
@@ -176,7 +176,7 @@ class MollieIdealFailureStep(CheckoutStep):
 		return self._contextualize_or_complete(self.request, self.invalid_context, data)
 
 	def render(self, request, context):
-		if not self.invalid_context:
+		if self.invalid_context is None:
 			self._contextualize_or_complete(request, context)
 		else:
 			context.update(self.invalid_context)

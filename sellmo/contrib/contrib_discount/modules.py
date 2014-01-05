@@ -37,10 +37,9 @@ from sellmo.contrib.contrib_discount.models import Discount
 class DiscountModule(Module):
     namespace = 'discount'
     Discount = Discount
+    subtypes = []
     
-    def __init__(self, *args, **kwargs):
-        self.subtypes = []
-    
+    @classmethod
     def register_subtype(self, subtype):
         self.subtypes.append(subtype)
         

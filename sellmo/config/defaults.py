@@ -29,8 +29,16 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
+ADD_TO_CART_FORM = 'sellmo.api.cart.forms.AddToCartForm'
+EDIT_PURCHASE_FORM = 'sellmo.api.cart.forms.EditPurchaseForm'
+
 CUSTOMER_REQUIRED = False
-REQUIRED_ADDRESS_TYPES = ['shipping', 'billing']
+EMAIL_REQUIRED = True
+BUSINESSES_ONLY = False
+BUSINESSES_ALLOWED = True
+ADDRESS_TYPES = ['shipping', 'billing']
+AUTH_ENABLED = True
+
 ORDER_STATUSES = {
 	'new' : (_("New"), {
 		'initial' : True,

@@ -51,6 +51,9 @@ class TaxParentAdmin(PolymorphicParentModelAdmin):
 		return modules.tax.Tax.objects.all()
 
 
+class TaxSettingsInline(admin.StackedInline):
+	model = modules.tax.TaxSettings
+
 
 admin.site.register(modules.tax.Tax, TaxParentAdmin)
 

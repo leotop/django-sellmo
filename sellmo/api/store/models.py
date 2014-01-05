@@ -118,6 +118,10 @@ class Purchase(PolymorphicModel):
         self.calculated = None
     
     @property
+    def qty_price(self):
+        return self.total / self.qty
+    
+    @property
     def description(self):
         return self.describe()
     

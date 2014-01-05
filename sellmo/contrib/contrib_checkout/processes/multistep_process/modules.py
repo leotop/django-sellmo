@@ -37,7 +37,6 @@ from sellmo.api.decorators import chainable, view
 
 class MultiStepCheckoutModule(Module):
 	namespace = 'checkout_process'
-	login_required = False
 	
 	@view()
 	def login(self, chain, request, context=None, **kwargs):

@@ -42,11 +42,13 @@ def load_model():
 	class OrderMail(modules.checkout_mailing.OrderMail):
 		
 		order = models.ForeignKey(
-			modules.checkout.Order
+			modules.checkout.Order,
+			editable = False,
 		)
 		
 		status = models.ForeignKey(
-			modules.mailing.MailStatus
+			modules.mailing.MailStatus,
+			editable = False,
 		)
 		
 		class Meta:
@@ -65,9 +67,6 @@ def finalize_model():
 	modules.checkout_mailing.OrderMail = OrderMail
 
 class OrderMail(models.Model):
-	
-	def __unicode__(self):
-		return self.message_type
 
 	class Meta:
 		abstract = True

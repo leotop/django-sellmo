@@ -35,15 +35,23 @@ from sellmo.api.pricing import Price
 namespace = modules.pricing.namespace
 
 @link()
-def get_price(price, product=None, **kwargs):
+def get_price(price, product=None, shipping_method=None, payment_method=None, **kwargs):
+    taxes = []
     if product:
         try:
             taxes = modules.tax.Tax.objects.polymorphic().best_for_product(product)
         except modules.tax.Tax.DoesNotExist:
             pass
-        else:
-            for tax in taxes:
-                price = tax.apply(price)
-            return {
-                'price' : price
-            }
+    elif shipping_method or payment_method:
+        settings = modules.tax.get_settings()
+        if shipping_method and settings.shipping_costs_tax:
+            taxes = [settings.shipping_costs_tax.downcast()]
+        elif shipping_method and settings.payment_costs_tax:
+            taxes = [settings.payment_costs_tax.downcast()]
+    
+    for tax in taxes:
+        price = tax.apply(price)
+        
+    return {
+        'price' : price
+    }

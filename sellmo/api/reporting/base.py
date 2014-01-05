@@ -54,6 +54,7 @@ class ReportWriter(object):
 	The format this writer will output
 	"""
 	format = None
+	params = {}
 	
 	@classmethod
 	def open(cls, output_format, context=None):
@@ -89,6 +90,9 @@ class ReportWriter(object):
 		False if we don't understand. The same value if we accept or a
 		different value if we want to change.
 		"""
+		if key in self.params:
+			return self.params[key]
 		return False
+			
 		
 		

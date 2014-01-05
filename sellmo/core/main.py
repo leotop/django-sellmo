@@ -65,14 +65,14 @@ class Sellmo(object):
         # 2. Find additional modules in each app
         self._load_apps(apps, 'modules')
         
-        # 3. Make sure every sellmo module registered to the mountpoint is instanciated.
-        modules.init_pending_modules()
-        
-        # 4. Allow every app to configure modules
+        # 3. Allow every app to configure modules
         self._load_apps(apps, 'configure')
         
-        # 5. Begin the loading process as declared in all of the sellmo apps.
+        # 4. Begin the loading process as declared in all of the sellmo apps.
         loading.loader.load()
+        
+        # 5. Make sure every sellmo module registered to the mountpoint is instanciated.
+        modules.init_pending_modules()
         
         # 6. Load link modules
         for module_name in self.links:

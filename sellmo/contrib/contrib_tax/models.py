@@ -36,6 +36,7 @@ from sellmo.magic import ModelMixin
 
 from django.db import models
 from django.db.models import Q
+from django.contrib.sites.models import Site
 from django.utils.translation import ugettext_lazy as _
 
 #
@@ -108,5 +109,54 @@ class Tax(PolymorphicModel):
     
     def __unicode__(self):
         return self.name
+
+        
+@load(action='finalize_tax_TaxSettings')
+@load(after='finalize_tax_Tax')
+def finalize_model():
+    class TaxSettings(modules.tax.TaxSettings):
+        
+        payment_costs_tax = models.ForeignKey(
+            modules.tax.Tax,
+            related_name = '+',
+            null = True,
+            blank = True,
+            verbose_name = _("payment costs tax"),
+        )
+        
+        shipping_costs_tax = models.ForeignKey(
+            modules.tax.Tax,
+            related_name = '+',
+            null = True,
+            blank = True,
+            verbose_name = _("shipping costs tax"),
+        )
+        
+        class Meta:
+            app_label = 'tax'
+            verbose_name = _("tax settings")
+            verbose_name_plural = _("tax settings")
+
+    modules.tax.TaxSettings = TaxSettings
+
+class TaxSettings(models.Model):
+
+    site = models.OneToOneField(
+        Site,
+        related_name='tax_settings'
+    )
+
+    #
+
+    calculate_inclusive = models.BooleanField(
+        default = False,
+        verbose_name = _("calculate inclusive"),
+    )
+
+    def __unicode__(self):
+        return u""
+
+    class Meta:
+        abstract = True
         
             
