@@ -187,9 +187,7 @@ class VariantForm(ProductAttributeForm):
         
     def set_values(self, instance):
         instance.product = self.cleaned_data['product']
-        for attribute in self._attributes.filter(variates=True):
-            value = self.cleaned_data.get(attribute.key)
-            instance.attributes[attribute.key] = value
+        super(VariantForm, self).set_values(instance)
             
     def clean(self):
         cleaned_data = super(VariantForm, self).clean()

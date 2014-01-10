@@ -40,7 +40,7 @@ from django.utils.translation import ugettext_lazy as _
 #
 
 @load(action='load_discount_subtypes', after='finalize_discount_Discount')
-def load_tax_subtypes():
+def load_subtypes():
 	class PercentDiscount(modules.discount.Discount):
 
 		rate = modules.pricing.construct_decimal_field(

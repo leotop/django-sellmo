@@ -30,7 +30,7 @@ from django.forms import formsets
 #
 
 class RedirectableMixin(object):
-    __redirect_key__ = None
+    redirect_key = None
     def redirect(self, request):
         request.redirection[self.get_redirect_key()] = self.data
     
@@ -38,12 +38,12 @@ class RedirectableMixin(object):
         return request.redirection.get(self.get_redirect_key())
         
     def get_redirect_key(self):
-        if self.__redirect_key__ is None:
+        if self.redirect_key is None:
             raise Exception("Redirect key was not set.")
-        return self.__redirect_key__
+        return self.redirect_key
         
     def set_redirect_key(self, key):
-        self.__redirect_key__ = key
+        self.redirect_key = key
         
         
 class RedirectableForm(forms.Form, RedirectableMixin):

@@ -238,9 +238,22 @@ class CartModule(sellmo.Module):
      
         
     @view(r'^add/(?P<product_slug>[a-z0-9_-]+)$')
-    def add_to_cart(self, chain, request, product_slug, product=None, formset=None, purchases=None, context=None, next='cart.cart', **kwargs):
+    def add_to_cart(
+            self, 
+            chain,
+            request,
+            product_slug,
+            product=None,
+            formset=None,
+            purchases=None,
+            context=None,
+            next='cart.cart',
+            invalid='cart.cart',
+            **kwargs
+        ):
         
         next = request.GET.get('next', next)
+        invalid = request.GET.get('invalid', invalid)
         
         if product is None:
             try:
@@ -257,6 +270,7 @@ class CartModule(sellmo.Module):
             else:
                 formset = self.get_add_to_cart_formset(product=product, data=request.GET)
     
+        redirection = redirect(next)
         # Purchase will in most cases not yet be assigned, it could be assigned however
         # during the capture fase.
         if purchases is None:
@@ -276,7 +290,7 @@ class CartModule(sellmo.Module):
                     purchases.append(purchase)
             else:
                 formset.redirect(request)
-                next = request.GET.get('invalid', 'cart.cart')
+                redirection = redirect(invalid)
         
         # Get the cart
         cart = self.get_cart(request=request)
@@ -289,9 +303,19 @@ class CartModule(sellmo.Module):
             # Keep track of our cart 
             cart.track(request)
         
-        redirection = redirect(next)
+        
         if chain:
-            return chain.execute(request, product=product, purchases=purchases, formset=formset, context=context, redirection=redirection, **kwargs)
+            return chain.execute(
+                request,
+                product=product,
+                purchases=purchases,
+                formset=formset,
+                context=context,
+                redirection=redirection,
+                next=next,
+                invalid=invalid,
+                **kwargs
+            )
         
         return redirection
         

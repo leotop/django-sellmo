@@ -37,3 +37,10 @@ def list(request, products, **kwargs):
     return {
         'products' : products
     }
+    
+@link(namespace=modules.product.namespace)
+def single(request, products, **kwargs):
+    products = products.filter(active=True)
+    return {
+        'products' : products
+    }

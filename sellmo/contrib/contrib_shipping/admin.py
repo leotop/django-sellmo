@@ -46,13 +46,12 @@ class ShippingMethodParentAdmin(PolymorphicParentModelAdmin):
     list_display_links = ['name']
     search_fields = ['name']
 
-    def queryset(self, queryset):
-        return modules.shipping.ShippingMethod.objects.all()
-
 # Admin for shipping carrier
 class ShippingCarrierAdmin(admin.ModelAdmin):
     pass
     
+class ShippingSettingsInline(admin.StackedInline):
+    model = modules.shipping.ShippingSettings
 
 
 admin.site.register(modules.shipping.ShippingMethod, ShippingMethodParentAdmin)

@@ -59,13 +59,23 @@ class ProductModule(sellmo.Module):
             if out.has_key('products'):
                 products = out['products']
         return products
+        
+    @chainable()
+    def single(self, chain, request, products=None):
+        if products is None:
+            products = self.Product.objects.all()
+        if chain:
+            out = chain.execute(request=request, products=products)
+            if out.has_key('products'):
+                products = out['products']
+        return products
     
     @view(r'^(?P<product_slug>[a-z0-9_-]+)$')
     def details(self, chain, request, product_slug, context=None, **kwargs):
         if context == None:
             context = {}
         try:
-            product = self.list(request=request).polymorphic().get(slug=product_slug)
+            product = self.single(request=request).polymorphic().get(slug=product_slug)
         except self.Product.DoesNotExist:
             raise Http404("""Product '%s' not found.""" % product_slug)
         

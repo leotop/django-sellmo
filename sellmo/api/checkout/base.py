@@ -26,6 +26,7 @@
 
 from sellmo import modules
 from sellmo.api.pricing import Price
+from django.utils.translation import ugettext_lazy as _
 
 #
 
@@ -49,6 +50,9 @@ class MethodBase(object):
     def get_costs(self, order, **kwargs):
         raise NotImplementedError()
         
+    def is_available(self, order, **kwargs):
+        return True
+        
     def process(self, request, order, next_step):
         return next_step
         
@@ -61,6 +65,8 @@ class ShippingMethod(MethodBase):
         raise NotImplementedError()
         
     def ship(self, order):
+        if not self.is_available(order):
+            raise Exception(_("Invalid shipping method for this order"))
         shipment = self.new_shipment(order)
         shipment.costs = self.get_costs(order=order)
         shipment.save()
@@ -75,6 +81,8 @@ class PaymentMethod(MethodBase):
         raise NotImplementedError()
         
     def pay(self, order):
+        if not self.is_available(order):
+            raise Exception(_("Invalid payment method for this order"))
         payment = self.new_payment(order)
         payment.costs = self.get_costs(order=order)
         payment.save()

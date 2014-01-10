@@ -84,7 +84,7 @@ class _ModuleMeta(SingletonMeta):
 
 		# Validate the module
 		if not out.namespace:
-			raise Exception("No namespace defined for module '%s'".format(out))
+			raise Exception("No namespace defined for module '{0}'".format(out))
 
 		# Notify mountpoint
 		modules.on_module_class(out)

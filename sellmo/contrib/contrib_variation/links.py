@@ -82,7 +82,7 @@ def list(request, products, **kwargs):
         products = products.variants(only=True)
     else:
         products = products.variants(exclude=True)
-    
+
     return {
         'products' : products
     }

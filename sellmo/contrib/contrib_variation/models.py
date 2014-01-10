@@ -452,7 +452,7 @@ class VariationManager(models.Manager):
             if attributes:
                 attribute = attributes[0]
                 values = modules.attribute.Value.objects.for_product_or_variant(product).for_attribute(attribute, distinct=True)
-                for value in values:
+                for value in modules.attribute.get_sorted_values(values=values, attribute=attribute):
                     _map(attributes[1:], combination + [value])
             else:
                 for value in list(combination):

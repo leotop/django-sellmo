@@ -41,7 +41,7 @@ from django.utils.translation import ugettext_lazy as _
 #
 
 @load(action='load_tax_subtypes', after='finalize_tax_Tax')
-def load_tax_subtypes():
+def load_subtypes():
 	
 	class PercentTax(modules.tax.Tax):
 

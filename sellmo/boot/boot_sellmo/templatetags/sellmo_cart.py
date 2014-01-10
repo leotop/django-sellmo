@@ -69,11 +69,13 @@ def add_to_cart_formset(context, product, next=None, invalid=None, **kwargs):
     if data:
         formset = modules.cart.get_add_to_cart_formset(product=product, data=data, **kwargs) 
     
+    if invalid is None:
+        invalid = context['request'].path
+    
     params = []
-    if not next is None:
+    if next is not None:
         params.append('next=%s' % next)
-    if not invalid is None:
-        params.append('invalid=%s' % invalid)
+    params.append('invalid=%s' % invalid)
         
     inner = {
         'formset' : formset,
@@ -91,11 +93,13 @@ def edit_purchase_form(context, purchase, next=None, invalid=None, **kwargs):
     if data:
         form = modules.cart.get_edit_purchase_form(purchase=purchase, data=data, **kwargs)
     
+    if invalid is None:
+        invalid = context['request'].path
+    
     params = []
-    if not next is None:
+    if next is not None:
         params.append('next=%s' % next)
-    if not invalid is None:
-        params.append('invalid=%s' % invalid)
+    params.append('invalid=%s' % invalid)
     
     inner = {
         'form' : form,

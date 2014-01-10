@@ -39,9 +39,20 @@ class AttributeModule(Module):
     namespace = 'attribute'
     Attribute = Attribute
     Value = Value
-    
-    def __init__(self):
-        pass
+        
+    @chainable()
+    def get_sorted_values(self, chain, values, attribute=None, **kwargs):
+        if chain:
+            out = chain.execute(values=values, attribute=attribute, **kwargs)
+            values = out.get('values', values)
+        return values
+        
+    @chainable()
+    def get_sorted_attributes(self, chain, attributes, **kwargs):
+        if chain:
+            out = chain.execute(attributes=attributes, **kwargs)
+            attributes = out.get('attributes', attributes)
+        return attributes
         
     @chainable()
     def get_value_template(self, chain, value, template=None, **kwargs):
@@ -50,6 +61,10 @@ class AttributeModule(Module):
             if value.attribute.type == Attribute.TYPE_OBJECT:
                 type = value.get_value().__class__.__name__
             template = 'attribute/%s.html' % type.lower()
+        
+        if chain:
+            out = chain.execute(value=value, template=template, **kwargs)
+            template = out.get('template', template)
         return template
         
     @chainable()
@@ -59,7 +74,6 @@ class AttributeModule(Module):
                 attribute = modules.attribute.Attribute.objects.get(key=attr)
             except modules.attribute.Attribute.DoesNotExist:
                 return products
-        
         try:
             value = attribute.parse(value)
         except ValueError:
@@ -73,5 +87,9 @@ class AttributeModule(Module):
                 }
                 q = ProductQ(attribute, **qargs)
             return products.filter(q)
+        
+        if chain:
+            out = chain.execute(request=request, products=products, attr=attr, value=value, attribute=attribute, operator=operator, **kwargs)
+            products = out.get('products', products)
         return products
         

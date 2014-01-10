@@ -37,7 +37,7 @@ from django.utils.translation import ugettext_lazy as _
 #
 
 @load(action='load_shipping_subtypes', after='finalize_shipping_ShippingMethod')
-def load_shipping_subtypes():
+def load_subtypes():
 	
 	class FlatShippingMethod(modules.shipping.ShippingMethod):
 

@@ -24,13 +24,14 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.http import Http404
+from django.db.models.signals import post_save
+from django.contrib.sites.models import Site
 
 #
 
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable
-from sellmo.contrib.contrib_shipping.models import ShippingMethod, ShippingCarrier, Shipment
+from sellmo.contrib.contrib_shipping.models import ShippingMethod, ShippingCarrier, Shipment, ShippingSettings
 
 #
 
@@ -39,11 +40,27 @@ class ShippingModule(Module):
 	ShippingMethod = ShippingMethod
 	ShippingCarrier = ShippingCarrier
 	Shipment = Shipment
+	ShippingSettings = ShippingSettings
 	subtypes = []
-
+		
+	def __init__(self, *args, **kwargs):
+		self._settings = None
+		post_save.connect(self.on_settings_post_save, sender=self.ShippingSettings)
+		
+	def on_settings_post_save(self, sender, instance, **kwargs):
+		self._settings = None
+	
 	@classmethod
 	def register_subtype(self, subtype):
 		self.subtypes.append(subtype)
-
+		
 		# Shouldn't be a problem if Capital cased classnames are used.
 		setattr(self, subtype.__name__, subtype)
+	
+	def get_settings(self):
+		if self._settings is None:
+			try:
+				self._settings = Site.objects.get_current().shipping_settings
+			except self.ShippingSettings.DoesNotExist:
+				self._settings = self.ShippingSettings()
+		return self._settings
