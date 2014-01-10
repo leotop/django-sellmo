@@ -25,6 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import types
+from threading import local
 
 #
 
@@ -39,6 +40,19 @@ from sellmo.utils.cloning import Cloneable
 
 #
 
+_override = local()
+
+class PolymorphicOverride(object):
+    
+    def __init__(self, polymorphic=True):
+        self._polymorphic = polymorphic
+    
+    def __enter__(self):
+        _override.polymorphic = self._polymorphic
+        
+    def __exit__(self, exc_type, exc_value, traceback):
+        del _override.polymorphic
+
 class PolymorphicQuerySet(QuerySet):
 
     _downcast = False
@@ -49,7 +63,12 @@ class PolymorphicQuerySet(QuerySet):
         super(PolymorphicQuerySet, self).__init__(*args, **kwargs)
 
     def iterator(self):
-        if not self._downcast:
+        downcast = (
+            self._downcast and getattr(_override, 'polymorphic', True)
+            or getattr(_override, 'polymorphic', False)
+        )
+        
+        if not downcast:
             return super(PolymorphicQuerySet, self).iterator()
         else:
             content_types = {}
@@ -83,10 +102,16 @@ class PolymorphicQuerySet(QuerySet):
         clone = super(PolymorphicQuerySet, self)._clone(*args, **kwargs)
         clone._downcast = self._downcast
         return clone
+        
+    def delete(self, *args, **kwargs):
+        with PolymorphicOverride(False):
+            super(PolymorphicQuerySet, self).delete(*args, **kwargs)
 
-    def polymorphic(self):
-        clone = self.prefetch_related('content_type')
-        clone._downcast = True
+    def polymorphic(self, polymorphic=True):
+        clone = self
+        if polymorphic:
+            clone = clone.prefetch_related('content_type')
+        clone._downcast = polymorphic
         return clone
 
 class PolymorphicManager(models.Manager):
@@ -104,13 +129,14 @@ class PolymorphicManager(models.Manager):
             qs = qs.polymorphic()
         return qs
 
-    def polymorphic(self):
-        return self.get_query_set().polymorphic()
+    def polymorphic(self, *args, **kwargs):
+        return self.get_query_set().polymorphic(*args, **kwargs)
 
 class PolymorphicModel(models.Model, Cloneable):
 
     content_type = models.ForeignKey(ContentType, editable=False)
     objects = PolymorphicManager()
+    _downcasted = None
 
     @classmethod
     def get_admin_url(cls, content_type, object_id):
@@ -122,19 +148,25 @@ class PolymorphicModel(models.Model, Cloneable):
         if self.content_type_id is None:
             self.content_type = ContentType.objects.get_for_model(self.__class__)
         super(PolymorphicModel, self).save(*args, **kwargs)
+        
+    def delete(self, *args, **kwargs):
+        assert self._get_pk_val() is not None, "%s object can't be deleted because its %s attribute is set to None." % (self._meta.object_name, self._meta.pk.attname)
+        with PolymorphicOverride(False):
+            upcasted = self.__class__.objects.get(pk=self.pk)
+            super(PolymorphicModel, upcasted).delete(*args, **kwargs)
 
     def downcast(self):
-        if not self.content_type_id is None:
-            model = self.content_type.model_class()
-            if(model == self.__class__):
-                return self
-            try:
-                downcasted = model.objects.get(pk=self.pk)
-            except model.DoesNotExist:
-                raise Exception("Could not downcast to model class '{0}', lookup failed for pk '{1}'".format(model, self.pk))
-            else:
-                return downcasted
-        return self
+        if not self._downcasted:
+            downcasted = self
+            if not self.content_type_id is None:
+                model = self.content_type.model_class()
+                if(model != self.__class__):
+                    try:
+                        downcasted = model.objects.get(pk=self.pk)
+                    except model.DoesNotExist:
+                        raise Exception("Could not downcast to model class '{0}', lookup failed for pk '{1}'".format(model, self.pk))
+            self._downcasted = downcasted    
+        return self._downcasted
 
     def resolve_content_type(self):
         if not self.content_type_id is None:
