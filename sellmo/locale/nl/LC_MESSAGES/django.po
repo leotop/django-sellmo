@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-20 05:32-0800\n"
+"POT-Creation-Date: 2014-01-08 07:52-0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: api/cart/models.py:67 api/checkout/models.py:63 api/store/models.py:63
+#: api/cart/models.py:67 api/checkout/models.py:65 api/store/models.py:63
 msgid "total"
 msgstr "totaal"
 
@@ -30,99 +30,101 @@ msgstr "winkelwagen"
 msgid "carts"
 msgstr "winkelwagens"
 
-#: api/cart/models.py:83 api/checkout/models.py:221
+#: api/cart/models.py:83 api/checkout/models.py:223
+#: contrib/contrib_mailing/models.py:65
 msgid "created at"
 msgstr "gemaakt op"
 
-#: api/cart/models.py:89 api/checkout/models.py:227
+#: api/cart/models.py:89 api/checkout/models.py:229
 msgid "modified at"
 msgstr "gewijzigd op"
 
-#: api/cart/models.py:100 api/checkout/models.py:242 api/store/models.py:95
+#: api/cart/models.py:100 api/checkout/models.py:244 api/store/models.py:95
 msgid "calculated at"
 msgstr "berekent op"
 
-#: api/checkout/models.py:62
+#: api/checkout/models.py:64
 msgid "subtotal"
 msgstr "subtotaal"
 
-#: api/checkout/models.py:69
+#: api/checkout/models.py:71
 msgid "paid"
 msgstr "betaald"
 
-#: api/checkout/models.py:81 api/checkout/models.py:90
+#: api/checkout/models.py:83 api/checkout/models.py:92
 msgid "costs"
 msgstr "kosten"
 
-#: api/checkout/models.py:104 api/checkout/models.py:207
+#: api/checkout/models.py:106 api/checkout/models.py:209
 msgid "payment"
 msgstr "betaling"
 
-#: api/checkout/models.py:113 api/checkout/models.py:197
+#: api/checkout/models.py:115 api/checkout/models.py:199
+#: contrib/contrib_shipping/models.py:89
 msgid "shipment"
 msgstr "verzending"
 
-#: api/checkout/models.py:131 api/customer/models.py:82
+#: api/checkout/models.py:133 api/customer/models.py:83
 msgid "customer"
 msgstr "klant"
 
-#: api/checkout/models.py:139
+#: api/checkout/models.py:141
 msgid "status"
 msgstr "toestand"
 
-#: api/checkout/models.py:161
+#: api/checkout/models.py:163
 msgid "{0} address"
 msgstr "{0} adres"
 
-#: api/checkout/models.py:174 api/checkout/models.py:187
+#: api/checkout/models.py:176 api/checkout/models.py:189
 msgid "order"
 msgstr "bestelling"
 
-#: api/checkout/models.py:188
+#: api/checkout/models.py:190
 msgid "orders"
 msgstr "bestellingen"
 
-#: api/checkout/models.py:198
+#: api/checkout/models.py:200 contrib/contrib_shipping/models.py:90
 msgid "shipments"
 msgstr "verzendingen"
 
-#: api/checkout/models.py:208
+#: api/checkout/models.py:210
 msgid "payments"
 msgstr "betalingen"
 
-#: api/checkout/models.py:496
+#: api/checkout/models.py:507
 msgid "order #{0}"
 msgstr "bestelling #{0}"
 
-#: api/customer/models.py:77
+#: api/customer/models.py:78
 msgid "user"
 msgstr "gebruiker"
 
-#: api/customer/models.py:83
+#: api/customer/models.py:84
 msgid "customers"
 msgstr "klanten"
 
-#: api/customer/models.py:125
+#: api/customer/models.py:126
 msgid "address"
 msgstr "adres"
 
-#: api/customer/models.py:126
+#: api/customer/models.py:127
 msgid "addresses"
 msgstr "adressen"
 
-#: api/customer/models.py:150
+#: api/customer/models.py:151
 msgid "email address"
 msgstr "e-mailadres"
 
-#: api/customer/models.py:178
+#: api/customer/models.py:179
 msgid "company name"
 msgstr "bedrijfsnaam"
 
-#: api/customer/models.py:198
+#: api/customer/models.py:199
 msgid "first name"
 msgstr "voornaam"
 
-#: api/customer/models.py:203
+#: api/customer/models.py:204
 msgid "last name"
 msgstr "achternaam"
 
@@ -164,39 +166,39 @@ msgstr "aankoop"
 msgid "qty"
 msgstr "aantal"
 
-#: config/defaults.py:35
+#: config/defaults.py:43
 msgid "New"
 msgstr "Nieuw"
 
-#: config/defaults.py:40
+#: config/defaults.py:48
 msgid "Awaiting payment"
 msgstr "Betalingen afwachten"
 
-#: config/defaults.py:45
+#: config/defaults.py:53
 msgid "Payment received"
 msgstr "Betaling ontvangen"
 
-#: config/defaults.py:50
+#: config/defaults.py:58
 msgid "Processing"
 msgstr "In verwerking"
 
-#: config/defaults.py:54
+#: config/defaults.py:62
 msgid "On hold"
 msgstr "Wachtstand"
 
-#: config/defaults.py:58
+#: config/defaults.py:66
 msgid "Completed"
 msgstr "Voltooid"
 
-#: config/defaults.py:63
+#: config/defaults.py:71
 msgid "Shipped"
 msgstr "Verzonden"
 
-#: config/defaults.py:67
+#: config/defaults.py:75
 msgid "Canceled"
 msgstr "Geannuleerd"
 
-#: config/defaults.py:71
+#: config/defaults.py:79
 msgid "Closed"
 msgstr "Afgesloten"
 
@@ -295,7 +297,9 @@ msgid "primary category"
 msgstr "hoofdcategorie"
 
 #: contrib/contrib_category/models.py:213
-#: contrib/contrib_discount/models.py:100 contrib/contrib_tax/models.py:100
+#: contrib/contrib_discount/models.py:100
+#: contrib/contrib_shipping/models.py:152
+#: contrib/contrib_shipping/models.py:204 contrib/contrib_tax/models.py:101
 msgid "name"
 msgstr "naam"
 
@@ -310,28 +314,39 @@ msgstr ""
 "en omschrijvend voor SEO toepassingen."
 
 #: contrib/contrib_category/models.py:231 contrib/contrib_product/models.py:44
-#: contrib/contrib_shipping/models.py:70
-#: contrib/contrib_shipping/models.py:122
+#: contrib/contrib_shipping/models.py:140
+#: contrib/contrib_shipping/models.py:192
 msgid "active"
 msgstr "actief"
 
-#: contrib/contrib_checkout/mailing.py:45
+#: contrib/contrib_checkout/admin.py:96
+msgid "Actions"
+msgstr ""
+
+#: contrib/contrib_checkout/mailing.py:84
 msgid "Order confirmation"
 msgstr "Order bevestiging"
 
-#: contrib/contrib_customer/addressees/default_addressee/models.py:41
-msgid "sir"
-msgstr "De heer"
+#: contrib/contrib_checkout/models.py:64
+#, fuzzy
+msgid "order mail"
+msgstr "bestelling"
 
-#: contrib/contrib_customer/addressees/default_addressee/models.py:42
-msgid "madam"
-msgstr "Mevrouw"
+#: contrib/contrib_checkout/models.py:65
+#, fuzzy
+msgid "order mails"
+msgstr "bestellingen"
 
-#: contrib/contrib_customer/addressees/default_addressee/models.py:50
+#: contrib/contrib_customer/models.py:46
+#, fuzzy
+msgid "phone number"
+msgstr "huisnummer"
+
+#: contrib/contrib_customer/addressees/default_addressee/models.py:46
 msgid "prefix"
 msgstr "aanhef"
 
-#: contrib/contrib_customer/addressees/default_addressee/models.py:59
+#: contrib/contrib_customer/addressees/default_addressee/models.py:55
 msgid "suffx"
 msgstr "tussenvoegsel"
 
@@ -361,6 +376,14 @@ msgstr "straatnaam"
 msgid "house number"
 msgstr "huisnummer"
 
+#: contrib/contrib_customer/config/defaults.py:36
+msgid "sir"
+msgstr "De heer"
+
+#: contrib/contrib_customer/config/defaults.py:37
+msgid "madam"
+msgstr "Mevrouw"
+
 #: contrib/contrib_discount/models.py:59 contrib/contrib_discount/models.py:91
 msgid "discount"
 msgstr "korting"
@@ -382,6 +405,28 @@ msgstr "procent korting"
 msgid "percent discounts"
 msgstr "procent kortingen"
 
+#: contrib/contrib_mailing/models.py:42
+#, fuzzy
+msgid "mail status"
+msgstr "toestand"
+
+#: contrib/contrib_mailing/models.py:43
+#, fuzzy
+msgid "mail statuses"
+msgstr "toestand"
+
+#: contrib/contrib_mailing/models.py:71
+msgid "send at"
+msgstr ""
+
+#: contrib/contrib_mailing/models.py:76
+msgid "send to"
+msgstr ""
+
+#: contrib/contrib_mailing/models.py:86
+msgid "failure message"
+msgstr ""
+
 #: contrib/contrib_payment/models.py:43 contrib/contrib_payment/models.py:44
 msgid "payment settings"
 msgstr "betaal instellingen"
@@ -394,69 +439,73 @@ msgstr "test modus"
 msgid "accept payments"
 msgstr "accepteer betalingen"
 
-#: contrib/contrib_payment/methods/bank_transfer/links.py:44
-#: contrib/contrib_payment/methods/bank_transfer/models.py:55
-msgid "Bank transfer"
+#: contrib/contrib_payment/methods/bank_transfer/base.py:40
+#, fuzzy
+msgid "bank transfer"
 msgstr "Bankoverboeking"
 
-#: contrib/contrib_payment/methods/bank_transfer/models.py:43
+#: contrib/contrib_payment/methods/bank_transfer/models.py:53
 msgid "bank transfer payment"
 msgstr "bankoverboeking betaling"
 
-#: contrib/contrib_payment/methods/bank_transfer/models.py:44
+#: contrib/contrib_payment/methods/bank_transfer/models.py:54
 msgid "bank transfers payments"
 msgstr "bankoverboeking betalingen"
 
-#: contrib/contrib_payment/methods/bank_transfer/models.py:56
+#: contrib/contrib_payment/methods/bank_transfer/models.py:65
+msgid "Bank transfer"
+msgstr "Bankoverboeking"
+
+#: contrib/contrib_payment/methods/bank_transfer/models.py:66
 msgid "bank transfer description"
 msgstr "bankoverboeking omschrijving"
 
-#: contrib/contrib_payment/methods/bank_transfer/models.py:61
+#: contrib/contrib_payment/methods/bank_transfer/models.py:71
 msgid "bank transfer additional text"
 msgstr "bankoverboeking extra tekst"
 
-#: contrib/contrib_payment/methods/ideal/mollie_ideal/links.py:44
-#: contrib/contrib_payment/methods/ideal/mollie_ideal/models.py:55
+#: contrib/contrib_payment/methods/ideal/mollie_ideal/base.py:44
+#: contrib/contrib_payment/methods/ideal/mollie_ideal/models.py:63
 msgid "iDeal"
 msgstr "iDeal"
 
-#: contrib/contrib_payment/methods/ideal/mollie_ideal/models.py:43
+#: contrib/contrib_payment/methods/ideal/mollie_ideal/models.py:51
 msgid "mollie ideal payment"
 msgstr "mollie ideal betaling"
 
-#: contrib/contrib_payment/methods/ideal/mollie_ideal/models.py:44
+#: contrib/contrib_payment/methods/ideal/mollie_ideal/models.py:52
 msgid "mollie ideal payments"
 msgstr "mollie ideal betalingen"
 
-#: contrib/contrib_payment/methods/ideal/mollie_ideal/models.py:56
+#: contrib/contrib_payment/methods/ideal/mollie_ideal/models.py:64
 msgid "mollie ideal description"
 msgstr "mollie ideal omschrijving"
 
-#: contrib/contrib_payment/methods/ideal/mollie_ideal/models.py:61
+#: contrib/contrib_payment/methods/ideal/mollie_ideal/models.py:69
 msgid "mollie ideal additional text"
 msgstr "mollie ideal extra tekst"
 
-#: contrib/contrib_payment/methods/ideal/mollie_ideal/models.py:66
+#: contrib/contrib_payment/methods/ideal/mollie_ideal/models.py:74
 msgid "mollie partner-id"
 msgstr "mollie partner-id"
 
-#: contrib/contrib_payment/methods/ideal/mollie_ideal/models.py:72
+#: contrib/contrib_payment/methods/ideal/mollie_ideal/models.py:80
 msgid "mollie profile key"
 msgstr "mollie profiel sleutel"
 
-#: contrib/contrib_payment/methods/ideal/mollie_ideal/models.py:88
+#: contrib/contrib_payment/methods/ideal/mollie_ideal/models.py:96
 msgid "success"
 msgstr "succesvol"
 
-#: contrib/contrib_payment/methods/ideal/mollie_ideal/models.py:89
+#: contrib/contrib_payment/methods/ideal/mollie_ideal/models.py:97
 msgid "failed"
 msgstr "mislukt"
 
-#: contrib/contrib_payment/methods/ideal/mollie_ideal/models.py:90
+#: contrib/contrib_payment/methods/ideal/mollie_ideal/models.py:98
 msgid "expired"
 msgstr "verlopen"
 
-#: contrib/contrib_payment/methods/ideal/mollie_ideal/models.py:91
+#: contrib/contrib_payment/methods/ideal/mollie_ideal/models.py:99
 msgid "canceled"
 msgstr "geannuleerd"
 
@@ -501,38 +550,46 @@ msgstr ""
 "Markeert dit product als uitgelicht en kan zorgen voor extra weergave over "
 "de site."
 
-#: contrib/contrib_shipping/models.py:47
-msgid "carriers"
+#: contrib/contrib_shipping/models.py:51 contrib/contrib_shipping/models.py:59
+msgid "carrier"
 msgstr "vervoerders"
 
-#: contrib/contrib_shipping/models.py:60
-msgid "shipping method"
-msgstr "verzendmethode"
+#: contrib/contrib_shipping/models.py:66
+#: contrib/contrib_shipping/methods/flat_shipping/models.py:52
+msgid "{0} by {1}"
+msgstr "{0} door {1}"
 
-#: contrib/contrib_shipping/models.py:61
-msgid "shipping methods"
-msgstr "verzendmethoden"
-
-#: contrib/contrib_shipping/models.py:77
-#: contrib/contrib_shipping/models.py:129
-msgid "identifier"
-msgstr "kenmerk"
-
-#: contrib/contrib_shipping/models.py:82
-#: contrib/contrib_shipping/models.py:134
+#: contrib/contrib_shipping/models.py:99
 #: contrib/contrib_variation/models.py:643
 msgid "description"
 msgstr "omschrijving"
 
-#: contrib/contrib_shipping/models.py:108
+#: contrib/contrib_shipping/models.py:115
+msgid "carriers"
+msgstr "vervoerders"
+
+#: contrib/contrib_shipping/models.py:128
+msgid "shipping method"
+msgstr "verzendmethode"
+
+#: contrib/contrib_shipping/models.py:129
+msgid "shipping methods"
+msgstr "verzendmethoden"
+
+#: contrib/contrib_shipping/models.py:147
+#: contrib/contrib_shipping/models.py:199
+msgid "identifier"
+msgstr "kenmerk"
+
+#: contrib/contrib_shipping/models.py:178
 msgid "extra costs"
 msgstr "extra kosten"
 
-#: contrib/contrib_shipping/models.py:113
+#: contrib/contrib_shipping/models.py:183
 msgid "shipping carrier"
 msgstr "vervoerder"
 
-#: contrib/contrib_shipping/models.py:114
+#: contrib/contrib_shipping/models.py:184
 msgid "shipping carriers"
 msgstr "vervoerders"
 
@@ -540,11 +597,11 @@ msgstr "vervoerders"
 msgid "shipping rate"
 msgstr "verzendkosten"
 
-#: contrib/contrib_shipping/methods/flat_shipping/models.py:56
+#: contrib/contrib_shipping/methods/flat_shipping/models.py:58
 msgid "flat shipping method"
 msgstr "basis verzendmethode"
 
-#: contrib/contrib_shipping/methods/flat_shipping/models.py:57
+#: contrib/contrib_shipping/methods/flat_shipping/models.py:59
 msgid "flat shipping methods"
 msgstr "basis verzendmethoden"
 
@@ -568,20 +625,40 @@ msgstr "contact telefoonnumer"
 msgid "contact address"
 msgstr "contactadres"
 
-#: contrib/contrib_tax/__sellmo__.py:36 contrib/contrib_tax/models.py:59
-#: contrib/contrib_tax/models.py:91
+#: contrib/contrib_tax/__sellmo__.py:36 contrib/contrib_tax/models.py:60
+#: contrib/contrib_tax/models.py:92
 msgid "tax"
 msgstr "belasting"
 
-#: contrib/contrib_tax/models.py:92
+#: contrib/contrib_tax/models.py:93
 msgid "taxes"
 msgstr "belastingen"
 
-#: contrib/contrib_tax/subtypes/percent_tax/models.py:59
+#: contrib/contrib_tax/models.py:124
+#, fuzzy
+msgid "payment costs tax"
+msgstr "betaal instellingen"
+
+#: contrib/contrib_tax/models.py:132
+#, fuzzy
+msgid "shipping costs tax"
+msgstr "vervoerder"
+
+#: contrib/contrib_tax/models.py:137 contrib/contrib_tax/models.py:138
+#, fuzzy
+msgid "tax settings"
+msgstr "betaal instellingen"
+
+#: contrib/contrib_tax/models.py:153
+#, fuzzy
+msgid "calculate inclusive"
+msgstr "berekent op"
+
+#: contrib/contrib_tax/subtypes/percent_tax/models.py:63
 msgid "percent tax"
 msgstr "procentuele belasting"
 
-#: contrib/contrib_tax/subtypes/percent_tax/models.py:60
+#: contrib/contrib_tax/subtypes/percent_tax/models.py:64
 msgid "percent taxes"
 msgstr "procentuele belastingen"
 
