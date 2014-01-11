@@ -39,19 +39,22 @@ from django.forms.formsets import formset_factory
 
 @link(namespace=modules.product.namespace)
 def list(request, products, **kwargs):
+	keys = modules.attribute.Attribute.objects.all().values_list('key', flat=True)
 	for key, value in request.GET.items():
+		attr = None
 		if key.startswith('attr__'):
 			attr = key[len('attr__'):]
-			if attr:
-				parts = attr.split('__')
-				attr = parts[0]
-				operator = None
-				if len(parts) == 2:
-					operator = parts[1]
-				elif len(parts) > 2:
-					continue
-				products = modules.attribute.filter(request=request, products=products, attr=attr, value=value, operator=operator)
-				
+		elif key.split('__')[0] in keys:
+			attr = key
+		if attr:
+			parts = attr.split('__')
+			attr = parts[0]
+			operator = None
+			if len(parts) == 2:
+				operator = parts[1]
+			elif len(parts) > 2:
+				continue
+			products = modules.attribute.filter(request=request, products=products, attr=attr, value=value, operator=operator)
 	return {
 		'products' : products
 	}

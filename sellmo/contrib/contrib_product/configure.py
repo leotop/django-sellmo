@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -24,22 +24,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.contrib.sites.models import Site
+from sellmo import modules
 
 #
 
-from sellmo import modules, Module
-from sellmo.api.decorators import view, chainable
-from sellmo.contrib.contrib_payment.models import PaymentSettings
-
-#
-
-class PaymentModule(Module):
-	namespace = 'payment'
-	PaymentSettings = PaymentSettings
-		
-	def get_settings(self):
-		try:
-			return Site.objects.get_current().payment_settings
-		except self.PaymentSettings.DoesNotExist:
-			return self.PaymentSettings()
+modules.product.reserved_url_params += ['active']

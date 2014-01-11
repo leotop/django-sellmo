@@ -46,6 +46,8 @@ class AttributeKeyField(models.SlugField):
             raise ValidationError(_(u"Must be all lower case, " \
                 u"start with a letter, and contain " \
                 u"only letters, numbers, or underscores."))
+        if value in modules.product.reserved_url_params:
+            raise ValidationError(_(u"Conflicts with url parameter"))
                 
     @staticmethod
     def create_key_from_name(name):

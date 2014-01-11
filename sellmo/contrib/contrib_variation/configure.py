@@ -24,6 +24,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from sellmo import modules
 from sellmo.config import settings
 from sellmo.contrib.contrib_variation.signals import variations_deprecated
 from sellmo.contrib.contrib_variation import tasks
@@ -35,3 +36,5 @@ def on_variations_deprecated(sender, product, **kwargs):
 
 if settings.CELERY_ENABLED:
 	variations_deprecated.connect(on_variations_deprecated)
+	
+modules.product.reserved_url_params += ['variants']

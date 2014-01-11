@@ -125,8 +125,11 @@ class ProductVariationsCache(Cache):
 
 class VariationChoiceCache(Cache):
 	
-	def on_variant_post_save(self, sender, instance, **kwargs):
-		keys = [self.get_choice_key(pk) for pk in instance.variations.values_list('pk', flat=True)]
+	def on_variations_deprecated(self, sender, product, **kwargs):
+		product = product.downcast()
+		keys = [
+			self.get_choice_key(variation.pk) for variation in product.variations.all()
+		]
 		self.delete(*keys)
 		
 	def get_choice_key(self, pk):
@@ -139,13 +142,12 @@ class VariationChoiceCache(Cache):
 			'choice_hit' : choice is not None
 		}
 		
-	def finalize(self, variation, choice, choice_hit):
+	def finalize(self, variation, choice, choice_hit, **kwargs):
 		if not choice_hit:
 			self.set(self.get_choice_key(variation.pk), choice)
 		
 	def hookup(self):
-		for subtype in modules.variation.subtypes:
-			post_save.connect(self.on_variant_post_save, sender=subtype)
+		variations_deprecated.connect(self.on_variations_deprecated)
 
 
 get_variations = cached(ProductVariationsCache, 'get_variations', 'variation', timeout=None)

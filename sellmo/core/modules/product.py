@@ -42,6 +42,7 @@ class ProductModule(sellmo.Module):
     Product = Product
     ProductRelatable = ProductRelatable
     subtypes = []
+    reserved_url_params = []
         
     @classmethod
     def register_subtype(self, subtype):

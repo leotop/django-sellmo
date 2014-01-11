@@ -82,12 +82,14 @@ class CheckoutModule(sellmo.Module):
             methods = self.get_shipping_methods(order=order)
         if form is None:
             class ShippingMethodForm(self.ShippingMethodForm):
+                choices = [
+                    (method.identifier, self.get_shipping_method_choice(method=method, order=order))
+                    for method in methods.values() if method.is_available(order=order)
+                ]
                 method = forms.ChoiceField(
                     widget = forms.RadioSelect(),
-                    choices = [
-                        (method.identifier, self.get_shipping_method_choice(method=method, order=order))
-                        for method in methods.values() if method.is_available(order=order)
-                    ]
+                    choices = choices,
+                    initial = choices[0][0] if choices else None
                 )
             initial = {}
             if method:
@@ -119,12 +121,14 @@ class CheckoutModule(sellmo.Module):
             methods = self.get_payment_methods(order=order)
         if form is None:
             class PaymentMethodForm(self.PaymentMethodForm):
+                choices = [
+                    (method.identifier, self.get_payment_method_choice(method=method, order=order))
+                    for method in methods.values() if method.is_available(order=order)
+                ]
                 method = forms.ChoiceField(
                     widget = forms.RadioSelect(),
-                    choices = [
-                        (method.identifier, self.get_payment_method_choice(method=method, order=order))
-                        for method in methods.values() if method.is_available(order=order)
-                    ]
+                    choices = choices,
+                    initial = choices[0][0] if choices else None
                 )
             initial = {}
             if method:
