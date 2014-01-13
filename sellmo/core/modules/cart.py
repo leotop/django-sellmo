@@ -28,8 +28,10 @@ from django import forms
 from django.contrib import messages
 from django.forms.formsets import formset_factory
 from django.db import models
+from django.db.models.signals import pre_delete
 from django.http import Http404
 from django.shortcuts import redirect
+from django.utils.module_loading import import_by_path
 
 #
 
@@ -38,7 +40,6 @@ from sellmo.config import settings
 from sellmo import modules
 from sellmo.api.decorators import view, chainable, link
 from sellmo.api.cart.models import Cart
-from django.utils.module_loading import import_by_path
 from sellmo.api.forms import RedirectableFormSet
 
 #
@@ -54,6 +55,12 @@ class CartModule(sellmo.Module):
     def __init__(self, *args, **kwargs):
         self.AddToCartForm = import_by_path(settings.ADD_TO_CART_FORM)
         self.EditPurchaseForm = import_by_path(settings.EDIT_PURCHASE_FORM)
+        pre_delete.connect(self.on_delete_cart, sender=self.Cart)
+        
+    def on_delete_cart(self, sender, instance, **kwargs):
+        for purchase in instance.purchases.all():
+            if purchase.is_stale(ignore_cart=True):
+                purchase.delete()
         
     @chainable()
     def get_edit_purchase_form(self, chain, form=None, cls=None, purchase=None, initial=None, data=None, **kwargs):

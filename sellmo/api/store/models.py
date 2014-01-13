@@ -135,6 +135,9 @@ class Purchase(PolymorphicModel):
         clone.total = self.total
         clone.calculated = self.calculated
         return clone
+        
+    def is_stale(self, **kwargs):
+        return True
     
     def __unicode__(self):
         return u"%s x %s" % (self.qty, self.description)

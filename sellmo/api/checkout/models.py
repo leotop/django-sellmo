@@ -171,10 +171,12 @@ def load_model():
             modules.checkout.Order,
             null = True,
             editable = False,
-            on_delete = models.SET_NULL,
             related_name = 'purchases',
             verbose_name = _("order"),
         )
+        
+        def is_stale(self, ignore_order=False, **kwargs):
+            return super(Purchase, self).is_stale(**kwargs) and (self.order is None or ignore_order)
 
         class Meta:
             abstract = True

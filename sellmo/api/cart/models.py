@@ -53,6 +53,9 @@ def load_model():
             related_name = 'purchases',
         )
         
+        def is_stale(self, ignore_cart=False, **kwargs):
+            return super(Purchase, self).is_stale(**kwargs) and (self.cart is None or ignore_cart)
+        
         class Meta:
             abstract = True
         
