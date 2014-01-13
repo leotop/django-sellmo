@@ -60,7 +60,7 @@ class MollieIdealBankSelectStep(CheckoutStep):
 		context['bank_select_form'] = form
 		success &= processed
 
-		if success:
+		if data is not None and success:
 			self.payment.save()
 
 		return success

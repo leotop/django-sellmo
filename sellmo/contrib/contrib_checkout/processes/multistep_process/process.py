@@ -120,7 +120,7 @@ class InformationStep(CheckoutStep):
 			success &= processed
 			addresses[type] = address
 		
-		if success:
+		if data is not None and success:
 			for type in settings.ADDRESS_TYPES:
 				address = addresses[type]
 				address.save()
@@ -164,7 +164,7 @@ class PaymentMethodStep(CheckoutStep):
 		context['payment_method_form'] = form
 		success &= processed
 
-		if success:
+		if data is not None and success:
 			self.order.save()
 		
 		return success
@@ -205,7 +205,7 @@ class SummaryStep(CheckoutStep):
 			else:
 				success = False
 		
-		if success:
+		if data is not None and success:
 			self.order.place()
 		return success
 	
