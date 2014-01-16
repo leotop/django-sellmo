@@ -26,6 +26,7 @@
 
 import types
 from threading import local
+from collections import deque
 
 #
 
@@ -40,7 +41,7 @@ from sellmo.utils.cloning import Cloneable
 
 #
 
-_override = local()
+_local = local()
 
 class PolymorphicOverride(object):
     
@@ -48,10 +49,14 @@ class PolymorphicOverride(object):
         self._polymorphic = polymorphic
     
     def __enter__(self):
-        _override.polymorphic = self._polymorphic
+        if not hasattr(_local, 'overrides'):
+            _local.overrides = deque()
+        _local.overrides.append(self._polymorphic)
         
     def __exit__(self, exc_type, exc_value, traceback):
-        del _override.polymorphic
+        _local.overrides.pop()
+        if not _local.overrides:
+            del _local.overrides
 
 class PolymorphicQuerySet(QuerySet):
 
@@ -63,9 +68,12 @@ class PolymorphicQuerySet(QuerySet):
         super(PolymorphicQuerySet, self).__init__(*args, **kwargs)
 
     def iterator(self):
+        override = None
+        if hasattr(_local, 'overrides'):
+            override = _local.overrides[-1] # peek
         downcast = (
-            self._downcast and getattr(_override, 'polymorphic', True)
-            or getattr(_override, 'polymorphic', False)
+            self._downcast and override is not False
+            or override is True
         )
         
         if not downcast:
