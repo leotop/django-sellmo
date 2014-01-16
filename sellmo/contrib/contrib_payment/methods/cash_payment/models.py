@@ -24,31 +24,60 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.http import Http404
+from sellmo import modules
+from sellmo.api.decorators import load
+from sellmo.contrib.contrib_payment.methods.cash_payment import CashPaymentMethod
 
 #
 
-from sellmo import modules, Module
-from sellmo.api.decorators import view, chainable, link
-from sellmo.contrib.contrib_payment.methods.bank_transfer.models import BankTransferPayment
+from django.db import models
+from django.utils.translation import ugettext_lazy as _
 
 #
 
-class BankTransferModule(Module):
-	namespace = 'bank_transfer'
-	BankTransferPayment = BankTransferPayment
+@load(action='finalize_cash_payment_Payment', after='finalize_checkout_Payment')
+def finalize_model():
 
-	@view()
-	def instructions(self, chain, request, order=None, context=None, **kwargs):
-		if context is None:
-			context = {}
-		if chain:
-			return chain.execute(request=request, context=context, **kwargs)
-		else:
-			# We don't render anything
-			raise Http404
+	class CashPayment(modules.checkout.Payment, modules.cash_payment.CashPayment):
+		
+		instant = False
+		
+		def get_method(self):
+			return CashPaymentMethod()
 			
-	@link(namespace='checkout')
-	def complete(self, request, order=None, context=None, **kwargs):
-		if isinstance(order.payment, self.BankTransferPayment):
-			return self.instructions(request, order=order, context=context)
+		def __unicode__(self):
+			return unicode(self.get_method())
+		
+		class Meta:
+			app_label = 'checkout'
+			verbose_name = _("cash payment")
+			verbose_name_plural = _("cash payments")
+
+	modules.cash_payment.CashPayment = CashPayment
+
+@load(before='finalize_payment_PaymentSettings')
+def finalize_model():
+
+	class PaymentSettings(modules.payment.PaymentSettings):
+		
+		cash_payment_description = models.CharField(
+			max_length = 80,
+			default = _("cash payment"),
+			verbose_name = _("cash payment description")
+		)
+		
+		cash_payment_additional_text = models.TextField(
+			blank = True,
+			verbose_name = _("cash payment additional text")
+		)
+		
+		class Meta:
+			abstract = True
+
+	modules.payment.PaymentSettings = PaymentSettings
+
+class CashPayment(models.Model):
+	
+	class Meta:
+		abstract = True
+		

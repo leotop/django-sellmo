@@ -30,13 +30,13 @@ from django.http import Http404
 
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable, link
-from sellmo.contrib.contrib_payment.methods.bank_transfer.models import BankTransferPayment
+from sellmo.contrib.contrib_payment.methods.cash_payment.models import CashPayment
 
 #
 
-class BankTransferModule(Module):
-	namespace = 'bank_transfer'
-	BankTransferPayment = BankTransferPayment
+class CashPaymentModule(Module):
+	namespace = 'cash_payment'
+	CashPayment = CashPayment
 
 	@view()
 	def instructions(self, chain, request, order=None, context=None, **kwargs):
@@ -50,5 +50,5 @@ class BankTransferModule(Module):
 			
 	@link(namespace='checkout')
 	def complete(self, request, order=None, context=None, **kwargs):
-		if isinstance(order.payment, self.BankTransferPayment):
+		if isinstance(order.payment, self.CashPayment):
 			return self.instructions(request, order=order, context=context)

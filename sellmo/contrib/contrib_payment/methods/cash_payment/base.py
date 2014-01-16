@@ -24,31 +24,32 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.http import Http404
+from sellmo import modules
+from sellmo.api.pricing import Price
+from sellmo.api.checkout import PaymentMethod
 
 #
 
-from sellmo import modules, Module
-from sellmo.api.decorators import view, chainable, link
-from sellmo.contrib.contrib_payment.methods.bank_transfer.models import BankTransferPayment
+from django.utils.translation import ugettext_lazy as _
 
 #
 
-class BankTransferModule(Module):
-	namespace = 'bank_transfer'
-	BankTransferPayment = BankTransferPayment
+class CashPaymentMethod(PaymentMethod):
 
-	@view()
-	def instructions(self, chain, request, order=None, context=None, **kwargs):
-		if context is None:
-			context = {}
-		if chain:
-			return chain.execute(request=request, context=context, **kwargs)
-		else:
-			# We don't render anything
-			raise Http404
-			
-	@link(namespace='checkout')
-	def complete(self, request, order=None, context=None, **kwargs):
-		if isinstance(order.payment, self.BankTransferPayment):
-			return self.instructions(request, order=order, context=context)
+	identifier = 'cash'
+	name = _("cash payment")
+	
+	def process(self, order, request, next_step):
+		return next_step
+
+	def new_payment(self, order):
+		return modules.cash_payment.CashPayment()
+
+	def get_costs(self, order, currency=None, **kwargs):
+		return modules.pricing.get_price(price=Price(0), payment_method=self)
+
+	def __unicode__(self):
+		settings = modules.payment.get_settings()
+		if settings.cash_payment_description:
+			return settings.cash_payment_description
+		return super(CashPaymentMethod, self).__unicode__()

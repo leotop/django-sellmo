@@ -239,7 +239,7 @@ class CheckoutModule(sellmo.Module):
         
     @view(r'^complete/$')
     def complete(self, chain, request, order=None, context=None, **kwargs):
-    
+        
         if context is None:
             context = {}
             
@@ -252,7 +252,6 @@ class CheckoutModule(sellmo.Module):
             
         # Append to context
         context['order'] = order
-        
         if chain:
             return chain.execute(request, order=order, context=context, **kwargs)
         else:

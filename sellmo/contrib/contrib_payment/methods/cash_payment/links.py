@@ -24,31 +24,25 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.http import Http404
+from django.utils.translation import ugettext_lazy as _
 
 #
 
-from sellmo import modules, Module
-from sellmo.api.decorators import view, chainable, link
-from sellmo.contrib.contrib_payment.methods.bank_transfer.models import BankTransferPayment
+from sellmo import modules
+from sellmo.api.decorators import link
+from sellmo.api.pricing import Price
+from sellmo.contrib.contrib_payment.methods.cash_payment import CashPaymentMethod
 
 #
 
-class BankTransferModule(Module):
-	namespace = 'bank_transfer'
-	BankTransferPayment = BankTransferPayment
+namespace = modules.checkout.namespace
 
-	@view()
-	def instructions(self, chain, request, order=None, context=None, **kwargs):
-		if context is None:
-			context = {}
-		if chain:
-			return chain.execute(request=request, context=context, **kwargs)
-		else:
-			# We don't render anything
-			raise Http404
-			
-	@link(namespace='checkout')
-	def complete(self, request, order=None, context=None, **kwargs):
-		if isinstance(order.payment, self.BankTransferPayment):
-			return self.instructions(request, order=order, context=context)
+#
+
+@link()
+def get_payment_methods(order, methods, **kwargs):
+	method = CashPaymentMethod()
+	methods[method.identifier] = method
+	return {
+		'methods' : methods
+	}
