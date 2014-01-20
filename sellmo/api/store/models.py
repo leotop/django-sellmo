@@ -39,6 +39,7 @@ from sellmo import modules
 from sellmo.api.decorators import load
 from sellmo.api.pricing import Price
 from sellmo.utils.polymorphism import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
+from sellmo.utils.cloning import Cloneable
 
 #
 
@@ -82,7 +83,7 @@ class PurchaseManager(PolymorphicManager):
     def mergeable_with(self, *args, **kwargs):
         return self.get_query_set().mergeable_with(*args, **kwargs)
 
-class Purchase(PolymorphicModel):
+class Purchase(PolymorphicModel, Cloneable):
     
     objects = PurchaseManager()
     
