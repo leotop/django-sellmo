@@ -252,6 +252,10 @@ class Attribute(models.Model):
         default=False
     )
     
+    visible = models.BooleanField(
+        default=True
+    )
+    
     sort_order = models.SmallIntegerField(
         default = 0,
         verbose_name = _("sort order"),
