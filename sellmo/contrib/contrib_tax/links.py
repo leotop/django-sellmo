@@ -43,7 +43,7 @@ def get_price(price, product=None, shipping_method=None, payment_method=None, **
         except modules.tax.Tax.DoesNotExist:
             pass
     elif shipping_method or payment_method:
-        settings = modules.tax.get_settings()
+        settings = modules.settings.get_settings()
         if shipping_method and settings.shipping_costs_tax:
             taxes = [settings.shipping_costs_tax.downcast()]
         elif shipping_method and settings.payment_costs_tax:

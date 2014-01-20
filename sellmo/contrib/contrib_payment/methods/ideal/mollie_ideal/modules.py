@@ -104,7 +104,7 @@ class MollieIdealModule(Module):
 		order = payment.order
 		
 		# Now get status
-		settings = modules.payment.get_settings()
+		settings = modules.settings.get_settings()
 		
 		payload = {
 			'partnerid' : settings.mollie_partner_id,
@@ -162,7 +162,7 @@ class MollieIdealModule(Module):
 	@view()
 	def redirect(self, chain, request, order, **kwargs):
 		
-		settings = modules.payment.get_settings()
+		settings = modules.settings.get_settings()
 		
 		payment = order.payment.downcast()
 		payload = {
@@ -230,7 +230,7 @@ class MollieIdealModule(Module):
 	@chainable()
 	def get_banks(self, chain):
 		
-		settings = modules.payment.get_settings()
+		settings = modules.settings.get_settings()
 		
 		payload = {
 			

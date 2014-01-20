@@ -24,5 +24,35 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.core.middleware.redirection import RedirectionMiddleware
-from sellmo.core.middleware.local import LocalContextMiddleware
+from sellmo import modules
+from sellmo.api.decorators import load
+
+#
+
+from django.db import models
+from django.contrib.sites.models import Site
+from django.utils.translation import ugettext_lazy as _
+
+#
+
+@load(action='finalize_settings_SiteSettings')
+def finalize_model():
+	class SiteSettings(modules.settings.SiteSettings):
+		class Meta:
+			app_label = 'settings'
+			verbose_name = _("site settings")
+			verbose_name_plural = _("site settings")
+			
+	modules.settings.SiteSettings = SiteSettings
+
+class SiteSettings(models.Model):
+	site = models.OneToOneField(
+		Site,
+		related_name = 'settings',
+	)
+	
+	def __unicode__(self):
+		return unicode(self.site)
+	
+	class Meta:
+		abstract = True

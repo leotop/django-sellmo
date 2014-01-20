@@ -52,38 +52,7 @@ def finalize_model():
 			verbose_name_plural = _("mollie ideal payments")
 		
 	modules.mollie_ideal.MollieIdealPayment = MollieIdealPayment
-	
-@load(before='finalize_payment_PaymentSettings')
-def finalize_model():
 
-	class PaymentSettings(modules.payment.PaymentSettings):
-		
-		mollie_ideal_description = models.CharField(
-			max_length = 80,
-			default = _("iDeal"),
-			verbose_name = _("mollie ideal description")
-		)
-		
-		mollie_ideal_additional_text = models.TextField(
-			blank = True,
-			verbose_name = _("mollie ideal additional text")
-		)
-		
-		mollie_partner_id = models.CharField(
-			max_length = 20,
-			verbose_name = _("mollie partner-id")
-		)
-		
-		mollie_profile_key = models.CharField(
-			max_length = 20,
-			blank = True,
-			verbose_name = _("mollie profile key")
-		)
-		
-		class Meta:
-			abstract = True
-
-	modules.payment.PaymentSettings = PaymentSettings
 	
 class MollieIdealPayment(models.Model):
 	

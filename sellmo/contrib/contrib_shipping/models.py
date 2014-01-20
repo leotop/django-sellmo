@@ -210,30 +210,4 @@ class ShippingCarrier(models.Model):
     
     class Meta:
         abstract = True
-        
-@load(action='finalize_shipping_ShippingSettings')
-def finalize_model():
-    class ShippingSettings(modules.shipping.ShippingSettings):
-
-        class Meta:
-            app_label = 'shipping'
-            verbose_name = _("shipping settings")
-            verbose_name_plural = _("shipping settings")
-
-    modules.shipping.ShippingSettings = ShippingSettings
-
-class ShippingSettings(models.Model):
-
-    site = models.OneToOneField(
-        Site,
-        related_name='shipping_settings'
-    )
-
-    #
-    
-    def __unicode__(self):
-        return u""
-
-    class Meta:
-        abstract = True
 

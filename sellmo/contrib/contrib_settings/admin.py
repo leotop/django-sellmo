@@ -24,5 +24,20 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.core.middleware.redirection import RedirectionMiddleware
-from sellmo.core.middleware.local import LocalContextMiddleware
+from sellmo import modules
+
+#
+
+from django.contrib import admin
+from django.utils.translation import ugettext_lazy as _
+
+#
+
+class SettingsAdmin(admin.ModelAdmin):
+	fieldsets = (
+		(None, {
+			'fields' : ['site'],
+		}),
+	) + modules.settings.fieldsets
+
+admin.site.register(modules.settings.SiteSettings, SettingsAdmin)

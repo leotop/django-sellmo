@@ -24,5 +24,30 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.core.middleware.redirection import RedirectionMiddleware
-from sellmo.core.middleware.local import LocalContextMiddleware
+from django.db import models
+from django.utils.translation import ugettext_lazy as _
+
+#
+
+from sellmo import modules
+
+#
+
+group = _("Mollie iDeal")
+
+modules.settings.add_setting('mollie_ideal_name', models.CharField(
+	max_length = 80,
+	default = _("iDeal"),
+	verbose_name = _("mollie ideal name")
+), group)
+
+modules.settings.add_setting('mollie_partner_id', models.CharField(
+	max_length = 20,
+	verbose_name = _("mollie partner-id")
+), group)
+
+modules.settings.add_setting('mollie_profile_key', models.CharField(
+	max_length = 20,
+	blank = True,
+	verbose_name = _("mollie profile key")
+), group)

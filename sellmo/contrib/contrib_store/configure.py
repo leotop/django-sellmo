@@ -24,5 +24,35 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.core.middleware.redirection import RedirectionMiddleware
-from sellmo.core.middleware.local import LocalContextMiddleware
+from sellmo import modules
+from sellmo.api.decorators import load
+
+#
+
+from django.db import models
+from django.utils.translation import ugettext_lazy as _
+
+#
+
+group = _("Store Information")
+
+modules.settings.add_setting('store_name', models.CharField(
+	max_length = 100,
+	verbose_name = _("store name"),
+), group)
+
+modules.settings.add_setting('contact_email', models.EmailField(
+	verbose_name = _("contact email address"),
+	blank = True,
+), group)
+
+modules.settings.add_setting('contact_phone_number', models.CharField(
+	max_length = 20,
+	verbose_name = _("contact phone number"),
+	blank = True,
+), group)
+
+modules.settings.add_setting('contact_address', models.TextField(
+	verbose_name = _("contact address"),
+	blank = True,
+), group)

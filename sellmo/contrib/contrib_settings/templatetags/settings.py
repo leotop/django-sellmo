@@ -24,5 +24,37 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.core.middleware.redirection import RedirectionMiddleware
-from sellmo.core.middleware.local import LocalContextMiddleware
+from django import template
+
+#
+
+from classytags.core import Tag, Options
+from classytags.arguments import Argument
+
+#
+
+from sellmo import modules
+
+#
+
+register = template.Library()
+
+#
+
+class SettingsTag(Tag):
+	name = 'settings'
+	options = Options(
+		'as',
+		Argument('varname', default='settings', required=False, resolve=False),
+		blocks = [('endsettings', 'nodelist')],
+	)
+
+	def render_tag(self, context, varname, nodelist):
+		settings = modules.settings.get_settings()
+		context.push()
+		context[varname] = settings
+		output = nodelist.render(context)
+		context.pop()
+		return output
+
+register.tag(SettingsTag)

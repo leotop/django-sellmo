@@ -24,5 +24,25 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.core.middleware.redirection import RedirectionMiddleware
-from sellmo.core.middleware.local import LocalContextMiddleware
+from django.db import models
+from django.utils.translation import ugettext_lazy as _
+
+#
+
+from sellmo import modules
+
+#
+
+group = _("Payments")
+
+#
+
+modules.settings.add_setting('test_mode', models.BooleanField(
+	default = True,
+	verbose_name = _("test mode"),
+), group)
+
+modules.settings.add_setting('accept_payments', models.BooleanField(
+	default = True,
+	verbose_name = _("accept payments"),
+), group)

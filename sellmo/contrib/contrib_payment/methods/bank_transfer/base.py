@@ -49,7 +49,7 @@ class BankTransferPaymentMethod(PaymentMethod):
 		return modules.pricing.get_price(price=Price(0), payment_method=self)
 
 	def __unicode__(self):
-		settings = modules.payment.get_settings()
-		if settings.bank_transfer_description:
-			return settings.bank_transfer_description
+		settings = modules.settings.get_settings()
+		if settings.bank_transfer_name:
+			return settings.bank_transfer_name
 		return super(BankTransferPaymentMethod, self).__unicode__()

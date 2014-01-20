@@ -24,5 +24,17 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.core.middleware.redirection import RedirectionMiddleware
-from sellmo.core.middleware.local import LocalContextMiddleware
+from django.db import models
+from django.utils.translation import ugettext_lazy as _
+
+#
+
+from sellmo import modules
+
+#
+
+modules.settings.add_setting('bank_transfer_name', models.CharField(
+	max_length = 80,
+	default = _("Bank transfer"),
+	verbose_name = _("bank transfer name")
+), _("Bank Transfer"))

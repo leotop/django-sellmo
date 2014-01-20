@@ -49,9 +49,6 @@ class ShippingMethodParentAdmin(PolymorphicParentModelAdmin):
 # Admin for shipping carrier
 class ShippingCarrierAdmin(admin.ModelAdmin):
     pass
-    
-class ShippingSettingsInline(admin.StackedInline):
-    model = modules.shipping.ShippingSettings
 
 
 admin.site.register(modules.shipping.ShippingMethod, ShippingMethodParentAdmin)

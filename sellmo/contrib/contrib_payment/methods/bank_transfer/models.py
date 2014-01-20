@@ -55,27 +55,6 @@ def finalize_model():
 
 	modules.bank_transfer.BankTransferPayment = BankTransferPayment
 
-@load(before='finalize_payment_PaymentSettings')
-def finalize_model():
-
-	class PaymentSettings(modules.payment.PaymentSettings):
-		
-		bank_transfer_description = models.CharField(
-			max_length = 80,
-			default = _("Bank transfer"),
-			verbose_name = _("bank transfer description")
-		)
-		
-		bank_transfer_additional_text = models.TextField(
-			blank = True,
-			verbose_name = _("bank transfer additional text")
-		)
-		
-		class Meta:
-			abstract = True
-
-	modules.payment.PaymentSettings = PaymentSettings
-
 class BankTransferPayment(models.Model):
 	
 	class Meta:

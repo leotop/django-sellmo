@@ -67,8 +67,8 @@ class MollieIdealPaymentMethod(PaymentMethod):
 		return modules.pricing.get_price(price=Price(0), payment_method=self)
 		
 	def __unicode__(self):
-		settings = modules.payment.get_settings()
-		if settings.mollie_ideal_description:
-			return settings.mollie_ideal_description
+		settings = modules.settings.get_settings()
+		if settings.mollie_ideal_name:
+			return settings.mollie_ideal_name
 		return super(MollieIdealPaymentMethod, self).__unicode__()
 		

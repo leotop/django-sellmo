@@ -24,5 +24,30 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.core.middleware.redirection import RedirectionMiddleware
-from sellmo.core.middleware.local import LocalContextMiddleware
+#
+
+from sellmo import modules
+from sellmo.api.decorators import load
+from sellmo.contrib.contrib_shipping.methods.tiered_shipping.config import settings
+
+#
+
+from django.db import models
+from django.utils.translation import ugettext_lazy as _
+
+#
+
+@load(after='finalize_attribute_Attribute')
+def add_settings():
+	if settings.SHIPPING_TIER_ATTRIBUTES > 0:
+		for i in range(settings.SHIPPING_TIER_ATTRIBUTES):
+			modules.settings.add_setting(
+				'shipping_tier_attribute{0}'.format(i + 1),
+				models.ForeignKey(
+					modules.attribute.Attribute,
+					null = True,
+					blank = True,
+					related_name = '+',
+				)
+				, _("Tiered Shipping")
+			)

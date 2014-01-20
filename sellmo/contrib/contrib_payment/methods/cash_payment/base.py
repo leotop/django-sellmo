@@ -41,6 +41,15 @@ class CashPaymentMethod(PaymentMethod):
 	
 	def process(self, order, request, next_step):
 		return next_step
+		
+	def is_available(self, order):
+		if order.shipment:
+			identifier = order.shipment.get_method().identifier.split('_')[0]
+			return modules.shipping.ShippingMethod.objects.filter(
+				allow_cash_payment=True,
+				identifier=identifier
+			).count() == 1
+		return True
 
 	def new_payment(self, order):
 		return modules.cash_payment.CashPayment()
@@ -49,7 +58,7 @@ class CashPaymentMethod(PaymentMethod):
 		return modules.pricing.get_price(price=Price(0), payment_method=self)
 
 	def __unicode__(self):
-		settings = modules.payment.get_settings()
-		if settings.cash_payment_description:
-			return settings.cash_payment_description
+		settings = modules.settings.get_settings()
+		if settings.cash_payment_name:
+			return settings.cash_payment_name
 		return super(CashPaymentMethod, self).__unicode__()

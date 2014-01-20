@@ -31,6 +31,7 @@ from sellmo.config import settings
 #
 
 class RedirectionAccess(object):
+    
     def __init__(self, session):
         self._session = session
         self._last = {}

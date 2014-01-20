@@ -30,7 +30,7 @@ from django.contrib.sites.models import Site
 
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable
-from sellmo.contrib.contrib_shipping.models import ShippingMethod, ShippingCarrier, Shipment, ShippingSettings
+from sellmo.contrib.contrib_shipping.models import ShippingMethod, ShippingCarrier, Shipment
 
 #
 
@@ -39,7 +39,6 @@ class ShippingModule(Module):
 	ShippingMethod = ShippingMethod
 	ShippingCarrier = ShippingCarrier
 	Shipment = Shipment
-	ShippingSettings = ShippingSettings
 	subtypes = []
 	
 	@classmethod
@@ -48,9 +47,3 @@ class ShippingModule(Module):
 		
 		# Shouldn't be a problem if Capital cased classnames are used.
 		setattr(self, subtype.__name__, subtype)
-	
-	def get_settings(self):
-		try:
-			return Site.objects.get_current().shipping_settings
-		except self.ShippingSettings.DoesNotExist:
-			return self.ShippingSettings()

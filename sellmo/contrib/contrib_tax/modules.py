@@ -30,14 +30,13 @@ from django.contrib.sites.models import Site
 
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable
-from sellmo.contrib.contrib_tax.models import Tax, TaxSettings
+from sellmo.contrib.contrib_tax.models import Tax
 
 #
 
 class TaxModule(Module):
     namespace = 'tax'
     Tax = Tax
-    TaxSettings = TaxSettings
     subtypes = []
     
     @classmethod
@@ -46,9 +45,3 @@ class TaxModule(Module):
         
         # Shouldn't be a problem if Capital cased classnames are used.
         setattr(self, subtype.__name__, subtype)
-    
-    def get_settings(self):
-        try:
-            return Site.objects.get_current().tax_settings
-        except self.TaxSettings.DoesNotExist:
-            return self.TaxSettings()

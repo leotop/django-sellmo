@@ -35,6 +35,21 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
+@load(before='finalize_shipping_ShippingMethod')
+def load_model():
+	
+	class ShippingMethod(modules.shipping.ShippingMethod):
+		
+		allow_cash_payment = models.BooleanField(
+			default = False,
+			verbose_name = _("allow cash payment")
+		)
+		
+		class Meta:
+			abstract = True
+			
+	modules.shipping.ShippingMethod = ShippingMethod
+
 @load(action='finalize_cash_payment_Payment', after='finalize_checkout_Payment')
 def finalize_model():
 
@@ -54,27 +69,6 @@ def finalize_model():
 			verbose_name_plural = _("cash payments")
 
 	modules.cash_payment.CashPayment = CashPayment
-
-@load(before='finalize_payment_PaymentSettings')
-def finalize_model():
-
-	class PaymentSettings(modules.payment.PaymentSettings):
-		
-		cash_payment_description = models.CharField(
-			max_length = 80,
-			default = _("cash payment"),
-			verbose_name = _("cash payment description")
-		)
-		
-		cash_payment_additional_text = models.TextField(
-			blank = True,
-			verbose_name = _("cash payment additional text")
-		)
-		
-		class Meta:
-			abstract = True
-
-	modules.payment.PaymentSettings = PaymentSettings
 
 class CashPayment(models.Model):
 	

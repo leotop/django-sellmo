@@ -24,5 +24,18 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.core.middleware.redirection import RedirectionMiddleware
-from sellmo.core.middleware.local import LocalContextMiddleware
+from django.db import models
+from django.utils.translation import ugettext_lazy as _
+
+#
+
+from sellmo import modules
+
+#
+
+modules.settings.add_setting('cash_payment_name', models.CharField(
+	max_length = 80,
+	default = _("Cash payment"),
+	verbose_name = _("cash payment name")
+), _("Cash Payment"))
+

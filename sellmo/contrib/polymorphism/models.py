@@ -35,6 +35,8 @@ from django.contrib.admin.util import quote
 from django.contrib.admin.models import LogEntry
 from django.contrib.contenttypes.models import ContentType
 
+#
+
 class LogEntryMixin(ModelMixin):
     model = LogEntry
     def get_admin_url(self):

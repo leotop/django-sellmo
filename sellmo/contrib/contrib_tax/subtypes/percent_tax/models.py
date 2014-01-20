@@ -51,8 +51,8 @@ def load_subtypes():
 		)
 
 		def apply(self, price):
-			settings = modules.tax.get_settings()
-			if settings.calculate_inclusive:
+			settings = modules.settings.get_settings()
+			if settings.tax_inclusive:
 				price /= (1 + self.rate)
 			amount = price.amount * self.rate
 			tax = Price(amount, currency=price.currency, type='tax', context={'tax' : self})

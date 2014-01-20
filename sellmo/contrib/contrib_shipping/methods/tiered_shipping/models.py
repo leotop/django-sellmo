@@ -36,8 +36,8 @@ from django.db import models
 from django.db.models import Q
 from django.db.models.query import QuerySet
 from django.core.exceptions import ValidationError
-from django.utils.functional import lazy
 from django.utils import six
+from django.utils.functional import lazy
 from django.utils.translation import ugettext_lazy as _
 
 #
@@ -101,8 +101,8 @@ def load_model():
 			abstract = True
 	
 	def get_attribute_name(i):
-		settings = modules.shipping.get_settings()
-		attribute = getattr(settings, 'attribute{0}'.format(i + 1))
+		settings = modules.settings.get_settings()
+		attribute = getattr(settings, 'shipping_tier_attribute{0}'.format(i + 1))
 		if not attribute:
 			attribute = _("value {0}".format(i + 1))
 		return _(u"max {0}").format(attribute)
@@ -130,9 +130,9 @@ class TieredShippingTierQuerySet(QuerySet):
 		
 		if settings.SHIPPING_TIER_ATTRIBUTES > 0:
 			# Match against attribute totals
-			_settings = modules.shipping.get_settings()
+			_settings = modules.settings.get_settings()
 			for i in range(settings.SHIPPING_TIER_ATTRIBUTES):
-				attribute = getattr(_settings, 'attribute{0}'.format(i + 1))
+				attribute = getattr(_settings, 'shipping_tier_attribute{0}'.format(i + 1))
 				# See if attribute is configured
 				if attribute:
 					# Collect order total value for this attribute
@@ -170,42 +170,31 @@ class TieredShippingTierManager(models.Manager):
 
 	def get_query_set(self):
 		return TieredShippingTierQuerySet(self.model)
-	
-@load(before='finalize_shipping_ShippingSettings')
-@load(after='finalize_attribute_Attribute')
+		
+		
+@load(before='finalize_settings_SiteSettings')
 def load_model():
 	if settings.SHIPPING_TIER_ATTRIBUTES > 0:
-		for i in range(settings.SHIPPING_TIER_ATTRIBUTES):
-			modules.shipping.ShippingSettings.add_to_class('attribute{0}'.format(i + 1),
-				models.ForeignKey(
-					modules.attribute.Attribute,
-					null = True,
-					blank = True,
-					related_name = '+',
-				)
-			)
-			
-		class ShippingSettings(modules.shipping.ShippingSettings):
-			
+		class SiteSettings(modules.settings.SiteSettings):
 			def clean(self):
 				valid_types = [
 					modules.attribute.Attribute.TYPE_INT,
 					modules.attribute.Attribute.TYPE_FLOAT,
 				]
-				
+
 				errors = {}
 				for i in range(settings.SHIPPING_TIER_ATTRIBUTES):
-					attr = 'attribute{0}'.format(i + 1)
+					attr = 'shipping_tier_attribute{0}'.format(i + 1)
 					attribute = getattr(self, attr, None)
 					if attribute and attribute.type not in valid_types:
 						errors[attr] = [_("Invalid attribute type, must be numeric.")]
-						
+
 				if errors:
 					raise ValidationError(errors)
-						
+
 			class Meta:
 				abstract = True
-				
-		modules.shipping.ShippingSettings = ShippingSettings
+
+		modules.settings.SiteSettings = SiteSettings
 				
 	

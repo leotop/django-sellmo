@@ -24,5 +24,41 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.core.middleware.redirection import RedirectionMiddleware
-from sellmo.core.middleware.local import LocalContextMiddleware
+#
+
+from sellmo import modules
+from sellmo.api.decorators import load
+
+#
+
+from django.db import models
+from django.utils.translation import ugettext_lazy as _
+
+#
+
+group = _("Taxes")
+
+@load(after='finalize_tax_Tax')
+def finalize_model():
+
+	modules.settings.add_setting('payment_costs_tax', models.ForeignKey(
+		modules.tax.Tax,
+		related_name = '+',
+		null = True,
+		blank = True,
+		verbose_name = _("payment costs tax"),
+	), group)
+
+	modules.settings.add_setting('shipping_costs_tax', models.ForeignKey(
+		modules.tax.Tax,
+		related_name = '+',
+		null = True,
+		blank = True,
+		verbose_name = _("shipping costs tax"),
+	), group)
+
+
+modules.settings.add_setting('tax_inclusive', models.BooleanField(
+	default = False,
+	verbose_name = _("tax inclusive"),
+), group)

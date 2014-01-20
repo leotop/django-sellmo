@@ -26,9 +26,8 @@
 
 from sellmo.core.redirection import RedirectionAccess
 
+#
+
 class RedirectionMiddleware(object):
     def process_request(self, request):
         request.redirection = RedirectionAccess(request.session)
-        
-    def process_response(self, request, response):
-        return response
