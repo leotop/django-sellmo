@@ -37,10 +37,6 @@ from django.contrib.admin.util import quote
 
 #
 
-from sellmo.utils.cloning import Cloneable
-
-#
-
 _local = local()
 
 class PolymorphicOverride(object):
@@ -140,7 +136,7 @@ class PolymorphicManager(models.Manager):
     def polymorphic(self, *args, **kwargs):
         return self.get_query_set().polymorphic(*args, **kwargs)
 
-class PolymorphicModel(models.Model, Cloneable):
+class PolymorphicModel(models.Model):
 
     content_type = models.ForeignKey(ContentType, editable=False)
     objects = PolymorphicManager()
@@ -162,7 +158,7 @@ class PolymorphicModel(models.Model, Cloneable):
         with PolymorphicOverride(False):
             upcasted = self.__class__.objects.get(pk=self.pk)
             super(PolymorphicModel, upcasted).delete(*args, **kwargs)
-
+    
     def downcast(self):
         if not self._downcasted:
             downcasted = self
