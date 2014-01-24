@@ -98,7 +98,7 @@ class ColorMappingManager(models.Manager):
             
         def do(product, color):
             if hasattr(modules, 'variation'):
-                exists = modules.attribute.Value.objects.for_product_or_variant(product)
+                exists = modules.attribute.Value.objects.for_product_or_variants_of(product)
             else:
                 exists = modules.attribute.Value.objects.for_product(product)
             

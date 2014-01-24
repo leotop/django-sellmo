@@ -59,14 +59,14 @@ class VariationModule(Module):
         if variations is None:
             variations = modules.variation.Variation.objects.for_product(product)
             if grouped:
-                attributes = modules.attribute.Attribute.objects.which_variates(product=product)
+                attributes = modules.attribute.Attribute.objects.which_variate(product=product)
                 try:
                     group = attributes.get(groups=True)
                 except modules.attribute.Attribute.DoesNotExist:
                     return None
                 else:
                     result = []
-                    for value in modules.attribute.Value.objects.for_product_or_variant(product).for_attribute(attribute=group, distinct=True):
+                    for value in modules.attribute.Value.objects.which_variate(product).for_attribute(attribute=group, distinct=True):
                         
                         # Get variations for this grouped attribute / value combination
                         qargs = {

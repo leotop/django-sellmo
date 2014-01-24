@@ -37,6 +37,52 @@ from sellmo.contrib.contrib_variation.signals import variations_deprecated
 
 class ProductVariationsCache(Cache):
 	
+	@staticmethod
+	def materialize(cache, grouped=False):
+		# Collect all variations so we can do one big query
+		if not grouped:
+			all_variations = list(cache)
+		else:
+			all_variations = []
+			for el in cache:
+				all_variations += el['variations']
+				
+		# Query them all
+		all_variations = list_from_pks(modules.variation.Variation.objects.filter(pk__in=all_variations), all_variations)
+		
+		# Reconstruct
+		if grouped:
+			grouped_variations = []
+			if len(cache) > 0:
+				all_values = [variation['value'] for variation in cache]
+				all_values = list_from_pks(modules.attribute.Value.objects.filter(pk__in=all_values), all_values)
+				all_variants = [variation['variant'] for variation in cache]
+				all_variants = list_from_pks(modules.product.Product.objects.polymorphic().filter(pk__in=all_variants), all_variants)
+				attribute = modules.attribute.Attribute.objects.get(pk=cache[0]['attribute'])
+			
+			for variation in cache:
+				
+				# Get our slice
+				variations = all_variations[:len(variation['variations'])]
+				all_variations = all_variations[len(variations):]
+				value = all_values[0]
+				all_values = all_values[1:]
+				variant = all_variants[0]
+				all_variants = all_variants[1:]
+				
+				grouped_variations += [{
+					'attribute' : attribute,
+					'value' : value,
+					'variations' : variations,
+					'variant' : variant,
+				}]
+			
+			variations = grouped_variations
+		else:
+			variations = all_variations
+			
+		return variations
+	
 	def on_variations_deprecated(self, sender, product, **kwargs):
 		keys = [
 			self.get_variations_key(product.pk, grouped=True),
@@ -53,50 +99,15 @@ class ProductVariationsCache(Cache):
 	def capture(self, product, grouped=False, **kwargs):
 		variations = self.get(self.get_variations_key(product.pk, grouped))
 		variations_hit = variations is not None
+		
 		if variations_hit:
-			cache = variations
-			
-			# Collect all variations so we can do one big query
-			if not grouped:
-				all_variations = list(variations)
-			else:
-				all_variations = []
-				for el in cache:
-					all_variations += el['variations']
-					
-			# Query them all
-			all_variations = list_from_pks(modules.variation.Variation.objects.filter(pk__in=all_variations), all_variations)
-			
-			# Reconstruct
-			if grouped:
-				grouped_variations = []
-				if len(cache) > 0:
-					all_values = [variation['value'] for variation in cache]
-					all_values = list_from_pks(modules.attribute.Value.objects.filter(pk__in=all_values), all_values)
-					all_variants = [variation['variant'] for variation in cache]
-					all_variants = list_from_pks(modules.product.Product.objects.polymorphic().filter(pk__in=all_variants), all_variants)
-					attribute = modules.attribute.Attribute.objects.get(pk=cache[0]['attribute'])
-				
-				for variation in cache:
-					
-					# Get our slice
-					variations = all_variations[:len(variation['variations'])]
-					all_variations = all_variations[len(variations):]
-					value = all_values[0]
-					all_values = all_values[1:]
-					variant = all_variants[0]
-					all_variants = all_variants[1:]
-					
-					grouped_variations += [{
-						'attribute' : attribute,
-						'value' : value,
-						'variations' : variations,
-						'variant' : variant,
-					}]
-				
-				variations = grouped_variations
-			else:
-				variations = all_variations
+			try:
+				variations = self.materialize(variations, grouped)
+			except Exception:
+				# Cache must have been invalid, clear it.
+				self.delete(self.get_variations_key(product.pk, grouped))
+				variations = None
+				variations_hit = False
 		
 		return {
 			'variations' : variations,

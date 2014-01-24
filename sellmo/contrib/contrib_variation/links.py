@@ -147,7 +147,7 @@ def get_add_to_cart_formset(formset, cls, product, variations=None, initial=None
     }
     
     # Add variation field as either a choice or as a hidden integer
-    if not modules.variation.batch_buy_enabled and variations:
+    if not modules.variation.batch_buy_enabled and variations and len(variations) > 1:
         dict['variation'] = forms.ChoiceField(
             choices = [(el.id, modules.variation.get_variation_choice(variation=el)) for el in variations]
         )
