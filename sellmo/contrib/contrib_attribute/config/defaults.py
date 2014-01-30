@@ -24,27 +24,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo import modules
-from sellmo.contrib.contrib_attribute import comparison
+from django.utils.translation import ugettext_lazy as _
 
 #
 
-from django import template
-
-#
-
-register = template.Library()
-
-#
-	
-@register.filter
-def difference(a, b):
-	return comparison.difference(a, b)
-	
-@register.filter
-def intersection(a, b):
-	return comparison.intersection(a, b)
-	
-@register.filter
-def union(a, b):
-	return comparison.union(a, b)
+VALUE_FORMAT = u"{value.value}"

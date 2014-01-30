@@ -32,8 +32,8 @@ from sellmo.magic import ModelMixin, ManagerMixinHelper
 from sellmo.utils.polymorphism import PolymorphicModel, PolymorphicManager
 from sellmo.contrib.contrib_variation.variant import VariantFieldDescriptor, VariantMixin, get_differs_field_name
 from sellmo.contrib.contrib_variation.utils import generate_slug
-from sellmo.contrib.contrib_variation.signals import variations_deprecated
-from sellmo.contrib.contrib_variation.helpers import RecipelessAttributeHelper, VariantAttributeHelper
+from sellmo.contrib.contrib_variation.signals import variations_deprecating, variations_deprecated
+from sellmo.contrib.contrib_variation.helpers import RecipelessAttributeHelper, VariantAttributeHelper, VariationAttributeHelper
 from sellmo.contrib.contrib_attribute.query import ProductQ
 
 #
@@ -183,6 +183,10 @@ def finalize_model():
 
         
 class Variant(models.Model):
+    
+    def __unicode__(self):
+        return u", ".join([unicode(value) for value in self.values.all()])
+    
     class Meta:
         abstract = True
                 
@@ -192,7 +196,7 @@ def on_value_pre_save(sender, instance, *args, **kwargs):
     if getattr(product, '_is_variant', False):
         instance.base_product = product.product
         
-def on_value_post_save(sender, instance, created, update_fields=None, *args, **kwargs):
+def on_value_post_save(sender, instance, *args, **kwargs):
     modules.variation.Variation.objects.deprecate(instance.base_product if instance.base_product else instance.product)
     
 def on_value_pre_delete(sender, instance, *args, **kwargs):
@@ -203,7 +207,7 @@ def listen():
     pre_save.connect(on_value_pre_save, sender=modules.attribute.Value)
     post_save.connect(on_value_post_save, sender=modules.attribute.Value)
     pre_delete.connect(on_value_pre_delete, sender=modules.attribute.Value)
-    
+
 
 @load(after='finalize_attribute_Attribute')
 def load_manager():
@@ -249,6 +253,15 @@ def load_model():
             default = False,
             verbose_name = _("groups")
         )
+        
+        def save(self, *args, **kwargs):
+            old = None
+            if self.pk:
+                old = modules.attribute.Attribute.objects.get(pk=self.pk)
+            super(Attribute, self).save(*args, **kwargs)
+            if self.variates or old and old.variates:
+                for product in modules.product.Product.objects.filter(ProductQ(attribute=self, product_field='base_product')):
+                    modules.variation.Variation.objects.deprecate(product)
         
         class Meta:
             abstract = True
@@ -432,13 +445,7 @@ class VariationManager(models.Manager):
             return
        
         # Do we have an attribute which groups ?
-        try:
-            group = attributes.get(groups=True)
-        except modules.attribute.Attribute.DoesNotExist:
-            group = False
-        except modules.attribute.Attribute.MultipleObjectsReturned:
-            # Abort generation
-            raise Exception("Only one attribute can group")
+        group = attributes.filter(groups=True).first()
             
         # CONVERT TO LIST FOR PERFORMANCE AND INDEXING
         attributes = list(attributes)
@@ -502,7 +509,7 @@ class VariationManager(models.Manager):
         # Filter out non existent combinations
         for combination in list(map):
             for value in combination:
-                if not value is None and not isinstance(value, modules.attribute.Value):
+                if value is not None and not isinstance(value, modules.attribute.Value):
                     index = map.index(combination)
                     map.pop(index)
                     break
@@ -522,6 +529,10 @@ class VariationManager(models.Manager):
         while map:
             values = map.pop(0)
             values = [value for value in values if not value is None]
+            
+            # Skip empties
+            if not values:
+                continue
             
             variant = product
             explicits = []
@@ -571,13 +582,14 @@ class VariationManager(models.Manager):
                 }
                 variations = modules.variation.Variation.objects.filter(product=product).filter(**qargs)
                 
-                # Get single variant
+                # Get variant
                 qargs = [ProductQ(group, value.get_value())]
-                for attribute in attributes:
-                    if attribute != group:
-                        q = ~ProductQ(attribute)
-                        qargs.append(q)
-                        
+                if variations.count() > 1:
+                    # Get single variant common across all variations
+                    for attribute in attributes:
+                        if attribute != group:
+                            q = ~ProductQ(attribute)
+                            qargs.append(q)
                 try:
                     variant = product.variants.get(*qargs)
                 except modules.product.Product.DoesNotExist:
@@ -592,6 +604,7 @@ class VariationManager(models.Manager):
     
     def deprecate(self, product):
         if not product.variations_deprecated:
+            variations_deprecating.send(self, product=product)
             product.variations_deprecated = True
             variations_deprecated.send(self, product=product)
         
@@ -626,6 +639,10 @@ class VariationManager(models.Manager):
 class Variation(models.Model):
 
     objects = VariationManager()
+    
+    def __init__(self, *args, **kwargs):
+        super(Variation, self).__init__(*args, **kwargs)
+        self.attributes = VariationAttributeHelper(self)
     
     @staticmethod
     def generate_id(product, values):

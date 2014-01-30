@@ -33,9 +33,11 @@ from django.utils.translation import ugettext_lazy as _
 from sellmo import modules
 from sellmo.api.decorators import load
 from sellmo.utils.polymorphism import PolymorphicModel, PolymorphicManager
+from sellmo.utils.formatting import call_or_format
 
 #
 
+from sellmo.contrib.contrib_attribute.config import settings
 from sellmo.contrib.contrib_attribute.fields import AttributeKeyField, AttributeTypeField
 from sellmo.contrib.contrib_attribute.helpers import AttributeHelper
 
@@ -82,7 +84,7 @@ def finalize_model():
         product = models.ForeignKey(
             modules.product.Product,
             db_index = True,
-            related_name = '+',
+            related_name = 'values',
         )
         
         # Possible value object
@@ -96,7 +98,7 @@ def finalize_model():
         
         class Meta:
             app_label = 'attribute'
-            ordering = ['attribute', 'value_string', 'value_int', 'value_object']
+            ordering = ['attribute', 'value_string', 'value_int', 'value_float', 'value_object']
             verbose_name = _("value")
             verbose_name_plural = _("values")
     
@@ -120,7 +122,7 @@ class ValueManager(models.Manager):
         return self.get_query_set().for_attribute(*args, **kwargs)
     
 class Value(models.Model):
-
+    
     objects = ValueManager()
     
     value_int = models.IntegerField(
@@ -138,31 +140,29 @@ class Value(models.Model):
         blank = True,
         default = '',
     )
-    
-    __value_object = None
-    @property
-    def _value_object(self):
-        if self.value_object and self.__value_object is None:
-            self.__value_object = self.value_object.downcast()
-        return self.__value_object
-    
-    def __unicode__(self):
-        return u"{0} - {1} : {2}".format(self.product, self.attribute, self.get_value())
         
     def get_value(self):
         field = self.attribute.value_field
+        value = getattr(self, field)
         if field == 'value_object':
-            return self._value_object
-        
-        return getattr(self, field)
+            value = value.downcast()
+        return value
         
     def set_value(self, value):
+        if value != self.get_value():
+            self._old_value = self.get_value()
         field = self.attribute.value_field
-        if field == 'value_object':
-            self.__value_object = None
         setattr(self, field, value)
         
     value = property(get_value, set_value)
+    
+    _old_value = None
+    def get_old_value(self):
+        if self._old_value is None:
+            return self.get_value()
+        return self._old_value
+    
+    old_value = property(get_old_value)
     
     @property
     def is_assigned(self):
@@ -174,7 +174,10 @@ class Value(models.Model):
         
     @property
     def template(self):
-        return modules.attribute.get_value_template(value=self)
+        type = self.attribute.type
+        if self.attribute.type == Attribute.TYPE_OBJECT:
+            type = self.value.__class__.__name__
+        return 'attribute/%s.html' % type.lower()
         
     def save_value(self):
         # Re-assign product
@@ -183,6 +186,9 @@ class Value(models.Model):
             self.save()
         elif not self.pk is None:
             self.delete()
+            
+    def __unicode__(self):
+        return call_or_format(settings.VALUE_FORMAT, value=self)
     
     class Meta:
         abstract = True
@@ -261,6 +267,17 @@ class Attribute(models.Model):
         verbose_name = _("sort order"),
     )
     
+    def save(self, *args, **kwargs):
+        old = None
+        if self.pk:
+            old = modules.attribute.Attribute.objects.get(pk=self.pk)
+        
+        if self.type != old.type:
+            raise Exception((_(u"Cannot change attribute type " \
+                u"of an attribute that is already in use.")))
+        
+        super(Attribute, self).save(*args, **kwargs)
+    
     def parse(self, string):
         if self.type == self.TYPE_STRING:
             return string
@@ -280,6 +297,10 @@ class Attribute(models.Model):
     @property
     def help_text(self):
         return ''
+        
+    @property
+    def label(self):
+        return self.name.capitalize()
         
     @property
     def validators(self):

@@ -327,6 +327,7 @@ class CheckoutModule(sellmo.Module):
             # Resolve shipping method
             method = form.cleaned_data['method']
             method = methods[method]
+            order.invalidate()
             method.ship(order)
             order.calculate(subtotal=order.subtotal)
             processed = True

@@ -68,7 +68,7 @@ class VariantAttributeHelper(RecipelessAttributeHelper):
         
     def set_value_value(self, key, value):
         product_value = self._product.product.attributes.get_value(key)
-        if product_value.value == value:
+        if product_value.value == value or product_value.old_value == value:
             # Make sure variant doesn't have this value set
             self.get_value(key).value = None
         else:
@@ -86,7 +86,19 @@ class VariantAttributeHelper(RecipelessAttributeHelper):
             if value.is_assigned:
                 yield value
         
+class VariationAttributeHelper(object):
+    def __init__(self, variation):
+        self._variation = variation
+        self._variant = variation.variant.downcast()
         
-        
-
+    def __iter__(self):
+        values = {}
+        for value in self._variation.values.all():
+            values[value.attribute.key] = value
+        for value in self._variant.attributes:
+            if value.attribute.key not in values:
+                values[value.attribute.key] = value
+        for value in values.values():
+            if value.is_assigned:
+                yield value
     

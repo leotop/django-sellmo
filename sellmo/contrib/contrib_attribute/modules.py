@@ -55,19 +55,6 @@ class AttributeModule(Module):
         return attributes
         
     @chainable()
-    def get_value_template(self, chain, value, template=None, **kwargs):
-        if not template:
-            type = value.attribute.type
-            if value.attribute.type == Attribute.TYPE_OBJECT:
-                type = value.get_value().__class__.__name__
-            template = 'attribute/%s.html' % type.lower()
-        
-        if chain:
-            out = chain.execute(value=value, template=template, **kwargs)
-            template = out.get('template', template)
-        return template
-        
-    @chainable()
     def filter(self, chain, request, products, attr, value, attribute=None, operator=None, **kwargs):
         if not attribute:
             try:

@@ -31,7 +31,7 @@ from django.db.models.signals import post_save
 from sellmo import modules
 from sellmo.caching import Cache, cached
 from sellmo.utils.querying import list_from_pks
-from sellmo.contrib.contrib_variation.signals import variations_deprecated
+from sellmo.contrib.contrib_variation.signals import variations_deprecating, variations_deprecated
 
 #
 
@@ -125,7 +125,7 @@ class ProductVariationsCache(Cache):
 						'attribute' : variation['attribute'].pk,
 						'value' : variation['value'].pk,
 						'variations' : [el.pk for el in variation['variations']],
-						'variant' : variation['variant'].pk,
+						'variant' :variation['variant'].pk,
 					})
 					
 			self.set(self.get_variations_key(product.pk, grouped), cache)
@@ -133,10 +133,9 @@ class ProductVariationsCache(Cache):
 	def hookup(self):
 		variations_deprecated.connect(self.on_variations_deprecated)
 
-
 class VariationChoiceCache(Cache):
 	
-	def on_variations_deprecated(self, sender, product, **kwargs):
+	def on_variations_deprecating(self, sender, product, **kwargs):
 		product = product.downcast()
 		keys = [
 			self.get_choice_key(variation.pk) for variation in product.variations.all()
@@ -158,7 +157,7 @@ class VariationChoiceCache(Cache):
 			self.set(self.get_choice_key(variation.pk), choice)
 		
 	def hookup(self):
-		variations_deprecated.connect(self.on_variations_deprecated)
+		variations_deprecating.connect(self.on_variations_deprecating)
 
 
 get_variations = cached(ProductVariationsCache, 'get_variations', 'variation', timeout=None)

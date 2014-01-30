@@ -358,12 +358,15 @@ class Order(trackable('sellmo_order')):
         
         self.total = Price()
         self.calculated = None
-        self.save()
         
         if self.shipment:
             self.shipment.delete()
         if self.payment:
             self.payment.delete()
+        
+        self.shipment = None
+        self.payment = None
+        self.save()
             
     # States
     

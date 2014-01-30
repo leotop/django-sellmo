@@ -28,4 +28,5 @@ import django.dispatch
 
 #
 
+variations_deprecating = django.dispatch.Signal()
 variations_deprecated = django.dispatch.Signal()

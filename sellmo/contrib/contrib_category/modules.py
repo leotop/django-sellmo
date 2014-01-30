@@ -42,23 +42,25 @@ class CategoryModule(Module):
     def list(self, chain, parent=None, categories=None, nested=False, **kwargs):
         if categories is None:
             if parent:
-                categories = parent.children.all()
+                categories = parent.get_children()
             else:
                 if nested:
-                    categories = self.Category.objects.all()
+                    categories = self.Category.objects.all().ordered()
                 else:
-                    categories = self.Category.objects.root()
-            categories = categories.active()
+                    categories = self.Category.objects.root_nodes().ordered()
+        
+        categories = categories.active()
         
         if chain:
             out = chain.execute(request=request, products=products)
-            if out.has_key('categories'):
-                categories = out['categories']
-        
+            categories = out.get('categories', categories)
         return categories
         
     @view(r'^$')
     def index(self, chain, request, context=None, **kwargs):
+        if context == None:
+            context = {}
+        
         if chain:
             return chain.execute(request, context=context, **kwargs)
         else:

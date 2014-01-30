@@ -39,10 +39,10 @@ from django.utils.text import capfirst
 class AttributeHelper(object):
     
     def __init__(self, product):
-        self.__dict__['_product'] = product
-        self.__dict__['_values'] = {}
-        self.__dict__['_attributes'] = {}
-        self.__dict__['_populated'] = False
+        self._product = product
+        self._values = {}
+        self._attributes = {}
+        self._populated = False
         
     def get_attribute(self, key):
         if not self._attributes.has_key(key):
@@ -105,6 +105,3 @@ class AttributeHelper(object):
     def save(self):
         for value in self._values.values():
             value.save_value()
-            
-        # Clean cache
-        self._values = {}

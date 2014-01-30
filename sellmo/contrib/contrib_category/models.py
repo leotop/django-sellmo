@@ -175,8 +175,8 @@ class CategoryQuerySet(QuerySet):
     def active(self):
         return self.filter(active=True)
         
-    def root(self):
-        return self.filter(level=0)
+    def ordered(self):
+        return self.order_by('sort_order', 'name')
     
 class CategoryManager(TreeManager):
     def in_parent(self, *args, **kwargs):
@@ -184,9 +184,6 @@ class CategoryManager(TreeManager):
         
     def active(self, *args, **kwargs):
         return self.get_query_set().active(*args, **kwargs)
-        
-    def root(self, *args, **kwargs):
-        return self.get_query_set().root(*args, **kwargs)
 
     def get_query_set(self):
         return CategoryQuerySet(self.model)

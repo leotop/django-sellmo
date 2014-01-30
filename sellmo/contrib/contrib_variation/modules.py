@@ -27,6 +27,7 @@
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable
 from sellmo.api.pricing import Price
+from sellmo.utils.formatting import call_or_format
 from sellmo.contrib.contrib_variation.models import Variant, Variation, VariationsState, VariationRecipe
 from sellmo.contrib.contrib_attribute.query import ProductQ
 
@@ -36,6 +37,10 @@ from django.utils.translation import ugettext_lazy as _
 #
 
 from django.db.models import Q
+
+#
+
+from sellmo.contrib.contrib_variation.config import settings
 
 #
 
@@ -60,14 +65,12 @@ class VariationModule(Module):
             variations = modules.variation.Variation.objects.for_product(product)
             if grouped:
                 attributes = modules.attribute.Attribute.objects.which_variate(product=product)
-                try:
-                    group = attributes.get(groups=True)
-                except modules.attribute.Attribute.DoesNotExist:
-                    return None
-                else:
+                group = attributes.filter(groups=True).first()
+                if group:
                     result = []
-                    for value in modules.attribute.Value.objects.which_variate(product).for_attribute(attribute=group, distinct=True):
-                        
+                    values = modules.attribute.Value.objects.which_variate(product).for_attribute(attribute=group, distinct=True)
+                    values = modules.attribute.get_sorted_values(values=values, attribute=group)
+                    for value in values:
                         # Get variations for this grouped attribute / value combination
                         qargs = {
                             'values__attribute' : group,
@@ -84,9 +87,11 @@ class VariationModule(Module):
                             'attribute' : group,
                             'value' : value,
                             'variations' : variations,
-                            'variant' : variations[0].group_variant,
+                            'variant' : variations[0].group_variant.downcast(),
                         }]
                     variations = result
+                else:
+                    return None
         
         if chain:
             out = chain.execute(product=product, grouped=grouped, variations=variations, **kwargs)
@@ -105,31 +110,45 @@ class VariationModule(Module):
              if out.has_key('choice'):
                  choice = out['choice']
                  
-        return choice 
+        return choice
         
     @chainable()
     def generate_variation_choice(self, chain, variation, choice=None, **kwargs):
         if choice is None:
-            choice = u", ".join([u"%s: %s" % (value.attribute.name, unicode(value.value)) for value in variation.values.all().order_by('attribute')])
             variant = variation.variant.downcast()
-            if hasattr(variant, '_is_variant') and variant.price_adjustment != 0:
-                prefix = u"+" if variant.price_adjustment > 0 else u"-"
-                choice = u"{0} {2}{1}".format(choice, Price(variant.price_adjustment), prefix)
+            price_adjustment = None
+            if hasattr(variant, '_is_variant') and variant.price_adjustment:
+                price_adjustment = Price(variant.price_adjustment)
             
+            values = settings.VARIATION_VALUE_SEPERATOR.join(
+                [unicode(value) for value in variation.values.all().order_by('attribute')]
+            )
+            
+            choice = call_or_format(settings.VARIATION_CHOICE_FORMAT,
+                variation=variation,
+                variant=variant,
+                values=values,
+                price_adjustment=price_adjustment
+            )
+        
         if chain:
             out = chain.execute(variation=variation, choice=choice, **kwargs)
             if out.has_key('choice'):
                 choice = out['choice']
-                
         return choice
         
     @chainable()
     def generate_variation_description(self, chain, product, values, description=None, **kwargs):
         if description is None:
-            if hasattr(product, 'product'):
-                product = product.product
-            prefix = unicode(product)
-            description = u"%s %s" % (prefix, u", ".join([unicode(value.value) for value in values]))
+            
+            values = settings.VARIATION_VALUE_SEPERATOR.join(
+                [unicode(value) for value in values]
+            )
+            
+            description = call_or_format(settings.VARIATION_DESCRIPTION_FORMAT,
+                product=product,
+                values=values
+            )
             
         if chain:
             out = chain.execute(product=product, values=values, description=description, **kwargs)
@@ -137,3 +156,5 @@ class VariationModule(Module):
                 description = out['description']
         
         return description
+    
+        

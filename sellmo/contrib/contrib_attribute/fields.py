@@ -63,11 +63,13 @@ class AttributeKeyField(models.SlugField):
 class AttributeTypeField(models.CharField):
     def validate(self, value, instance):
         super(AttributeTypeField, self).validate(value, instance)
-        if not instance.pk:
-            return
+        old = None
         
-        if value == modules.attribute.Attribute.objects.get(pk=instance.pk).type:
-            return  
+        if instance.pk:
+            old = modules.attribute.Attribute.objects.get(pk=instance.pk)
+            
+        if not old or value == old.type:
+            return
         
         if instance.values.count() > 0:
             raise ValidationError(_(u"Cannot change attribute type " \

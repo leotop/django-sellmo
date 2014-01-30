@@ -25,6 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from sellmo import modules
+from sellmo.utils.formatting import call_or_format
 
 #
 
@@ -53,10 +54,7 @@ class Currency(object):
         return self.code
         
     def format(self, amount, align=-1):
-        if callable(self._format):
-            return self._format(amount=amount, align=align)
-        else:
-            return self._format.format(amount=amount, align=align)
+        return call_or_format(self._format, amount=amount, align=align)
         
 class PriceType(object):
     def __init__(self, key, name):
@@ -126,12 +124,6 @@ class Price(object):
             current = self.mutations.get(key, 0)
             self.mutations[key] = current + amount
         
-    def __invert__(self):
-        price = self.clone()
-        price.amount = -price.amount
-        price.mutations = {key : -amount for key, amount in price.mutations.iteritems()}
-        return price
-        
     def __add__(self, other):
         Price.sanity_check(self, other)
         price = self.clone()
@@ -160,6 +152,12 @@ class Price(object):
         price.mutations = {key : amount / divider for key, amount in price.mutations.iteritems()}
         return price
         
+    def __neg__(self):
+        price = self.clone()
+        price.amount = -price.amount
+        price.mutations = {key : -amount for key, amount in price.mutations.iteritems()}
+        return price
+        
     def __contains__(self, key):
         if not isinstance(key, (basestring, PriceType)):
             raise TypeError()
@@ -181,7 +179,7 @@ class Price(object):
         self.mutations[str(key)] = value.amount
             
     def __nonzero__(self):
-        return self.amount > 0
+        return self.amount != 0
     
     def __unicode__(self):
         return self.currency.format(self.amount)

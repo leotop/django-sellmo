@@ -60,7 +60,7 @@ class ProductAttributeMixin(object):
 
 class AttributeAdmin(admin.ModelAdmin):
     
-    list_display = ['name', 'required']
+    list_display = ['name', 'type', 'required', 'key']
     
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         if db_field.name == 'object_choices':
@@ -70,6 +70,7 @@ class AttributeAdmin(admin.ModelAdmin):
 class ValueAdmin(admin.ModelAdmin):
     
     list_display = ['product', 'attribute', 'value']
+    list_filter = ['attribute']
     
     def value(self, obj):
         return obj.get_value()

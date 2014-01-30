@@ -107,7 +107,7 @@ class ProductAttributeFormFactory(object):
         
     def get_attribute_field_kwargs(self, attribute, field):
         kwargs = {
-            'label' : attribute.name.capitalize(),
+            'label' : attribute.label,
             'required' : attribute.required,
             'help_text' : attribute.help_text,
             'validators' : attribute.validators,
