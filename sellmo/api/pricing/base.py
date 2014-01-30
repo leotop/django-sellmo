@@ -116,6 +116,12 @@ class Price(object):
         price.mutations = self.mutations.copy()
         return price
         
+    def round(self, digits=2):
+        price = self.clone()
+        price.amount = Decimal(str(round(price.amount, digits)))
+        price.mutations = {key : Decimal(str(round(amount, digits))) for key, amount in price.mutations.iteritems()}
+        return price
+        
     def _update_context(self, context):
         self.context.update(context)
         

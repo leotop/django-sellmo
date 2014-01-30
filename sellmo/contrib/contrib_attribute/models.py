@@ -144,7 +144,7 @@ class Value(models.Model):
     def get_value(self):
         field = self.attribute.value_field
         value = getattr(self, field)
-        if field == 'value_object':
+        if field == 'value_object' and value:
             value = value.downcast()
         return value
         

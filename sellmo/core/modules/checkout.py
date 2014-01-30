@@ -154,7 +154,7 @@ class CheckoutModule(sellmo.Module):
                 choice = out['choice']
         return choice
     
-    @view([r'^step/(?P<step>[a-z0-9_-]+)/$', r'^$'])
+    @view([r'^step/(?P<step>[a-zA-Z0-9_-]+)/$', r'^$'])
     def checkout(self, chain, request, step=None, data=None, order=None, process=None, context=None, **kwargs):
         
         if context is None:

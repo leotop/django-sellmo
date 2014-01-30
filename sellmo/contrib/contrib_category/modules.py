@@ -42,7 +42,7 @@ class CategoryModule(Module):
     def list(self, chain, parent=None, categories=None, nested=False, **kwargs):
         if categories is None:
             if parent:
-                categories = parent.get_children()
+                categories = parent.get_children().ordered()
             else:
                 if nested:
                     categories = self.Category.objects.all().ordered()
@@ -52,7 +52,7 @@ class CategoryModule(Module):
         categories = categories.active()
         
         if chain:
-            out = chain.execute(request=request, products=products)
+            out = chain.execute(parent=parent, categories=categories, nested=nested, **kwargs)
             categories = out.get('categories', categories)
         return categories
         
@@ -67,7 +67,7 @@ class CategoryModule(Module):
             # We don't render anything
             raise Http404
     
-    @view(r'^(?P<full_slug>[-/\w]+)/')
+    @view(r'^(?P<full_slug>[a-zA-Z0-9_-]+)/')
     def category(self, chain, request, full_slug, category=None, context=None, **kwargs):
         if context == None:
             context = {}
@@ -89,9 +89,9 @@ class CategoryModule(Module):
                     
             count = categories.count()
             if count == 0:
-                raise Http404("""Category '%s' not found.""" % full_slug)
+                raise Http404("Category '{0}' not found.".format(full_slug))
             elif count > 1:
-                raise Http404("""Category '%s' could not be resolved.""" % full_slug)
+                raise Http404("Category '{0}' could not be resolved.".format(full_slug))
         
             category = categories[0]
         
