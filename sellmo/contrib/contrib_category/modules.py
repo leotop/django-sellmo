@@ -67,7 +67,7 @@ class CategoryModule(Module):
             # We don't render anything
             raise Http404
     
-    @view(r'^(?P<full_slug>[a-zA-Z0-9_-]+)/')
+    @view(r'^(?P<full_slug>[-a-zA-Z0-9_/]+)/$')
     def category(self, chain, request, full_slug, category=None, context=None, **kwargs):
         if context == None:
             context = {}

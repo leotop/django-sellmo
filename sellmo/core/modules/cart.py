@@ -244,7 +244,7 @@ class CartModule(sellmo.Module):
         return redirection
      
         
-    @view(r'^add/(?P<product_slug>[a-zA-Z0-9_-]+)$')
+    @view(r'^add/(?P<product_slug>[-a-zA-Z0-9_]+)$')
     def add_to_cart(
             self, 
             chain,
