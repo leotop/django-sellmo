@@ -29,3 +29,5 @@ boot.model_boot = False
 
 from sellmo.boot.boot_modules import boot
 from sellmo.boot.boot_sellmo.boot import celery_app as app
+from sellmo.core.params import params
+params.worker_mode = True

@@ -75,13 +75,15 @@ class SettingsModule(Module):
 		settings = context.get('site_settings', None)
 		if settings is None:
 			site = Site.objects.get_current()
+			if not site:
+				raise Exception("Could not retrieve settings, no current site.")
 			key = 'site_settings_{0}'.format(site.pk)
 			settings = cache.get(key)
 			if settings is None:
 				try:
 					settings = self.SiteSettings.objects.get(site=site)
 				except self.SiteSettings.DoesNotExist:
-					settings = self.SiteSettings()
+					raise Exception("Could not retrieve settings, no settings found for site '{0}'".format(site))
 				cache.set(key, settings)
 			context['site_settings'] = settings
 		return settings

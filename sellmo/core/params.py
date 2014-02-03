@@ -26,31 +26,12 @@
 
 #
 
-from threading import local
-		
-#
-
-from sellmo.core.params import params
+from sellmo.magic import singleton
 
 #
 
-_local = local()
+@singleton
+class SellmoParams(object):
+	pass
 
-#
-		
-def new_context():
-	if not hasattr(_local, 'context'):
-		_local.context = {}
-	else:
-		raise Exception("Local context could not be created.")
-		
-def get_context():
-	if not hasattr(_local, 'context'):
-		if getattr(params, 'worker_mode', False):
-			return {}
-		raise Exception("Local context could not be retrieved.")
-	return _local.context
-	
-def release_context():
-	if hasattr(_local, 'context'):
-		del _local.context
+params = SellmoParams()
