@@ -89,7 +89,6 @@ class CartModule(sellmo.Module):
                 form = out['form']
         
         return form
-        
     
     @chainable()
     def get_add_to_cart_formset(self, chain, product, formset=None, cls=None, initial=None, data=None, **kwargs):
@@ -141,7 +140,6 @@ class CartModule(sellmo.Module):
         
     @chainable()
     def get_purchase_args(self, chain, product, form, **kwargs):
-        
         args = {
             'product' : product,
         }
@@ -150,7 +148,8 @@ class CartModule(sellmo.Module):
             args['qty'] = form.cleaned_data['qty']
         
         if chain:
-            args = chain.execute(product=product, form=form, args=args, **kwargs)
+            out = chain.execute(product=product, form=form, args=args, **kwargs)
+            args = out.get('args', args)
         
         # Purchase args should always contain
         # 'product', 'qty'
