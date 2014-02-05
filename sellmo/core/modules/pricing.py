@@ -36,6 +36,7 @@ from django.utils.translation import ugettext_lazy as _, string_concat
 
 import sellmo
 from sellmo import modules
+from sellmo.config import settings
 from sellmo.api.decorators import view, chainable, load
 from sellmo.api.pricing import Price, PriceType, StampableProperty
 
@@ -61,7 +62,7 @@ class PricingModule(sellmo.Module):
     
     def __init__(self, *args, **kwargs):
         if self.currency is None:
-            raise Exception("Need a currency to work")
+            self.currency = settings.CURRENCY
         if not self.currencies:
             self.currencies = [self.currency]
         pass

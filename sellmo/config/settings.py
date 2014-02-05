@@ -36,6 +36,8 @@ debug = getattr(settings, 'DEBUG', False)
 
 #
 
+CURRENCY = getattr(settings, 'SELLMO_CURRENCY', defaults.CURRENCY)
+
 ADD_TO_CART_FORM = getattr(settings, 'SELLMO_ADD_TO_CART_FORM', defaults.ADD_TO_CART_FORM)
 EDIT_PURCHASE_FORM = getattr(settings, 'SELLMO_EDIT_PURCHASE_FORM', defaults.EDIT_PURCHASE_FORM)
 
@@ -71,3 +73,4 @@ MAIL_FROM = getattr(settings, 'SELLMO_MAIL_FROM', defaults.MAIL_FROM)
 
 REPORT_GENERATORS = getattr(settings, 'SELLMO_REPORT_GENERATORS', defaults.REPORT_GENERATORS)
 REPORT_FORMAT = getattr(settings, 'SELLMO_REPORT_FORMAT', defaults.REPORT_FORMAT)
+
