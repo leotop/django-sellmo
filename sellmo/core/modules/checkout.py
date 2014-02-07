@@ -27,7 +27,9 @@
 from django import forms, dispatch
 from django.http import Http404
 from django.core.urlresolvers import reverse
+from django.core.exceptions import ImproperlyConfigured
 from django.shortcuts import redirect
+from django.utils.module_loading import import_by_path
 from django.utils.decorators import method_decorator
 from django.db import models, transaction
 
@@ -38,9 +40,9 @@ from sellmo import modules
 from sellmo.config import settings
 from sellmo.core.processing import ProcessError
 from sellmo.utils.tracking import UntrackableError
+from sellmo.utils.formatting import call_or_format
 from sellmo.api.decorators import view, chainable, link
 from sellmo.api.checkout.models import Order, Shipment, Payment, ORDER_NEW
-from sellmo.api.checkout.processes import CheckoutProcess
 from sellmo.signals.checkout import order_state_changed
 
 #
@@ -56,12 +58,19 @@ class CheckoutModule(sellmo.Module):
     Order = Order
     Shipment = Shipment
     Payment = Payment
-    CheckoutProcess = CheckoutProcess
+    
+    CheckoutProcess = None
     
     ShippingMethodForm = None
     PaymentMethodForm = None
     
     def __init__(self, *args, **kwargs):
+        # Configure
+        if not self.CheckoutProcess:
+            if not settings.CHECKOUT_PROCESS:
+                raise ImproperlyConfigured("No checkout process configured")
+            self.CheckoutProcess = import_by_path(settings.CHECKOUT_PROCESS)
+        
         # Hookup signals
         order_state_changed.connect(self.on_order_state_changed)
     
@@ -105,10 +114,11 @@ class CheckoutModule(sellmo.Module):
     def get_shipping_method_choice(self, chain, order, method, choice=None, **kwargs):
         if choice is None:
             costs = method.get_costs(order=order)
-            if costs:
-                choice = u"{0} + {1}".format(method, costs)
-            else:
-                choice = unicode(method)
+            choice = call_or_format(
+                settings.SHIPPING_METHOD_CHOICE_FORMAT,
+                method = method,
+                costs = costs 
+            )
         if chain:
             out = chain.execute(method=method, order=order, choice=choice, **kwargs)
             if out.has_key('choice'):
@@ -144,10 +154,11 @@ class CheckoutModule(sellmo.Module):
     def get_payment_method_choice(self, chain, order, method, choice=None, **kwargs):
         if choice is None:
             costs = method.get_costs(order=order)
-            if costs:
-                choice = u"{0} + {1}".format(method, costs)
-            else:
-                choice = unicode(method)
+            choice = call_or_format(
+                settings.PAYMENT_METHOD_CHOICE_FORMAT,
+                method = method,
+                costs = costs 
+            )
         if chain:
             out = chain.execute(method=method, order=order, choice=choice, **kwargs)
             if out.has_key('choice'):
@@ -393,7 +404,7 @@ class CheckoutModule(sellmo.Module):
             order.calculate(subtotal=cart.total, save=not order.pk is None)
         
     @link(namespace='cart')
-    def add_purchase(self, request, cart, purchase, **kwargs):
+    def add_purchase(self, request, purchase, cart, **kwargs):
         order = self.get_order(request=request)
         if order.pk:
             if order.may_change:
@@ -404,7 +415,7 @@ class CheckoutModule(sellmo.Module):
                 order.untrack(request)
             
     @link(namespace='cart')
-    def update_purchase(self, request, cart, purchase, **kwargs):
+    def update_purchase(self, request, purchase, cart, **kwargs):
         order = self.get_order(request=request)
         if order.pk and order.may_change:
             order.update(purchase, calculate=False)
@@ -412,7 +423,7 @@ class CheckoutModule(sellmo.Module):
             order.invalidate()
         
     @link(namespace='cart')
-    def remove_purchase(self, request, cart, purchase, **kwargs):
+    def remove_purchase(self, request, purchase, cart, **kwargs):
         order = self.get_order(request=request)
         if order.pk and order.may_change:
             if purchase in order:

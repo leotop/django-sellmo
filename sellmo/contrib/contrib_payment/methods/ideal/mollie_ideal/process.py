@@ -30,7 +30,7 @@ from sellmo.api.checkout import PaymentMethod
 
 #
 
-from sellmo.api.checkout.processes import CheckoutProcess, CheckoutStep
+from sellmo.api.checkout.process import CheckoutProcess, CheckoutStep
 
 #
 

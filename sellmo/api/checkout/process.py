@@ -24,9 +24,27 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo import modules
-from sellmo.contrib.contrib_checkout.processes.multistep_process.process import MultiStepCheckoutProcess
+from django.core.urlresolvers import reverse
 
 #
 
-modules.checkout.CheckoutProcess = MultiStepCheckoutProcess
+from sellmo.core.processing import Process, ProcessStep
+
+#
+
+class CheckoutProcess(Process):
+	
+	def __init__(self, order, request):
+		super(CheckoutProcess, self).__init__()
+		self.order = order
+		self.request = request
+		
+	def resolve_url(self, step):
+		return reverse('checkout.checkout', args=[step.key])
+		
+class CheckoutStep(ProcessStep):
+	
+	def __init__(self, order, request):
+		super(CheckoutStep, self).__init__()
+		self.order = order
+		self.request = request

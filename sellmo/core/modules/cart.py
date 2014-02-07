@@ -326,7 +326,10 @@ class CartModule(sellmo.Module):
         return redirection
         
     @chainable()
-    def add_purchase(self, chain, request, cart, purchase=None, **kwargs):
+    def add_purchase(self, chain, request, cart=None, purchase=None, **kwargs):
+        if cart is None:
+            cart = self.get_cart(request=request)
+        
         # See if we can merge this purchase
         merged = modules.store.merge_purchase(purchase=purchase, existing_purchases=list(cart))
         if merged:
@@ -339,7 +342,10 @@ class CartModule(sellmo.Module):
             chain.execute(request=request, purchase=purchase, cart=cart, **kwargs)
             
     @chainable()
-    def update_purchase(self, chain, request, cart, purchase=None, **kwargs):
+    def update_purchase(self, chain, request, cart=None, purchase=None, **kwargs):
+        if cart is None:
+            cart = self.get_cart(request=request)
+        
         # See if we can merge this purchase
         merged = modules.store.merge_purchase(purchase=purchase, existing_purchases=list(cart))
         if merged:
@@ -352,7 +358,10 @@ class CartModule(sellmo.Module):
             chain.execute(request=request, purchase=purchase, cart=cart, **kwargs)
             
     @chainable()
-    def remove_purchase(self, chain, request, cart, purchase=None, **kwargs):
+    def remove_purchase(self, chain, request, cart=None, purchase=None, **kwargs):
+        if cart is None:
+            cart = self.get_cart(request=request)
+        
         # Remove from cart
         if purchase in cart:
             cart.remove(purchase)

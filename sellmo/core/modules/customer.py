@@ -209,6 +209,8 @@ class CustomerModule(sellmo.Module):
             processed = True
             if user is None:
                 user = form.get_user()
+            if settings.AUTH_ENABLED:
+                auth_login(request, user)
         if chain:
             out = chain.execute(request=request, prefix=prefix, data=data, user=user, form=form, processed=processed, **kwargs)
             user, form, processed = out.get('user', user), out.get('form', form), out.get('processed', processed)
@@ -230,9 +232,6 @@ class CustomerModule(sellmo.Module):
             
         user, form, processed = self.handle_login(request=request, data=data)
         context['form'] = form
-        
-        if settings.AUTH_ENABLED and processed:
-            auth_login(request, user)
         
         redirection = redirect(next)
         

@@ -61,11 +61,11 @@ class PricingModule(sellmo.Module):
     decimal_places = 2
     
     def __init__(self, *args, **kwargs):
+        #Configure
         if self.currency is None:
             self.currency = settings.CURRENCY
         if not self.currencies:
             self.currencies = [self.currency]
-        pass
     
     @classmethod
     def construct_decimal_field(self, **kwargs):

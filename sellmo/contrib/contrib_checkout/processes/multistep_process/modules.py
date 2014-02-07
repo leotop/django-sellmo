@@ -36,7 +36,14 @@ from sellmo.api.decorators import chainable, view
 #
 
 class MultiStepCheckoutModule(Module):
-	namespace = 'checkout_process'
+	namespace = 'multistep_checkout'
+	
+	@chainable()
+	def get_step(self, chain, key, order, request, step=None, **kwargs):
+		if chain:
+			out = chain.execute(key=key, order=order, request=request, step=step)
+			step = out.get('step', step)
+		return step
 	
 	@view()
 	def login(self, chain, request, context=None, **kwargs):

@@ -33,10 +33,18 @@ from sellmo.api.pricing import Currency
 
 #
 
-CURRENCY = Currency('eur', _(u"euro"), _(u"\u20ac {amount:.2f}"))
+CURRENCY = Currency('eur', _(u"euro"), _(u"\u20ac {amount:\u00a0>{align}.2f}"))
 
 ADD_TO_CART_FORM = 'sellmo.api.cart.forms.AddToCartForm'
 EDIT_PURCHASE_FORM = 'sellmo.api.cart.forms.EditPurchaseForm'
+
+def method_choice_format(method, costs, **kwargs):
+	if costs:
+		return u"{method} +{costs}".format(method=method, costs=costs)
+	return u"{method}".format(method=method)
+
+PAYMENT_METHOD_CHOICE_FORMAT = method_choice_format
+SHIPPING_METHOD_CHOICE_FORMAT = method_choice_format
 
 CUSTOMER_REQUIRED = False
 EMAIL_REQUIRED = True
