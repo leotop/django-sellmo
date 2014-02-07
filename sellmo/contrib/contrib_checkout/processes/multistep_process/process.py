@@ -65,6 +65,10 @@ class LoginStep(CheckoutStep):
 		user, form, processed = modules.customer.handle_login(request=request, prefix='login', data=data)
 		context['login_form'] = form
 		success &= processed
+		
+		if success:
+			modules.customer.login_user(request=request, user=user)
+		
 		return success
 		
 	def complete(self, data):

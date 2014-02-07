@@ -162,7 +162,6 @@ class CustomerModule(sellmo.Module):
         
     @chainable()
     def handle_contactable(self, chain, prefix=None, data=None, contactable=None, **kwargs):
-        
         processed = False
         form = self.get_contactable_form(prefix=prefix, data=data, contactable=contactable)
         if data and form.is_valid():
@@ -178,7 +177,6 @@ class CustomerModule(sellmo.Module):
         
     @chainable()
     def handle_address(self, chain, type, customer=None, prefix=None, data=None, address=None, **kwargs):
-        
         if type not in settings.ADDRESS_TYPES:
             raise ValueError("Invalid address type.")
         
@@ -209,20 +207,23 @@ class CustomerModule(sellmo.Module):
             processed = True
             if user is None:
                 user = form.get_user()
-            if settings.AUTH_ENABLED:
-                auth_login(request, user)
         if chain:
             out = chain.execute(request=request, prefix=prefix, data=data, user=user, form=form, processed=processed, **kwargs)
             user, form, processed = out.get('user', user), out.get('form', form), out.get('processed', processed)
         return user, form, processed
+        
+    @chainable()
+    def login_user(self, chain, request, user, **kwargs):
+        if settings.AUTH_ENABLED:
+            auth_login(request, user)
+        if chain:
+            chain.execute(request=request, user=user, **kwargs)
     
     @method_decorator(csrf_protect)
     @method_decorator(never_cache)
     @view(r'^login/$')
     def login(self, chain, request, context=None, **kwargs):
-        
         next = request.GET.get('next', 'customer.account')
-        
         if context == None:
             context = {}
         
@@ -233,6 +234,8 @@ class CustomerModule(sellmo.Module):
         user, form, processed = self.handle_login(request=request, data=data)
         context['form'] = form
         
+        if processed:
+            self.login_user(request=request, user=user)
         redirection = redirect(next)
         
         if chain:
@@ -244,19 +247,22 @@ class CustomerModule(sellmo.Module):
             
     # LOGOUT LOGIC
     
+    @chainable()
+    def logout_user(self, chain, request, user, **kwargs):
+        if settings.AUTH_ENABLED:
+            auth_logout(request)
+        if chain:
+            chain.execute(request=request, user=user, **kwargs)
+    
     @method_decorator(csrf_protect)
     @method_decorator(never_cache)
     @view(r'^logout/$')
     def logout(self, chain, request, context=None, **kwargs):
-        
         next = request.GET.get('next', 'customer.login')
-        
         if context == None:
             context = {}
         
-        if settings.AUTH_ENABLED:
-            auth_logout(request)
-        
+        self.logout_user(request=request, user=request.user)
         redirection = redirect(next)
         
         if chain:
@@ -283,7 +289,6 @@ class CustomerModule(sellmo.Module):
     @method_decorator(never_cache)
     @view(r'^registration/$')
     def registration(self, chain, request, context=None, **kwargs):
-        
         next = request.GET.get('next', 'customer.login')
         redirection = None
         
@@ -325,10 +330,8 @@ class CustomerModule(sellmo.Module):
                 address = addresses[type]
                 address.save()
                 customer.set_address(type, address)
+            
             customer.save()
-            
-            #
-            
             redirection = redirect(next)
         
         if chain:
@@ -344,13 +347,11 @@ class CustomerModule(sellmo.Module):
     
     @view(r'^account/$')
     def account(self, chain, request, customer=None, context=None, **kwargs):
-        
         if context == None:
             context = {}
-        
+            
         if not customer:
             customer = self.get_customer(request=request)
-            
         if not customer or not customer.pk:
             raise Http404("Not a customer")
             
@@ -361,6 +362,8 @@ class CustomerModule(sellmo.Module):
         else:
             # We don't render anything
             raise Http404
+           
+    #
     
     @link(namespace='checkout')
     def get_order(self, request, order=None, **kwargs):
