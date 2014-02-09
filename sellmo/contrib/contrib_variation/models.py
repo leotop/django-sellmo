@@ -692,7 +692,7 @@ def load_model():
 class VariationsState(models.Model):
     
     deprecated = models.BooleanField(
-        default = True,
+        default = False,
         editable = False,
     )
     
