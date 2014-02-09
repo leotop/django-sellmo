@@ -27,7 +27,7 @@
 #
 
 from sellmo import modules
-from sellmo.contrib.contrib_variation.forms import VariantForm, VariationRecipeForm, VariationRecipeFormFactory
+from sellmo.contrib.contrib_variation.forms import VariantAttributeFormMixin, ProductVariationFormFactory, ProductVariationFormMixin
 from sellmo.contrib.contrib_attribute.admin import ProductAttributeMixin
 from sellmo.contrib.contrib_attribute.forms import ProductAttributeFormFactory
 
@@ -44,19 +44,24 @@ from django.contrib.admin.sites import NotRegistered
 from django.contrib.contenttypes.models import ContentType
 
 #
-        
-class VariantInlineMixin(ProductAttributeMixin):
-    form = ProductAttributeFormFactory(VariantForm)
+
+class VariantAttributeMixin(ProductAttributeMixin):
+    form = ProductAttributeFormFactory(mixin=VariantAttributeFormMixin, prefix='attribute')
     
-class VariationRecipeInlineMixin(object):
-    form = VariationRecipeFormFactory(VariationRecipeForm)
+class ProductVariationMixin(object):
+    
+    form = ProductVariationFormFactory(mixin=ProductVariationFormMixin, prefix='variations')
+    
+    def save_model(self, request, obj, form, change):
+        obj.save()
+        form.save_variations()
     
     def get_fieldsets(self, request, obj=None):
-        fieldsets = ()
-        if self.declared_fieldsets:
-            fieldsets = self.declared_fieldsets
-        
-        fieldsets += ((_("Attributes"), {'fields': modules.attribute.Attribute.objects.filter(variates=True).values_list('key', flat=True)}),)
+        fieldsets = super(ProductVariationMixin, self).get_fieldsets(request, obj)
+        fields = [
+            'variations_{0}'.format(key) for key in modules.attribute.Attribute.objects.filter(variates=True).values_list('key', flat=True)
+        ]
+        fieldsets += ((_("Variations"), {'fields': fields}),)
         return fieldsets
         
 #
@@ -66,3 +71,4 @@ class VariationAdmin(admin.ModelAdmin):
     
 
 admin.site.register(modules.variation.Variation, VariationAdmin)
+

@@ -43,39 +43,30 @@ from django.contrib.contenttypes.models import ContentType
 
 #
 
-class ProductAttributeForm(forms.ModelForm):
-
+class ProductAttributeFormMixin(object):
+    
     def __init__(self, *args, **kwargs):
         initial = {}
-        instance = None
         if 'initial' in kwargs:
             initial = kwargs['initial']
+        instance = None
         if 'instance' in kwargs:
             instance = kwargs['instance']
-        
         if instance:
-            initial.update(self.get_values(instance))
+            initial.update({
+                self.__attribute_field_names[attribute.key] : instance.attributes[attribute.key] 
+                for attribute in self.__attributes
+            })
         kwargs['initial'] = initial
-        super(ProductAttributeForm, self).__init__(*args, **kwargs)
-
-    def get_values(self, instance):
-        values = {}
-        for attribute in self._attributes:
-            values[attribute.key] = instance.attributes[attribute.key]
-        return values
-        
-    def set_values(self, instance):
-        for attribute in self._attributes:
-            value = self.cleaned_data.get(attribute.key)
-            instance.attributes[attribute.key] = value
-
+        super(ProductAttributeFormMixin, self).__init__(*args, **kwargs)
+    
     def save(self, commit=True):
-        instance = super(ProductAttributeForm, self).save(commit=False)
-        self.set_values(instance)
-        
+        instance = super(ProductAttributeFormMixin, self).save(commit=False)
+        for attribute in self.__attributes:
+            value = self.cleaned_data.get(self.__attribute_field_names[attribute.key])
+            instance.attributes[attribute.key] = value
         if commit:
             instance.save()
-
         return instance
 
 class ProductAttributeFormFactory(object):
@@ -87,11 +78,10 @@ class ProductAttributeFormFactory(object):
         modules.attribute.Attribute.TYPE_OBJECT : forms.ModelChoiceField,
     }
     
-    form = ProductAttributeForm
-    
-    def __init__(self, form=None):
-        if form:
-            self.form = form
+    def __init__(self, form=forms.ModelForm, mixin=ProductAttributeFormMixin, prefix=None):
+        self.form = form
+        self.mixin = mixin
+        self.prefix = prefix
         
     def get_attributes(self):
         return modules.attribute.Attribute.objects.all()
@@ -124,17 +114,23 @@ class ProductAttributeFormFactory(object):
         
     def factory(self):
         attributes = self.get_attributes()
+        names = {}
         fields = {}
         attr_dict = {
-            '_attributes' : attributes,
-            '_attribute_fields' : fields
+            '_{0}__attributes'.format(self.mixin.__name__) : attributes,
+            '_{0}__attribute_field_names'.format(self.mixin.__name__) : names,
+            '_{0}__attribute_fields'.format(self.mixin.__name__) : fields,
         }
         for attribute in attributes:
             field = self.get_attribute_field(attribute)
+            name = attribute.key
+            if self.prefix:
+                name = '{0}_{1}'.format(self.prefix, name)
+            names[attribute.key] = name
             fields[attribute.key] = field
-            attr_dict[attribute.key] = field
+            attr_dict[name] = field
         
-        return type('ProductAttributeForm', (self.form,), attr_dict)
+        return type('ProductAttributeForm', (self.mixin, self.form), attr_dict)
         
     def __get__(self, obj, objtype):
         return self.factory()

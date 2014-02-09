@@ -64,10 +64,10 @@ def load_model():
         
     modules.product.Product = Product
     
-@load(action='finalize_attribute_Value')
 @load(after='finalize_attribute_Attribute')
 @load(after='finalize_product_Product')
-def finalize_model():
+@load(before='finalize_attribute_Value')
+def load_model():
     
     class Value(modules.attribute.Value):
         
@@ -79,7 +79,7 @@ def finalize_model():
             related_name = 'values',
             on_delete = models.PROTECT
         )
-    
+        
         # The product to which we apply
         product = models.ForeignKey(
             modules.product.Product,
@@ -87,15 +87,15 @@ def finalize_model():
             related_name = 'values',
         )
         
-        # Possible value object
-        value_object = models.ForeignKey(
-            ValueObject,
-            null = True,
-            blank = True,
-            db_index = True,
-            on_delete = models.PROTECT
-        )
-        
+        class Meta:
+            abstract = True
+            
+    modules.attribute.Value = Value
+    
+@load(action='finalize_attribute_Value')
+def finalize_model():
+    
+    class Value(modules.attribute.Value):
         class Meta:
             app_label = 'attribute'
             ordering = ['attribute', 'value_string', 'value_int', 'value_float', 'value_object']
@@ -139,6 +139,14 @@ class Value(models.Model):
         max_length = 255,
         blank = True,
         default = '',
+    )
+    
+    value_object = models.ForeignKey(
+        ValueObject,
+        null = True,
+        blank = True,
+        db_index = True,
+        on_delete = models.PROTECT
     )
         
     def get_value(self):

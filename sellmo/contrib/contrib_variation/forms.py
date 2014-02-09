@@ -46,14 +46,14 @@ from django.core.validators import EMPTY_VALUES
 #
 
 from sellmo.contrib.contrib_attribute.models import ValueObject
-from sellmo.contrib.contrib_attribute.forms import ProductAttributeForm, ProductAttributeFormFactory
+from sellmo.contrib.contrib_attribute.forms import ProductAttributeFormFactory
 from sellmo.contrib.contrib_variation.utils import generate_slug
 
 #
 
 class SaveFieldMixin(object):
 
-    def get_deprecated_values(self, recipe, attribute, values):
+    def get_deprecated_values(self, product, attribute, values):
         field = '%s__in' % (attribute.value_field, )
         kwargs = {
             field : values
@@ -61,9 +61,9 @@ class SaveFieldMixin(object):
         
         q = ~Q(**kwargs) 
         
-        return modules.attribute.Value.objects.filter(attribute=attribute, recipe=recipe).filter(q)
+        return modules.attribute.Value.objects.filter(attribute=attribute, product=product, variates=True).filter(q)
         
-    def get_existing_values(self, recipe, attribute, values):
+    def get_existing_values(self, product, attribute, values):
         field = '%s__in' % (attribute.value_field, )
         kwargs = {
             field : values
@@ -71,16 +71,16 @@ class SaveFieldMixin(object):
         
         q = Q(**kwargs) 
         
-        return modules.attribute.Value.objects.filter(attribute=attribute, recipe=recipe).filter(q)
+        return modules.attribute.Value.objects.filter(attribute=attribute, product=product, variates=True).filter(q)
 
-    def save(self, recipe, attribute, values):
-        deprecated = self.get_deprecated_values(recipe, attribute, values)
+    def save(self, product, attribute, values):
+        deprecated = self.get_deprecated_values(product, attribute, values)
         deprecated.delete()
         
-        existing = [value.get_value() for value in self.get_existing_values(recipe, attribute, values)]
+        existing = [value.get_value() for value in self.get_existing_values(product, attribute, values)]
         for value in values:
             if not value in existing:
-                obj = modules.attribute.Value(product=recipe.product, recipe=recipe, attribute=attribute)
+                obj = modules.attribute.Value(product=product, variates=True, attribute=attribute)
                 obj.set_value(value)
                 obj.save()
 
@@ -121,7 +121,7 @@ class ObjectField(forms.ModelMultipleChoiceField, SaveFieldMixin):
     def from_values(self, values):
         return ValueObject.objects.filter(pk__in=[value.get_value().pk for value in values])
 
-class VariationRecipeFormFactory(ProductAttributeFormFactory):
+class ProductVariationFormFactory(ProductAttributeFormFactory):
     
     FIELD_CLASSES = {
         modules.attribute.Attribute.TYPE_STRING : SeperatedCharField,
@@ -140,64 +140,89 @@ class VariationRecipeFormFactory(ProductAttributeFormFactory):
         
         return args
 
-class VariationRecipeForm(ProductAttributeForm):
+class ProductVariationFormMixin(object):
+    
+    def __init__(self, *args, **kwargs):
+        initial = {}
+        if 'initial' in kwargs:
+            initial = kwargs['initial']
+        instance = None
+        if 'instance' in kwargs:
+            instance = kwargs['instance']
+        if instance:
+            initial.update({
+                self.__attribute_field_names[key] : value for key, value in self.__get_values(instance).iteritems()
+            })
+        kwargs['initial'] = initial
+        super(ProductVariationFormMixin, self).__init__(*args, **kwargs)
         
-    def get_values(self, instance):
+    def __get_values(self, product):
         result = {}
-        for attribute in self._attributes:
-            if instance.pk is not None:
+        for attribute in self.__attributes:
+            if product.pk is not None:
                 try:
-                    values = modules.attribute.Value.objects.filter(attribute=attribute, recipe=instance)
+                    values = modules.attribute.Value.objects.filter(attribute=attribute, product=product, variates=True)
                 except modules.attribute.Value.DoesNotExist:
                     values = None
             else:
                 values = None
             
-            field = self._attribute_fields[attribute.key]
+            field = self.__attribute_fields[attribute.key]
             result[attribute.key] = field.from_values(values)
         return result
-        
-    def set_values(self, instance):
-        # Do nothing
-        pass
     
     def save(self, commit=True):
-        instance = super(VariationRecipeForm, self).save(commit=False)
-        
-        def save_attributes():
-            for attribute in self._attributes:
-                values = self.cleaned_data.get(attribute.key)
-                field = self._attribute_fields[attribute.key]
-                field.save(self.instance, attribute, values)
-        
+        instance = super(ProductVariationFormMixin, self).save(commit=False)
+        def save_variations():
+            for attribute in self.__attributes:
+                values = self.cleaned_data.get(self.__attribute_field_names[attribute.key])
+                field = self.__attribute_fields[attribute.key]
+                field.save(instance, attribute, values)
         if commit:
             instance.save()
-            save_attributes()
+            save_variations()
         else:
-            self.save_m2m = save_attributes
-            
+            self.save_variations = save_variations
         return instance
 
-class VariantForm(ProductAttributeForm):
+class VariantAttributeFormMixin(object):
     
     def __init__(self, *args, **kwargs):
-        super(VariantForm, self).__init__(*args, **kwargs)
+        initial = {}
+        if 'initial' in kwargs:
+            initial = kwargs['initial']
+        instance = None
+        if 'instance' in kwargs:
+            instance = kwargs['instance']
+        if instance:
+            initial.update({
+                self.__attribute_field_names[attribute.key] : instance.attributes[attribute.key] 
+                for attribute in self.__attributes
+            })
+        kwargs['initial'] = initial
+        super(VariantAttributeFormMixin, self).__init__(*args, **kwargs)
         for field in self.fields:
             self[field].field.required = False
-        
-    def set_values(self, instance):
+    
+    def save(self, commit=True):
+        instance = super(VariantAttributeFormMixin, self).save(commit=False)
         instance.product = self.cleaned_data['product']
-        super(VariantForm, self).set_values(instance)
+        for attribute in self.__attributes:
+            value = self.cleaned_data.get(self.__attribute_field_names[attribute.key])
+            instance.attributes[attribute.key] = value
+        if commit:
+            instance.save()
+        return instance
             
     def clean(self):
-        cleaned_data = super(VariantForm, self).clean()
+        cleaned_data = super(VariantAttributeFormMixin, self).clean()
         
         # Temporary collect values to generate slug
         # Get only the values which variate
         values = []
-        for attribute in self._attributes.filter(variates=True):
+        for attribute in self.__attributes.filter(variates=True):
             value = modules.attribute.Value(attribute=attribute)
-            value.value = self.cleaned_data.get(attribute.key)
+            value.value = self.cleaned_data.get(self.__attribute_field_names[attribute.key])
             if value.is_assigned:
                 values.append(value)
         

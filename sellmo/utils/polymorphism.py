@@ -152,7 +152,7 @@ class PolymorphicModel(models.Model):
         if self.content_type_id is None:
             self.content_type = ContentType.objects.get_for_model(self.__class__)
         super(PolymorphicModel, self).save(*args, **kwargs)
-        
+    
     def delete(self, *args, **kwargs):
         assert self._get_pk_val() is not None, "%s object can't be deleted because its %s attribute is set to None." % (self._meta.object_name, self._meta.pk.attname)
         with PolymorphicOverride(False):

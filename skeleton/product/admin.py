@@ -5,19 +5,17 @@ from django.utils.translation import ugettext_lazy as _
 from sellmo import modules
 from sellmo.contrib.contrib_variation.admin import VariantInlineMixin
 from sellmo.contrib.contrib_category.admin import ProductCategoryListFilter, ProductCategoryMixin
-from sellmo.contrib.contrib_variation.admin import VariantInlineMixin, VariationRecipeInlineMixin
+from sellmo.contrib.contrib_variation.admin import VariantInlineMixin
 from sellmo.contrib.contrib_attribute.admin import ProductAttributeMixin
 from sellmo.contrib.polymorphism.admin import PolymorphicParentModelAdmin
 
 from pricing.admin import ProductQtyPriceInline
 
-class VariationRecipeInline(VariationRecipeInlineMixin, admin.StackedInline):
-    model = modules.variation.VariationRecipe
 
 # Base admin for every product subtype
 class ProductAdminBase(ProductAttributeMixin, admin.ModelAdmin):
     
-    inlines = [ProductQtyPriceInline, VariationRecipeInline]
+    inlines = [ProductQtyPriceInline]
     fieldsets = (
         (_("Product information"), {
             'fields': ('name', 'sku',)

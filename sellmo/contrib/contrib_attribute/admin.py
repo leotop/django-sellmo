@@ -46,14 +46,14 @@ from django.contrib.contenttypes.models import ContentType
             
 class ProductAttributeMixin(object):
     
-    form = ProductAttributeFormFactory()
+    form = ProductAttributeFormFactory(prefix='attribute')
     
     def get_fieldsets(self, request, obj=None):
-        fieldsets = ()
-        if self.declared_fieldsets:
-            fieldsets = self.declared_fieldsets
-        
-        fieldsets += ((_("Attributes"), {'fields': modules.attribute.Attribute.objects.values_list('key', flat=True)}),)
+        fieldsets = super(ProductAttributeMixin, self).get_fieldsets(request, obj)
+        fields = [
+            'attribute_{0}'.format(key) for key in modules.attribute.Attribute.objects.values_list('key', flat=True)
+        ]
+        fieldsets += ((_("Attributes"), {'fields': fields}),)
         return fieldsets
 
 #

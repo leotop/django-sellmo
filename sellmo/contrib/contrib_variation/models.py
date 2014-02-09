@@ -33,7 +33,7 @@ from sellmo.utils.polymorphism import PolymorphicModel, PolymorphicManager
 from sellmo.contrib.contrib_variation.variant import VariantFieldDescriptor, VariantMixin, get_differs_field_name
 from sellmo.contrib.contrib_variation.utils import generate_slug
 from sellmo.contrib.contrib_variation.signals import variations_deprecating, variations_deprecated
-from sellmo.contrib.contrib_variation.helpers import RecipelessAttributeHelper, VariantAttributeHelper, VariationAttributeHelper
+from sellmo.contrib.contrib_variation.helpers import AttributeHelper, VariantAttributeHelper, VariationAttributeHelper
 from sellmo.contrib.contrib_attribute.query import ProductQ
 
 #
@@ -57,7 +57,7 @@ def load_model():
     class Product(modules.product.Product):
         def __init__(self, *args, **kwargs):
             super(Product, self).__init__(*args, **kwargs)
-            self.attributes = RecipelessAttributeHelper(self)
+            self.attributes = AttributeHelper(self)
             
         def save(self, *args, **kwargs):
             super(Product, self).save(*args, **kwargs)
@@ -221,7 +221,7 @@ def load_manager():
         def which_variate(self, product):
             return self.filter(
                 Q(variates=True)
-                & (Q(values__base_product=product) | Q(values__product=product) & Q(values__recipe__isnull=False))
+                & (Q(values__base_product=product) | Q(values__product=product) & Q(values__variates=True))
             ).distinct()
     
     class AttributeManager(modules.attribute.Attribute.objects.__class__, ManagerMixinHelper):
@@ -287,7 +287,7 @@ def load_manager():
                     qargs = {
                         attribute.value_field : value
                     }
-                    id = q.filter(**qargs).annotate(has_recipe=Count('recipe')).order_by('-has_recipe')[0].id
+                    id = q.filter(**qargs).annotate(does_variate=Count('variates')).order_by('-does_variate')[0].id
                     distinct.append(id)
                 return q.filter(id__in=distinct)
             else:
@@ -296,7 +296,7 @@ def load_manager():
         def which_variate(self, product):
             return self.filter(
                 Q(attribute__variates=True)
-                & (Q(base_product=product) | Q(product=product) & Q(recipe__isnull=False))
+                & (Q(base_product=product) | Q(product=product) & Q(variates=True))
             )
     
     class ValueManager(modules.attribute.Value.objects.__class__, ManagerMixinHelper):
@@ -314,64 +314,31 @@ def load_manager():
         objects = ValueManager()
 
 @load(before='finalize_attribute_Value')
-@load(after='finalize_variation_VariationRecipe')
+@load(after='finalize_product_Product')
+@load(after='finalize_variation_VariationRule')
 def load_model():
     
     class Value(modules.attribute.Value):
         
-        # The attribute to which we belong
-        recipe = models.ForeignKey(
-            modules.variation.VariationRecipe,
-            db_index = True,
-            null = True,
-            blank = True,
-            editable = False,
-            related_name = 'values'
-        )
-        
-        #
         base_product = models.ForeignKey(
             modules.product.Product,
             db_index = True,
             null = True,
             blank = True,
             editable = False,
-            related_name = '+',
+            related_name = '+'
+        )
+        
+        variates = models.BooleanField(
+            default = False,
+            editable = False
         )
         
         class Meta:
             abstract = True
         
     modules.attribute.Value = Value
-    
-@load(action='finalize_variation_VariationRecipe')
-@load(after='finalize_product_Product')
-def finalize_model():
-    
-    class VariationRecipe(modules.variation.VariationRecipe):
-        
-        # The product to which we apply
-        product = models.OneToOneField(
-            modules.product.Product,
-            db_index = True,
-            related_name = 'recipe',
-        )
-        
-        class Meta:
-            app_label = 'variation'
-            verbose_name = _("variation recipe")
-            verbose_name_plural = _("variation recipes")
-        
-    modules.variation.VariationRecipe = VariationRecipe
-        
-    
-class VariationRecipe(models.Model):
 
-    def __unicode__(self):
-        return unicode(self.product)
-
-    class Meta:
-        abstract = True
         
 @load(action='finalize_variation_Variation')
 @load(after='finalize_attribute_Value')
@@ -454,7 +421,7 @@ class VariationManager(models.Manager):
         explicits = {}
         for attribute in attributes:
             for value in modules.attribute.Value.objects.which_variate(product).for_attribute(attribute, distinct=True):
-                if not value.recipe is None:
+                if value.variates:
                     explicits[attribute.key] = False
                     break
             else:
@@ -471,7 +438,7 @@ class VariationManager(models.Manager):
             else:
                 for value in list(combination):
                     index = combination.index(value)
-                    if value.recipe is None:
+                    if not value.variates:
                         combination[index] = value.get_value()
                 map.append(combination)
         

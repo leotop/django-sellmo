@@ -25,7 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from sellmo import modules
-from sellmo.contrib.contrib_attribute.helpers import AttributeHelper
+from sellmo.contrib.contrib_attribute.helpers import AttributeHelper as AttributeHelperBase
 
 #
 
@@ -37,12 +37,12 @@ from django.utils.text import capfirst
 
 #
 
-class RecipelessAttributeHelper(AttributeHelper):
+class AttributeHelper(AttributeHelperBase):
     def populate(self):
         if self.__dict__['_populated']:
             return
         self.__dict__['_populated'] = True
-        for value in modules.attribute.Value.objects.filter(product=self._product, recipe__isnull=True):
+        for value in modules.attribute.Value.objects.filter(product=self._product, variates=False):
             attribute = value.attribute
             self._attributes[attribute.key] = attribute
             if not self._values.has_key(attribute.key):
@@ -52,14 +52,14 @@ class RecipelessAttributeHelper(AttributeHelper):
         attribute = self.get_attribute(key)
         if not self._values.has_key(attribute.key):
             try:
-                value = modules.attribute.Value.objects.get(attribute=attribute, product=self._product, recipe__isnull=True)
+                value = modules.attribute.Value.objects.get(attribute=attribute, product=self._product, variates=False)
             except modules.attribute.Value.DoesNotExist:
                 self._values[attribute.key] = modules.attribute.Value(product=self._product, attribute=attribute)
             else:
                 self._values[attribute.key] = value
         return self._values[attribute.key]
         
-class VariantAttributeHelper(RecipelessAttributeHelper):    
+class VariantAttributeHelper(AttributeHelper):    
     def get_value_value(self, key):
         value = self.get_value(key)
         if not value.is_assigned:
