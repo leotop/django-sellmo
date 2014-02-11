@@ -51,7 +51,7 @@ def load_model():
 			editable = False,
 		)
 		
-		class Meta:
+		class Meta(modules.checkout_mailing.OrderMail.Meta):
 			abstract = True
 	
 	modules.checkout_mailing.OrderMail = OrderMail
@@ -59,7 +59,7 @@ def load_model():
 @load(action='finalize_checkout_mailing_OrderMail')
 def finalize_model():
 	class OrderMail(modules.checkout_mailing.OrderMail):
-		class Meta:
+		class Meta(modules.checkout_mailing.OrderMail.Meta):
 			app_label = 'checkout'
 			verbose_name = _("order mail")
 			verbose_name_plural = _("order mails")
@@ -67,6 +67,6 @@ def finalize_model():
 	modules.checkout_mailing.OrderMail = OrderMail
 
 class OrderMail(models.Model):
-
+	
 	class Meta:
 		abstract = True

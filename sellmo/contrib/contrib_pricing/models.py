@@ -90,7 +90,7 @@ def load_model():
         def apply(self, price=None):
             return Price(self.amount)
         
-        class Meta:
+        class Meta(modules.qty_pricing.QtyPrice.Meta):
             abstract =  True
     modules.qty_pricing.QtyPrice = QtyPrice
     
@@ -115,7 +115,7 @@ def load_model():
         def apply(self, price=None):
             return price * self.ratio
         
-        class Meta:
+        class Meta(modules.qty_pricing.QtyPriceRatio.Meta):
             abstract =  True
             
     modules.qty_pricing.QtyPriceRatio = QtyPriceRatio
@@ -132,10 +132,11 @@ class QtyPriceRatio(models.Model):
 @load(action='finalize_qty_pricing_ProductQtyPrice')
 def finalize_model():
     class ProductQtyPrice(modules.qty_pricing.ProductQtyPrice):
-        class Meta:
+        class Meta(modules.qty_pricing.ProductQtyPrice.Meta):
             app_label = 'pricing'
             verbose_name = _("qty price")
             verbose_name_plural = _("qty prices")
+    
     modules.qty_pricing.ProductQtyPrice = ProductQtyPrice
     
 @load(before='finalize_qty_pricing_ProductQtyPrice')
@@ -143,15 +144,15 @@ def finalize_model():
 @load(after='finalize_product_Product')
 def load_model():
     class ProductQtyPrice(modules.qty_pricing.ProductQtyPrice, modules.qty_pricing.QtyPrice):
-        
         product = models.ForeignKey(
             modules.product.Product,
             related_name = 'qty_prices',
             verbose_name = _("product"),
         )
         
-        class Meta:
+        class Meta(modules.qty_pricing.ProductQtyPrice.Meta):
             abstract = True
+    
     modules.qty_pricing.ProductQtyPrice = ProductQtyPrice
 
 class ProductQtyPrice(models.Model):

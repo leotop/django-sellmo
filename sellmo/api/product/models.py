@@ -45,7 +45,7 @@ def load_product_subtypes():
 def finalize_model():
     
     class Product(modules.product.Product):
-        class Meta:
+        class Meta(modules.product.Product.Meta):
             app_label = 'product'
             verbose_name = _("product")
             verbose_name_plural = _("products")
@@ -64,7 +64,7 @@ def load_model():
             blank = True,
         )
         
-        class Meta:
+        class Meta(modules.product.ProductRelatable.Meta):
             abstract = True
     
     modules.product.ProductRelatable = ProductRelatable

@@ -56,7 +56,7 @@ def load_subtypes():
 				identifier = '{0}_{1}'.format(identifier, carrier.identifier)
 			return _TieredShippingMethod(identifier, name, method=self, carrier=carrier)
 
-		class Meta:
+		class Meta(modules.shipping.ShippingMethod.Meta):
 			app_label = 'shipping'
 			verbose_name = _("tiered shipping method")
 			verbose_name_plural = _("tiered shipping methods")
@@ -76,7 +76,7 @@ def finalize_model():
 			related_name = 'tiers'
 		)
 		
-		class Meta:
+		class Meta(modules.shipping.TieredShippingTier.Meta):
 			app_label = 'shipping'
 			verbose_name = _("tiered shipping tier")
 			verbose_name_plural = _("tiered shipping tiers")
@@ -192,7 +192,7 @@ def load_model():
 				if errors:
 					raise ValidationError(errors)
 
-			class Meta:
+			class Meta(modules.settings.SiteSettings.Meta):
 				abstract = True
 
 		modules.settings.SiteSettings = SiteSettings

@@ -59,7 +59,7 @@ def load_model():
             super(Product, self).save(*args, **kwargs)
             self.attributes.save()
     
-        class Meta:
+        class Meta(modules.product.Product.Meta):
             abstract = True
         
     modules.product.Product = Product
@@ -87,7 +87,7 @@ def load_model():
             related_name = 'values',
         )
         
-        class Meta:
+        class Meta(modules.attribute.Value.Meta):
             abstract = True
             
     modules.attribute.Value = Value
@@ -96,7 +96,7 @@ def load_model():
 def finalize_model():
     
     class Value(modules.attribute.Value):
-        class Meta:
+        class Meta(modules.attribute.Value.Meta):
             app_label = 'attribute'
             ordering = ['attribute', 'value_string', 'value_int', 'value_float', 'value_object']
             verbose_name = _("value")
@@ -210,7 +210,7 @@ def finalize_model():
             blank = True
         )
         
-        class Meta:
+        class Meta(modules.attribute.Attribute.Meta):
             app_label = 'attribute'
             ordering = ['sort_order', 'name']
             verbose_name = _("attribute")

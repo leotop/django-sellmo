@@ -56,7 +56,7 @@ def load_model():
         def is_stale(self, ignore_cart=False, **kwargs):
             return super(Purchase, self).is_stale(**kwargs) and (self.cart is None or ignore_cart)
         
-        class Meta:
+        class Meta(modules.store.Purchase.Meta):
             abstract = True
         
     modules.store.Purchase = Purchase
@@ -72,10 +72,11 @@ def finalize_model():
     )
     
     class Cart(modules.cart.Cart):
-        class Meta:
+        class Meta(modules.cart.Cart.Meta):
             app_label = 'cart'
             verbose_name = _("cart")
             verbose_name_plural = _("carts")
+    
     modules.cart.Cart = Cart
 
 class Cart(trackable('sellmo_cart')):

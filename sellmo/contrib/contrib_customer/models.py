@@ -52,7 +52,7 @@ def load_model():
 				clone.phone_number = self.phone_number
 			return clone
 
-		class Meta:
+		class Meta(modules.customer.Contactable.Meta):
 			abstract = True
 
 	modules.customer.Contactable = Contactable

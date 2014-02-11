@@ -37,7 +37,7 @@ from sellmo.api.decorators import load
 @load(action='finalize_mailing_MailStatus')
 def finalize_model():
 	class MailStatus(modules.mailing.MailStatus):
-		class Meta:
+		class Meta(modules.mailing.MailStatus.Meta):
 			app_label = 'mailing'
 			verbose_name = _("mail status")
 			verbose_name_plural = _("mail statuses")

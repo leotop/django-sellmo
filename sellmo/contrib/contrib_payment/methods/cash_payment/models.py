@@ -45,7 +45,7 @@ def load_model():
 			verbose_name = _("allow cash payment")
 		)
 		
-		class Meta:
+		class Meta(modules.shipping.ShippingMethod.Meta):
 			abstract = True
 			
 	modules.shipping.ShippingMethod = ShippingMethod
@@ -63,7 +63,7 @@ def finalize_model():
 		def __unicode__(self):
 			return unicode(self.get_method())
 		
-		class Meta:
+		class Meta(modules.cash_payment.CashPayment.Meta):
 			app_label = 'checkout'
 			verbose_name = _("cash payment")
 			verbose_name_plural = _("cash payments")

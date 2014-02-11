@@ -38,7 +38,7 @@ from django.utils.translation import ugettext_lazy as _
 @load(action='finalize_settings_SiteSettings')
 def finalize_model():
 	class SiteSettings(modules.settings.SiteSettings):
-		class Meta:
+		class Meta(modules.settings.SiteSettings.Meta):
 			app_label = 'settings'
 			verbose_name = _("site settings")
 			verbose_name_plural = _("site settings")

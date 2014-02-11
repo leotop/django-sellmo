@@ -85,7 +85,7 @@ def finalize_model():
                 return unicode(method)
             return super(Shipment, self).__unicode__()
         
-        class Meta:
+        class Meta(modules.checkout.Shipment.Meta, modules.shipping.Shipment.Meta):
             app_label = 'shipping'
             verbose_name = _("shipment")
             verbose_name_plural = _("shipments")
@@ -116,7 +116,7 @@ def load_model():
             verbose_name = _("carriers")
         )
         
-        class Meta:
+        class Meta(modules.shipping.ShippingMethod.Meta):
             abstract = True
         
     modules.shipping.ShippingMethod = ShippingMethod
@@ -124,7 +124,7 @@ def load_model():
 @load(action='finalize_shipping_ShippingMethod')
 def finalize_model():
     class ShippingMethod(modules.shipping.ShippingMethod):
-        class Meta:
+        class Meta(modules.shipping.ShippingMethod.Meta):
             app_label = 'shipping'
             verbose_name = _("shipping method")
             verbose_name_plural = _("shipping methods")
@@ -179,7 +179,7 @@ def finalize_model():
             verbose_name = _("extra costs")
         )
         
-        class Meta:
+        class Meta(modules.shipping.ShippingCarrier.Meta):
             app_label = 'shipping'
             verbose_name = _("shipping carrier")
             verbose_name_plural = _("shipping carriers")

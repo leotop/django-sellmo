@@ -65,7 +65,7 @@ def load_model():
             matches = matches.annotate(max_level=Max('category__level')).order_by('-max_level')
             return super(ProductRelatable, cls).get_best_for_product(product=product, matches=matches)
 
-        class Meta:
+        class Meta(modules.product.ProductRelatable.Meta):
             abstract = True
 
     modules.product.ProductRelatable = ProductRelatable
@@ -73,7 +73,11 @@ def load_model():
 @load(action='finalize_category_Category')
 def finalize_model():
     class Category(modules.category.Category):
-        class Meta:
+        
+        class MPTTMeta(modules.category.Category.Meta):
+            pass
+        
+        class Meta(modules.category.Category.Meta):
             app_label = 'category'
             verbose_name = _("category")
             verbose_name_plural = _("categories")
@@ -159,7 +163,7 @@ def load_model():
             verbose_name = _("primary category"),
         )
         
-        class Meta:
+        class Meta(modules.product.Product.Meta):
             abstract = True
     
     modules.product.Product = Product
@@ -175,8 +179,8 @@ class CategoryQuerySet(QuerySet):
     def active(self):
         return self.filter(active=True)
         
-    def ordered(self):
-        return self.order_by('sort_order', 'name')
+    def flat_ordered(self):
+        return self.order_by('tree_id', 'lft')
     
 class CategoryManager(TreeManager):
     def in_parent(self, *args, **kwargs):

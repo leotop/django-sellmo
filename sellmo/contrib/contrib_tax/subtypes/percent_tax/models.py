@@ -58,7 +58,7 @@ def load_subtypes():
 			tax = Price(amount, currency=price.currency, type='tax', context={'tax' : self})
 			return price + tax
 
-		class Meta:
+		class Meta(modules.tax.Tax.Meta):
 			app_label = 'tax'
 			verbose_name = _("percent tax")
 			verbose_name_plural = _("percent taxes")

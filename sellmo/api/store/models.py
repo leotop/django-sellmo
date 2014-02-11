@@ -50,7 +50,8 @@ def load_model():
             modules.product.Product,
             verbose_name = _("product"),
         )
-        class Meta:
+        
+        class Meta(modules.store.Purchase.Meta):
             abstract = True
     
     modules.store.Purchase = Purchase
@@ -66,10 +67,11 @@ def finalize_model():
     )
     
     class Purchase(modules.store.Purchase):
-        class Meta:
+        class Meta(modules.store.Purchase.Meta):
             app_label = 'store'
             verbose_name = _("purchase")
             verbose_name_plural = ("purchases")
+    
     modules.store.Purchase = Purchase
     
 class PurchaseQuerySet(PolymorphicQuerySet):

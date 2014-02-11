@@ -53,7 +53,7 @@ def load_subtypes():
 				identifier = '{0}_{1}'.format(identifier, carrier.identifier)
 			return _FlatShippingMethod(identifier, name, method=self, carrier=carrier)
 
-		class Meta:
+		class Meta(modules.shipping.ShippingMethod.Meta):
 			app_label = 'shipping'
 			verbose_name = _("flat shipping method")
 			verbose_name_plural = _("flat shipping methods")

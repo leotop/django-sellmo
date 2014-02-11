@@ -71,7 +71,7 @@ def load_model():
             verbose_name = _("paid")
         )
         
-        class Meta:
+        class Meta(modules.checkout.Order.Meta):
             abstract = True
     modules.checkout.Order = Order
     
@@ -115,7 +115,7 @@ def load_model():
             verbose_name = _("shipment")
         )
         
-        class Meta:
+        class Meta(modules.checkout.Order.Meta):
             abstract = True
     modules.checkout.Order = Order
     
@@ -141,15 +141,17 @@ def load_model():
             verbose_name = _("status"),
         )
         
-        class Meta:
+        class Meta(modules.checkout.Order.Meta):
             abstract = True
             
+    modules.checkout.Order = Order
+            
     if not settings.CUSTOMER_REQUIRED:
-        class Order(Order, modules.customer.Contactable):
-            class Meta:
+        class Order(modules.checkout.Order, modules.customer.Contactable):
+            class Meta(modules.checkout.Order.Meta):
                 abstract = True
     
-    modules.checkout.Order = Order
+        modules.checkout.Order = Order
     
 @load(after='finalize_customer_Address', before='finalize_checkout_Order')
 def load_model():
@@ -178,7 +180,7 @@ def load_model():
         def is_stale(self, ignore_order=False, **kwargs):
             return super(Purchase, self).is_stale(**kwargs) and (self.order is None or ignore_order)
 
-        class Meta:
+        class Meta(modules.store.Purchase.Meta):
             abstract = True
 
     modules.store.Purchase = Purchase
@@ -186,7 +188,7 @@ def load_model():
 @load(action='finalize_checkout_Order')
 def finalize_model():
     class Order(modules.checkout.Order):
-        class Meta:
+        class Meta(modules.checkout.Order.Meta):
             app_label = 'checkout'
             verbose_name = _("order")
             verbose_name_plural = _("orders")
@@ -196,7 +198,7 @@ def finalize_model():
 @load(action='finalize_checkout_Shipment')
 def finalize_model():
     class Shipment(modules.checkout.Shipment):
-        class Meta:
+        class Meta(modules.checkout.Shipment.Meta):
             app_label = 'checkout'
             verbose_name = _("shipment")
             verbose_name_plural = _("shipments")
@@ -206,7 +208,7 @@ def finalize_model():
 @load(action='finalize_checkout_Payment')
 def finalize_model():
     class Payment(modules.checkout.Payment):
-        class Meta:
+        class Meta(modules.checkout.Payment.Meta):
             app_label = 'checkout'
             verbose_name = _("payment")
             verbose_name_plural = _("payments")

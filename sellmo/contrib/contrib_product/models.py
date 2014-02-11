@@ -55,7 +55,7 @@ def load_model():
             )
         )
         
-        class Meta:
+        class Meta(modules.product.Product.Meta):
             abstract = True
     
     modules.product.Product = Product

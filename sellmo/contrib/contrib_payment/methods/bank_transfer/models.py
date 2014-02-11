@@ -48,7 +48,7 @@ def finalize_model():
 		def __unicode__(self):
 			return unicode(self.get_method())
 		
-		class Meta:
+		class Meta(modules.bank_transfer.BankTransferPayment.Meta):
 			app_label = 'checkout'
 			verbose_name = _("bank transfer payment")
 			verbose_name_plural = _("bank transfers payments")

@@ -52,8 +52,8 @@ def load_subtypes():
 			discount = Price(price.amount * self.rate, currency=price.currency, type='discount', context={'discount' : self})
 			return price + discount
 
-		class Meta:
-			 = 'discount'
+		class Meta(modules.discount.Discount.Meta):
+			app_label = 'discount'
 			verbose_name = _("percent discount")
 			verbose_name_plural = _("percent discounts")
 

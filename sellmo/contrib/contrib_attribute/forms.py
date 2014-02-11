@@ -27,6 +27,7 @@
 #
 
 from sellmo import modules
+from sellmo.utils.forms import FormFactory
 
 #
 
@@ -69,7 +70,7 @@ class ProductAttributeFormMixin(object):
             instance.save()
         return instance
 
-class ProductAttributeFormFactory(object):
+class ProductAttributeFormFactory(FormFactory):
     
     FIELD_CLASSES = {
         modules.attribute.Attribute.TYPE_STRING : forms.CharField,
@@ -131,6 +132,3 @@ class ProductAttributeFormFactory(object):
             attr_dict[name] = field
         
         return type('ProductAttributeForm', (self.mixin, self.form), attr_dict)
-        
-    def __get__(self, obj, objtype):
-        return self.factory()

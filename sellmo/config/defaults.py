@@ -27,13 +27,10 @@
 from django.conf import settings as django_settings
 from django.utils.translation import ugettext_lazy as _
 
-#
-
-from sellmo.api.pricing import Currency
 
 #
 
-CURRENCY = Currency('eur', _(u"euro"), _(u"\u20ac {amount:\u00a0>{align}.2f}"))
+CURRENCY = ('eur', _(u"euro"), _(u"\u20ac {amount:\u00a0>{align}.2f}"))
 
 ADD_TO_CART_FORM = 'sellmo.api.cart.forms.AddToCartForm'
 EDIT_PURCHASE_FORM = 'sellmo.api.cart.forms.EditPurchaseForm'

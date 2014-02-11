@@ -41,17 +41,12 @@ from django.contrib.admin.sites import NotRegistered
 class CategoryAdminBase(admin.ModelAdmin):
     def queryset(self, request):
         # optimize the list display.
-        qs = super(CategoryAdminBase, self).queryset(request)
-        
-        # always order by (tree_id, left)
-        tree_id = qs.model._mptt_meta.tree_id_attr
-        left = qs.model._mptt_meta.left_attr
-        return qs.order_by(tree_id, left)
+        return super(CategoryAdminBase, self).queryset(request).flat_ordered()
 
 class ProductCategoryMixin(object):
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         if db_field.name == 'category':
-            kwargs['queryset'] = modules.category.Category.objects.all().prefetch_related('parent')
+            kwargs['queryset'] = modules.category.Category.objects.all().prefetch_related('parent').flat_ordered()
         return super(ProductCategoryMixin, self).formfield_for_manytomany(db_field, request, **kwargs)
 
 class ProductCategoryListFilter(admin.SimpleListFilter):
@@ -59,7 +54,7 @@ class ProductCategoryListFilter(admin.SimpleListFilter):
     parameter_name = 'category'
     
     def lookups(self, request, model_admin):
-        return [(str(category.pk), unicode(category)) for category in modules.category.Category.objects.all()]
+        return [(str(category.pk), unicode(category)) for category in modules.category.Category.objects.all().flat_ordered()]
         
     def queryset(self, request, queryset):
         pk = self.value()
@@ -74,7 +69,7 @@ class CategoryParentListFilter(admin.SimpleListFilter):
     parameter_name = 'parent'
     
     def lookups(self, request, model_admin):
-        return [(str(category.pk), unicode(category)) for category in modules.category.Category.objects.all()]
+        return [(str(category.pk), unicode(category)) for category in modules.category.Category.objects.all().flat_ordered()]
         
     def queryset(self, request, queryset):
         pk = self.value()

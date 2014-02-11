@@ -24,45 +24,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo import modules
-from sellmo.api.decorators import load
-from sellmo.contrib.contrib_customer.config import settings
-
-#
-
-from django.db import models
-from django.utils.translation import ugettext_lazy as _
-
-#
-
-@load(before='finalize_customer_Addressee')
-def load_model():
+class FormFactory(object):
+	def factory(self):
+		raise NotImplementedError()
 		
-	class Addressee(modules.customer.Addressee):
-		
-		if settings.NAME_PREFIX_ENABLED:
-			prefix = models.CharField(
-				max_length = 20,
-				verbose_name = _("prefix"),
-				blank = not settings.NAME_PREFIX_REQUIRED,
-				choices = settings.NAME_PREFIX_CHOICES,
-				default = settings.NAME_PREFIX_CHOICES[0][0]
-			)
-		
-		suffix = models.CharField(
-			max_length = 10,
-			blank = True,
-			verbose_name = _("suffx"),
-		)
-		
-		def clone(self, cls=None, clone=None):
-			clone = super(Addressee, self).clone(cls=cls, clone=clone)
-			clone.suffix = self.suffix
-			if settings.NAME_PREFIX_ENABLED:
-				clone.prefix = self.prefix
-			return clone
+	def __get__(self, obj, objtype):
+		return self.factory()
 
-		class Meta(modules.customer.Addressee.Meta):
-			abstract = True
-
-	modules.customer.Addressee = Addressee

@@ -72,7 +72,7 @@ def load_model():
                 for variant in self.variants.all():
                     variant.save()
         
-        class Meta:
+        class Meta(modules.product.Product.Meta):
             abstract = True
 
     modules.product.Product = Product
@@ -139,7 +139,7 @@ def load_model():
 @load(after='finalize_variation_Variant')
 def load_variants():
     for subtype in modules.variation.product_subtypes:
-        class Meta:
+        class Meta(subtype.Meta):
             app_label = 'product'
             verbose_name = _("variant")
             verbose_name_plural = _("variants")
@@ -176,7 +176,7 @@ def finalize_model():
             verbose_name = _("price adjustment")
         )
         
-        class Meta:
+        class Meta(modules.variation.Variant.Meta):
             abstract = True
 
     modules.variation.Variant = Variant
@@ -263,7 +263,7 @@ def load_model():
                 for product in modules.product.Product.objects.filter(ProductQ(attribute=self, product_field='base_product')):
                     modules.variation.Variation.objects.deprecate(product)
         
-        class Meta:
+        class Meta(modules.attribute.Attribute.Meta):
             abstract = True
         
     modules.attribute.Attribute = Attribute
@@ -334,7 +334,7 @@ def load_model():
             editable = False
         )
         
-        class Meta:
+        class Meta(modules.attribute.Value.Meta):
             abstract = True
         
     modules.attribute.Value = Value
@@ -383,7 +383,7 @@ def finalize_model():
             verbose_name = _("values"),
         )
         
-        class Meta:
+        class Meta(modules.variation.Variation.Meta):
             app_label = 'variation'
             ordering = ['sort_order']
             verbose_name = _("variation")
@@ -654,7 +654,7 @@ def finalize_model():
             related_name = 'variations_state'
         )
         
-        class Meta:
+        class Meta(modules.variation.VariationsState.Meta):
             app_label = 'variation'
             verbose_name = _("variations state")
             verbose_name_plural = _("variations states")
@@ -684,7 +684,7 @@ def load_model():
             
         variations_deprecated = property(get_variations_deprecated, set_variations_deprecated)
         
-        class Meta:
+        class Meta(modules.product.Product.Meta):
             abstract = True
             
     modules.product.Product = Product
@@ -740,7 +740,7 @@ def load_model():
             clone.variation_description = self.variation_description
             return clone
         
-        class Meta:
+        class Meta(modules.store.Purchase.Meta):
             app_label = 'store'
             verbose_name = _("variation purchase")
             verbose_name_plural = _("variation purchases")

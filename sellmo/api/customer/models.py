@@ -54,7 +54,7 @@ def load_model():
 @load(after='finalize_customer_Addressee', before='finalize_customer_Customer')
 def load_model():
     class Customer(modules.customer.Customer, modules.customer.Addressee):
-        class Meta:
+        class Meta(modules.customer.Customer.Meta):
             abstract = True
         
     modules.customer.Customer = Customer
@@ -62,7 +62,7 @@ def load_model():
 @load(after='finalize_customer_Contactable', before='finalize_customer_Customer')
 def load_model():
     class Customer(modules.customer.Customer, modules.customer.Contactable):
-        class Meta:
+        class Meta(modules.customer.Customer.Meta):
             abstract = True
 
     modules.customer.Customer = Customer
@@ -78,7 +78,7 @@ def finalize_model():
                 verbose_name = _("user"),
             )
         
-        class Meta:
+        class Meta(modules.customer.Customer.Meta):
             app_label = 'customer'
             verbose_name = _("customer")
             verbose_name_plural = _("customers")
@@ -113,7 +113,7 @@ class Customer(models.Model, Cloneable):
 @load(after='finalize_customer_Addressee', before='finalize_customer_Address')
 def load_model():
     class Address(modules.customer.Address, modules.customer.Addressee):
-        class Meta:
+        class Meta(modules.customer.Address.Meta):
             abstract = True
 
     modules.customer.Address = Address
@@ -121,7 +121,7 @@ def load_model():
 @load(action='finalize_customer_Address')
 def finalize_model():
     class Address(modules.customer.Address):
-        class Meta:
+        class Meta(modules.customer.Address.Meta):
             app_label = 'customer'
             verbose_name = _("address")
             verbose_name_plural = _("addresses")
@@ -151,19 +151,20 @@ def finalize_model():
             verbose_name = _("email address"),
         )
         
-        class Meta:
+        class Meta(modules.customer.Contactable.Meta):
             abstract = True
 
     modules.customer.Contactable = Contactable
     
 class Contactable(models.Model, Cloneable):
-    class Meta:
-        abstract = True
-        
+    
     def clone(self, cls=None, clone=None):
         clone = super(Contactable, self).clone(cls=cls, clone=clone)
         clone.email = self.email
         return clone
+        
+    class Meta:
+        abstract = True
   
 #
 # Addressee model
@@ -187,7 +188,7 @@ def finalize_model():
             def is_business(self):
                 return False
         
-        class Meta:
+        class Meta(modules.customer.Addressee.Meta):
             abstract = True
 
     modules.customer.Addressee = Addressee     

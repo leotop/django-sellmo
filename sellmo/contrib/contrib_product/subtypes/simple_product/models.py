@@ -37,7 +37,7 @@ from django.utils.translation import ugettext_lazy as _
 @load(action='load_product_subtypes', after='finalize_product_Product')
 def load_product_subtypes():
 	class SimpleProduct(modules.product.Product):
-		class Meta:
+		class Meta(modules.product.Product.Meta):
 			app_label = 'product'
 			verbose_name = _("product")
 			verbose_name_plural = _("products")

@@ -38,7 +38,7 @@ import sellmo
 from sellmo import modules
 from sellmo.config import settings
 from sellmo.api.decorators import view, chainable, load
-from sellmo.api.pricing import Price, PriceType, StampableProperty
+from sellmo.api.pricing import Currency, Price, PriceType, StampableProperty
 
 #
 
@@ -63,7 +63,7 @@ class PricingModule(sellmo.Module):
     def __init__(self, *args, **kwargs):
         #Configure
         if self.currency is None:
-            self.currency = settings.CURRENCY
+            self.currency = Currency(*settings.CURRENCY)
         if not self.currencies:
             self.currencies = [self.currency]
     
@@ -103,7 +103,7 @@ class PricingModule(sellmo.Module):
     @classmethod
     def make_stampable(self, cls, properties, **kwargs):
         
-        class Meta:
+        class Meta(cls.Meta):
             abstract = True
         
         name = cls.__name__

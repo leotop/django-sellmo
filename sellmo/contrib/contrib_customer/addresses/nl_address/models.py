@@ -66,7 +66,7 @@ def load_model():
 			clone.city = self.city
 			return clone
 
-		class Meta:
+		class Meta(modules.customer.Address.Meta):
 			abstract = True
 
 	modules.customer.Address = Address

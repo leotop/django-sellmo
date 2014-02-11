@@ -87,7 +87,7 @@ def finalize_model():
                 matches = better
             return super(Tax, cls).get_best_for_product(product=product, matches=matches)
         
-        class Meta:
+        class Meta(modules.tax.Tax.Meta, modules.product.ProductRelatable.Meta):
             app_label = 'tax'
             verbose_name = _("tax")
             verbose_name_plural = _("taxes")

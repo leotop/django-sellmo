@@ -46,7 +46,7 @@ def finalize_model():
 		def __unicode__(self):
 			return unicode(self.get_method())
 		
-		class Meta:
+		class Meta(modules.mollie_ideal.MollieIdealPayment.Meta):
 			app_label = 'checkout'
 			verbose_name = _("mollie ideal payment")
 			verbose_name_plural = _("mollie ideal payments")

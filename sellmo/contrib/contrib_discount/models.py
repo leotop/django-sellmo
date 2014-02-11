@@ -86,7 +86,7 @@ def finalize_model():
                 matches = better
             return super(Discount, cls).get_best_for_product(product=product, matches=matches)
         
-        class Meta:
+        class Meta(modules.discount.Discount.Meta):
             app_label = 'discount'
             verbose_name = _("discount")
             verbose_name_plural = _("discounts")

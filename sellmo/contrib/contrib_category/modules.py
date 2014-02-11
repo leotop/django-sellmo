@@ -42,12 +42,12 @@ class CategoryModule(Module):
     def list(self, chain, parent=None, categories=None, nested=False, **kwargs):
         if categories is None:
             if parent:
-                categories = parent.get_children().ordered()
+                categories = parent.get_children().flat_ordered()
             else:
                 if nested:
-                    categories = self.Category.objects.all().ordered()
+                    categories = self.Category.objects.all()
                 else:
-                    categories = self.Category.objects.root_nodes().ordered()
+                    categories = self.Category.objects.root_nodes().flat_ordered()
         
         categories = categories.active()
         

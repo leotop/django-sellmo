@@ -182,7 +182,7 @@ def finalize_model():
             related_name = '+',
         )
         
-        class Meta:
+        class Meta(modules.color.ColorMapping.Meta):
             unique_together = ('product', 'attribute', 'color')
             app_label = 'color'
             
@@ -193,11 +193,11 @@ def load_model():
     class Product(modules.product.Product):
 
         def get_colors(self, **kwargs):
-            return modules.color.get_colors(product=product, **kwargs)
+            return modules.color.get_colors(product=self, **kwargs)
         
         colors = property(get_colors)
 
-        class Meta:
+        class Meta(modules.product.Product.Meta):
             abstract = True
 
     modules.product.Product = Product

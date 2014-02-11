@@ -39,7 +39,7 @@ from django.utils.translation import ugettext_lazy as _
 def load_model():
 	class Discount(modules.discount.Discount):
 
-		class Meta:
+		class Meta(modules.discount.Discount.Meta):
 			abstract = True
 
 	modules.discount.Discount = Discount
