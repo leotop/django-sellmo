@@ -24,51 +24,34 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from sellmo import modules
+
 #
 
-class ValueComparator(object):
-    def __init__(self, value):
-        self.value = value
-        
-    def __eq__(self, other):
-        a = self.value
-        b = self.value
-        return a.value == b.value and a.attribute.key == b.attribute.key
-        
-    def __hash__(self):
-        return hash(u"attr_{0}_value_{1}".format(self.value.attribute.key, self.value.value))
+from django import forms
+from django.contrib import admin
+from django.utils.translation import ugettext_lazy as _
+from django.contrib.admin.widgets import FilteredSelectMultiple
 
-class ValueSet(set):
-    def __init__(self, values):
-        values = [ValueComparator(value) for value in list(values)]
-        super(ValueSet, self).__init__(values)
-    
-    def extract(self):
-        for comparator in self:
-            yield comparator.value
-            
 #
 
-def _ordered(func):
-    def wrap(a, b):
-        c = func(ValueSet(a), ValueSet(b))
-        out = []
-        for value in list(a) + list(b):
-            if ValueComparator(value) in c:
-                out.append(value)
-        return out
-    return wrap
-
-@_ordered
-def difference(a, b):
-    return a - b
-
-@_ordered  
-def intersection(a, b):
-    return a & b
-    
-@_ordered
-def union(a, b):
-    return a + b
-    
-    
+class ProductTaxesForm(forms.ModelForm):
+	taxes = forms.ModelMultipleChoiceField(
+		queryset = modules.tax.Tax.objects.all(), 
+		required = False,
+		label = _("taxes")
+	)
+	
+	def __init__(self, *args, **kwargs):
+		super(ProductTaxesForm, self).__init__(*args, **kwargs)
+		if self.instance and self.instance.pk:
+			self.fields['taxes'].initial = self.instance.taxes.all()
+			
+	def save(self, commit=True):
+		product = super(ProductTaxesForm, self).save(commit=False)
+		if commit:
+			product.save()
+		if product.pk:
+			product.taxes = self.cleaned_data['taxes']
+			self.save_m2m()
+		return product

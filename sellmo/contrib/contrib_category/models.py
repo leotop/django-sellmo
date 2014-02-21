@@ -25,7 +25,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from sellmo import modules
-from sellmo.magic import ModelMixin, ManagerMixinHelper
+from sellmo.core.params import params
+from sellmo.magic import ModelMixin
 from sellmo.api.decorators import load
 
 #
@@ -61,9 +62,8 @@ def load_model():
             return super(ProductRelatable, cls).get_for_product_query(product) | Q(category__in=categories)
 
         @classmethod
-        def get_best_for_product(cls, product, matches):
-            matches = matches.annotate(max_level=Max('category__level')).order_by('-max_level')
-            return super(ProductRelatable, cls).get_best_for_product(product=product, matches=matches)
+        def sort_best_for_product(cls, product, matches):
+            return super(ProductRelatable, cls).sort_best_for_product(product=product, matches=matches)
 
         class Meta(modules.product.ProductRelatable.Meta):
             abstract = True
@@ -72,6 +72,7 @@ def load_model():
 
 @load(action='finalize_category_Category')
 def finalize_model():
+    
     class Category(modules.category.Category):
         
         class MPTTMeta(modules.category.Category.Meta):
@@ -96,8 +97,7 @@ def load_manager():
             else:
                 return self.filter(category__in=[category])
     
-    
-    class ProductManager(modules.product.Product.objects.__class__, ManagerMixinHelper):
+    class ProductManager(modules.product.Product.objects.__class__):
         def in_category(self, *args, **kwargs):
             return self.get_query_set().in_category(*args, **kwargs)
     
@@ -107,6 +107,25 @@ def load_manager():
     class Product(ModelMixin):
         model = modules.product.Product
         objects = ProductManager()
+        
+@load(after='finalize_category_Category')
+def load_manager():
+    if getattr(params, 'dumpdata', False):
+        # Override manager with specialized dumpdata manager
+        qs = modules.category.Category.objects.get_query_set()
+        
+        class CategoryQuerySet(qs.__class__):
+            def order_by(self, *args, **kwargs):
+                # Ignore pk ordering request by dumpdata command
+                return super(CategoryQuerySet, self).order_by('tree_id', 'lft')
+    
+        class CategoryManager(modules.category.Category.objects.__class__):
+            def get_query_set(self):
+                return CategoryQuerySet(self.model)
+    
+        class Category(ModelMixin):
+            model = modules.category.Category
+            objects = CategoryManager()
 
 # Admin will not call "post_remove", this will cause an issue if all categories are unassigned.
 def on_category_changed(sender, instance, action, **kwargs):
@@ -115,7 +134,8 @@ def on_category_changed(sender, instance, action, **kwargs):
     
 @load(after='finalize_product_Product')
 def load_model():
-    m2m_changed.connect(on_category_changed, sender=modules.product.Product.category.through)
+    if not getattr(params, 'loaddata', False):
+        m2m_changed.connect(on_category_changed, sender=modules.product.Product.category.through)
     
 @load(before='finalize_product_Product', after='finalize_category_Category')
 def load_model():
@@ -183,6 +203,14 @@ class CategoryQuerySet(QuerySet):
         return self.order_by('tree_id', 'lft')
     
 class CategoryManager(TreeManager):
+    
+    def get_by_natural_key(self, full_slug):
+        parts = full_slug.split('/')
+        category = None
+        for slug in parts:
+            category = self.get(parent=category, slug=slug)
+        return category
+    
     def in_parent(self, *args, **kwargs):
         return self.get_query_set().in_parent(*args, **kwargs)
         
@@ -267,6 +295,9 @@ class Category(MPTTModel):
         if slug is None:
             slug = self.full_slug
         return reverse('category.category', args=[slug])
+        
+    def natural_key(self):
+        return (self.get_full_slug(),)
     
     def __unicode__(self):
         return self.full_name

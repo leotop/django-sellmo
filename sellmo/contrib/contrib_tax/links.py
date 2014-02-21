@@ -39,7 +39,8 @@ def get_price(price, product=None, shipping_method=None, payment_method=None, **
     taxes = []
     if product:
         try:
-            taxes = modules.tax.Tax.objects.polymorphic().best_for_product(product)
+            tax = modules.tax.Tax.objects.polymorphic().best_for_product(product)
+            taxes.append(tax)
         except modules.tax.Tax.DoesNotExist:
             pass
     elif shipping_method or payment_method:

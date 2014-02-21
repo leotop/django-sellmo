@@ -33,7 +33,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from sellmo import modules
 from sellmo.api.decorators import load
-from sellmo.utils.polymorphism import PolymorphicModel
+from sellmo.core.polymorphism import PolymorphicModel, PolymorphicManager
 
 #
 
@@ -51,30 +51,20 @@ def finalize_model():
             verbose_name_plural = _("products")
     
     modules.product.Product = Product
- 
-# Make sure to load directly after finalizing the product model
-# Also ensure 'finalize_product_ProductRelatable' is called directly afterwards
-@load(before='finalize_product_ProductRelatable', after='finalize_product_Product', directly=True)
-def load_model():
-    
-    class ProductRelatable(modules.product.ProductRelatable):
-        product = models.ManyToManyField(
-            modules.product.Product,
-            related_name = '+',
-            blank = True,
-        )
-        
-        class Meta(modules.product.ProductRelatable.Meta):
-            abstract = True
-    
-    modules.product.ProductRelatable = ProductRelatable
-
 
 @load(action='finalize_product_ProductRelatable')
 def finalize_model():
     pass
+    
+class ProductManager(PolymorphicManager):
+    def get_by_polymorphic_natural_key(self, slug):
+        return self.get(slug=slug)
 
 class Product(PolymorphicModel):
+    
+    objects = ProductManager()
+    
+    #
     
     slug = models.SlugField(
         max_length = 80,
@@ -93,7 +83,7 @@ class Product(PolymorphicModel):
     def __unicode__(self):
         return self.slug
         
-    def natural_key(self):
+    def polymorphic_natural_key(self):
         return (self.slug,)
         
     @models.permalink
@@ -112,9 +102,9 @@ class ProductRelatableQuerySet(QuerySet):
         return self.filter(self.model.get_for_product_query(product=product)).distinct()
     
     def best_for_product(self, product):
-        q = self.for_product(product)
-        if q:
-            return self.model.get_best_for_product(product=product, matches=q)
+        matches = self.for_product(product)
+        if matches:
+            return self.model.get_best_for_product(product=product, matches=matches)
         raise self.model.DoesNotExist(
             "%s matching query does not exist." %
             self.model._meta.object_name) 
@@ -139,11 +129,15 @@ class ProductRelatable(models.Model):
     
     @classmethod
     def get_for_product_query(cls, product):
-        return Q(all_products=True) | Q(product=product)
+        return Q(all_products=True) | Q(products=product)
+        
+    @classmethod
+    def sort_best_for_product(cls, product, matches):
+        return matches.order_by('all_products')
         
     @classmethod
     def get_best_for_product(cls, product, matches):
-        return [matches[0]]
+        return cls.sort_best_for_product(product, matches)[0]
     
     class Meta:
         abstract = True

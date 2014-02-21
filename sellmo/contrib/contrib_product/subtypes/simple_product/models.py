@@ -41,5 +41,5 @@ def load_product_subtypes():
 			app_label = 'product'
 			verbose_name = _("product")
 			verbose_name_plural = _("products")
-
+	
 	modules.product.register_subtype(SimpleProduct)

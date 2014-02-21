@@ -42,10 +42,13 @@ from django.utils.translation import ugettext_lazy as _
 
 class QtyPriceQuerySet(QuerySet):
     def for_qty(self, qty):
-        q = self.filter(qty__lte=qty).order_by('-qty')[:1]
-        if not q:
-            raise self.model.DoesNotExist()
-        return q[0]
+        match = self.filter(qty__gte=qty).order_by('qty').first()
+        if match:
+            return match
+        match = self.all().order_by('qty').first()
+        if match:
+            return match
+        raise self.model.DoesNotExist()
 
 class QtyPriceManager(models.Manager):
     def get_query_set(self):
@@ -77,6 +80,7 @@ class QtyPriceBase(models.Model):
         return _("%s qty or more") % unicode(self.qty)
     
     class Meta:
+        ordering = ['qty']
         abstract = True
         
 @load(after='finalize_qty_pricing_QtyPriceBase', before='finalize_qty_pricing_QtyPrice')
@@ -90,7 +94,7 @@ def load_model():
         def apply(self, price=None):
             return Price(self.amount)
         
-        class Meta(modules.qty_pricing.QtyPrice.Meta):
+        class Meta(modules.qty_pricing.QtyPrice.Meta, modules.qty_pricing.QtyPriceBase.Meta):
             abstract =  True
     modules.qty_pricing.QtyPrice = QtyPrice
     
@@ -115,7 +119,7 @@ def load_model():
         def apply(self, price=None):
             return price * self.ratio
         
-        class Meta(modules.qty_pricing.QtyPriceRatio.Meta):
+        class Meta(modules.qty_pricing.QtyPriceRatio.Meta, modules.qty_pricing.QtyPriceBase.Meta):
             abstract =  True
             
     modules.qty_pricing.QtyPriceRatio = QtyPriceRatio

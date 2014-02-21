@@ -26,7 +26,7 @@
 
 from sellmo import modules
 from sellmo.api.decorators import load
-from sellmo.utils.polymorphism import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
+from sellmo.core.polymorphism import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
 from sellmo.api.checkout import ShippingMethod as _ShippingMethod
 
 #

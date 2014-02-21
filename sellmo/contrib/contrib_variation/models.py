@@ -28,8 +28,8 @@
 
 from sellmo import modules
 from sellmo.api.decorators import load
-from sellmo.magic import ModelMixin, ManagerMixinHelper
-from sellmo.utils.polymorphism import PolymorphicModel, PolymorphicManager
+from sellmo.magic import ModelMixin
+from sellmo.core.polymorphism import PolymorphicModel, PolymorphicManager
 from sellmo.contrib.contrib_variation.variant import VariantFieldDescriptor, VariantMixin, get_differs_field_name
 from sellmo.contrib.contrib_variation.utils import generate_slug
 from sellmo.contrib.contrib_variation.signals import variations_deprecating, variations_deprecated
@@ -45,6 +45,14 @@ from django.db.models.signals import pre_save, post_save, pre_delete
 from django.core.exceptions import ValidationError
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy as _
+
+#
+
+import sys, logging
+
+#
+
+logger = logging.getLogger('sellmo')
 
 #
 
@@ -91,7 +99,7 @@ def load_manager():
             return self
                 
 
-    class ProductManager(modules.product.Product.objects.__class__, ManagerMixinHelper):
+    class ProductManager(modules.product.Product.objects.__class__):
         def get_query_set(self):
             return ProductQuerySet(self.model)
 
@@ -128,11 +136,15 @@ def load_model():
             def variated_by(self):
                 return modules.attribute.Attribute.objects.which_variate(self)
             
+            def get_variations(self, deprecated=False):
+                if getattr(self, '_is_variant', False):
+                    return modules.variation.Variation.objects.for_product(self.product, deprecated=deprecated).filter(variant=self)
+                return modules.variation.Variation.objects.for_product(self, deprecated=deprecated)
+            
             @property
             def variations(self):
-                if getattr(self, '_is_variant', False):
-                    return modules.variation.Variation.objects.for_product(self.product).filter(variant=self)
-                return modules.variation.Variation.objects.for_product(self)
+                return self.get_variations()
+            
                 
 @load(action='load_variants')
 @load(after='setup_variants')
@@ -190,14 +202,16 @@ class Variant(models.Model):
     class Meta:
         abstract = True
                 
-def on_value_pre_save(sender, instance, *args, **kwargs):
-    product = instance.product.downcast()
-    instance.base_product = None
-    if getattr(product, '_is_variant', False):
-        instance.base_product = product.product
+def on_value_pre_save(sender, instance, raw=False, *args, **kwargs):
+    if not raw:
+        product = instance.product.downcast()
+        instance.base_product = None
+        if getattr(product, '_is_variant', False):
+            instance.base_product = product.product
         
-def on_value_post_save(sender, instance, *args, **kwargs):
-    modules.variation.Variation.objects.deprecate(instance.base_product if instance.base_product else instance.product)
+def on_value_post_save(sender, instance, raw=False, *args, **kwargs):
+    if not raw:
+        modules.variation.Variation.objects.deprecate(instance.base_product if instance.base_product else instance.product)
     
 def on_value_pre_delete(sender, instance, *args, **kwargs):
     modules.variation.Variation.objects.deprecate(instance.base_product if instance.base_product else instance.product)
@@ -224,7 +238,7 @@ def load_manager():
                 & (Q(values__base_product=product) | Q(values__product=product) & Q(values__variates=True))
             ).distinct()
     
-    class AttributeManager(modules.attribute.Attribute.objects.__class__, ManagerMixinHelper):
+    class AttributeManager(modules.attribute.Attribute.objects.__class__):
         def get_query_set(self):
             return AttributeQuerySet(self.model)
             
@@ -299,7 +313,7 @@ def load_manager():
                 & (Q(base_product=product) | Q(product=product) & Q(variates=True))
             )
     
-    class ValueManager(modules.attribute.Value.objects.__class__, ManagerMixinHelper):
+    class ValueManager(modules.attribute.Value.objects.__class__):
         def get_query_set(self):
             return ValueQuerySet(self.model)
         
@@ -562,7 +576,8 @@ class VariationManager(models.Manager):
                 except modules.product.Product.DoesNotExist:
                     variant = product
                 except modules.product.Product.MultipleObjectsReturned:
-                    raise Exception("Invalid variant consruction in combination with grouping")
+                    logger.warning("Invalid variant consruction in combination with grouping")
+                    logger.info(product.variants.filter(*qargs))
         
                 variations.update(group_variant=variant)
                 
@@ -596,7 +611,7 @@ class VariationManager(models.Manager):
         # Get variations
         variations = self.get_query_set().for_product(product)
         
-        if variations.count() == 0:
+        if not deprecated and variations.count() == 0:
             # No variations, build
             build()
             variations = self.get_query_set().for_product(product)
@@ -711,7 +726,7 @@ def load_model():
         def mergeable_with(self, purchase):
             return super(PurchaseQuerySet, self.filter(variation_key=purchase.variation_key)).mergeable_with(purchase)
     
-    class PurchaseManager(modules.store.Purchase.objects.__class__, ManagerMixinHelper):
+    class PurchaseManager(modules.store.Purchase.objects.__class__):
         def get_query_set(self):
             return PurchaseQuerySet(self.model)
     

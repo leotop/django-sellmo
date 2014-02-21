@@ -38,7 +38,7 @@ namespace = modules.pricing.namespace
 def get_price(price, product=None, **kwargs):
     if product:
         try:
-            discount = modules.discount.Discount.objects.best_for_product(product)
+            discount = modules.discount.Discount.objects.polymorphic().best_for_product(product)
         except modules.discount.Discount.DoesNotExist:
             pass
         else:

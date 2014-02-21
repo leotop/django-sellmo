@@ -39,13 +39,10 @@ class _ModelMixin(type):
             for name, member in dict.iteritems():
                 if name not in ModelMixin.__dict__:                 
                     model.add_to_class(name, member)
+                    if name == 'objects':
+                        model._default_manager = member
         
         return cls
 
 class ModelMixin(object):
     __metaclass__ = _ModelMixin
-    
-class ManagerMixinHelper(object):
-    def contribute_to_class(self, model, name):
-        super(ManagerMixinHelper, self).contribute_to_class(model, name)
-        model._default_manager = self

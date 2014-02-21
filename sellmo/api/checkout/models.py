@@ -43,7 +43,7 @@ from sellmo.signals.checkout import *
 from sellmo.api.pricing import Price
 from sellmo.api.decorators import load
 from sellmo.api.checkout import statuses
-from sellmo.utils.polymorphism import PolymorphicModel, PolymorphicManager
+from sellmo.core.polymorphism import PolymorphicModel, PolymorphicManager
 from sellmo.utils.tracking import trackable
 
 #

@@ -29,7 +29,7 @@
 from sellmo import modules
 from sellmo.api.decorators import load
 from sellmo.api.product.models import ProductRelatableManager, ProductRelatableQuerySet
-from sellmo.utils.polymorphism import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
+from sellmo.core.polymorphism import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
 from sellmo.magic import ModelMixin
 
 #
@@ -45,30 +45,21 @@ from django.utils.translation import ugettext_lazy as _
 def load_tax_subtypes():
     pass
 
-# Make sure to load directly after finalize_tax_Tax and thus 
-# directly after finalize_product_Product
-@load(after='finalize_tax_Tax', directly=True)
-def load_model():
-    class ProductMixin(ModelMixin):
-        model = modules.product.Product
-        tax = models.ForeignKey(
-            modules.tax.Tax,
-            blank = True,
-            null = True,
-            on_delete = models.SET_NULL,
-            related_name = 'products',
-            verbose_name = _("tax"),
-        )
-
 # Make sure to load directly after finalize_product_ProductRelatable and thus 
-# directly after finalize_product_Product          
-@load(action='finalize_tax_Tax', after='finalize_product_ProductRelatable', directly=True)
+# directly after finalize_product_Product
+@load(after='finalize_product_Product')
+@load(after='finalize_product_ProductRelatable')
+@load(action='finalize_tax_Tax')
 def finalize_model():
     
     class TaxQuerySet(ProductRelatableQuerySet, PolymorphicQuerySet):
         pass
     
     class TaxManager(ProductRelatableManager, PolymorphicManager):
+        
+        def get_by_natural_key(self, name):
+            return self.get(name=name)
+        
         def get_query_set(self):
             return TaxQuerySet(self.model)
     
@@ -76,16 +67,19 @@ def finalize_model():
         
         objects = TaxManager()
         
+        products = models.ManyToManyField(
+            modules.product.Product,
+            related_name = 'taxes',
+            blank = True,
+        )
+        
         @classmethod
         def get_for_product_query(cls, product):
-            return super(Tax, cls).get_for_product_query(product) | Q(products=product)
+            return super(Tax, cls).get_for_product_query(product)
             
         @classmethod
-        def get_best_for_product(cls, product, matches):
-            better = matches.filter(products=product)
-            if better:
-                matches = better
-            return super(Tax, cls).get_best_for_product(product=product, matches=matches)
+        def sort_best_for_product(cls, product, matches):
+            return super(Tax, cls).sort_best_for_product(product=product, matches=matches)
         
         class Meta(modules.tax.Tax.Meta, modules.product.ProductRelatable.Meta):
             app_label = 'tax'
@@ -99,7 +93,11 @@ class Tax(PolymorphicModel):
     name = models.CharField(
         max_length = 80,
         verbose_name = _("name"),
+        unique = True
     )
+    
+    def natural_key(self):
+        return (self.name,)
     
     def apply(self, price):
         raise NotImplementedError()

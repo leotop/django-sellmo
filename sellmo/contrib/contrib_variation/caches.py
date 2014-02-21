@@ -24,10 +24,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.db.models.signals import post_save
-
-#
-
 from sellmo import modules
 from sellmo.caching import Cache, cached
 from sellmo.utils.querying import list_from_pks
@@ -138,7 +134,7 @@ class VariationChoiceCache(Cache):
 	def on_variations_deprecating(self, sender, product, **kwargs):
 		product = product.downcast()
 		keys = [
-			self.get_choice_key(variation.pk) for variation in product.variations.all()
+			self.get_choice_key(variation.pk) for variation in product.get_variations(deprecated=True)
 		]
 		self.delete(*keys)
 		

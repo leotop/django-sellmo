@@ -32,7 +32,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from sellmo import modules
 from sellmo.api.decorators import load
-from sellmo.utils.polymorphism import PolymorphicModel, PolymorphicManager
+from sellmo.core.polymorphism import PolymorphicModel, PolymorphicManager
 from sellmo.utils.formatting import call_or_format
 
 #
@@ -112,6 +112,13 @@ class ValueQuerySet(QuerySet):
         return self.filter(attribute=attribute)
     
 class ValueManager(models.Manager):
+    
+    def get_by_natural_key(self, attribute, product):
+        return self.get(
+            attribute=modules.attribute.Attribute.get_by_natural_key(*attribute),
+            product=modules.product.Product.get_by_natural_key(*product)
+        )
+    
     def get_query_set(self):
         return ValueQuerySet(self.model)
         
@@ -195,6 +202,10 @@ class Value(models.Model):
         elif not self.pk is None:
             self.delete()
             
+    def natural_key(self):
+        return (self.attribute.natural_key(), self.product.natural_key())
+    natural_key.dependencies = ['attribute.attribute', 'product.product']
+            
     def __unicode__(self):
         return call_or_format(settings.VALUE_FORMAT, value=self)
     
@@ -223,6 +234,10 @@ class AttributeQuerySet(QuerySet):
         return self.filter(values__product=product).distinct()
 
 class AttributeManager(models.Manager):
+    
+    def get_by_natural_key(self, key):
+        return self.get(key=key)
+    
     def get_query_set(self):
         return AttributeQuerySet(self.model)
     
@@ -324,6 +339,9 @@ class Attribute(models.Model):
         if not self.key:
             self.key = AttributeKeyField.create_key_from_name(self.name)
         super(Attribute, self).save(*args, **kwargs)
+        
+    def natural_key(self):
+        return (self.key,)
     
     def __unicode__(self):
         return self.name

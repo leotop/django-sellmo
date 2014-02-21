@@ -38,7 +38,7 @@ from django.utils.translation import ugettext_lazy as _
 from sellmo import modules
 from sellmo.api.decorators import load
 from sellmo.api.pricing import Price
-from sellmo.utils.polymorphism import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
+from sellmo.core.polymorphism import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
 from sellmo.utils.cloning import Cloneable
 
 #

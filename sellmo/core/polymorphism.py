@@ -34,6 +34,7 @@ from django.db import models
 from django.db.models.query import QuerySet
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.admin.util import quote
+from django.utils.functional import allow_lazy
 
 #
 
@@ -88,18 +89,17 @@ class PolymorphicQuerySet(QuerySet):
                 content_types_elements[el.content_type_id].append(el)
                 order.append(el.pk)
 
-            if self._downcast:
-                for content_type in content_types.values():
-                    model = content_type.model_class()
-                    elements = content_types_elements[content_type.pk]
-                    pks = [element.pk for element in elements]
+            for content_type in content_types.values():
+                model = content_type.model_class()
+                elements = content_types_elements[content_type.pk]
+                pks = [element.pk for element in elements]
 
-                    for el in QuerySet(model).filter(pk__in=pks):
-                        downcasts[el.pk] = el
+                for el in QuerySet(model).filter(pk__in=pks):
+                    downcasts[el.pk] = el
 
-                for pk in order:
-                    result.append(downcasts[pk])
-
+            for pk in order:
+                result.append(downcasts[pk])
+            
             return result
 
     def _clone(self, *args, **kwargs):
@@ -126,6 +126,13 @@ class PolymorphicManager(models.Manager):
         self._downcast = downcast
         self._cls = cls
         super(PolymorphicManager, self).__init__()
+        
+    def get_by_polymorphic_natural_key(self, *args):
+        raise NotImplementedError()
+        
+    def get_by_natural_key(self, content_type, key):
+        content_type = ContentType.objects.get_by_natural_key(*content_type)
+        return content_type.model_class().objects.get_by_polymorphic_natural_key(*key)
 
     def get_query_set(self):
         qs = self._cls(self.model)
@@ -135,6 +142,7 @@ class PolymorphicManager(models.Manager):
 
     def polymorphic(self, *args, **kwargs):
         return self.get_query_set().polymorphic(*args, **kwargs)
+        
 
 class PolymorphicModel(models.Model):
 
@@ -171,12 +179,24 @@ class PolymorphicModel(models.Model):
                         raise Exception("Could not downcast to model class '{0}', lookup failed for pk '{1}'".format(model, self.pk))
             self._downcasted = downcasted    
         return self._downcasted
+        
+    def can_downcast(self):
+        if not self.content_type_id is None:
+            model = self.content_type.model_class()
+            return model != self.__class__
+        return False
 
     def resolve_content_type(self):
         if not self.content_type_id is None:
             return self.content_type
         else:
             return ContentType.objects.get_for_model(self.__class__)
+            
+    def polymorphic_natural_key(self):
+        raise NotImplementedError()
 
+    def natural_key(self):
+        return (self.content_type.natural_key(), self.downcast().polymorphic_natural_key())
+    
     class Meta:
         abstract = True

@@ -24,51 +24,23 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from django.core.management.commands.dumpdata import Command as BaseCommand
+
+
 #
 
-class ValueComparator(object):
-    def __init__(self, value):
-        self.value = value
-        
-    def __eq__(self, other):
-        a = self.value
-        b = self.value
-        return a.value == b.value and a.attribute.key == b.attribute.key
-        
-    def __hash__(self):
-        return hash(u"attr_{0}_value_{1}".format(self.value.attribute.key, self.value.value))
+from sellmo.core.polymorphism import PolymorphicOverride
 
-class ValueSet(set):
-    def __init__(self, values):
-        values = [ValueComparator(value) for value in list(values)]
-        super(ValueSet, self).__init__(values)
-    
-    def extract(self):
-        for comparator in self:
-            yield comparator.value
-            
 #
 
-def _ordered(func):
-    def wrap(a, b):
-        c = func(ValueSet(a), ValueSet(b))
-        out = []
-        for value in list(a) + list(b):
-            if ValueComparator(value) in c:
-                out.append(value)
-        return out
-    return wrap
+import sys, logging
 
-@_ordered
-def difference(a, b):
-    return a - b
+#
 
-@_ordered  
-def intersection(a, b):
-    return a & b
-    
-@_ordered
-def union(a, b):
-    return a + b
-    
-    
+from sellmo.core.params import params
+params.dumpdata = True
+
+class Command(BaseCommand):
+	def handle(self, *args, **kwargs):
+		with PolymorphicOverride(False):
+			super(Command, self).handle(*args, **kwargs)
