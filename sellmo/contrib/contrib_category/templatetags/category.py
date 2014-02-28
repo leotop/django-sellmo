@@ -25,11 +25,15 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from django import template
+from django.conf import settings as django_settings
+from django.core.cache import cache
+from django.core.cache.utils import make_template_fragment_key
 from django.utils.safestring import mark_safe
 
 #
 
 from sellmo import modules
+from sellmo.contrib.contrib_category.config import settings
 
 #
 
@@ -38,7 +42,7 @@ from mptt.templatetags.mptt_tags import cache_tree_children
 #
 
 from classytags.core import Tag, Options
-from classytags.arguments import Argument, MultiKeywordArgument, KeywordArgument, Flag
+from classytags.arguments import Argument, MultiKeywordArgument, Flag
 
 #
 
@@ -51,8 +55,8 @@ class CategoriesTag(Tag):
     options = Options(
         Flag('nested', true_values=['nested'], false_values=['flat']),
         MultiKeywordArgument('kwargs', required=False),
-        'as',
-        Argument('varname', default='categories', required=False, resolve=False),
+        'cached',
+        Argument('expire_time', default=False, required=False, resolve=False),
         blocks = [
             ('node', 'pre_node'),
             ('endnode', 'node'),
@@ -92,23 +96,14 @@ class CategoriesTag(Tag):
         
         context.pop()
         return output
-
-    def render_tag(self, context, nested, kwargs, varname, pre_node, node, post_node):
-        current = None
-        if 'current' in kwargs:
-            current = kwargs.pop('current')
         
-        categories = modules.category.list(nested=nested, **kwargs)
-        if nested:
-            categories = cache_tree_children(categories)
-        
+    def _render_categories(self, context, categories, current, pre_node, node, post_node):
         context.push()
-        context[varname] = categories
-    
+        
         nodes = []
         if node:
             nodes = [self._render_category_node(category, [], current, context, node) for category in categories]
-            
+        
         bits = [
             pre_node.render(context),
             mark_safe(''.join(nodes)),
@@ -117,6 +112,40 @@ class CategoriesTag(Tag):
         
         output = mark_safe(''.join(bits))
         context.pop()
+        return output
+
+    def render_tag(self, context, nested, kwargs, expire_time,  pre_node, node, post_node):
+        current = None
+        if 'current' in kwargs:
+            current = kwargs.pop('current')
+        
+        cache_key = False
+        output = None
+        
+        if not django_settings.DEBUG and expire_time is not False:
+            cache_key = make_template_fragment_key('categories', [nested, current, str(pre_node + node + post_node)])
+            output = cache.get(cache_key)
+    
+        if not output:
+            # Query categories
+            categories = modules.category.list(nested=nested, **kwargs)
+            if nested:
+                categories = cache_tree_children(categories)
+            output = self._render_categories(context, categories, current, pre_node, node, post_node)            
+            if cache_key:
+                if expire_time is not None:
+                    expire_time = int(expire_time)
+                # Make sure we don't expire any longer than the categories_cache_keys entry
+                if not settings.MAX_EXPIRE_TIME is None:
+                    if expire_time is None or expire_time > settings.MAX_EXPIRE_TIME:
+                        raise Exception("Expire time may not exceed {0}".format(settings.MAX_EXPIRE_TIME))
+                
+                cache.set(cache_key, output, expire_time)
+                cache_keys = cache.get('categories_cache_keys', [])
+                if cache_key not in cache_keys:
+                    cache_keys.append(cache_key)
+                cache.set('categories_cache_keys', cache_keys, settings.MAX_EXPIRE_TIME)
+        
         return output
 
 register.tag(CategoriesTag)

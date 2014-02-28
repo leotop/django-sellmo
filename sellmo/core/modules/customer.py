@@ -224,7 +224,7 @@ class CustomerModule(sellmo.Module):
     @view(r'^login/$')
     def login(self, chain, request, context=None, **kwargs):
         next = request.GET.get('next', 'customer.account')
-        if context == None:
+        if context is None:
             context = {}
         
         data = None
@@ -259,7 +259,7 @@ class CustomerModule(sellmo.Module):
     @view(r'^logout/$')
     def logout(self, chain, request, context=None, **kwargs):
         next = request.GET.get('next', 'customer.login')
-        if context == None:
+        if context is None:
             context = {}
         
         self.logout_user(request=request, user=request.user)
@@ -296,7 +296,7 @@ class CustomerModule(sellmo.Module):
         if customer and customer.pk:
             raise Http404("Already registered")
         
-        if context == None:
+        if context is None:
             context = {}
         
         data = None
@@ -347,7 +347,7 @@ class CustomerModule(sellmo.Module):
     
     @view(r'^account/$')
     def account(self, chain, request, customer=None, context=None, **kwargs):
-        if context == None:
+        if context is None:
             context = {}
             
         if not customer:

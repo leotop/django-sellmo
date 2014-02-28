@@ -52,28 +52,28 @@ class ProductModule(sellmo.Module):
         setattr(self, subtype.__name__, subtype)
         
     @chainable()
-    def list(self, chain, request, products=None):
+    def list(self, chain, request, products=None, **kwargs):
         if products is None:
             products = self.Product.objects.all()
         if chain:
-            out = chain.execute(request=request, products=products)
+            out = chain.execute(request=request, products=products, **kwargs)
             if out.has_key('products'):
                 products = out['products']
         return products
         
     @chainable()
-    def single(self, chain, request, products=None):
+    def single(self, chain, request, products=None, **kwargs):
         if products is None:
             products = self.Product.objects.all()
         if chain:
-            out = chain.execute(request=request, products=products)
+            out = chain.execute(request=request, products=products, **kwargs)
             if out.has_key('products'):
                 products = out['products']
         return products
     
     @view(r'^(?P<product_slug>[-a-zA-Z0-9_]+)$')
     def details(self, chain, request, product_slug, context=None, **kwargs):
-        if context == None:
+        if context is None:
             context = {}
         try:
             product = self.single(request=request).polymorphic().get(slug=product_slug)

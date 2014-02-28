@@ -24,31 +24,37 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from django.db import models
+from django.db.models.query import QuerySet
+from django.utils.translation import ugettext_lazy as _
+
 #
 
 from sellmo import modules
-from sellmo.api.decorators import link
+from sellmo.api.decorators import load
 
 #
 
-@link(namespace=modules.product.namespace)
-def list(request, products, **kwargs):
-	keys = modules.attribute.Attribute.objects.all().values_list('key', flat=True)
-	for key, value in request.GET.items():
-		attr = None
-		if key.startswith('attr__'):
-			attr = key[len('attr__'):]
-		elif key.split('__')[0] in keys:
-			attr = key
-		if attr:
-			parts = attr.split('__')
-			attr = parts[0]
-			operator = None
-			if len(parts) == 2:
-				operator = parts[1]
-			elif len(parts) > 2:
-				continue
-			products = modules.attribute.filter(request=request, products=products, attr=attr, value=value, operator=operator)
-	return {
-		'products' : products
-	}
+@load(action='finalize_pricing_PriceIndexBase')
+def finalize_model():
+	class PriceIndexBase(modules.pricing.PriceIndexBase):
+		class Meta(modules.pricing.PriceIndexBase.Meta):
+			abstract = True
+			app_label = 'pricing'
+	modules.pricing.PriceIndexBase = PriceIndexBase
+	
+class PriceIndexQuerySet(QuerySet):
+	def invalidate(self):
+		return self.delete()
+
+class PriceIndexManager(models.Manager):
+	def invalidate(self):
+		return self.get_query_set().all().invalidate()
+
+	def get_query_set(self):
+		return PriceIndexQuerySet(self.model)
+
+class PriceIndexBase(models.Model):
+	objects = PriceIndexManager()
+	class Meta:
+		abstract = True

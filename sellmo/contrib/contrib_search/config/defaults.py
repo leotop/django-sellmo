@@ -24,31 +24,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#
-
-from sellmo import modules
-from sellmo.api.decorators import link
+from django.utils.translation import ugettext_lazy as _
 
 #
 
-@link(namespace=modules.product.namespace)
-def list(request, products, **kwargs):
-	keys = modules.attribute.Attribute.objects.all().values_list('key', flat=True)
-	for key, value in request.GET.items():
-		attr = None
-		if key.startswith('attr__'):
-			attr = key[len('attr__'):]
-		elif key.split('__')[0] in keys:
-			attr = key
-		if attr:
-			parts = attr.split('__')
-			attr = parts[0]
-			operator = None
-			if len(parts) == 2:
-				operator = parts[1]
-			elif len(parts) > 2:
-				continue
-			products = modules.attribute.filter(request=request, products=products, attr=attr, value=value, operator=operator)
-	return {
-		'products' : products
-	}
+SEARCH_FIELDS = []

@@ -37,8 +37,10 @@ from django.utils.translation import ugettext_lazy as _, string_concat
 import sellmo
 from sellmo import modules
 from sellmo.config import settings
-from sellmo.api.decorators import view, chainable, load
+from sellmo.api.decorators import view, chainable, link
 from sellmo.api.pricing import Currency, Price, PriceType, StampableProperty
+from sellmo.api.pricing.index import PriceIndex
+from sellmo.api.pricing.models import PriceIndexBase
 
 #
 
@@ -47,13 +49,15 @@ def get_default_currency():
 
 class PricingModule(sellmo.Module):
     """
-    Routes product pricing logic to higher level modules and acts as a container for pricing
-    related models.
+    Routes pricing logic to higher level modules.
     """
     namespace = 'pricing'
     currency = None
-    currencies = []
+    currencies = {}
     types = []
+    indexes = {}
+    
+    PriceIndexBase = PriceIndexBase
     
     #: Configures the max digits for a pricing (decimal) field
     decimal_max_digits = 9
@@ -61,11 +65,16 @@ class PricingModule(sellmo.Module):
     decimal_places = 2
     
     def __init__(self, *args, **kwargs):
-        #Configure
+        # Configure
         if self.currency is None:
             self.currency = Currency(*settings.CURRENCY)
         if not self.currencies:
-            self.currencies = [self.currency]
+            self.currencies = {
+                self.currency.code : self.currency
+            }
+        # Initialize indexes
+        for index in self.indexes.values():
+            index._build()    
     
     @classmethod
     def construct_decimal_field(self, **kwargs):
@@ -101,15 +110,15 @@ class PricingModule(sellmo.Module):
         )
         
     @classmethod
-    def make_stampable(self, cls, properties, **kwargs):
+    def make_stampable(self, model, properties, **kwargs):
         
-        class Meta(cls.Meta):
+        class Meta(model.Meta):
             abstract = True
         
-        name = cls.__name__
+        name = model.__name__
         attr_dict = {
             'Meta' : Meta,
-            '__module__' : cls.__module__
+            '__module__' : model.__module__
         }
         
         for prop in properties:
@@ -146,14 +155,28 @@ class PricingModule(sellmo.Module):
                     
                 attr_dict[field] = self.construct_pricing_field(**fargs)
             
-        model = type(name, (cls,), attr_dict)
-        return model
+        out = type(name, (model,), attr_dict)
+        return out
+        
+    @classmethod
+    def create_index(self, identifier):
+        if identifier in self.indexes:
+            raise Exception("Index '{0}' already exists.".format(identifier))
+        index = PriceIndex(identifier)
+        self.indexes[identifier] = index
+        return index
+        
+    @classmethod
+    def get_index(self, identifier):
+        if identifier not in self.indexes:
+            raise Exception("Index '{0}' not found.".format(identifier))
+        return self.indexes[identifier]
         
     @chainable()
     def retrieve(self, chain, stampable, prop, **kwargs):
         amount = getattr(stampable, '{0}_amount'.format(prop))
         currency = getattr(stampable, '{0}_currency'.format(prop))
-        price = Price(amount, currency=None)
+        price = Price(amount, currency=self.currencies[currency])
         for key in self.types:
             price[key] = Price(getattr(stampable, '{0}_{1}'.format(prop, key)))
         return price
@@ -180,9 +203,16 @@ class PricingModule(sellmo.Module):
         return currency
             
     @chainable()
-    def get_price(self, chain, currency=None, price=None, **kwargs):
+    def get_price(self, chain, currency=None, price=None, index=None, **kwargs):
         if currency is None:
             currency = self.get_currency()
+        
+        # Price indexing
+        if index:
+            price = self.get_index(index).lookup(currency=currency.code, **kwargs)
+            if price is not None:
+                return price
+            
         if price is None:
             price = Price(0, currency=currency)
         if chain:
@@ -190,5 +220,20 @@ class PricingModule(sellmo.Module):
             if out.has_key('price'):
                 price = out['price']
         
+        # Price indexing
+        if index:
+            self.get_index(index).index(price, currency=currency.code, **kwargs)
+        
         return price
-    
+        
+    @link(namespace='product', name='list')
+    def list_products(self, products, currency=None, index=None, index_relation='product', **kwargs):
+        if currency is None:
+            currency = self.get_currency()
+        if index is not None:
+            products = self.get_index(index).query(products, index_relation, currency=currency, **kwargs)
+            if getattr(products, '_is_indexed', False):
+                products = products.order_indexes_by('price_amount')
+        return {
+            'products' : products
+        }

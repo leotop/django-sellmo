@@ -35,6 +35,7 @@ from sellmo.magic import ModelMixin
 #
 
 from django.db import models
+from django.db.models.signals import pre_save, post_save, pre_delete, m2m_changed
 from django.db.models import Q
 from django.contrib.sites.models import Site
 from django.utils.translation import ugettext_lazy as _
@@ -44,6 +45,36 @@ from django.utils.translation import ugettext_lazy as _
 @load(action='load_tax_subtypes', after='finalize_tax_Tax')
 def load_tax_subtypes():
     pass
+    
+def on_tax_pre_save(sender, instance, **kwargs):
+    if instance.pk is not None:
+        old = instance.__class__.objects.get(pk=instance.pk)
+        invalidate_indexes(old)
+    
+def on_tax_post_save(sender, instance, **kwargs):
+    invalidate_indexes(instance)
+    
+def on_tax_m2m_changed(sender, instance, action, **kwargs):
+    if action.startswith('post_'):
+        invalidate_indexes(instance)
+    
+def on_tax_pre_delete(sender, instance, **kwargs):
+   invalidate_indexes(instance)
+    
+def invalidate_indexes(tax):
+    modules.pricing.get_index('product_price').model.objects.filter(
+        product__in=modules.product.Product.objects.for_relatable(tax)
+    ).invalidate()
+    
+@load(after='load_tax_subtypes')
+def hookup_invalidation():
+    for relation in modules.tax.Tax.m2m_invalidations:
+        field = getattr(modules.tax.Tax, relation)
+        m2m_changed.connect(on_tax_m2m_changed, sender=field.through)   
+    for subtype in modules.tax.subtypes:
+        pre_save.connect(on_tax_pre_save, sender=subtype)
+        post_save.connect(on_tax_post_save, sender=subtype)
+        pre_delete.connect(on_tax_pre_delete, sender=subtype)
 
 # Make sure to load directly after finalize_product_ProductRelatable and thus 
 # directly after finalize_product_Product
@@ -73,14 +104,6 @@ def finalize_model():
             blank = True,
         )
         
-        @classmethod
-        def get_for_product_query(cls, product):
-            return super(Tax, cls).get_for_product_query(product)
-            
-        @classmethod
-        def sort_best_for_product(cls, product, matches):
-            return super(Tax, cls).sort_best_for_product(product=product, matches=matches)
-        
         class Meta(modules.tax.Tax.Meta, modules.product.ProductRelatable.Meta):
             app_label = 'tax'
             verbose_name = _("tax")
@@ -96,6 +119,9 @@ class Tax(PolymorphicModel):
         unique = True
     )
     
+    def get_related_products_query(self):
+        return super(Tax, self).get_related_products_query() | Q(taxes=self)
+    
     def natural_key(self):
         return (self.name,)
     
@@ -107,4 +133,5 @@ class Tax(PolymorphicModel):
     
     def __unicode__(self):
         return self.name
-            
+        
+    

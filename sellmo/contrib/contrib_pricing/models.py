@@ -35,6 +35,7 @@ from sellmo.api.pricing import Price
 #
 
 from django.db import models
+from django.db.models.signals import post_save, pre_delete
 from django.db.models.query import QuerySet
 from django.utils.translation import ugettext_lazy as _
 
@@ -133,6 +134,9 @@ class QtyPriceRatio(models.Model):
     class Meta:
         abstract = True
         
+def on_invalidate_index(sender, instance, **kwargs):
+    modules.pricing.get_index('product_price').invalidate(product=instance.product)
+        
 @load(action='finalize_qty_pricing_ProductQtyPrice')
 def finalize_model():
     class ProductQtyPrice(modules.qty_pricing.ProductQtyPrice):
@@ -142,6 +146,9 @@ def finalize_model():
             verbose_name_plural = _("qty prices")
     
     modules.qty_pricing.ProductQtyPrice = ProductQtyPrice
+    post_save.connect(on_invalidate_index, sender=ProductQtyPrice)
+    pre_delete.connect(on_invalidate_index, sender=ProductQtyPrice)
+    
     
 @load(before='finalize_qty_pricing_ProductQtyPrice')
 @load(after='finalize_qty_pricing_QtyPrice')
@@ -163,4 +170,14 @@ class ProductQtyPrice(models.Model):
     
     class Meta:
         abstract = True
+        
+        
+# Setup indexes
+@load(after='finalize_product_Product')
+def setup_indexes():
+    index = modules.pricing.get_index('product_price')
+    index.add_kwarg('qty', models.PositiveIntegerField(
+        null = True
+    ), required = False)
+
         

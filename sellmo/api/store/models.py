@@ -60,7 +60,7 @@ def load_model():
 def finalize_model():
     
     modules.store.Purchase = modules.pricing.make_stampable(
-        cls = modules.store.Purchase,
+        model = modules.store.Purchase,
         properties = [
             ('total', _("total"))
         ]

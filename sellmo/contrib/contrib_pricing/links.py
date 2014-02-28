@@ -38,7 +38,7 @@ namespace = modules.pricing.namespace
 
 @link()
 def get_price(price, product=None, currency=None, qty=1, **kwargs):
-    if product:
+    if product and not price:
         try:
             qty_price = modules.qty_pricing.ProductQtyPrice.objects.filter(product=product).for_qty(qty)
         except modules.qty_pricing.ProductQtyPrice.DoesNotExist:

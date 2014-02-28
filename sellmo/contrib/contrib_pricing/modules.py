@@ -44,10 +44,8 @@ class QtyPricingModule(Module):
             q = product.qty_prices.all()
             if q:
                 tiers =  q
-    
         if chain:
             out = chain.execute(product=product, tiers=tiers, **kwargs)
             if out.has_key('tiers'):
                 tiers = out['tiers']
-        
         return tiers

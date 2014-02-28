@@ -43,11 +43,11 @@ class CategoryAdminBase(admin.ModelAdmin):
         # optimize the list display.
         return super(CategoryAdminBase, self).queryset(request).flat_ordered()
 
-class ProductCategoryMixin(object):
+class ProductCategoriesMixin(object):
     def formfield_for_manytomany(self, db_field, request, **kwargs):
-        if db_field.name == 'category':
+        if db_field.name == 'categories':
             kwargs['queryset'] = modules.category.Category.objects.all().prefetch_related('parent').flat_ordered()
-        return super(ProductCategoryMixin, self).formfield_for_manytomany(db_field, request, **kwargs)
+        return super(ProductCategoriesMixin, self).formfield_for_manytomany(db_field, request, **kwargs)
 
 class ProductCategoryListFilter(admin.SimpleListFilter):
     title = _("category")

@@ -59,8 +59,8 @@ ORDER_CANCELED = 'canceled'
 @load(before='finalize_checkout_Order')
 def load_model():
     modules.checkout.Order = modules.pricing.make_stampable(
-        cls=modules.checkout.Order,
-        properties=[
+        model = modules.checkout.Order,
+        properties = [
             ('subtotal', _("subtotal")),
             ('total', _("total")),
         ]
@@ -78,8 +78,8 @@ def load_model():
 @load(before='finalize_checkout_Payment')
 def load_model():
     modules.checkout.Payment = modules.pricing.make_stampable(
-        cls=modules.checkout.Payment,
-        properties=[
+        model = modules.checkout.Payment,
+        properties = [
             ('costs', _("costs"))
         ]
     )
@@ -87,8 +87,8 @@ def load_model():
 @load(before='finalize_checkout_Shipment')
 def load_model():
     modules.checkout.Shipment = modules.pricing.make_stampable(
-        cls=modules.checkout.Shipment,
-        properties=[
+        model = modules.checkout.Shipment,
+        properties = [
             ('costs', _("costs"))
         ]
     )
@@ -278,7 +278,7 @@ class Order(trackable('sellmo_order')):
     
     def add(self, purchase, save=True, calculate=True):
         self.ensure_state(ORDER_NEW)
-        if self.pk == None:
+        if self.pk is None:
             self.save()
         purchase.order = self
         if save:

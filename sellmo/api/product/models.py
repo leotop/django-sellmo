@@ -27,13 +27,14 @@
 from django.db import models
 from django.db.models import Q
 from django.db.models.query import QuerySet
+from django.db.models.signals import pre_save, pre_delete, post_save, m2m_changed
 from django.utils.translation import ugettext_lazy as _
 
 #
 
 from sellmo import modules
 from sellmo.api.decorators import load
-from sellmo.core.polymorphism import PolymorphicModel, PolymorphicManager
+from sellmo.core.polymorphism import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
 
 #
 
@@ -43,7 +44,6 @@ def load_product_subtypes():
 
 @load(action='finalize_product_Product')
 def finalize_model():
-    
     class Product(modules.product.Product):
         class Meta(modules.product.Product.Meta):
             app_label = 'product'
@@ -51,12 +51,22 @@ def finalize_model():
             verbose_name_plural = _("products")
     
     modules.product.Product = Product
-
-@load(action='finalize_product_ProductRelatable')
-def finalize_model():
-    pass
+    index = modules.pricing.create_index('product_price')
+    index.add_kwarg('product', models.ForeignKey(
+        Product
+    ))
+    
+class ProductQuerySet(PolymorphicQuerySet):
+    def for_relatable(self, relatable):
+        return self.filter(pk__in=relatable.get_related_products())
     
 class ProductManager(PolymorphicManager):
+    def __init__(self, cls=ProductQuerySet, **kwargs):
+        super(ProductManager, self).__init__(cls=cls, **kwargs)
+    
+    def for_relatable(self, *args, **kwargs):
+        return self.get_query_set().for_relatable(*args, **kwargs)
+    
     def get_by_polymorphic_natural_key(self, slug):
         return self.get(slug=slug)
 
@@ -91,7 +101,7 @@ class Product(PolymorphicModel):
         return 'product.details', (self.slug,)
     
     def get_price(self, currency=None, **kwargs):
-        return modules.pricing.get_price(product=self, currency=currency, **kwargs)
+        return modules.pricing.get_price(product=self, currency=currency, index='product_price', **kwargs)
     
     class Meta:
         ordering = ['slug']
@@ -121,11 +131,22 @@ class ProductRelatableManager(models.Manager):
         
 class ProductRelatable(models.Model):
     objects = ProductRelatableManager()
+    m2m_invalidations = ['products']
     
     all_products = models.BooleanField(
         default = False,
         verbose_name = _("all products"),
     )
+    
+    def get_related_products(self):
+        products = modules.product.Product.objects.get_query_set()
+        if self.all_products:
+            return products.all()
+        else:
+            return products.filter(self.get_related_products_query())
+    
+    def get_related_products_query(self):
+        return Q()
     
     @classmethod
     def get_for_product_query(cls, product):

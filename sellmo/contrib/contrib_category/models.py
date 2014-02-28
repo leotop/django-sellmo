@@ -31,9 +31,10 @@ from sellmo.api.decorators import load
 
 #
 from django.db import models
-from django.db.models.signals import m2m_changed
+from django.db.models.signals import m2m_changed, post_save, post_delete
 from django.db.models.query import QuerySet
 from django.db.models import Q, Max
+from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_lazy as _
 
@@ -46,20 +47,28 @@ from mptt.models import MPTTModel, TreeForeignKey, TreeManager
 @load(after='finalize_category_Category', before='finalize_product_ProductRelatable')
 def load_model():
     class ProductRelatable(modules.product.ProductRelatable):
-        category = models.ManyToManyField(
+        m2m_invalidations = modules.product.ProductRelatable.m2m_invalidations + ['categories']
+        
+        categories = models.ManyToManyField(
             modules.category.Category,
             related_name = '+',
             blank = True,
         )
         
+        def get_related_products_query(self):
+            # Get categories including descendants
+            q = Q()
+            for category in self.categories.all():
+                q |= Q(categories__in=category.get_descendants(include_self=True))
+            return super(ProductRelatable, self).get_related_products_query() | q
+        
         @classmethod
         def get_for_product_query(cls, product):
             # Get categories including ancestors
-            categories = []
-            for category in product.category.all():
-                categories += list(modules.category.Category.objects.filter(tree_id=category.tree_id, level__lte=category.level))
-            
-            return super(ProductRelatable, cls).get_for_product_query(product) | Q(category__in=categories)
+            q = Q()
+            for category in product.categories.all():
+                q |= Q(categories__in=category.get_ancestors(include_self=True))
+            return super(ProductRelatable, cls).get_for_product_query(product) | q
 
         @classmethod
         def sort_best_for_product(cls, product, matches):
@@ -69,6 +78,12 @@ def load_model():
             abstract = True
 
     modules.product.ProductRelatable = ProductRelatable
+
+
+# Cache invalidation
+def on_cache_invalidation(sender, instance, **kwargs):
+    cache_keys = cache.get('categories_cache_keys', [])
+    cache.delete_many(cache_keys + ['navigation_cache_keys'])
 
 @load(action='finalize_category_Category')
 def finalize_model():
@@ -83,6 +98,10 @@ def finalize_model():
             verbose_name = _("category")
             verbose_name_plural = _("categories")
     
+    # Hookup signals
+    post_save.connect(on_cache_invalidation, sender=Category)
+    post_delete.connect(on_cache_invalidation, sender=Category)
+    
     modules.category.Category = Category
     
 @load(after='finalize_product_Product')
@@ -93,9 +112,9 @@ def load_manager():
     class ProductQuerySet(qs.__class__):
         def in_category(self, category, recurse=True):
             if recurse:
-                return self.filter(category__in=category.get_descendants(include_self=True))
+                return self.filter(categories__in=category.get_descendants(include_self=True))
             else:
-                return self.filter(category__in=[category])
+                return self.filter(categories__in=[category])
     
     class ProductManager(modules.product.Product.objects.__class__):
         def in_category(self, *args, **kwargs):
@@ -128,14 +147,14 @@ def load_manager():
             objects = CategoryManager()
 
 # Admin will not call "post_remove", this will cause an issue if all categories are unassigned.
-def on_category_changed(sender, instance, action, **kwargs):
+def on_categories_changed(sender, instance, action, **kwargs):
     if action == 'post_add' or action == 'post_remove':
         instance.update_primary_category(instance)
     
 @load(after='finalize_product_Product')
 def load_model():
     if not getattr(params, 'loaddata', False):
-        m2m_changed.connect(on_category_changed, sender=modules.product.Product.category.through)
+        m2m_changed.connect(on_categories_changed, sender=modules.product.Product.categories.through)
     
 @load(before='finalize_product_Product', after='finalize_category_Category')
 def load_model():
@@ -143,35 +162,37 @@ def load_model():
         
         @staticmethod
         def find_primary_category(product):
-            q = product.category.all().order_by('-level')
+            q = product.categories.all().order_by('-level')
             if q:
                 return q[0]
             return None
             
         @staticmethod
         def update_primary_category(product):
-            
-            if (product.primary_category is None
-            or getattr(product, '_primary_category_found', False)
-            or product.category.filter(pk=product.primary_category.pk).count() == 0
-            ) and product.category.count() > 0:
+            if (
+                (product.primary_category is None
+                or product.categories.filter(pk=product.primary_category.pk).count() == 0)
+                and not getattr(product, '_primary_category_found', False)
+                and product.categories.count() > 0
+            ):
                 # Find best suitable category
                 found = product.find_primary_category(product)
                 if product.primary_category != found:
                     product.primary_category = found
                     setattr(product, '_primary_category_found', True)
                     product.save()
-            elif not product.primary_category is None and product.category.count() == 0:
+            elif not product.primary_category is None and product.categories.count() == 0:
                 # Unassign
                 product.primary_category = None
+                setattr(product, '_primary_category_found', True)
                 product.save()
         
-        category = models.ManyToManyField(
+        categories = models.ManyToManyField(
             modules.category.Category,
             blank = True,
             null = True,
-            related_name = 'products',
-            verbose_name = _("category"),
+            related_name = 'products2',
+            verbose_name = _("categories"),
         )
         
         primary_category = models.ForeignKey(

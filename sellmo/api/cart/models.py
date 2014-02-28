@@ -65,7 +65,7 @@ def load_model():
 def finalize_model():
     
     modules.cart.Cart = modules.pricing.make_stampable(
-        cls = modules.cart.Cart,
+        model = modules.cart.Cart,
         properties = [
             ('total', _("total"))
         ]
@@ -107,7 +107,7 @@ class Cart(trackable('sellmo_cart')):
     #
        
     def add(self, purchase, save=True, calculate=True):
-        if self.pk == None:
+        if self.pk is None:
             self.save()
         purchase.cart = self
         if save:

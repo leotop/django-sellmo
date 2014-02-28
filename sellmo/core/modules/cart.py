@@ -172,7 +172,7 @@ class CartModule(sellmo.Module):
         
     @view(r'^$')
     def cart(self, chain, request, cart=None, context=None, **kwargs):
-        if context == None:
+        if context is None:
             context = {}
             
         cart = self.get_cart(request=request)

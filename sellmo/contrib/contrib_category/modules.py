@@ -26,6 +26,7 @@
 
 from django.http import Http404
 
+
 #
 
 from sellmo import modules, Module
@@ -58,7 +59,7 @@ class CategoryModule(Module):
         
     @view(r'^$')
     def index(self, chain, request, context=None, **kwargs):
-        if context == None:
+        if context is None:
             context = {}
         
         if chain:
@@ -69,7 +70,7 @@ class CategoryModule(Module):
     
     @view(r'^(?P<full_slug>[-a-zA-Z0-9_/]+)/$')
     def category(self, chain, request, full_slug, category=None, context=None, **kwargs):
-        if context == None:
+        if context is None:
             context = {}
         
         if category is None:
