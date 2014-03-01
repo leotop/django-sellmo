@@ -37,24 +37,24 @@ from sellmo.api.decorators import load
 
 @load(action='finalize_pricing_PriceIndexBase')
 def finalize_model():
-	class PriceIndexBase(modules.pricing.PriceIndexBase):
-		class Meta(modules.pricing.PriceIndexBase.Meta):
-			abstract = True
-			app_label = 'pricing'
-	modules.pricing.PriceIndexBase = PriceIndexBase
-	
+    class PriceIndexBase(modules.pricing.PriceIndexBase):
+        class Meta(modules.pricing.PriceIndexBase.Meta):
+            abstract = True
+            app_label = 'pricing'
+    modules.pricing.PriceIndexBase = PriceIndexBase
+    
 class PriceIndexQuerySet(QuerySet):
-	def invalidate(self):
-		return self.delete()
+    def invalidate(self):
+        return self.delete()
 
 class PriceIndexManager(models.Manager):
-	def invalidate(self):
-		return self.get_query_set().all().invalidate()
+    def invalidate(self):
+        return self.get_query_set().all().invalidate()
 
-	def get_query_set(self):
-		return PriceIndexQuerySet(self.model)
+    def get_query_set(self):
+        return PriceIndexQuerySet(self.model)
 
 class PriceIndexBase(models.Model):
-	objects = PriceIndexManager()
-	class Meta:
-		abstract = True
+    objects = PriceIndexManager()
+    class Meta:
+        abstract = True

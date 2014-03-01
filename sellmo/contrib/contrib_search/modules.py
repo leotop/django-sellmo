@@ -40,44 +40,44 @@ from sellmo.contrib.contrib_search.config import settings
 #
 
 class SearchModule(Module):
-	namespace = 'search'
+    namespace = 'search'
 
-	@view(r'^$')
-	def results(self, chain, request, products=None, context=None, **kwargs):
-		if context is None:
-			context = {}
-		
-		if products is None:
-			products = modules.product.list(request=request)
-		
-		if chain:
-			return chain.execute(request, products=products, context=context, **kwargs)
-		else:
-			# We don't render anything
-			raise Http404
-			
-	@chainable()
-	def search(self, chain, request, products, term, **kwargs):
-		def construct_search(field):
-			if field.startswith('^'):
-				return "%s__istartswith" % field[1:]
-			elif field.startswith('='):
-				return "%s__iexact" % field[1:]
-			elif field.startswith('@'):
-				return "%s__search" % field[1:]
-			else:
-				return "%s__icontains" % field
-		
-		fields = settings.SEARCH_FIELDS
-		if fields and term:
-			orm_lookups = [construct_search(str(field)) for field in fields]
-			for bit in term.split():
-				or_queries = [Q(**{orm_lookup: bit})
-							  for orm_lookup in orm_lookups]
-				products = products.filter(reduce(operator.or_, or_queries))
-			products = products.distinct()
-		
-		if chain:
-			out = chain.execute(request=request, products=products, term=term, **kwargs)
-			products = out.get('products', products)
-		return products
+    @view(r'^$')
+    def results(self, chain, request, products=None, context=None, **kwargs):
+        if context is None:
+            context = {}
+        
+        if products is None:
+            products = modules.product.list(request=request)
+        
+        if chain:
+            return chain.execute(request, products=products, context=context, **kwargs)
+        else:
+            # We don't render anything
+            raise Http404
+            
+    @chainable()
+    def search(self, chain, request, products, term, **kwargs):
+        def construct_search(field):
+            if field.startswith('^'):
+                return "%s__istartswith" % field[1:]
+            elif field.startswith('='):
+                return "%s__iexact" % field[1:]
+            elif field.startswith('@'):
+                return "%s__search" % field[1:]
+            else:
+                return "%s__icontains" % field
+        
+        fields = settings.SEARCH_FIELDS
+        if fields and term:
+            orm_lookups = [construct_search(str(field)) for field in fields]
+            for bit in term.split():
+                or_queries = [Q(**{orm_lookup: bit})
+                              for orm_lookup in orm_lookups]
+                products = products.filter(reduce(operator.or_, or_queries))
+            products = products.distinct()
+        
+        if chain:
+            out = chain.execute(request=request, products=products, term=term, **kwargs)
+            products = out.get('products', products)
+        return products

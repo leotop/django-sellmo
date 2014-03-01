@@ -39,15 +39,15 @@ from django.utils.translation import ugettext_lazy as _
 
 @load(after='finalize_attribute_Attribute')
 def add_settings():
-	if settings.SHIPPING_TIER_ATTRIBUTES > 0:
-		for i in range(settings.SHIPPING_TIER_ATTRIBUTES):
-			modules.settings.add_setting(
-				'shipping_tier_attribute{0}'.format(i + 1),
-				models.ForeignKey(
-					modules.attribute.Attribute,
-					null = True,
-					blank = True,
-					related_name = '+',
-				)
-				, _("Tiered Shipping")
-			)
+    if settings.SHIPPING_TIER_ATTRIBUTES > 0:
+        for i in range(settings.SHIPPING_TIER_ATTRIBUTES):
+            modules.settings.add_setting(
+                'shipping_tier_attribute{0}'.format(i + 1),
+                models.ForeignKey(
+                    modules.attribute.Attribute,
+                    null = True,
+                    blank = True,
+                    related_name = '+',
+                )
+                , _("Tiered Shipping")
+            )

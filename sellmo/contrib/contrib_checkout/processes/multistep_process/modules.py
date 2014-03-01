@@ -36,55 +36,55 @@ from sellmo.api.decorators import chainable, view
 #
 
 class MultiStepCheckoutModule(Module):
-	namespace = 'multistep_checkout'
-	
-	@chainable()
-	def get_step(self, chain, key, order, request, step=None, **kwargs):
-		if chain:
-			out = chain.execute(key=key, order=order, request=request, step=step)
-			step = out.get('step', step)
-		return step
-	
-	@view()
-	def login(self, chain, request, context=None, **kwargs):
-		if context is None:
-			context = {}
-			
-		if chain:
-			return chain.execute(request=request, context=context, **kwargs)
-		else:
-			# We don't render anything
-			raise Http404
-	
-	@view()
-	def information(self, chain, request, context=None, **kwargs):
-		if context is None:
-			context = {}
+    namespace = 'multistep_checkout'
+    
+    @chainable()
+    def get_step(self, chain, key, order, request, step=None, **kwargs):
+        if chain:
+            out = chain.execute(key=key, order=order, request=request, step=step)
+            step = out.get('step', step)
+        return step
+    
+    @view()
+    def login(self, chain, request, context=None, **kwargs):
+        if context is None:
+            context = {}
+            
+        if chain:
+            return chain.execute(request=request, context=context, **kwargs)
+        else:
+            # We don't render anything
+            raise Http404
+    
+    @view()
+    def information(self, chain, request, context=None, **kwargs):
+        if context is None:
+            context = {}
 
-		if chain:
-			return chain.execute(request=request, context=context, **kwargs)
-		else:
-			# We don't render anything
-			raise Http404
-			
-	@view()
-	def payment_method(self, chain, request, context=None, **kwargs):
-		if context is None:
-			context = {}
-	
-		if chain:
-			return chain.execute(request=request, context=context, **kwargs)
-		else:
-			# We don't render anything
-			raise Http404
-			
-	@view()
-	def summary(self, chain, request, context=None, **kwargs):
-		if context is None:
-			context = {}
-	
-		if chain:
-			return chain.execute(request=request, context=context, **kwargs)
-		else:
-			# We don't render anything
-			raise Http404
+        if chain:
+            return chain.execute(request=request, context=context, **kwargs)
+        else:
+            # We don't render anything
+            raise Http404
+            
+    @view()
+    def payment_method(self, chain, request, context=None, **kwargs):
+        if context is None:
+            context = {}
+    
+        if chain:
+            return chain.execute(request=request, context=context, **kwargs)
+        else:
+            # We don't render anything
+            raise Http404
+            
+    @view()
+    def summary(self, chain, request, context=None, **kwargs):
+        if context is None:
+            context = {}
+    
+        if chain:
+            return chain.execute(request=request, context=context, **kwargs)
+        else:
+            # We don't render anything
+            raise Http404

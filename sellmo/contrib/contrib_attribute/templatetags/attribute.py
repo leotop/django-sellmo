@@ -36,15 +36,15 @@ from django import template
 register = template.Library()
 
 #
-	
+    
 @register.filter
 def difference(a, b):
-	return comparison.difference(a, b)
-	
+    return comparison.difference(a, b)
+    
 @register.filter
 def intersection(a, b):
-	return comparison.intersection(a, b)
-	
+    return comparison.intersection(a, b)
+    
 @register.filter
 def union(a, b):
-	return comparison.union(a, b)
+    return comparison.union(a, b)

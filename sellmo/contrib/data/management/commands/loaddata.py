@@ -41,6 +41,6 @@ from sellmo.core.params import params
 params.loaddata = True
 
 class Command(BaseCommand):
-	def handle(self, *args, **kwargs):
-		with PolymorphicOverride(False):
-			super(Command, self).handle(*args, **kwargs)
+    def handle(self, *args, **kwargs):
+        with PolymorphicOverride(False):
+            super(Command, self).handle(*args, **kwargs)

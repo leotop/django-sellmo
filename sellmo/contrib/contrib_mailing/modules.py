@@ -32,8 +32,8 @@ from sellmo.contrib.contrib_mailing.models import MailStatus
 
 class MailingModule(Module):  
 
-	namespace = 'mailing'
-	MailStatus = MailStatus
+    namespace = 'mailing'
+    MailStatus = MailStatus
 
-	def __init__(self):
-		pass
+    def __init__(self):
+        pass

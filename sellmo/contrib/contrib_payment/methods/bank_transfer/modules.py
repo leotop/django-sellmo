@@ -35,20 +35,20 @@ from sellmo.contrib.contrib_payment.methods.bank_transfer.models import BankTran
 #
 
 class BankTransferModule(Module):
-	namespace = 'bank_transfer'
-	BankTransferPayment = BankTransferPayment
+    namespace = 'bank_transfer'
+    BankTransferPayment = BankTransferPayment
 
-	@view()
-	def instructions(self, chain, request, order=None, context=None, **kwargs):
-		if context is None:
-			context = {}
-		if chain:
-			return chain.execute(request=request, context=context, **kwargs)
-		else:
-			# We don't render anything
-			raise Http404
-			
-	@link(namespace='checkout')
-	def complete(self, request, order=None, context=None, **kwargs):
-		if isinstance(order.payment, self.BankTransferPayment):
-			return self.instructions(request, order=order, context=context)
+    @view()
+    def instructions(self, chain, request, order=None, context=None, **kwargs):
+        if context is None:
+            context = {}
+        if chain:
+            return chain.execute(request=request, context=context, **kwargs)
+        else:
+            # We don't render anything
+            raise Http404
+            
+    @link(namespace='checkout')
+    def complete(self, request, order=None, context=None, **kwargs):
+        if isinstance(order.payment, self.BankTransferPayment):
+            return self.instructions(request, order=order, context=context)

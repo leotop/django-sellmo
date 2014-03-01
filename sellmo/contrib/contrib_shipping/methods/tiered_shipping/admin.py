@@ -35,11 +35,11 @@ from django.contrib import admin
 #
 
 class TieredShippingTierInline(admin.TabularInline):
-	model = modules.shipping.TieredShippingTier
+    model = modules.shipping.TieredShippingTier
 
 class TieredShippingMethodAdmin(ShippingMethodAdminBase):
-	inlines = ShippingMethodAdminBase.inlines + [TieredShippingTierInline]
-	
+    inlines = ShippingMethodAdminBase.inlines + [TieredShippingTierInline]
+    
 #
 
 ShippingMethodParentAdmin.child_models += [(modules.shipping.TieredShippingMethod, TieredShippingMethodAdmin)]

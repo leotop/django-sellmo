@@ -34,16 +34,16 @@ from sellmo.config import settings
 #
 
 if settings.CACHING_ENABLED:
-	import sellmo.caching.boot
-	
+    import sellmo.caching.boot
+    
 if settings.CELERY_ENABLED:
-	from sellmo.celery.boot import app as celery_app
+    from sellmo.celery.boot import app as celery_app
 else:
-	celery_app = None
+    celery_app = None
 
 # Wrap all exceptions because Django does not capture ImportErrors
 try:
-	# !! THIS INITS SELLMO
-	sellmo = Sellmo()	
+    # !! THIS INITS SELLMO
+    sellmo = Sellmo()   
 except Exception as exception:
-	raise Exception(str(exception)), None, sys.exc_info()[2]
+    raise Exception(str(exception)), None, sys.exc_info()[2]

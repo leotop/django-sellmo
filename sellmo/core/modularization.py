@@ -34,82 +34,82 @@ from sellmo.signals.core import module_created, module_init
 @singleton
 class MountPoint(object):
 
-	def __init__(self):
-		self._pending = []
-		self._modules = []
+    def __init__(self):
+        self._pending = []
+        self._modules = []
 
-	def on_module_class(self, module):
-		setattr(self, module.namespace, module)
-		self._pending.append(module)
-		self._modules.append(module)
-		
-		# Signal
-		module_created.send(sender=self, module=module)
+    def on_module_class(self, module):
+        setattr(self, module.namespace, module)
+        self._pending.append(module)
+        self._modules.append(module)
+        
+        # Signal
+        module_created.send(sender=self, module=module)
 
-	def on_module_init(self, module, instance):
-		setattr(self, module.namespace, instance)
+    def on_module_init(self, module, instance):
+        setattr(self, module.namespace, instance)
 
-		# Remove class based module and add instance based module
-		self._pending.remove(module)
-		self._modules.remove(module)
-		self._modules.append(instance)
-		
-		# Signal
-		module_init.send(sender=self, module=instance)
+        # Remove class based module and add instance based module
+        self._pending.remove(module)
+        self._modules.remove(module)
+        self._modules.append(instance)
+        
+        # Signal
+        module_init.send(sender=self, module=instance)
 
-	def init_pending_modules(self):
-		while self._pending:
-			module = self._pending[0]
-			module()
+    def init_pending_modules(self):
+        while self._pending:
+            module = self._pending[0]
+            module()
 
-	def __iter__(self):
-		for module in self._modules:
-			yield module
+    def __iter__(self):
+        for module in self._modules:
+            yield module
 
 class _ModuleMeta(SingletonMeta):
 
-	def __new__(cls, name, bases, dict):
-		out = super(_ModuleMeta, cls).__new__(cls, name, bases, dict)
+    def __new__(cls, name, bases, dict):
+        out = super(_ModuleMeta, cls).__new__(cls, name, bases, dict)
 
-		# __new__ will also be called for the Module class. Do not proceed
-		# with any further initialization. Ignore it..
-		if out.__ignore__:
-			out.__ignore__ = False
-			return out
-			
-		# See if this module is enabled. If not, no further initialization
-		# is needed.
-		if not out.enabled:
-			return out
+        # __new__ will also be called for the Module class. Do not proceed
+        # with any further initialization. Ignore it..
+        if out.__ignore__:
+            out.__ignore__ = False
+            return out
+            
+        # See if this module is enabled. If not, no further initialization
+        # is needed.
+        if not out.enabled:
+            return out
 
-		# Validate the module
-		if not out.namespace:
-			raise Exception("No namespace defined for module '{0}'".format(out))
+        # Validate the module
+        if not out.namespace:
+            raise Exception("No namespace defined for module '{0}'".format(out))
 
-		# Notify mountpoint
-		modules.on_module_class(out)
+        # Notify mountpoint
+        modules.on_module_class(out)
 
-		return out
+        return out
 
 class Module(object):
 
-	__metaclass__ = _ModuleMeta
-	# __new__ will also be called for the Module class. We need a flag
-	# to ignore it.
-	__ignore__ = True
+    __metaclass__ = _ModuleMeta
+    # __new__ will also be called for the Module class. We need a flag
+    # to ignore it.
+    __ignore__ = True
 
-	enabled = True
-	namespace = None
-	prefix = None
+    enabled = True
+    namespace = None
+    prefix = None
 
-	def __new__(cls, *args, **kwargs):
-		if not cls.enabled:
-			return None
+    def __new__(cls, *args, **kwargs):
+        if not cls.enabled:
+            return None
 
-		module = super(Module, cls).__new__(cls)
-		modules.on_module_init(cls, module)
-		return module
-		
-		
+        module = super(Module, cls).__new__(cls)
+        modules.on_module_init(cls, module)
+        return module
+        
+        
 modules = MountPoint()
-		
+        

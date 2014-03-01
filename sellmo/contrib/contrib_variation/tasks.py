@@ -34,4 +34,4 @@ from sellmo import modules
 
 @shared_task
 def build_variations(product):
-	modules.variation.Variation.objects.build(product)
+    modules.variation.Variation.objects.build(product)

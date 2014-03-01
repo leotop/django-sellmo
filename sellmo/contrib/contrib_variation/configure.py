@@ -32,9 +32,9 @@ from sellmo.contrib.contrib_variation import tasks
 #
 
 def on_variations_deprecated(sender, product, **kwargs):
-	tasks.build_variations.apply_async((product,), countdown=60)
+    tasks.build_variations.apply_async((product,), countdown=60)
 
 if settings.CELERY_ENABLED:
-	variations_deprecated.connect(on_variations_deprecated)
-	
+    variations_deprecated.connect(on_variations_deprecated)
+    
 modules.product.reserved_url_params += ['variants']

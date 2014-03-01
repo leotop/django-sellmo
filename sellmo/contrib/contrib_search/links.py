@@ -33,9 +33,9 @@ from sellmo.api.decorators import link
 
 @link(namespace=modules.product.namespace)
 def list(request, products, **kwargs):
-	term = request.GET.get('search', None)
-	if query:
-		products = modules.search.search(request=request, term=term, products=products)
-	return {
-		'products' : products
-	}
+    term = request.GET.get('search', None)
+    if query:
+        products = modules.search.search(request=request, term=term, products=products)
+    return {
+        'products' : products
+    }

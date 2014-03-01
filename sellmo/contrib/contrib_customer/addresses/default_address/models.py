@@ -36,39 +36,39 @@ from django.utils.translation import ugettext_lazy as _
 
 @load(before='finalize_customer_Address')
 def load_model():
-	class Address(modules.customer.Address):
+    class Address(modules.customer.Address):
 
-		street1 = models.CharField(
-			max_length = 80,
-			verbose_name = _("street address 1")
-		)
+        street1 = models.CharField(
+            max_length = 80,
+            verbose_name = _("street address 1")
+        )
 
-		street2 = models.CharField(
-			max_length = 80,
-			blank = True,
-			null = True,
-			verbose_name = _("street address 2")
-		)
-		
-		postal_code = models.CharField(
-			max_length = 15,
-			verbose_name = _("postal code")
-		)
-		
-		city = models.CharField(
-			max_length = 50,
-			verbose_name = _("city")
-		)
-		
-		def clone(self, cls=None, clone=None):
-			clone = super(Address, self).clone(cls=cls, clone=clone)
-			clone.street1 = self.street1
-			clone.street2 = self.street2
-			clone.postal_code = self.postal_code
-			clone.city = self.city
-			return clone
+        street2 = models.CharField(
+            max_length = 80,
+            blank = True,
+            null = True,
+            verbose_name = _("street address 2")
+        )
+        
+        postal_code = models.CharField(
+            max_length = 15,
+            verbose_name = _("postal code")
+        )
+        
+        city = models.CharField(
+            max_length = 50,
+            verbose_name = _("city")
+        )
+        
+        def clone(self, cls=None, clone=None):
+            clone = super(Address, self).clone(cls=cls, clone=clone)
+            clone.street1 = self.street1
+            clone.street2 = self.street2
+            clone.postal_code = self.postal_code
+            clone.city = self.city
+            return clone
 
-		class Meta(modules.customer.Address.Meta):
-			abstract = True
+        class Meta(modules.customer.Address.Meta):
+            abstract = True
 
-	modules.customer.Address = Address
+    modules.customer.Address = Address

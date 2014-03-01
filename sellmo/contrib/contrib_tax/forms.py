@@ -36,22 +36,22 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 #
 
 class ProductTaxesForm(forms.ModelForm):
-	taxes = forms.ModelMultipleChoiceField(
-		queryset = modules.tax.Tax.objects.all(), 
-		required = False,
-		label = _("taxes")
-	)
-	
-	def __init__(self, *args, **kwargs):
-		super(ProductTaxesForm, self).__init__(*args, **kwargs)
-		if self.instance and self.instance.pk:
-			self.fields['taxes'].initial = self.instance.taxes.all()
-			
-	def save(self, commit=True):
-		product = super(ProductTaxesForm, self).save(commit=False)
-		if commit:
-			product.save()
-		if product.pk:
-			product.taxes = self.cleaned_data['taxes']
-			self.save_m2m()
-		return product
+    taxes = forms.ModelMultipleChoiceField(
+        queryset = modules.tax.Tax.objects.all(), 
+        required = False,
+        label = _("taxes")
+    )
+    
+    def __init__(self, *args, **kwargs):
+        super(ProductTaxesForm, self).__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            self.fields['taxes'].initial = self.instance.taxes.all()
+            
+    def save(self, commit=True):
+        product = super(ProductTaxesForm, self).save(commit=False)
+        if commit:
+            product.save()
+        if product.pk:
+            product.taxes = self.cleaned_data['taxes']
+            self.save_m2m()
+        return product

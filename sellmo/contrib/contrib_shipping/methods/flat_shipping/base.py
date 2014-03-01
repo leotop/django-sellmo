@@ -31,24 +31,24 @@ from sellmo.api.checkout import ShippingMethod
 #
 
 class FlatShippingMethod(ShippingMethod):
-	
-	identifier = None
-	name = None
-	
-	def new_shipment(self, order):
-		return modules.shipping.Shipment(
-			method=self.method,
-			carrier=self.carrier,
-		)
+    
+    identifier = None
+    name = None
+    
+    def new_shipment(self, order):
+        return modules.shipping.Shipment(
+            method=self.method,
+            carrier=self.carrier,
+        )
 
-	def __init__(self, identifier, name, method, carrier=None):
-		self.identifier = identifier
-		self.name = name
-		self.method = method
-		self.carrier = carrier
+    def __init__(self, identifier, name, method, carrier=None):
+        self.identifier = identifier
+        self.name = name
+        self.method = method
+        self.carrier = carrier
 
-	def get_costs(self, order, currency=None, **kwargs):
-		costs = self.method.costs
-		if self.carrier:
-			costs += self.carrier.extra_costs
-		return modules.pricing.get_price(price=Price(costs), shipping_method=self)
+    def get_costs(self, order, currency=None, **kwargs):
+        costs = self.method.costs
+        if self.carrier:
+            costs += self.carrier.extra_costs
+        return modules.pricing.get_price(price=Price(costs), shipping_method=self)

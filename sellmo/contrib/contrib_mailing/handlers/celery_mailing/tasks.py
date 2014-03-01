@@ -36,15 +36,15 @@ from sellmo.core.mailing import mailer
 
 @shared_task
 def send_mail(message_type, message_reference, context):
-	writer = mailer.writers[message_type]
-	handler = MailHandlerBase(writer)
-	try:
-		handler.send_mail(message_type, message_reference, context)
-	except Exception as exc:
-		if settings.SEND_MAIL_RETRY_ENABLED:
-			raise send_mail.retry(
-				countdown=settings.SEND_MAIL_RETRY_DELAY,
-				max_retries=settings.SEND_MAIL_RETRY_LIMIT,
-				exc=exc
-			)
-		raise
+    writer = mailer.writers[message_type]
+    handler = MailHandlerBase(writer)
+    try:
+        handler.send_mail(message_type, message_reference, context)
+    except Exception as exc:
+        if settings.SEND_MAIL_RETRY_ENABLED:
+            raise send_mail.retry(
+                countdown=settings.SEND_MAIL_RETRY_DELAY,
+                max_retries=settings.SEND_MAIL_RETRY_LIMIT,
+                exc=exc
+            )
+        raise

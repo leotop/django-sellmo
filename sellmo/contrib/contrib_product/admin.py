@@ -36,17 +36,17 @@ from django.utils.translation import ugettext_lazy as _
 #
 
 class ProductAdminBase(admin.ModelAdmin):
-	pass
+    pass
 
 class ProductParentAdminBase(PolymorphicParentModelAdmin):
-	base_model = modules.product.Product
-	child_models = []
+    base_model = modules.product.Product
+    child_models = []
 
-	polymorphic_list = False
-	list_display = ['slug']
-	list_display_links = ['slug']
-	search_fields = ['slug']
+    polymorphic_list = False
+    list_display = ['slug']
+    list_display_links = ['slug']
+    search_fields = ['slug']
 
-	def queryset(self, queryset):
-		return modules.product.Product.objects.all()
+    def queryset(self, queryset):
+        return modules.product.Product.objects.all()
 

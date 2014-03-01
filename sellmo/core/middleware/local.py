@@ -29,14 +29,14 @@ from sellmo.core.local import new_context, release_context
 #
 
 class LocalContextMiddleware(object):
-	
-	def process_request(self, request):
-		new_context()
-	
-	def process_response(self, request, response):
-		release_context()
-		return response
-		
-	def process_exception(self, request, exception):
-		release_context()
-		return None
+    
+    def process_request(self, request):
+        new_context()
+    
+    def process_response(self, request, response):
+        release_context()
+        return response
+        
+    def process_exception(self, request, exception):
+        release_context()
+        return None

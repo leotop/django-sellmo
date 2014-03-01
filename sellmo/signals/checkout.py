@@ -29,13 +29,13 @@ import django.dispatch
 #
 
 __all__ = [
-	'order_pending',
-	'order_paid',
-	'order_completed',
-	'order_closed',
-	'order_canceled',
-	'order_state_changed',
-	'order_status_changed',
+    'order_pending',
+    'order_paid',
+    'order_completed',
+    'order_closed',
+    'order_canceled',
+    'order_state_changed',
+    'order_status_changed',
 ]
 
 #

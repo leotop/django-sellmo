@@ -34,7 +34,7 @@ from sellmo import modules
 #
 
 modules.settings.add_setting('bank_transfer_name', models.CharField(
-	max_length = 80,
-	default = _("Bank transfer"),
-	verbose_name = _("bank transfer name")
+    max_length = 80,
+    default = _("Bank transfer"),
+    verbose_name = _("bank transfer name")
 ), _("Bank Transfer"))

@@ -29,10 +29,10 @@ import django.dispatch
 #
 
 __all__ = [
-	'pre_init',
-	'post_init',
-	'module_created',
-	'module_init',
+    'pre_init',
+    'post_init',
+    'module_created',
+    'module_init',
 ]
 
 #

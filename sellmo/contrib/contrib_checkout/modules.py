@@ -32,34 +32,34 @@ from sellmo.contrib.contrib_checkout.models import OrderMail
 
 class CheckoutMailingModule(Module):  
 
-	namespace = 'checkout_mailing'
-	
-	OrderMail = OrderMail
+    namespace = 'checkout_mailing'
+    
+    OrderMail = OrderMail
 
-	@chainable()
-	def render_order_confirmation(self, chain, format, order, data=None, **kwargs):
-		if chain:
-			out = chain.execute(format=format, order=order, data=data, **kwargs)
-			if 'data' in out:
-				data = out['data']
-		
-		return data
-	
-	def __init__(self):
-		pass
-		
+    @chainable()
+    def render_order_confirmation(self, chain, format, order, data=None, **kwargs):
+        if chain:
+            out = chain.execute(format=format, order=order, data=data, **kwargs)
+            if 'data' in out:
+                data = out['data']
+        
+        return data
+    
+    def __init__(self):
+        pass
+        
 class CheckoutReportingModule(Module):  
 
-	namespace = 'checkout_reporting'
+    namespace = 'checkout_reporting'
 
-	def __init__(self):
-		pass
-		
-	@chainable()
-	def render_invoice(self, chain, order, data=None, **kwargs):
-		if chain:
-			out = chain.execute(order=order, data=data, **kwargs)
-			if 'data' in out:
-				data = out['data']
-		
-		return data
+    def __init__(self):
+        pass
+        
+    @chainable()
+    def render_invoice(self, chain, order, data=None, **kwargs):
+        if chain:
+            out = chain.execute(order=order, data=data, **kwargs)
+            if 'data' in out:
+                data = out['data']
+        
+        return data

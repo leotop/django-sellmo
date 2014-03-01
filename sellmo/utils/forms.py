@@ -25,9 +25,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 class FormFactory(object):
-	def factory(self):
-		raise NotImplementedError()
-		
-	def __get__(self, obj, objtype):
-		return self.factory()
+    def factory(self):
+        raise NotImplementedError()
+        
+    def __get__(self, obj, objtype):
+        return self.factory()
 

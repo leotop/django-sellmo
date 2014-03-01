@@ -37,22 +37,22 @@ from django.utils.translation import ugettext_lazy as _
 group = _("Store Information")
 
 modules.settings.add_setting('store_name', models.CharField(
-	max_length = 100,
-	verbose_name = _("store name"),
+    max_length = 100,
+    verbose_name = _("store name"),
 ), group)
 
 modules.settings.add_setting('contact_email', models.EmailField(
-	verbose_name = _("contact email address"),
-	blank = True,
+    verbose_name = _("contact email address"),
+    blank = True,
 ), group)
 
 modules.settings.add_setting('contact_phone_number', models.CharField(
-	max_length = 20,
-	verbose_name = _("contact phone number"),
-	blank = True,
+    max_length = 20,
+    verbose_name = _("contact phone number"),
+    blank = True,
 ), group)
 
 modules.settings.add_setting('contact_address', models.TextField(
-	verbose_name = _("contact address"),
-	blank = True,
+    verbose_name = _("contact address"),
+    blank = True,
 ), group)

@@ -31,21 +31,21 @@ import subprocess
 #
 
 class PipeError(Exception):
-	pass
+    pass
 
 
 def pipe(command, input=None, cwd=None, *args, **kwargs):
-	
-	handle = subprocess.Popen(command, shell=True, cwd=cwd, stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE, *args, **kwargs)
-	out, err = handle.communicate(input=input)
-	
-	if handle.returncode != 0:
-		error = err
-		if not error:
-			error = out
+    
+    handle = subprocess.Popen(command, shell=True, cwd=cwd, stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE, *args, **kwargs)
+    out, err = handle.communicate(input=input)
+    
+    if handle.returncode != 0:
+        error = err
+        if not error:
+            error = out
 
-		if not error:
-			error = """Command '%s' failed to run.""" % command
+        if not error:
+            error = """Command '%s' failed to run.""" % command
 
-		raise PipeError(error)
-	return out
+        raise PipeError(error)
+    return out

@@ -31,18 +31,18 @@ from django.utils.translation import ugettext_lazy as _
 ACCEPT_TERMS_ENABLED = True
 INVOICE_WRITER = 'sellmo.contrib.contrib_checkout.reporting.InvoiceWriter'
 CHECKOUT_MAILS = {
-	'order_confirmation' : {
-		'writer' : 'sellmo.contrib.contrib_checkout.mailing.OrderConfirmationWriter',
-		'send_once' : True,
-		'send_events' : [
-			{
-				'on_paid' : True,
-				'instant_payment' : True
-			},
-			{
-				'on_pending' : True,
-				'instant_payment' : False
-			}
-		]
-	}
+    'order_confirmation' : {
+        'writer' : 'sellmo.contrib.contrib_checkout.mailing.OrderConfirmationWriter',
+        'send_once' : True,
+        'send_events' : [
+            {
+                'on_paid' : True,
+                'instant_payment' : True
+            },
+            {
+                'on_pending' : True,
+                'instant_payment' : False
+            }
+        ]
+    }
 }

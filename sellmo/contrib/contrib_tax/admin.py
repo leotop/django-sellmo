@@ -35,20 +35,20 @@ from django.utils.translation import ugettext_lazy as _
 
 # Base admin for every payment method subtype
 class TaxAdminBase(admin.ModelAdmin):
-	pass
+    pass
 
 # Admin for payment method
 class TaxParentAdmin(PolymorphicParentModelAdmin):
-	base_model = modules.tax.Tax
-	child_models = []
+    base_model = modules.tax.Tax
+    child_models = []
 
-	polymorphic_list = True
-	list_display = ['name']
-	list_display_links = ['name']
-	search_fields = ['name']
+    polymorphic_list = True
+    list_display = ['name']
+    list_display_links = ['name']
+    search_fields = ['name']
 
-	def queryset(self, queryset):
-		return modules.tax.Tax.objects.all()
+    def queryset(self, queryset):
+        return modules.tax.Tax.objects.all()
 
 admin.site.register(modules.tax.Tax, TaxParentAdmin)
 

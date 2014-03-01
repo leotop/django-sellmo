@@ -41,20 +41,20 @@ from django.utils.translation import ugettext_lazy as _
 
 @load(action='load_discount_subtypes', after='finalize_discount_Discount')
 def load_subtypes():
-	class PercentDiscount(modules.discount.Discount):
+    class PercentDiscount(modules.discount.Discount):
 
-		rate = modules.pricing.construct_decimal_field(
-			default = Decimal('0.0'),
-			verbose_name = _("rate"),
-		)
+        rate = modules.pricing.construct_decimal_field(
+            default = Decimal('0.0'),
+            verbose_name = _("rate"),
+        )
 
-		def apply(self, price):
-			discount = Price(price.amount * self.rate, currency=price.currency, type='discount', context={'discount' : self})
-			return price + discount
+        def apply(self, price):
+            discount = Price(price.amount * self.rate, currency=price.currency, type='discount', context={'discount' : self})
+            return price + discount
 
-		class Meta(modules.discount.Discount.Meta):
-			app_label = 'discount'
-			verbose_name = _("percent discount")
-			verbose_name_plural = _("percent discounts")
+        class Meta(modules.discount.Discount.Meta):
+            app_label = 'discount'
+            verbose_name = _("percent discount")
+            verbose_name_plural = _("percent discounts")
 
-	modules.discount.register_subtype(PercentDiscount)
+    modules.discount.register_subtype(PercentDiscount)

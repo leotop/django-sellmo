@@ -37,32 +37,32 @@ from django.utils.translation import ugettext_lazy as _
 
 @load(before='finalize_customer_Addressee')
 def load_model():
-		
-	class Addressee(modules.customer.Addressee):
-		
-		if settings.NAME_PREFIX_ENABLED:
-			prefix = models.CharField(
-				max_length = 20,
-				verbose_name = _("prefix"),
-				blank = not settings.NAME_PREFIX_REQUIRED,
-				choices = settings.NAME_PREFIX_CHOICES,
-				default = settings.NAME_PREFIX_CHOICES[0][0]
-			)
-		
-		suffix = models.CharField(
-			max_length = 10,
-			blank = True,
-			verbose_name = _("suffx"),
-		)
-		
-		def clone(self, cls=None, clone=None):
-			clone = super(Addressee, self).clone(cls=cls, clone=clone)
-			clone.suffix = self.suffix
-			if settings.NAME_PREFIX_ENABLED:
-				clone.prefix = self.prefix
-			return clone
+        
+    class Addressee(modules.customer.Addressee):
+        
+        if settings.NAME_PREFIX_ENABLED:
+            prefix = models.CharField(
+                max_length = 20,
+                verbose_name = _("prefix"),
+                blank = not settings.NAME_PREFIX_REQUIRED,
+                choices = settings.NAME_PREFIX_CHOICES,
+                default = settings.NAME_PREFIX_CHOICES[0][0]
+            )
+        
+        suffix = models.CharField(
+            max_length = 10,
+            blank = True,
+            verbose_name = _("suffx"),
+        )
+        
+        def clone(self, cls=None, clone=None):
+            clone = super(Addressee, self).clone(cls=cls, clone=clone)
+            clone.suffix = self.suffix
+            if settings.NAME_PREFIX_ENABLED:
+                clone.prefix = self.prefix
+            return clone
 
-		class Meta(modules.customer.Addressee.Meta):
-			abstract = True
+        class Meta(modules.customer.Addressee.Meta):
+            abstract = True
 
-	modules.customer.Addressee = Addressee
+    modules.customer.Addressee = Addressee

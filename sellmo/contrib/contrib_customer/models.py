@@ -37,22 +37,22 @@ from django.utils.translation import ugettext_lazy as _
 
 @load(before='finalize_customer_Contactable')
 def load_model():
-	class Contactable(modules.customer.Contactable):
+    class Contactable(modules.customer.Contactable):
 
-		if settings.PHONE_NUMBER_ENABLED:
-			phone_number = models.CharField(
-				max_length = 20,
-				blank = not settings.PHONE_NUMBER_REQUIRED,
-				verbose_name = _("phone number"),
-			)
-			
-		def clone(self, cls=None, clone=None):
-			clone = super(Contactable, self).clone(cls=cls, clone=clone)
-			if settings.PHONE_NUMBER_ENABLED:
-				clone.phone_number = self.phone_number
-			return clone
+        if settings.PHONE_NUMBER_ENABLED:
+            phone_number = models.CharField(
+                max_length = 20,
+                blank = not settings.PHONE_NUMBER_REQUIRED,
+                verbose_name = _("phone number"),
+            )
+            
+        def clone(self, cls=None, clone=None):
+            clone = super(Contactable, self).clone(cls=cls, clone=clone)
+            if settings.PHONE_NUMBER_ENABLED:
+                clone.phone_number = self.phone_number
+            return clone
 
-		class Meta(modules.customer.Contactable.Meta):
-			abstract = True
+        class Meta(modules.customer.Contactable.Meta):
+            abstract = True
 
-	modules.customer.Contactable = Contactable
+    modules.customer.Contactable = Contactable

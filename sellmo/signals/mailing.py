@@ -29,9 +29,9 @@ import django.dispatch
 #
 
 __all__ = [
-	'mail_init',
-	'mail_send',
-	'mail_failed',
+    'mail_init',
+    'mail_send',
+    'mail_failed',
 ]
 
 #

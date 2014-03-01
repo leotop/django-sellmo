@@ -37,41 +37,41 @@ from django.utils.translation import ugettext_lazy as _
 
 @load(before='finalize_shipping_ShippingMethod')
 def load_model():
-	
-	class ShippingMethod(modules.shipping.ShippingMethod):
-		
-		allow_cash_payment = models.BooleanField(
-			default = False,
-			verbose_name = _("allow cash payment")
-		)
-		
-		class Meta(modules.shipping.ShippingMethod.Meta):
-			abstract = True
-			
-	modules.shipping.ShippingMethod = ShippingMethod
+    
+    class ShippingMethod(modules.shipping.ShippingMethod):
+        
+        allow_cash_payment = models.BooleanField(
+            default = False,
+            verbose_name = _("allow cash payment")
+        )
+        
+        class Meta(modules.shipping.ShippingMethod.Meta):
+            abstract = True
+            
+    modules.shipping.ShippingMethod = ShippingMethod
 
 @load(action='finalize_cash_payment_Payment', after='finalize_checkout_Payment')
 def finalize_model():
 
-	class CashPayment(modules.checkout.Payment, modules.cash_payment.CashPayment):
-		
-		instant = False
-		
-		def get_method(self):
-			return CashPaymentMethod()
-			
-		def __unicode__(self):
-			return unicode(self.get_method())
-		
-		class Meta(modules.cash_payment.CashPayment.Meta):
-			app_label = 'checkout'
-			verbose_name = _("cash payment")
-			verbose_name_plural = _("cash payments")
+    class CashPayment(modules.checkout.Payment, modules.cash_payment.CashPayment):
+        
+        instant = False
+        
+        def get_method(self):
+            return CashPaymentMethod()
+            
+        def __unicode__(self):
+            return unicode(self.get_method())
+        
+        class Meta(modules.cash_payment.CashPayment.Meta):
+            app_label = 'checkout'
+            verbose_name = _("cash payment")
+            verbose_name_plural = _("cash payments")
 
-	modules.cash_payment.CashPayment = CashPayment
+    modules.cash_payment.CashPayment = CashPayment
 
 class CashPayment(models.Model):
-	
-	class Meta:
-		abstract = True
-		
+    
+    class Meta:
+        abstract = True
+        

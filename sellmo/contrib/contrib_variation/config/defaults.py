@@ -30,11 +30,11 @@ from django.utils.translation import ugettext_lazy as _
 
 VARIATION_DESCRIPTION_FORMAT = u"{product} {values}"
 def VARIATION_CHOICE_FORMAT(values, price_adjustment, **kwargs):
-	if price_adjustment:
-		if price_adjustment.amount > 0:
-			return u"{values} +{price_adjustment}".format(values=values, price_adjustment=price_adjustment)
-		else:
-			return u"{values} -{price_adjustment}".format(values=values, price_adjustment=-price_adjustment)
-	return u"{values}".format(values=values)
-	
+    if price_adjustment:
+        if price_adjustment.amount > 0:
+            return u"{values} +{price_adjustment}".format(values=values, price_adjustment=price_adjustment)
+        else:
+            return u"{values} -{price_adjustment}".format(values=values, price_adjustment=-price_adjustment)
+    return u"{values}".format(values=values)
+    
 VARIATION_VALUE_SEPERATOR = u", "

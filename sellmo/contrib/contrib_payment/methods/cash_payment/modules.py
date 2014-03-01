@@ -35,20 +35,20 @@ from sellmo.contrib.contrib_payment.methods.cash_payment.models import CashPayme
 #
 
 class CashPaymentModule(Module):
-	namespace = 'cash_payment'
-	CashPayment = CashPayment
+    namespace = 'cash_payment'
+    CashPayment = CashPayment
 
-	@view()
-	def instructions(self, chain, request, order=None, context=None, **kwargs):
-		if context is None:
-			context = {}
-		if chain:
-			return chain.execute(request=request, context=context, **kwargs)
-		else:
-			# We don't render anything
-			raise Http404
-			
-	@link(namespace='checkout')
-	def complete(self, request, order=None, context=None, **kwargs):
-		if isinstance(order.payment, self.CashPayment):
-			return self.instructions(request, order=order, context=context)
+    @view()
+    def instructions(self, chain, request, order=None, context=None, **kwargs):
+        if context is None:
+            context = {}
+        if chain:
+            return chain.execute(request=request, context=context, **kwargs)
+        else:
+            # We don't render anything
+            raise Http404
+            
+    @link(namespace='checkout')
+    def complete(self, request, order=None, context=None, **kwargs):
+        if isinstance(order.payment, self.CashPayment):
+            return self.instructions(request, order=order, context=context)

@@ -35,4 +35,4 @@ from sellmo.api.decorators import load
 #
 
 class AcceptTermsForm(forms.Form):
-	accept = forms.BooleanField()
+    accept = forms.BooleanField()

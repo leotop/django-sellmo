@@ -36,29 +36,29 @@ from django.utils.translation import ugettext_lazy as _
 
 class CashPaymentMethod(PaymentMethod):
 
-	identifier = 'cash'
-	name = _("cash payment")
-	
-	def process(self, order, request, next_step):
-		return next_step
-		
-	def is_available(self, order):
-		if order.shipment:
-			identifier = order.shipment.get_method().identifier.split('_')[0]
-			return modules.shipping.ShippingMethod.objects.filter(
-				allow_cash_payment=True,
-				identifier=identifier
-			).count() == 1
-		return True
+    identifier = 'cash'
+    name = _("cash payment")
+    
+    def process(self, order, request, next_step):
+        return next_step
+        
+    def is_available(self, order):
+        if order.shipment:
+            identifier = order.shipment.get_method().identifier.split('_')[0]
+            return modules.shipping.ShippingMethod.objects.filter(
+                allow_cash_payment=True,
+                identifier=identifier
+            ).count() == 1
+        return True
 
-	def new_payment(self, order):
-		return modules.cash_payment.CashPayment()
+    def new_payment(self, order):
+        return modules.cash_payment.CashPayment()
 
-	def get_costs(self, order, currency=None, **kwargs):
-		return modules.pricing.get_price(price=Price(0), payment_method=self)
+    def get_costs(self, order, currency=None, **kwargs):
+        return modules.pricing.get_price(price=Price(0), payment_method=self)
 
-	def __unicode__(self):
-		settings = modules.settings.get_settings()
-		if settings.cash_payment_name:
-			return settings.cash_payment_name
-		return super(CashPaymentMethod, self).__unicode__()
+    def __unicode__(self):
+        settings = modules.settings.get_settings()
+        if settings.cash_payment_name:
+            return settings.cash_payment_name
+        return super(CashPaymentMethod, self).__unicode__()

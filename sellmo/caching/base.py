@@ -35,49 +35,49 @@ from sellmo.config import settings
 #
 
 def cached(cache, name, namespace, timeout=True):
-	return cache(name, namespace, timeout)
+    return cache(name, namespace, timeout)
 
 class Cache(object):
-	
-	#
-	timeout = True
-	prefix = settings.CACHING_PREFIX
-	
-	def __init__(self, name, namespace, timeout=True):
-		post_init.connect(self._on_post_init)
-		chainer.link(self.capture, name=name, namespace=namespace, capture=True),
-		chainer.link(self.finalize, name=name, namespace=namespace)
-		self.timeout = timeout
-		
-	def resolve_key(self, key):
-		if self.prefix:
-			return '_'.join([self.prefix, key])
-		
-	def set(self, key, value):
-		key = self.resolve_key(key)
-		args = [key, value]
-		if self.timeout is not True:
-			args += [self.timeout]
-		cache.set(*args)
-	
-	def get(self, key, default=None):
-		key = self.resolve_key(key)
-		return cache.get(key, default)
-		
-	def delete(self, *keys):
-		if len(keys) > 1:
-			cache.delete_many([self.resolve_key(key) for key in keys])
-		elif len(keys) == 1:
-			cache.delete(self.resolve_key(keys[0]))
-		
-	def capture(self, *args, **kwargs):
-		pass
-		
-	def finalize(self, *args, **kwargs):
-		pass
-		
-	def hookup(self):
-		pass
-		
-	def _on_post_init(self, sender, **kwargs):
-		self.hookup()
+    
+    #
+    timeout = True
+    prefix = settings.CACHING_PREFIX
+    
+    def __init__(self, name, namespace, timeout=True):
+        post_init.connect(self._on_post_init)
+        chainer.link(self.capture, name=name, namespace=namespace, capture=True),
+        chainer.link(self.finalize, name=name, namespace=namespace)
+        self.timeout = timeout
+        
+    def resolve_key(self, key):
+        if self.prefix:
+            return '_'.join([self.prefix, key])
+        
+    def set(self, key, value):
+        key = self.resolve_key(key)
+        args = [key, value]
+        if self.timeout is not True:
+            args += [self.timeout]
+        cache.set(*args)
+    
+    def get(self, key, default=None):
+        key = self.resolve_key(key)
+        return cache.get(key, default)
+        
+    def delete(self, *keys):
+        if len(keys) > 1:
+            cache.delete_many([self.resolve_key(key) for key in keys])
+        elif len(keys) == 1:
+            cache.delete(self.resolve_key(keys[0]))
+        
+    def capture(self, *args, **kwargs):
+        pass
+        
+    def finalize(self, *args, **kwargs):
+        pass
+        
+    def hookup(self):
+        pass
+        
+    def _on_post_init(self, sender, **kwargs):
+        self.hookup()

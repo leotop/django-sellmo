@@ -34,10 +34,10 @@ from django.utils.translation import ugettext_lazy as _
 #
 
 class SettingsAdmin(admin.ModelAdmin):
-	fieldsets = (
-		(None, {
-			'fields' : ['site'],
-		}),
-	) + modules.settings.fieldsets
+    fieldsets = (
+        (None, {
+            'fields' : ['site'],
+        }),
+    ) + modules.settings.fieldsets
 
 admin.site.register(modules.settings.SiteSettings, SettingsAdmin)

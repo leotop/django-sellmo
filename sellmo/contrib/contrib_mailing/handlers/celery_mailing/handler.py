@@ -30,5 +30,5 @@ from sellmo.contrib.contrib_mailing.handlers.celery_mailing import tasks
 #
 
 class CeleryMailHandler(MailHandlerBase):
-	def handle_mail(self, message_type, message_reference, context):
-		tasks.send_mail.delay(message_type=message_type, message_reference=message_reference, context=context)
+    def handle_mail(self, message_type, message_reference, context):
+        tasks.send_mail.delay(message_type=message_type, message_reference=message_reference, context=context)

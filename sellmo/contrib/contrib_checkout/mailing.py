@@ -37,62 +37,62 @@ from django.utils.translation import ugettext_lazy as _
 #
 
 def send_order_mails(order, event_signature=None):
-	# Update event_signature
-	if event_signature is None:
-		event_signature = {}
-	if order.payment:
-		event_signature['instant_payment'] = order.payment.instant
-	
-	for mail, config in settings.CHECKOUT_MAILS.iteritems():
-		for event in config['send_events']:
-			for key, value in event.iteritems():
-				# Make sure signature is a match
-				if not key in event_signature or not event_signature[key] == value:
-					break
-			else:
-				# Did have a match
-				break
-		else:
-			# Did not found a match
-			continue
-		# Did have a match
-		
-		send_once = config.get('send_once', False)
-		if send_once:
-			send_mails = modules.checkout_mailing.OrderMail.objects.filter(
-				order=order,
-				status__message_type=mail,
-				status__delivered=True
-			)
-			if send_mails.count() > 0:
-				# Do not send
-				continue
-			
-		mailer.send_mail(mail, {
-			'order' : order
-		})
-				
+    # Update event_signature
+    if event_signature is None:
+        event_signature = {}
+    if order.payment:
+        event_signature['instant_payment'] = order.payment.instant
+    
+    for mail, config in settings.CHECKOUT_MAILS.iteritems():
+        for event in config['send_events']:
+            for key, value in event.iteritems():
+                # Make sure signature is a match
+                if not key in event_signature or not event_signature[key] == value:
+                    break
+            else:
+                # Did have a match
+                break
+        else:
+            # Did not found a match
+            continue
+        # Did have a match
+        
+        send_once = config.get('send_once', False)
+        if send_once:
+            send_mails = modules.checkout_mailing.OrderMail.objects.filter(
+                order=order,
+                status__message_type=mail,
+                status__delivered=True
+            )
+            if send_mails.count() > 0:
+                # Do not send
+                continue
+            
+        mailer.send_mail(mail, {
+            'order' : order
+        })
+                
 
 class OrderConfirmationWriter(MailWriter):
-	
-	formats = ['html', 'text']
-	
-	def __init__(self, order):
-		self.order = order
-		
-	def get_subject(self):
-		return _("Order confirmation")
-		
-	def get_body(self, format):
-		return modules.checkout_mailing.render_order_confirmation(format=format, order=self.order)
-	
-	def get_to(self):
-		return self.order.email
-		
-	def get_attachments(self):
-		report = reporter.get_report('invoice', context={
-			'order' : self.order
-		})
-		return [
-			(report.filename, report.data, report.mimetype)
-		]
+    
+    formats = ['html', 'text']
+    
+    def __init__(self, order):
+        self.order = order
+        
+    def get_subject(self):
+        return _("Order confirmation")
+        
+    def get_body(self, format):
+        return modules.checkout_mailing.render_order_confirmation(format=format, order=self.order)
+    
+    def get_to(self):
+        return self.order.email
+        
+    def get_attachments(self):
+        report = reporter.get_report('invoice', context={
+            'order' : self.order
+        })
+        return [
+            (report.filename, report.data, report.mimetype)
+        ]

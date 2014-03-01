@@ -39,57 +39,57 @@ from sellmo.contrib.contrib_settings.models import SiteSettings
 #
 
 class SettingsModule(Module):
-	namespace = 'settings'
-	SiteSettings = SiteSettings
-	_settings = []
-	
-	def __init__(self, *args, **kwargs):
-		# Add settings to SiteSettings
-		grouped = {}
-		for setting in self._settings:
-			self.SiteSettings.add_to_class(setting[0], setting[1])
-			group = setting[2]
-			if group not in grouped:
-				grouped[group] = []
-			grouped[group].append(setting[0])
-		
-		self.fieldsets = tuple()
-		for group in sorted(grouped.iterkeys()):
-			fields = grouped[group]
-			self.fieldsets += (
-				(group, {
-					'fields' : fields	
-				}),
-			)
-		
-		# Hookup invalidation
-		pre_save.connect(self.on_site_settings_invalidated, sender=self.SiteSettings)
-		pre_delete.connect(self.on_site_settings_invalidated, sender=self.SiteSettings)
+    namespace = 'settings'
+    SiteSettings = SiteSettings
+    _settings = []
+    
+    def __init__(self, *args, **kwargs):
+        # Add settings to SiteSettings
+        grouped = {}
+        for setting in self._settings:
+            self.SiteSettings.add_to_class(setting[0], setting[1])
+            group = setting[2]
+            if group not in grouped:
+                grouped[group] = []
+            grouped[group].append(setting[0])
+        
+        self.fieldsets = tuple()
+        for group in sorted(grouped.iterkeys()):
+            fields = grouped[group]
+            self.fieldsets += (
+                (group, {
+                    'fields' : fields   
+                }),
+            )
+        
+        # Hookup invalidation
+        pre_save.connect(self.on_site_settings_invalidated, sender=self.SiteSettings)
+        pre_delete.connect(self.on_site_settings_invalidated, sender=self.SiteSettings)
 
-	def on_site_settings_invalidated(self, sender, instance, **kwargs):
-		# Clear cache
-		cache.delete('site_settings_{0}'.format(instance.site.pk))
-		
-	def get_settings(self):
-		context = get_context()
-		settings = context.get('site_settings', None)
-		if settings is None:
-			site = Site.objects.get_current()
-			if not site:
-				raise Exception("Could not retrieve settings, no current site.")
-			key = 'site_settings_{0}'.format(site.pk)
-			settings = cache.get(key)
-			if settings is None:
-				try:
-					settings = self.SiteSettings.objects.get(site=site)
-				except self.SiteSettings.DoesNotExist:
-					raise Exception("Could not retrieve settings, no settings found for site '{0}'".format(site))
-				cache.set(key, settings)
-			context['site_settings'] = settings
-		return settings
-	
-	@classmethod
-	def add_setting(self, key, field, group=None):
-		self._settings.append((key, field, group))
-		
-		
+    def on_site_settings_invalidated(self, sender, instance, **kwargs):
+        # Clear cache
+        cache.delete('site_settings_{0}'.format(instance.site.pk))
+        
+    def get_settings(self):
+        context = get_context()
+        settings = context.get('site_settings', None)
+        if settings is None:
+            site = Site.objects.get_current()
+            if not site:
+                raise Exception("Could not retrieve settings, no current site.")
+            key = 'site_settings_{0}'.format(site.pk)
+            settings = cache.get(key)
+            if settings is None:
+                try:
+                    settings = self.SiteSettings.objects.get(site=site)
+                except self.SiteSettings.DoesNotExist:
+                    raise Exception("Could not retrieve settings, no settings found for site '{0}'".format(site))
+                cache.set(key, settings)
+            context['site_settings'] = settings
+        return settings
+    
+    @classmethod
+    def add_setting(self, key, field, group=None):
+        self._settings.append((key, field, group))
+        
+        

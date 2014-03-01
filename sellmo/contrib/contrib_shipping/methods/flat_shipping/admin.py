@@ -34,8 +34,8 @@ from django.utils.translation import ugettext_lazy as _
 #
 
 class FlatShippingMethodAdmin(ShippingMethodAdminBase):
-	pass
-	
+    pass
+    
 #
 
 ShippingMethodParentAdmin.child_models += [(modules.shipping.FlatShippingMethod, FlatShippingMethodAdmin)]

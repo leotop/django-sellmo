@@ -38,25 +38,25 @@ from django.utils.translation import ugettext_lazy as _
 @load(action='finalize_bank_transfer_Payment', after='finalize_checkout_Payment')
 def finalize_model():
 
-	class BankTransferPayment(modules.checkout.Payment, modules.bank_transfer.BankTransferPayment):
-		
-		instant = False
-		
-		def get_method(self):
-			return BankTransferPaymentMethod()
-			
-		def __unicode__(self):
-			return unicode(self.get_method())
-		
-		class Meta(modules.bank_transfer.BankTransferPayment.Meta):
-			app_label = 'checkout'
-			verbose_name = _("bank transfer payment")
-			verbose_name_plural = _("bank transfers payments")
+    class BankTransferPayment(modules.checkout.Payment, modules.bank_transfer.BankTransferPayment):
+        
+        instant = False
+        
+        def get_method(self):
+            return BankTransferPaymentMethod()
+            
+        def __unicode__(self):
+            return unicode(self.get_method())
+        
+        class Meta(modules.bank_transfer.BankTransferPayment.Meta):
+            app_label = 'checkout'
+            verbose_name = _("bank transfer payment")
+            verbose_name_plural = _("bank transfers payments")
 
-	modules.bank_transfer.BankTransferPayment = BankTransferPayment
+    modules.bank_transfer.BankTransferPayment = BankTransferPayment
 
 class BankTransferPayment(models.Model):
-	
-	class Meta:
-		abstract = True
-		
+    
+    class Meta:
+        abstract = True
+        

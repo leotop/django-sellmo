@@ -29,70 +29,70 @@ from sellmo.config import settings
 #
 
 class Report(object):
-	def __init__(self, filename, data, mimetype):
-		self.filename = filename
-		self.data = data
-		self.mimetype = mimetype
+    def __init__(self, filename, data, mimetype):
+        self.filename = filename
+        self.data = data
+        self.mimetype = mimetype
 
 class ReportGenerator(object):
 
-	output_formats = []
-	input_formats = []
+    output_formats = []
+    input_formats = []
 
-	def __init__(self, writer):
-		self.writer = writer
-	
-	def generate_report(self, format, context=None):
-		"""
-		Returns a Report instance
-		"""
-		raise NotImplementedError()
+    def __init__(self, writer):
+        self.writer = writer
+    
+    def generate_report(self, format, context=None):
+        """
+        Returns a Report instance
+        """
+        raise NotImplementedError()
  
 class ReportWriter(object):
-	
-	"""
-	The format this writer will output
-	"""
-	format = None
-	params = {}
-	
-	@classmethod
-	def open(cls, output_format, context=None):
-		if context is None:
-			context = {}
-		return cls(output_format, **context)
-	
-	def __init__(self, output_format,  **context):
-		self.output_format = output_format
-		self.context = context
-	
-	def __enter__(self):
-		self.setup()
-		return self
-	
-	def __exit__(self, type, value, traceback):
-		self.teardown()
-	
-	def setup(self):
-		pass
-		
-	def teardown(self):
-		pass
-		
-	def get_name(self):
-		raise NotImplementedError()
-		
-	def get_data(self, **params):
-		raise NotImplementedError()
-		
-	def negotiate_param(self, key, value, **params):
-		"""
-		False if we don't understand. The same value if we accept or a
-		different value if we want to change.
-		"""
-		if key in self.params:
-			return self.params[key]
-		return False
-			
-		
-		
+    
+    """
+    The format this writer will output
+    """
+    format = None
+    params = {}
+    
+    @classmethod
+    def open(cls, output_format, context=None):
+        if context is None:
+            context = {}
+        return cls(output_format, **context)
+    
+    def __init__(self, output_format,  **context):
+        self.output_format = output_format
+        self.context = context
+    
+    def __enter__(self):
+        self.setup()
+        return self
+    
+    def __exit__(self, type, value, traceback):
+        self.teardown()
+    
+    def setup(self):
+        pass
+        
+    def teardown(self):
+        pass
+        
+    def get_name(self):
+        raise NotImplementedError()
+        
+    def get_data(self, **params):
+        raise NotImplementedError()
+        
+    def negotiate_param(self, key, value, **params):
+        """
+        False if we don't understand. The same value if we accept or a
+        different value if we want to change.
+        """
+        if key in self.params:
+            return self.params[key]
+        return False
+            
+        
+        

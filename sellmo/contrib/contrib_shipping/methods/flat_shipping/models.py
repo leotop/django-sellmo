@@ -38,24 +38,24 @@ from django.utils.translation import ugettext_lazy as _
 
 @load(action='load_shipping_subtypes', after='finalize_shipping_ShippingMethod')
 def load_subtypes():
-	
-	class FlatShippingMethod(modules.shipping.ShippingMethod):
+    
+    class FlatShippingMethod(modules.shipping.ShippingMethod):
 
-		costs = modules.pricing.construct_pricing_field(
-			verbose_name = _("shipping rate"),
-		)
-		
-		def get_method(self, carrier=None):
-			name = self.name
-			identifier = self.identifier
-			if carrier:
-				name = _(u"{0} by {1}").format(name, carrier.name)
-				identifier = '{0}_{1}'.format(identifier, carrier.identifier)
-			return _FlatShippingMethod(identifier, name, method=self, carrier=carrier)
+        costs = modules.pricing.construct_pricing_field(
+            verbose_name = _("shipping rate"),
+        )
+        
+        def get_method(self, carrier=None):
+            name = self.name
+            identifier = self.identifier
+            if carrier:
+                name = _(u"{0} by {1}").format(name, carrier.name)
+                identifier = '{0}_{1}'.format(identifier, carrier.identifier)
+            return _FlatShippingMethod(identifier, name, method=self, carrier=carrier)
 
-		class Meta(modules.shipping.ShippingMethod.Meta):
-			app_label = 'shipping'
-			verbose_name = _("flat shipping method")
-			verbose_name_plural = _("flat shipping methods")
+        class Meta(modules.shipping.ShippingMethod.Meta):
+            app_label = 'shipping'
+            verbose_name = _("flat shipping method")
+            verbose_name_plural = _("flat shipping methods")
 
-	modules.shipping.register_subtype(FlatShippingMethod)
+    modules.shipping.register_subtype(FlatShippingMethod)

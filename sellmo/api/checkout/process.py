@@ -33,18 +33,18 @@ from sellmo.core.processing import Process, ProcessStep
 #
 
 class CheckoutProcess(Process):
-	
-	def __init__(self, order, request):
-		super(CheckoutProcess, self).__init__()
-		self.order = order
-		self.request = request
-		
-	def resolve_url(self, step):
-		return reverse('checkout.checkout', args=[step.key])
-		
+    
+    def __init__(self, order, request):
+        super(CheckoutProcess, self).__init__()
+        self.order = order
+        self.request = request
+        
+    def resolve_url(self, step):
+        return reverse('checkout.checkout', args=[step.key])
+        
 class CheckoutStep(ProcessStep):
-	
-	def __init__(self, order, request):
-		super(CheckoutStep, self).__init__()
-		self.order = order
-		self.request = request
+    
+    def __init__(self, order, request):
+        super(CheckoutStep, self).__init__()
+        self.order = order
+        self.request = request

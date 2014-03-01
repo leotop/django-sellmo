@@ -41,7 +41,7 @@ app = Celery()
 app.config_from_object(settings)
 
 def on_post_init(sender, **kwargs):
-	# Will load tasks.py after sellmo has been initialized
-	app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
-	
+    # Will load tasks.py after sellmo has been initialized
+    app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
+    
 post_init.connect(on_post_init)

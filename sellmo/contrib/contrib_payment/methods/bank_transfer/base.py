@@ -36,20 +36,20 @@ from django.utils.translation import ugettext_lazy as _
 
 class BankTransferPaymentMethod(PaymentMethod):
 
-	identifier = 'bank_transfer'
-	name = _("bank transfer")
-	
-	def process(self, order, request, next_step):
-		return next_step
+    identifier = 'bank_transfer'
+    name = _("bank transfer")
+    
+    def process(self, order, request, next_step):
+        return next_step
 
-	def new_payment(self, order):
-		return modules.bank_transfer.BankTransferPayment()
+    def new_payment(self, order):
+        return modules.bank_transfer.BankTransferPayment()
 
-	def get_costs(self, order, currency=None, **kwargs):
-		return modules.pricing.get_price(price=Price(0), payment_method=self)
+    def get_costs(self, order, currency=None, **kwargs):
+        return modules.pricing.get_price(price=Price(0), payment_method=self)
 
-	def __unicode__(self):
-		settings = modules.settings.get_settings()
-		if settings.bank_transfer_name:
-			return settings.bank_transfer_name
-		return super(BankTransferPaymentMethod, self).__unicode__()
+    def __unicode__(self):
+        settings = modules.settings.get_settings()
+        if settings.bank_transfer_name:
+            return settings.bank_transfer_name
+        return super(BankTransferPaymentMethod, self).__unicode__()

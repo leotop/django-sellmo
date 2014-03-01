@@ -33,32 +33,32 @@ from sellmo.api.reporting import ReportGenerator, Report
 #
 
 class ReportGeneratorBase(ReportGenerator):
-	def generate_report(self, format, context=None):
-		with self.writer.open(format, context) as writer:
-			return Report(
-				self.get_filename(writer, format),
-				self.get_data(writer, format),
-				self.get_mimetype(format)
-			)
-			
-	def get_params(self, writer, format):
-		return {}
-			
-	def get_data(self, writer, format):
-		params = self.get_params(writer, format)
-		if params is None:
-			params = {}
-		return writer.get_data(**params)
-		
-	def get_filename(self, writer, format):
-		ext = self.get_extension(format)
-		if not ext or not ext.startswith('.'):
-			raise Exception("Invalid extension")
-		return writer.get_name() + ext
-			
-	def get_extension(self, format):
-		raise NotImplementedError()
-		
-	def get_mimetype(self, format):
-		raise NotImplementedError()
-	
+    def generate_report(self, format, context=None):
+        with self.writer.open(format, context) as writer:
+            return Report(
+                self.get_filename(writer, format),
+                self.get_data(writer, format),
+                self.get_mimetype(format)
+            )
+            
+    def get_params(self, writer, format):
+        return {}
+            
+    def get_data(self, writer, format):
+        params = self.get_params(writer, format)
+        if params is None:
+            params = {}
+        return writer.get_data(**params)
+        
+    def get_filename(self, writer, format):
+        ext = self.get_extension(format)
+        if not ext or not ext.startswith('.'):
+            raise Exception("Invalid extension")
+        return writer.get_name() + ext
+            
+    def get_extension(self, format):
+        raise NotImplementedError()
+        
+    def get_mimetype(self, format):
+        raise NotImplementedError()
+    

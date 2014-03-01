@@ -39,34 +39,34 @@ from django.utils.translation import ugettext_lazy as _
 @load(after='finalize_checkout_Order')
 @load(after='finalize_mailing_MailStatus')
 def load_model():
-	class OrderMail(modules.checkout_mailing.OrderMail):
-		
-		order = models.ForeignKey(
-			modules.checkout.Order,
-			editable = False,
-		)
-		
-		status = models.ForeignKey(
-			modules.mailing.MailStatus,
-			editable = False,
-		)
-		
-		class Meta(modules.checkout_mailing.OrderMail.Meta):
-			abstract = True
-	
-	modules.checkout_mailing.OrderMail = OrderMail
-	
+    class OrderMail(modules.checkout_mailing.OrderMail):
+        
+        order = models.ForeignKey(
+            modules.checkout.Order,
+            editable = False,
+        )
+        
+        status = models.ForeignKey(
+            modules.mailing.MailStatus,
+            editable = False,
+        )
+        
+        class Meta(modules.checkout_mailing.OrderMail.Meta):
+            abstract = True
+    
+    modules.checkout_mailing.OrderMail = OrderMail
+    
 @load(action='finalize_checkout_mailing_OrderMail')
 def finalize_model():
-	class OrderMail(modules.checkout_mailing.OrderMail):
-		class Meta(modules.checkout_mailing.OrderMail.Meta):
-			app_label = 'checkout'
-			verbose_name = _("order mail")
-			verbose_name_plural = _("order mails")
+    class OrderMail(modules.checkout_mailing.OrderMail):
+        class Meta(modules.checkout_mailing.OrderMail.Meta):
+            app_label = 'checkout'
+            verbose_name = _("order mail")
+            verbose_name_plural = _("order mails")
 
-	modules.checkout_mailing.OrderMail = OrderMail
+    modules.checkout_mailing.OrderMail = OrderMail
 
 class OrderMail(models.Model):
-	
-	class Meta:
-		abstract = True
+    
+    class Meta:
+        abstract = True

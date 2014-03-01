@@ -35,36 +35,36 @@ from django.utils.translation import ugettext_lazy as _
 #
 
 class TieredShippingMethod(ShippingMethod):
-	
-	identifier = None
-	name = None
-	
-	def new_shipment(self, order):
-		return modules.shipping.Shipment(
-			method=self.method,
-			carrier=self.carrier,
-		)
+    
+    identifier = None
+    name = None
+    
+    def new_shipment(self, order):
+        return modules.shipping.Shipment(
+            method=self.method,
+            carrier=self.carrier,
+        )
 
-	def __init__(self, identifier, name, method, carrier=None):
-		self.identifier = identifier
-		self.name = name
-		self.method = method
-		self.carrier = carrier
-		
-	def is_available(self, order, **kwargs):
-		try:
-			costs = self.method.tiers.for_order(order).costs
-		except modules.shipping.TieredShippingTier.DoesNotExist:
-			return False
-		return True
+    def __init__(self, identifier, name, method, carrier=None):
+        self.identifier = identifier
+        self.name = name
+        self.method = method
+        self.carrier = carrier
+        
+    def is_available(self, order, **kwargs):
+        try:
+            costs = self.method.tiers.for_order(order).costs
+        except modules.shipping.TieredShippingTier.DoesNotExist:
+            return False
+        return True
 
-	def get_costs(self, order, currency=None, **kwargs):
-		costs = 0
-		try:
-			costs = self.method.tiers.for_order(order).costs
-		except modules.shipping.TieredShippingTier.DoesNotExist:
-			raise Exception(_("Cannot get shipping costs for this order"))
-			
-		if self.carrier:
-			costs += self.carrier.extra_costs
-		return modules.pricing.get_price(price=Price(costs), shipping_method=self)
+    def get_costs(self, order, currency=None, **kwargs):
+        costs = 0
+        try:
+            costs = self.method.tiers.for_order(order).costs
+        except modules.shipping.TieredShippingTier.DoesNotExist:
+            raise Exception(_("Cannot get shipping costs for this order"))
+            
+        if self.carrier:
+            costs += self.carrier.extra_costs
+        return modules.pricing.get_price(price=Price(costs), shipping_method=self)

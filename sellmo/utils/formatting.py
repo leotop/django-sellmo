@@ -25,7 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 def call_or_format(format, *args, **kwargs):
-	if callable(format):
-		return format(*args, **kwargs)
-	else:
-		return format.format(*args, **kwargs)
+    if callable(format):
+        return format(*args, **kwargs)
+    else:
+        return format.format(*args, **kwargs)

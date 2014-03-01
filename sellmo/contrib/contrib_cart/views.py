@@ -39,9 +39,9 @@ namespace = modules.cart.namespace
 #
 
 if settings.SINGLE_PURCHASE_MODE:
-	@link(capture=True)
-	def add_to_cart(next=None, **kwargs):
-		next = 'checkout.checkout'
-		return {
-			'next' : next
-		}
+    @link(capture=True)
+    def add_to_cart(next=None, **kwargs):
+        next = 'checkout.checkout'
+        return {
+            'next' : next
+        }

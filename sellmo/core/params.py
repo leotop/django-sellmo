@@ -32,6 +32,6 @@ from sellmo.magic import singleton
 
 @singleton
 class SellmoParams(object):
-	pass
+    pass
 
 params = SellmoParams()

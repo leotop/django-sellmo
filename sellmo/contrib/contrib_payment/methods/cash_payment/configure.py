@@ -34,8 +34,8 @@ from sellmo import modules
 #
 
 modules.settings.add_setting('cash_payment_name', models.CharField(
-	max_length = 80,
-	default = _("Cash payment"),
-	verbose_name = _("cash payment name")
+    max_length = 80,
+    default = _("Cash payment"),
+    verbose_name = _("cash payment name")
 ), _("Cash Payment"))
 

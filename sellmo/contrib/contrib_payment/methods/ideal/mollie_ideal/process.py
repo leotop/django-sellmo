@@ -36,149 +36,149 @@ from sellmo.api.checkout.process import CheckoutProcess, CheckoutStep
 
 class MollieIdealBankSelectStep(CheckoutStep):
 
-	invalid_context = None
-	key = 'ideal_bank_select'
+    invalid_context = None
+    key = 'ideal_bank_select'
 
-	def __init__(self, order, request, next_step):
-		super(MollieIdealBankSelectStep, self).__init__(order=order, request=request)
-		self.next_step = next_step
-		self.payment = self.order.payment.downcast()
+    def __init__(self, order, request, next_step):
+        super(MollieIdealBankSelectStep, self).__init__(order=order, request=request)
+        self.next_step = next_step
+        self.payment = self.order.payment.downcast()
 
-	def is_completed(self):
-		return self.payment.bank_id
+    def is_completed(self):
+        return self.payment.bank_id
 
-	def can_skip(self):
-		return False
+    def can_skip(self):
+        return False
 
-	def get_next_step(self):
-		return MollieIdealRedirectStep(order=self.order, request=self.request, next_step=self.next_step)
+    def get_next_step(self):
+        return MollieIdealRedirectStep(order=self.order, request=self.request, next_step=self.next_step)
 
-	def _contextualize_or_complete(self, request, context, data=None):
-		success = True
+    def _contextualize_or_complete(self, request, context, data=None):
+        success = True
 
-		bank, form, processed = modules.mollie_ideal.handle_bank_select(request=request, payment=self.payment, prefix='bank_select', data=data)
-		context['bank_select_form'] = form
-		success &= processed
+        bank, form, processed = modules.mollie_ideal.handle_bank_select(request=request, payment=self.payment, prefix='bank_select', data=data)
+        context['bank_select_form'] = form
+        success &= processed
 
-		if data is not None and success:
-			self.payment.save()
+        if data is not None and success:
+            self.payment.save()
 
-		return success
+        return success
 
-	def complete(self, data):
-		self.invalid_context = {}
-		return self._contextualize_or_complete(self.request, self.invalid_context, data)
+    def complete(self, data):
+        self.invalid_context = {}
+        return self._contextualize_or_complete(self.request, self.invalid_context, data)
 
-	def render(self, request, context):
-		if self.invalid_context is None:
-			self._contextualize_or_complete(request, context)
-		else:
-			context.update(self.invalid_context)
+    def render(self, request, context):
+        if self.invalid_context is None:
+            self._contextualize_or_complete(request, context)
+        else:
+            context.update(self.invalid_context)
 
-		return modules.mollie_ideal.bank_select(request=request, order=self.order, context=context)
+        return modules.mollie_ideal.bank_select(request=request, order=self.order, context=context)
 
 
 class MollieIdealRedirectStep(CheckoutStep):
 
-	invalid_context = None
-	key = 'ideal_redirect'
+    invalid_context = None
+    key = 'ideal_redirect'
 
-	def __init__(self, order, request, next_step):
-		super(MollieIdealRedirectStep, self).__init__(order=order, request=request)
-		self.next_step = next_step
+    def __init__(self, order, request, next_step):
+        super(MollieIdealRedirectStep, self).__init__(order=order, request=request)
+        self.next_step = next_step
 
-	def is_completed(self):
-		return False
+    def is_completed(self):
+        return False
 
-	def can_skip(self):
-		return False
+    def can_skip(self):
+        return False
 
-	def get_next_step(self):
-		return None
+    def get_next_step(self):
+        return None
 
-	def render(self, request, context):
-		return modules.mollie_ideal.redirect(request=request, order=self.order, contex=context)
+    def render(self, request, context):
+        return modules.mollie_ideal.redirect(request=request, order=self.order, contex=context)
 
 class MollieIdealPendingStep(CheckoutStep):
 
-	invalid_context = None
-	key = 'ideal_pending'
+    invalid_context = None
+    key = 'ideal_pending'
 
-	def __init__(self, order, request, next_step):
-		super(MollieIdealPendingStep, self).__init__(order=order, request=request)
-		self.next_step = next_step
-		self.payment = self.order.payment.downcast()
+    def __init__(self, order, request, next_step):
+        super(MollieIdealPendingStep, self).__init__(order=order, request=request)
+        self.next_step = next_step
+        self.payment = self.order.payment.downcast()
 
-	def has_deviated(self):
-		return True
+    def has_deviated(self):
+        return True
 
-	def is_completed(self):
-		return not self.payment.is_pending
+    def is_completed(self):
+        return not self.payment.is_pending
 
-	def can_skip(self):
-		return False
+    def can_skip(self):
+        return False
 
-	def get_next_step(self):
-		return False
+    def get_next_step(self):
+        return False
 
-	def _contextualize_or_complete(self, request, context, data=None):
-		success = True
-		
-		if data and 'pay_again' in data:
-			self.payment.retry()
-		
-		return success
-	
-	def complete(self, data):
-		self.invalid_context = {}
-		return self._contextualize_or_complete(self.request, self.invalid_context, data)
-	
-	def render(self, request, context):
-		if self.invalid_context is None:
-			self._contextualize_or_complete(request, context)
-		else:
-			context.update(self.invalid_context)
-	
-		return modules.mollie_ideal.pending(request=request, order=self.order, context=context)
+    def _contextualize_or_complete(self, request, context, data=None):
+        success = True
+        
+        if data and 'pay_again' in data:
+            self.payment.retry()
+        
+        return success
+    
+    def complete(self, data):
+        self.invalid_context = {}
+        return self._contextualize_or_complete(self.request, self.invalid_context, data)
+    
+    def render(self, request, context):
+        if self.invalid_context is None:
+            self._contextualize_or_complete(request, context)
+        else:
+            context.update(self.invalid_context)
+    
+        return modules.mollie_ideal.pending(request=request, order=self.order, context=context)
 
 class MollieIdealFailureStep(CheckoutStep):
 
-	invalid_context = None
-	key = 'ideal_failure'
+    invalid_context = None
+    key = 'ideal_failure'
 
-	def __init__(self, order, request, next_step):
-		super(MollieIdealFailureStep, self).__init__(order=order, request=request)
-		self.next_step = next_step
-		self.payment = self.order.payment.downcast()
+    def __init__(self, order, request, next_step):
+        super(MollieIdealFailureStep, self).__init__(order=order, request=request)
+        self.next_step = next_step
+        self.payment = self.order.payment.downcast()
 
-	def has_deviated(self):
-		return True
+    def has_deviated(self):
+        return True
 
-	def is_completed(self):
-		return not self.payment.transaction_status is False
+    def is_completed(self):
+        return not self.payment.transaction_status is False
 
-	def can_skip(self):
-		return False
+    def can_skip(self):
+        return False
 
-	def get_next_step(self):
-		return False
+    def get_next_step(self):
+        return False
 
-	def _contextualize_or_complete(self, request, context, data=None):
-		success = True
+    def _contextualize_or_complete(self, request, context, data=None):
+        success = True
 
-		if data and 'pay_again' in data:
-			self.payment.retry()
+        if data and 'pay_again' in data:
+            self.payment.retry()
 
-		return success
+        return success
 
-	def complete(self, data):
-		self.invalid_context = {}
-		return self._contextualize_or_complete(self.request, self.invalid_context, data)
+    def complete(self, data):
+        self.invalid_context = {}
+        return self._contextualize_or_complete(self.request, self.invalid_context, data)
 
-	def render(self, request, context):
-		if self.invalid_context is None:
-			self._contextualize_or_complete(request, context)
-		else:
-			context.update(self.invalid_context)
+    def render(self, request, context):
+        if self.invalid_context is None:
+            self._contextualize_or_complete(request, context)
+        else:
+            context.update(self.invalid_context)
 
-		return modules.mollie_ideal.failure(request=request, order=self.order, context=context)
+        return modules.mollie_ideal.failure(request=request, order=self.order, context=context)

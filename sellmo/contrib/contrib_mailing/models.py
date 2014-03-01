@@ -36,58 +36,58 @@ from sellmo.api.decorators import load
 
 @load(action='finalize_mailing_MailStatus')
 def finalize_model():
-	class MailStatus(modules.mailing.MailStatus):
-		class Meta(modules.mailing.MailStatus.Meta):
-			app_label = 'mailing'
-			verbose_name = _("mail status")
-			verbose_name_plural = _("mail statuses")
-	
-	modules.mailing.MailStatus = MailStatus
+    class MailStatus(modules.mailing.MailStatus):
+        class Meta(modules.mailing.MailStatus.Meta):
+            app_label = 'mailing'
+            verbose_name = _("mail status")
+            verbose_name_plural = _("mail statuses")
+    
+    modules.mailing.MailStatus = MailStatus
 
 class MailStatus(models.Model):
 
-	message_reference = models.CharField(
-		max_length = 32,
-		editable = False,
-		unique = True,
-		db_index = True,
-	)
+    message_reference = models.CharField(
+        max_length = 32,
+        editable = False,
+        unique = True,
+        db_index = True,
+    )
 
-	message_type = models.CharField(
-		max_length = 80,
-		editable = False,
-		db_index = True,
-	)
+    message_type = models.CharField(
+        max_length = 80,
+        editable = False,
+        db_index = True,
+    )
 
-	created = models.DateTimeField(
-		auto_now_add = True,
-		editable = False,
-		verbose_name = _("created at"),
-	)
+    created = models.DateTimeField(
+        auto_now_add = True,
+        editable = False,
+        verbose_name = _("created at"),
+    )
 
-	send = models.DateTimeField(
-		null = True,
-		editable = False,
-		verbose_name = _("send at"),
-	)
-	
-	send_to = models.TextField(
-		editable = False,
-		verbose_name = _("send to"),
-	)
-	
-	delivered = models.BooleanField(
-		default = False,
-		editable = False,
-	)
+    send = models.DateTimeField(
+        null = True,
+        editable = False,
+        verbose_name = _("send at"),
+    )
+    
+    send_to = models.TextField(
+        editable = False,
+        verbose_name = _("send to"),
+    )
+    
+    delivered = models.BooleanField(
+        default = False,
+        editable = False,
+    )
 
-	failure_message = models.TextField(
-		editable = False,
-		verbose_name = _("failure message"),
-	)
-	
-	def __unicode__(self):
-		return u"{0} - {1}".format(self.message_type, self.message_reference)
+    failure_message = models.TextField(
+        editable = False,
+        verbose_name = _("failure message"),
+    )
+    
+    def __unicode__(self):
+        return u"{0} - {1}".format(self.message_type, self.message_reference)
 
-	class Meta:
-		abstract = True
+    class Meta:
+        abstract = True

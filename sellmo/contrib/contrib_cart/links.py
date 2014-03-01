@@ -39,7 +39,7 @@ namespace = modules.cart.namespace
 #
 
 if settings.SINGLE_PURCHASE_MODE:
-	@link(capture=True)
-	def add_purchase(cart, **kwargs):
-		for purchase in list(cart):
-			purchase.delete()
+    @link(capture=True)
+    def add_purchase(cart, **kwargs):
+        for purchase in list(cart):
+            purchase.delete()

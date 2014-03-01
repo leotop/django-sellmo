@@ -38,11 +38,11 @@ group = _("Payments")
 #
 
 modules.settings.add_setting('test_mode', models.BooleanField(
-	default = True,
-	verbose_name = _("test mode"),
+    default = True,
+    verbose_name = _("test mode"),
 ), group)
 
 modules.settings.add_setting('accept_payments', models.BooleanField(
-	default = True,
-	verbose_name = _("accept payments"),
+    default = True,
+    verbose_name = _("accept payments"),
 ), group)

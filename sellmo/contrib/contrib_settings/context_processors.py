@@ -29,6 +29,6 @@ from sellmo import modules
 #
 
 def settings(request):
-	return {
-		'settings' : modules.settings.get_settings
-	}
+    return {
+        'settings' : modules.settings.get_settings
+    }

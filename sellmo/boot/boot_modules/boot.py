@@ -29,7 +29,7 @@ import sys, logging
 
 # Wrap all exceptions because Django does not capture ImportErrors
 try:
-	# !! THIS INITS THE SELLMO CORE MODULES
-	from sellmo.core.modules import *
+    # !! THIS INITS THE SELLMO CORE MODULES
+    from sellmo.core.modules import *
 except Exception as exception:
-	raise Exception(str(exception)), None, sys.exc_info()[2]
+    raise Exception(str(exception)), None, sys.exc_info()[2]

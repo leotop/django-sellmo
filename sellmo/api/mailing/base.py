@@ -30,57 +30,57 @@ from sellmo.config import settings
 
 class MailHandler(object):
 
-	def __init__(self, writer):
-		self.writer = writer
+    def __init__(self, writer):
+        self.writer = writer
 
-	def handle_mail(self, message_type, message_reference, context):
-		raise NotImplementedError()
+    def handle_mail(self, message_type, message_reference, context):
+        raise NotImplementedError()
 
 class MailWriter(object):
-	
-	# Can be either text, html or both
-	formats = ['text']
-	
-	@classmethod
-	def open(cls, context=None):
-		if context is None:
-			context = {}
-		return cls(**context)
-	
-	def __init__(self, **context):
-		self.context = context
-	
-	def __enter__(self):
-		self.setup()
-		return self
-	
-	def __exit__(self, type, value, traceback):
-		self.teardown()
-	
-	def setup(self):
-		pass
-		
-	def teardown(self):
-		pass
-	
-	def get_to(self):
-		raise NotImplementedError()
-		
-	def get_subject(self):
-		raise NotImplementedError()
-	
-	def get_body(self, format):
-		raise NotImplementedError()
-		
-	def get_bcc(self):
-		return []
-		
-	def get_from(self):
-		return settings.MAIL_FROM
-		
-	def get_attachments(self):
-		return []
-		
-	def get_headers(self):
-		return {}
-		
+    
+    # Can be either text, html or both
+    formats = ['text']
+    
+    @classmethod
+    def open(cls, context=None):
+        if context is None:
+            context = {}
+        return cls(**context)
+    
+    def __init__(self, **context):
+        self.context = context
+    
+    def __enter__(self):
+        self.setup()
+        return self
+    
+    def __exit__(self, type, value, traceback):
+        self.teardown()
+    
+    def setup(self):
+        pass
+        
+    def teardown(self):
+        pass
+    
+    def get_to(self):
+        raise NotImplementedError()
+        
+    def get_subject(self):
+        raise NotImplementedError()
+    
+    def get_body(self, format):
+        raise NotImplementedError()
+        
+    def get_bcc(self):
+        return []
+        
+    def get_from(self):
+        return settings.MAIL_FROM
+        
+    def get_attachments(self):
+        return []
+        
+    def get_headers(self):
+        return {}
+        

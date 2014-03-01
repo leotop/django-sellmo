@@ -29,13 +29,13 @@ from django.utils.translation import ugettext_lazy as _
 #
 
 REPORTING_PARAMS = {
-	'pdf' : {
-		'size' : 'A4',
-		'orientation' : 'portrait',
-		'margin' : '1cm',
-		'zoom' : 1.0,
-	},
-	'png' : {
-		'viewport' : '800x800'
-	}
+    'pdf' : {
+        'size' : 'A4',
+        'orientation' : 'portrait',
+        'margin' : '1cm',
+        'zoom' : 1.0,
+    },
+    'png' : {
+        'viewport' : '800x800'
+    }
 }

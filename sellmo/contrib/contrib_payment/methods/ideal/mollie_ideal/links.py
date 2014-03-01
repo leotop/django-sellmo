@@ -41,8 +41,8 @@ namespace = modules.checkout.namespace
 
 @link()
 def get_payment_methods(order, methods, **kwargs):
-	method = MollieIdealPaymentMethod()
-	methods[method.identifier] =  method
-	return {
-		'methods' : methods
-	}
+    method = MollieIdealPaymentMethod()
+    methods[method.identifier] =  method
+    return {
+        'methods' : methods
+    }

@@ -35,49 +35,49 @@ from sellmo.contrib.contrib_checkout.config import settings
 
 # Validate & Register mail writers
 for message_type, config in settings.CHECKOUT_MAILS.iteritems():
-	if 'writer' not in config:
-		raise Exception("{0} has no writer configured.".format(message_type))
-	if 'send_events' not in config or not config['send_events']:
-		raise Exception("{0} has no send_events configured.".format(message_type))
-	mailer.register(message_type, config['writer'])
+    if 'writer' not in config:
+        raise Exception("{0} has no writer configured.".format(message_type))
+    if 'send_events' not in config or not config['send_events']:
+        raise Exception("{0} has no send_events configured.".format(message_type))
+    mailer.register(message_type, config['writer'])
 
 # Register report writers
 reporter.register('invoice', settings.INVOICE_WRITER)
-	
+    
 #
 
 def on_mail_init(sender, message_type, message_reference, context, **kwargs):
-	if message_type in settings.CHECKOUT_MAILS:
-		try:
-			status = modules.mailing.MailStatus.objects.get(message_reference=message_reference)
-		except modules.mailing.MailStatus.DoesNotExist:
-			logger.warning("Mail message {0} could not be linked to order {1}.".format(message_reference, context['order']))
-		else:
-			modules.checkout_mailing.OrderMail.objects.create(
-				status=status,
-				order=context['order'],
-			)
+    if message_type in settings.CHECKOUT_MAILS:
+        try:
+            status = modules.mailing.MailStatus.objects.get(message_reference=message_reference)
+        except modules.mailing.MailStatus.DoesNotExist:
+            logger.warning("Mail message {0} could not be linked to order {1}.".format(message_reference, context['order']))
+        else:
+            modules.checkout_mailing.OrderMail.objects.create(
+                status=status,
+                order=context['order'],
+            )
 
 mail_init.connect(on_mail_init)
 
 #
 
 def on_order_paid(sender, order, **kwargs):
-	send_order_mails(order, {
-		'on_paid' : True,
-	})
-	
+    send_order_mails(order, {
+        'on_paid' : True,
+    })
+    
 def on_order_state_changed(sender, order, new_state, old_state=None, **kwargs):
-	send_order_mails(order, {
-		'state' : new_state,
-		'on_{0}'.format(new_state) : True,
-	})
-	
+    send_order_mails(order, {
+        'state' : new_state,
+        'on_{0}'.format(new_state) : True,
+    })
+    
 def on_order_status_changed(sender, order, new_status, old_status=None, **kwargs):
-	send_order_mails(order, {
-		'status' : new_status,
-	})
-	
+    send_order_mails(order, {
+        'status' : new_status,
+    })
+    
 
 order_paid.connect(on_order_paid)
 order_state_changed.connect(on_order_state_changed)

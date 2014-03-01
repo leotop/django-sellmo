@@ -36,5 +36,5 @@ from sellmo.api.decorators import link
 
 @link()
 def checkout(request, cart, context, **kwargs):
-	context = RequestContext(request, context)
-	return render_to_response('checkout/checkout.html', context)
+    context = RequestContext(request, context)
+    return render_to_response('checkout/checkout.html', context)

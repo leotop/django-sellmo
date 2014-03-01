@@ -30,10 +30,10 @@ from sellmo.config import settings
 #
 
 __all__ = [
-	'initial_status',
-	'status_choices',
-	'status_events',
-	'status_states',
+    'initial_status',
+    'status_choices',
+    'status_events',
+    'status_states',
 ]
 
 #
@@ -46,26 +46,26 @@ status_states = {}
 
 # Validate order statuses and hookup events
 for status, entry in settings.ORDER_STATUSES.iteritems():
-	config = entry[1] if len(entry) == 2 else {}
-	if 'initial' in config and config['initial']:
-		if initial_status is not None:
-			raise Exception("Only one order status can be defined as initial.")
-		initial_status = status
-	if 'state' in config:
-		status_states[status] = config['state'] 
-	if 'flow' in config:
-		# Check flow
-		for allowed in config['flow']:
-			if allowed not in settings.ORDER_STATUSES:
-				raise Exception("Order status '{0}' does not exist.".format(allowed))
-	for event in events:
-		if event in config:
-			if event in status_events:
-			   raise Exception("Can only have one status responding to '{0}'.".format(event))
-			status_events[event] = status
+    config = entry[1] if len(entry) == 2 else {}
+    if 'initial' in config and config['initial']:
+        if initial_status is not None:
+            raise Exception("Only one order status can be defined as initial.")
+        initial_status = status
+    if 'state' in config:
+        status_states[status] = config['state'] 
+    if 'flow' in config:
+        # Check flow
+        for allowed in config['flow']:
+            if allowed not in settings.ORDER_STATUSES:
+                raise Exception("Order status '{0}' does not exist.".format(allowed))
+    for event in events:
+        if event in config:
+            if event in status_events:
+               raise Exception("Can only have one status responding to '{0}'.".format(event))
+            status_events[event] = status
 
-	status_choices.append((status, entry[0]))
+    status_choices.append((status, entry[0]))
 
 # Validate
 if not initial_status:
-	raise Exception("No initial order status configured.")
+    raise Exception("No initial order status configured.")

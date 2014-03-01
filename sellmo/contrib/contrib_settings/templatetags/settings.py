@@ -42,19 +42,19 @@ register = template.Library()
 #
 
 class SettingsTag(Tag):
-	name = 'settings'
-	options = Options(
-		'as',
-		Argument('varname', default='settings', required=False, resolve=False),
-		blocks = [('endsettings', 'nodelist')],
-	)
+    name = 'settings'
+    options = Options(
+        'as',
+        Argument('varname', default='settings', required=False, resolve=False),
+        blocks = [('endsettings', 'nodelist')],
+    )
 
-	def render_tag(self, context, varname, nodelist):
-		settings = modules.settings.get_settings()
-		context.push()
-		context[varname] = settings
-		output = nodelist.render(context)
-		context.pop()
-		return output
+    def render_tag(self, context, varname, nodelist):
+        settings = modules.settings.get_settings()
+        context.push()
+        context[varname] = settings
+        output = nodelist.render(context)
+        context.pop()
+        return output
 
 register.tag(SettingsTag)

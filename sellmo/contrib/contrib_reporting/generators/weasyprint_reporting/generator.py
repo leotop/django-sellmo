@@ -40,26 +40,26 @@ logger.handlers = []
 
 class WeasyPrintReportGenerator(ReportGeneratorBase):
 
-	input_formats = ['html']
-	output_formats = ['pdf']
+    input_formats = ['html']
+    output_formats = ['pdf']
 
-	def get_params(self, writer, format):
-		params = super(WeasyPrintReportGenerator, self).get_params(writer, format)
-		suggest_params = settings.REPORTING_PARAMS.get(format, {})
+    def get_params(self, writer, format):
+        params = super(WeasyPrintReportGenerator, self).get_params(writer, format)
+        suggest_params = settings.REPORTING_PARAMS.get(format, {})
 
-		for param, suggest in suggest_params.iteritems():
-			value = writer.negotiate_param(param, suggest, **params)
-			params[param] = value if not value is False else suggest
+        for param, suggest in suggest_params.iteritems():
+            value = writer.negotiate_param(param, suggest, **params)
+            params[param] = value if not value is False else suggest
 
-		return params
+        return params
 
-	def get_data(self, writer, format):
-		html = super(WeasyPrintReportGenerator, self).get_data(writer, format)
-		return HTML(string=html).write_pdf()
+    def get_data(self, writer, format):
+        html = super(WeasyPrintReportGenerator, self).get_data(writer, format)
+        return HTML(string=html).write_pdf()
 
-	def get_extension(self, format):
-		return '.' + format
+    def get_extension(self, format):
+        return '.' + format
 
-	def get_mimetype(self, format):
-		if format == 'pdf':
-			return 'application/pdf'
+    def get_mimetype(self, format):
+        if format == 'pdf':
+            return 'application/pdf'

@@ -33,6 +33,6 @@ namespace = modules.checkout.namespace
 
 @link()
 def get_payment_methods(order, methods, **kwargs):
-	return {
-		'methods' : methods
-	}
+    return {
+        'methods' : methods
+    }

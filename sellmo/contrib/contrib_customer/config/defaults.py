@@ -33,6 +33,6 @@ PHONE_NUMBER_REQUIRED = False
 NAME_PREFIX_ENABLED = False
 NAME_PREFIX_REQUIRED = True
 NAME_PREFIX_CHOICES = [
-	('sir', _("sir")),
-	('madame', _("madam")),
+    ('sir', _("sir")),
+    ('madame', _("madam")),
 ]

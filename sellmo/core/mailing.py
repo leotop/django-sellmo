@@ -25,17 +25,17 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 class Mailer(object):
-	
-	handler = None
-	writers = {}
-	
-	def __init__(self):
-		pass
-		
-	def send_mail(message_type, recipients, context=None):
-		pass
-		
-	def register_writer(message_type, writer):
-		pass
+    
+    handler = None
+    writers = {}
+    
+    def __init__(self):
+        pass
+        
+    def send_mail(message_type, recipients, context=None):
+        pass
+        
+    def register_writer(message_type, writer):
+        pass
 
 mailer = Mailer()
