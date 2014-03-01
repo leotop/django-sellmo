@@ -39,7 +39,7 @@ from sellmo import modules
 from sellmo.config import settings
 from sellmo.api.decorators import view, chainable, link
 from sellmo.api.pricing import Currency, Price, PriceType, StampableProperty
-from sellmo.api.pricing.index import PriceIndex
+from sellmo.api.pricing.index import PriceIndex, PrefetchedPriceIndex
 from sellmo.api.pricing.models import PriceIndexBase
 
 #
@@ -209,7 +209,10 @@ class PricingModule(sellmo.Module):
         
         # Price indexing
         if index:
-            price = self.get_index(index).lookup(currency=currency.code, **kwargs)
+            if isinstance(index, PrefetchedPriceIndex):
+                price = index.lookup(currency=currency.code, **kwargs)
+            else:
+                price = self.get_index(index).lookup(currency=currency.code, **kwargs)
             if price is not None:
                 return price
             
@@ -221,7 +224,7 @@ class PricingModule(sellmo.Module):
                 price = out['price']
         
         # Price indexing
-        if index:
+        if index and not isinstance(index, PrefetchedPriceIndex):
             self.get_index(index).index(price, currency=currency.code, **kwargs)
         
         return price
@@ -232,8 +235,6 @@ class PricingModule(sellmo.Module):
             currency = self.get_currency()
         if index is not None:
             products = self.get_index(index).query(products, index_relation, currency=currency, **kwargs)
-            if getattr(products, '_is_indexed', False):
-                products = products.order_indexes_by('price_amount')
         return {
             'products' : products
         }
