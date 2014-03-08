@@ -92,6 +92,8 @@ def finalize_model():
             verbose_name_plural = _("discounts")
     
     modules.discount.Discount = Discount
+    modules.discount.register('DiscountQuerySet', DiscountQuerySet)
+    modules.discount.register('DiscountManager', DiscountManager)
         
 class Discount(PolymorphicModel):
     

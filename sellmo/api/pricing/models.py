@@ -44,12 +44,12 @@ def finalize_model():
     modules.pricing.PriceIndexBase = PriceIndexBase
     
 class PriceIndexQuerySet(QuerySet):
-    def invalidate(self):
+    def invalidate(self, **kwargs):
         return self.delete()
 
 class PriceIndexManager(models.Manager):
-    def invalidate(self):
-        return self.get_query_set().all().invalidate()
+    def invalidate(self, *args, **kwargs):
+        return self.get_query_set().all().invalidate(*args, **kwargs)
 
     def get_query_set(self):
         return PriceIndexQuerySet(self.model)

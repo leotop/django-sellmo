@@ -135,7 +135,7 @@ class QtyPriceRatio(models.Model):
         abstract = True
         
 def on_invalidate_index(sender, instance, **kwargs):
-    modules.pricing.get_index('product_price').invalidate(product=instance.product)
+    modules.pricing.get_index('product_price').update(product=[instance.product])
         
 @load(action='finalize_qty_pricing_ProductQtyPrice')
 def finalize_model():
@@ -167,10 +167,8 @@ def load_model():
     modules.qty_pricing.ProductQtyPrice = ProductQtyPrice
 
 class ProductQtyPrice(models.Model):
-    
     class Meta:
         abstract = True
-        
         
 # Setup indexes
 @load(after='finalize_product_Product')
@@ -179,5 +177,28 @@ def setup_indexes():
     index.add_kwarg('qty', models.PositiveIntegerField(
         null = True
     ), required = False)
-
+    
+class PriceIndexHandle(models.Model):
+    
+    index = models.CharField(
+        max_length = 255,
+        unique = True,
+        verbose_name = _("index"),
+    )
+    
+    updates = models.BinaryField(
+        editable = False,
+    )
+    
+    class Meta:
+        abstract = True
         
+@load(action='finalize_price_indexing_PriceIndexHandle')
+def finalize_model():
+    class PriceIndexHandle(modules.price_indexing.PriceIndexHandle):
+        class Meta(modules.price_indexing.PriceIndexHandle.Meta):
+            app_label = 'pricing'
+            verbose_name = _("price index")
+            verbose_name_plural = _("price indexes")
+
+    modules.price_indexing.PriceIndexHandle = PriceIndexHandle

@@ -26,7 +26,11 @@
 
 from sellmo import modules, Module
 from sellmo.api.decorators import chainable
-from sellmo.contrib.contrib_pricing.models import QtyPriceBase, QtyPrice, QtyPriceRatio, ProductQtyPrice
+from sellmo.contrib.contrib_pricing.models import QtyPriceBase, QtyPrice, QtyPriceRatio, ProductQtyPrice, PriceIndexHandle
+
+#
+
+from django.db import transaction
 
 #
 
@@ -49,3 +53,22 @@ class QtyPricingModule(Module):
             if out.has_key('tiers'):
                 tiers = out['tiers']
         return tiers
+        
+class PriceIndexingModule(Module):
+    namespace = 'price_indexing'
+    
+    PriceIndexHandle = PriceIndexHandle
+    
+    @chainable()
+    @transaction.atomic
+    def queue_update(self, chain, index, invalidations, **kwargs):
+        print invalidations
+        #handle = self.PriceIndexHandle.objects.select_for_update.get_or_create(index=index)
+        
+    @chainable()
+    @transaction.atomic
+    def handle_updates(self, chain, **kwargs):
+        pass
+        #handle = self.PriceIndexHandle.objects.select_for_update.get_or_create(index=index)
+    
+    

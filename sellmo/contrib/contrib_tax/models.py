@@ -54,17 +54,15 @@ def on_tax_pre_save(sender, instance, **kwargs):
 def on_tax_post_save(sender, instance, **kwargs):
     invalidate_indexes(instance)
     
-def on_tax_m2m_changed(sender, instance, action, **kwargs):
-    if action.startswith('post_'):
+def on_tax_m2m_changed(sender, instance, action, reverse, **kwargs):
+    if not reverse and action.startswith('post_'):
         invalidate_indexes(instance)
     
 def on_tax_pre_delete(sender, instance, **kwargs):
    invalidate_indexes(instance)
     
 def invalidate_indexes(tax):
-    modules.pricing.get_index('product_price').model.objects.filter(
-        product__in=modules.product.Product.objects.for_relatable(tax)
-    ).invalidate()
+    modules.pricing.get_index('product_price').update(product=modules.product.Product.objects.for_relatable(tax))
     
 @load(after='load_tax_subtypes')
 def hookup_invalidation():
@@ -110,6 +108,8 @@ def finalize_model():
             verbose_name_plural = _("taxes")
     
     modules.tax.Tax = Tax
+    modules.tax.register('TaxQuerySet', TaxQuerySet)
+    modules.tax.register('TaxManager', TaxManager)
         
 class Tax(PolymorphicModel):
     

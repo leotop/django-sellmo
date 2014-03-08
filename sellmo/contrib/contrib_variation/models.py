@@ -97,7 +97,6 @@ def load_manager():
             if only:
                 return self.filter(content_type__in=ContentType.objects.get_for_models(*modules.variation.subtypes).values())
             return self
-                
 
     class ProductManager(modules.product.Product.objects.__class__):
         def get_query_set(self):
@@ -109,6 +108,9 @@ def load_manager():
     class Product(ModelMixin):
         model = modules.product.Product
         objects = ProductManager()
+        
+    modules.product.register('ProductQuerySet', ProductQuerySet)
+    modules.product.register('ProductManager', ProductManager)
 
                 
 @load(after='load_variants')
@@ -251,6 +253,9 @@ def load_manager():
     class Attribute(ModelMixin):
         model = modules.attribute.Attribute
         objects = AttributeManager()
+        
+    modules.attribute.register('AttributeQuerySet', AttributeQuerySet)
+    modules.attribute.register('AttributeManager', AttributeManager)
     
     
 @load(before='finalize_attribute_Attribute')
@@ -326,6 +331,9 @@ def load_manager():
     class Value(ModelMixin):
         model = modules.attribute.Value
         objects = ValueManager()
+        
+    modules.attribute.register('ValueQuerySet', ValueQuerySet)
+    modules.attribute.register('ValueManager', ValueManager)
 
 @load(before='finalize_attribute_Value')
 @load(after='finalize_product_Product')
@@ -722,17 +730,17 @@ def load_model():
     
     qs = modules.store.Purchase.objects.get_query_set()
     
-    class PurchaseQuerySet(qs.__class__):
+    class VariationPurchaseQuerySet(qs.__class__):
         def mergeable_with(self, purchase):
-            return super(PurchaseQuerySet, self.filter(variation_key=purchase.variation_key)).mergeable_with(purchase)
+            return super(VariationPurchaseQuerySet, self.filter(variation_key=purchase.variation_key)).mergeable_with(purchase)
     
-    class PurchaseManager(modules.store.Purchase.objects.__class__):
+    class VariationPurchaseManager(modules.store.Purchase.objects.__class__):
         def get_query_set(self):
-            return PurchaseQuerySet(self.model)
+            return VariationPurchaseQuerySet(self.model)
     
     class VariationPurchase(modules.store.Purchase):
         
-        objects = PurchaseManager()
+        objects = VariationPurchaseManager()
         
         variation_key = models.CharField(
             max_length = 255
@@ -761,4 +769,6 @@ def load_model():
             verbose_name_plural = _("variation purchases")
         
     modules.variation.VariationPurchase = VariationPurchase
+    modules.variation.register('VariationPurchaseQuerySet', VariationPurchaseQuerySet)
+    modules.variation.register('VariationPurchaseManager', VariationPurchaseManager)
         

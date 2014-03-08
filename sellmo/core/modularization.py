@@ -24,6 +24,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import sys
+import imp
+
+#
+
+from django.db import models
+
 #
 
 from sellmo.magic import singleton, SingletonMeta
@@ -37,11 +44,38 @@ class MountPoint(object):
     def __init__(self):
         self._pending = []
         self._modules = []
+        self.create_module('sellmo_registry', True)
+        sys.meta_path.append(self)
+        
+    def find_module(self, fullname, path=None):
+        if fullname.startswith('sellmo_registry'):
+            return self
+        return None
+        
+    def load_module(self, fullname):
+        if fullname in sys.modules:
+            return sys.modules[fullname]
+        raise ImportError()
+        
+    def create_module(self, fullname, package=False):
+        module = sys.modules.setdefault(fullname, imp.new_module(fullname))
+        module.__file__ = '<sellmo_registry>'
+        module.__loader__ = self
+        if package:
+            module.__path__ = []
+            module.__package__ = fullname
+        else:
+            module.__package__ = fullname.rpartition('.')[0]
+        return module
 
     def on_module_class(self, module):
         setattr(self, module.namespace, module)
         self._pending.append(module)
         self._modules.append(module)
+        
+        # Create module
+        module.registry = self.create_module('sellmo_registry.{0}'.format(module.namespace))
+        setattr(sys.modules['sellmo_registry'], module.namespace, module.registry)
         
         # Signal
         module_created.send(sender=self, module=module)
@@ -85,11 +119,16 @@ class _ModuleMeta(SingletonMeta):
         # Validate the module
         if not out.namespace:
             raise Exception("No namespace defined for module '{0}'".format(out))
-
+        
         # Notify mountpoint
         modules.on_module_class(out)
 
         return out
+    
+    def __setattr__(cls, name, value):
+        if isinstance(value, type) and issubclass(value, models.Model):
+            cls.register(name, value)
+        super(_ModuleMeta, cls).__setattr__(name, value)
 
 class Module(object):
 
@@ -110,6 +149,10 @@ class Module(object):
         modules.on_module_init(cls, module)
         return module
         
+    @classmethod
+    def register(cls, name, value):
+        value.__module__ = cls.registry.__name__
+        setattr(cls.registry, name, value)
         
 modules = MountPoint()
         

@@ -72,9 +72,12 @@ class PricingModule(sellmo.Module):
             self.currencies = {
                 self.currency.code : self.currency
             }
+        
         # Initialize indexes
         for index in self.indexes.values():
-            index._build()    
+            index.add_kwarg('currency', field_name='price_currency')
+            index._build()
+            self.register(index.model.__name__, index.model)
     
     @classmethod
     def construct_decimal_field(self, **kwargs):
@@ -171,26 +174,65 @@ class PricingModule(sellmo.Module):
         if identifier not in self.indexes:
             raise Exception("Index '{0}' not found.".format(identifier))
         return self.indexes[identifier]
+    
+    @chainable()
+    def update_index(self, chain, index, invalidations, currency=None, **kwargs):
+        index = self.get_index(index)
+        
+        # Collect index kwargs
+        out = {}
+        if currency is None:
+            currency = self.currencies.values()
+        out['currency'] = currency
+        out.update(kwargs)
+        if chain:
+            out.update(chain.execute(index=index, invalidations=invalidations, **kwargs))
+            
+        # Filter out kwargs
+        kwargs = { key : value for key, value in out.iteritems() if index.is_kwarg(key)}
+            
+        # Now invalidate
+        invalidations.invalidate()
+        
+        # Create and index all combinations
+        def do(remaining, combination=None):
+            if combination is None:
+                combination = {}
+            if remaining:
+                key, values = remaining.popitem()
+                for value in values:
+                    merged = {key : value}
+                    merged.update(combination)
+                    do(dict(remaining), merged)
+            else:
+                index.index(self.get_price(**combination), **combination)
+        do(kwargs)
         
     @chainable()
-    def retrieve(self, chain, stampable, prop, **kwargs):
-        amount = getattr(stampable, '{0}_amount'.format(prop))
-        currency = getattr(stampable, '{0}_currency'.format(prop))
-        price = Price(amount, currency=self.currencies[currency])
-        for key in self.types:
-            price[key] = Price(getattr(stampable, '{0}_{1}'.format(prop, key)))
+    def retrieve(self, chain, stampable, prop, price=None, **kwargs):
+        if price is None:
+            amount = getattr(stampable, '{0}_amount'.format(prop))
+            currency = getattr(stampable, '{0}_currency'.format(prop))
+            price = Price(amount, currency=self.currencies[currency])
+            for key in self.types:
+                price[key] = Price(getattr(stampable, '{0}_{1}'.format(prop, key)))
+        if chain:
+            out = chain.execute(stampable=stampable, prop=prop, price=price, **kwargs)
+            price = out.get('price', price)
         return price
             
     @chainable()
     def stamp(self, chain, stampable, prop, price, **kwargs):
         setattr(stampable, '{0}_amount'.format(prop), price.amount)
-        setattr(stampable, '{0}_currency'.format(prop), price.currency)
+        setattr(stampable, '{0}_currency'.format(prop), price.currency.code )
         for key in self.types:
             if key in price:
                 amount = price[key].amount
             else:
                 amount = Decimal(0.0)
             setattr(stampable, '{0}_{1}'.format(prop, key), amount)
+        if chain:
+            chain.execute(stampable=stampable, prop=prop, price=price, **kwargs)
         
     @chainable()
     def get_currency(self, chain, request=None, currency=None, **kwargs):

@@ -24,6 +24,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+#
+
 from sellmo import modules
 from sellmo.core.params import params
 from sellmo.magic import ModelMixin
@@ -126,6 +128,10 @@ def load_manager():
     class Product(ModelMixin):
         model = modules.product.Product
         objects = ProductManager()
+    
+    # Register
+    modules.product.register('ProductQuerySet', ProductQuerySet)
+    modules.product.register('ProductManager', ProductManager)
         
 @load(after='finalize_category_Category')
 def load_manager():
@@ -145,6 +151,10 @@ def load_manager():
         class Category(ModelMixin):
             model = modules.category.Category
             objects = CategoryManager()
+            
+        # Register
+        modules.category.register('CategoryQuerySet', CategoryQuerySet)
+        modules.category.register('CategoryManager', CategoryManager)
 
 # Admin will not call "post_remove", this will cause an issue if all categories are unassigned.
 def on_categories_changed(sender, instance, action, **kwargs):
@@ -191,7 +201,7 @@ def load_model():
             modules.category.Category,
             blank = True,
             null = True,
-            related_name = 'products2',
+            related_name = 'products',
             verbose_name = _("categories"),
         )
         

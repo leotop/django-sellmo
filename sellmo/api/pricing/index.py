@@ -152,12 +152,7 @@ class PrefetchedPriceIndex(object):
 class PriceIndex(object):
     def __init__(self, identifier):
         self.identifier = identifier
-        self.kwargs = {
-            'currency' : {
-                'field_name' : 'price_currency',
-                'required' : True
-            }
-        }
+        self.kwargs = {}
         self._model = None
 
     def _build(self):
@@ -195,13 +190,17 @@ class PriceIndex(object):
         model = type(name, (model,), attr_dict)
         self._model = model
 
-    def _get_query(self, relation=None, **kwargs):
+    def _get_query(self, relation=None, nullable=False, **kwargs):
         fargs, complete = self._get_field_args(relation=relation, **kwargs)
         orm_lookup = {}
         for key, value in fargs.iteritems():
             if value is None:
+                if nullable:
+                    continue
                 key = '{0}__isnull'.format(key)
                 value = True
+            if isinstance(value, (tuple, list, QuerySet)):
+                key = '{0}__in'.format(key)
             orm_lookup[key] = value
         return Q(**orm_lookup), complete
 
@@ -220,7 +219,9 @@ class PriceIndex(object):
                 fargs[field_name] = None
         return fargs, complete
 
-    def add_kwarg(self, name, field, field_name=None, required=True):
+    def add_kwarg(self, name, field=None, field_name=None, required=True):
+        if name in ('relation', 'nullable'):
+            raise Exception("Resereved kwarg name '{0}".format(name))
         if name in self.kwargs:
             raise Exception("Index '{0}' already has a kwarg '{1}'".format(self, name))
         if not field_name:
@@ -229,12 +230,15 @@ class PriceIndex(object):
             raise Exception("Index '{0}' is already build.".format(self))
         if not required and field.null is False:
             raise Exception("Index '{0}' field '{1}' must be nullable.".format(self, field_name))
-
+    
         self.kwargs[name] = {
             'field_name' : field_name,
             'required' : required,
-            'field' : field
+            'field' : field,
         }
+    
+    def is_kwarg(self, name):
+        return name in self.kwargs
 
     def index(self, price, **kwargs):
         existing = self.lookup(**kwargs)
@@ -257,15 +261,19 @@ class PriceIndex(object):
                 pass
         return None
 
-    def invalidate(self, **kwargs):
-        q, complete = self._get_query(**kwargs)
-        self.model.objects.filter(q).invalidate()
-
     def query(self, queryset, relation, **kwargs):
-        q, complete = self._get_query(relation, **kwargs)
+        q, complete = self._get_query(relation=relation, **kwargs)
         if complete:
             queryset = make_indexed(queryset, self.model.objects.filter(q), relation)
         return queryset
+        
+    def update(self, **kwargs):
+        # First query invalidations
+        q, complete = self._get_query(nullable=True, **kwargs)
+        invalidations = self.model.objects.filter(q)
+        
+        # Now update with provided kwargs
+        modules.pricing.update_index(index=self.identifier, invalidations=invalidations, **kwargs)
 
     @property
     def model(self):
