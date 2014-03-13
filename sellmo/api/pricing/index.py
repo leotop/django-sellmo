@@ -211,15 +211,16 @@ class PriceIndex(object):
             if key == relation:
                 continue
             field_name = value['field_name']
+            transform = value['transform']
             if key in kwargs and kwargs[key] is not None:
-                fargs[field_name] = kwargs[key]
+                fargs[field_name] = kwargs[key] if not transform else transform(kwargs[key])
             elif value['required']:
                 complete = False
             else:
                 fargs[field_name] = None
         return fargs, complete
 
-    def add_kwarg(self, name, field=None, field_name=None, required=True):
+    def add_kwarg(self, name, field=None, field_name=None, required=True, transform=None):
         if name in ('relation', 'nullable'):
             raise Exception("Resereved kwarg name '{0}".format(name))
         if name in self.kwargs:
@@ -235,15 +236,19 @@ class PriceIndex(object):
             'field_name' : field_name,
             'required' : required,
             'field' : field,
+            'transform' : transform
         }
     
     def is_kwarg(self, name):
         return name in self.kwargs
 
     def index(self, price, **kwargs):
-        existing = self.lookup(**kwargs)
-        if existing:
-            existing.delete()
+        q, complete = self._get_query(**kwargs)
+        if complete:
+            try:
+                return self.model.objects.get(q).delete()
+            except self.model.DoesNotExist:
+                pass
         fargs, complete = self._get_field_args(**kwargs)
         if complete:
             obj = self.model(**fargs)
@@ -271,6 +276,13 @@ class PriceIndex(object):
         # First query invalidations
         q, complete = self._get_query(nullable=True, **kwargs)
         invalidations = self.model.objects.filter(q)
+        
+        # Make sure kwargs is either a QuerySet, or a list
+        for key, value in kwargs.iteritems():
+            if not self.is_kwarg(key):
+                raise ValueError("Index '{0}' update kwarg '{1}' is not valid.".format(self, key))
+            if not isinstance(value, (list, tuple, QuerySet)):
+                raise TypeError("Index '{0}' update kwarg '{1}' must be a list or QuerySet.".format(self, key))
         
         # Now update with provided kwargs
         modules.pricing.update_index(index=self.identifier, invalidations=invalidations, **kwargs)

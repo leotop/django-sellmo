@@ -24,6 +24,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import logging
+
+#
+
 from sellmo import modules, Module
 from sellmo.api.decorators import chainable
 from sellmo.contrib.contrib_pricing.models import QtyPriceBase, QtyPrice, QtyPriceRatio, ProductQtyPrice, PriceIndexHandle
@@ -31,6 +35,11 @@ from sellmo.contrib.contrib_pricing.models import QtyPriceBase, QtyPrice, QtyPri
 #
 
 from django.db import transaction
+from django.db.models.query import QuerySet
+
+#
+
+logger = logging.getLogger('sellmo')
 
 #
 
@@ -59,16 +68,79 @@ class PriceIndexingModule(Module):
     
     PriceIndexHandle = PriceIndexHandle
     
+    def _get_handle(self, index):
+        if self.PriceIndexHandle.objects.filter(index=index).count() == 0:
+            self.PriceIndexHandle.objects.create(index=index)
+        return self.PriceIndexHandle.objects.select_for_update().get(index=index)
+        
+    def _read_updates(self, handle):
+        if handle.updates:
+            return handle.updates
+        else:
+            return {
+                'invalidations' : modules.pricing.get_index(handle.index).model.objects.none(),
+                'kwargs' : {},
+            }
+            
+    def _write_updates(self, handle, updates):
+        handle.updates = updates
+        handle.save()
+        
+    def _ensure_query_set(self, values):
+        if not isinstance(values, QuerySet):
+            return values[0].__class__.objects.filter(pk__in=[value.pk for value in values])
+        return values
+        
+    def _merge_kwarg(self, key, existing, new):
+        if isinstance(existing, QuerySet) or isinstance(new, QuerySet):
+            existing = self._ensure_query_set(existing)
+            new = self._ensure_query_set(new)
+            # Make sure we are dealing with the same model
+            if existing.model != new.model:
+                raise Exception("Cannot merge kwarg '{0}'.".format(key))
+            merged = [pk for pk in existing.values_list('pk', flat=True)]
+            merged.extend([pk for pk in new.values_list('pk', flat=True) if pk not in merged])
+            merged = existing.model.objects.filter(pk__in=merged)
+        else:
+            merged = list(existing)
+            merged.extend([value for value in new if value not in existing])
+        return merged
+    
     @chainable()
-    @transaction.atomic
     def queue_update(self, chain, index, invalidations, **kwargs):
-        print invalidations
-        #handle = self.PriceIndexHandle.objects.select_for_update.get_or_create(index=index)
+        with transaction.atomic():
+            handle = self._get_handle(index)
+            updates = self._read_updates(handle)
+            
+            # Merge invalidations
+            existing = updates['invalidations']
+            merged = [pk for pk in existing.values_list('pk', flat=True)]
+            merged.extend([pk for pk in invalidations.values_list('pk', flat=True) if pk not in merged])
+            updates['invalidations'] = modules.pricing.get_index(index).model.objects.filter(pk__in=merged)
+            
+            # merge kwargs
+            merged = dict(updates['kwargs'])
+            for key, value in kwargs.iteritems():
+                if not value:
+                    # Skip empty lists (or querysets)
+                    continue
+                if key not in merged:
+                    merged[key] = value
+                else:
+                    merged[key] = self._merge_kwarg(key, merged[key], value)
+            updates['kwargs'] = merged
+            self._write_updates(handle, updates)
+        
         
     @chainable()
-    @transaction.atomic
     def handle_updates(self, chain, **kwargs):
-        pass
-        #handle = self.PriceIndexHandle.objects.select_for_update.get_or_create(index=index)
-    
+        for index in modules.pricing.indexes.keys():
+            with transaction.atomic():
+                handle = self._get_handle(index)
+                if handle.updates is None:
+                    continue
+                updates = self._read_updates(handle)
+                self._write_updates(handle, None)
+            
+            modules.pricing.update_index(index=index, invalidations=updates['invalidations'], **updates['kwargs'])
     

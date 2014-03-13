@@ -41,9 +41,13 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
+from picklefield.fields import PickledObjectField
+
+#
+
 class QtyPriceQuerySet(QuerySet):
     def for_qty(self, qty):
-        match = self.filter(qty__gte=qty).order_by('qty').first()
+        match = self.filter(qty__lte=qty).order_by('-qty').first()
         if match:
             return match
         match = self.all().order_by('qty').first()
@@ -186,8 +190,9 @@ class PriceIndexHandle(models.Model):
         verbose_name = _("index"),
     )
     
-    updates = models.BinaryField(
+    updates = PickledObjectField(
         editable = False,
+        null = True
     )
     
     class Meta:

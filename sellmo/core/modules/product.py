@@ -32,6 +32,7 @@ import sellmo
 from sellmo import modules
 from sellmo.api.decorators import view, chainable
 from sellmo.api.product.models import Product, ProductRelatable
+from sellmo.api.http.query import QueryString
 
 #
 
@@ -42,7 +43,7 @@ class ProductModule(sellmo.Module):
     Product = Product
     ProductRelatable = ProductRelatable
     subtypes = []
-    reserved_url_params = []
+    reserved_url_params = ['sort']
         
     @classmethod
     def register_subtype(self, subtype):
@@ -52,11 +53,13 @@ class ProductModule(sellmo.Module):
         setattr(self, subtype.__name__, subtype)
         
     @chainable()
-    def list(self, chain, request, products=None, **kwargs):
+    def list(self, chain, request, products=None, query=None, **kwargs):
         if products is None:
             products = self.Product.objects.all()
+        if query is None:
+            query = QueryString(request)
         if chain:
-            out = chain.execute(request=request, products=products, **kwargs)
+            out = chain.execute(request=request, products=products, query=query, **kwargs)
             if out.has_key('products'):
                 products = out['products']
         return products

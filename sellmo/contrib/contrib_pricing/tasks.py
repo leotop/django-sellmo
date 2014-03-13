@@ -33,7 +33,7 @@ from sellmo import modules
 #
 
 @shared_task
-def queue_update(index, invalidations, kwargs):
+def queue_update(index, invalidations, **kwargs):
     modules.price_indexing.queue_update(index=index, invalidations=invalidations, **kwargs)
     
 @shared_task

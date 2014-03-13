@@ -24,7 +24,23 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo import modules
+import datetime
 
 #
 
+from sellmo import modules
+from sellmo.config import settings
+from sellmo.core.params import params
+
+#
+
+if settings.CELERY_ENABLED and getattr(params, 'worker_mode', False):
+    from sellmo.boot.boot_sellmo.boot import celery_app as app
+    app.conf.update(
+        CELERYBEAT_SCHEDULE = {
+            'handle-updates-every-5-minutes': {
+                'task': 'sellmo.contrib.contrib_pricing.tasks.handle_updates',
+                'schedule': datetime.timedelta(minutes=5),
+            },
+        }
+    )

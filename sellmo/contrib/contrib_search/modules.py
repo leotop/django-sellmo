@@ -30,6 +30,7 @@ import operator
 
 from django.http import Http404
 from django.db.models import Q
+from django.utils.module_loading import import_by_path
 
 #
 
@@ -41,6 +42,28 @@ from sellmo.contrib.contrib_search.config import settings
 
 class SearchModule(Module):
     namespace = 'search'
+    
+    def __init__(self, *args, **kwargs):
+        self.SearchForm = import_by_path(settings.SEARCH_FORM)
+        
+    @chainable()
+    def get_search_form(self, chain, form=None, cls=None, initial=None, data=None, **kwargs):
+        if cls is None:
+            cls = self.SearchForm
+            
+        if form is None:
+            if not data and not initial:
+                initial = {}
+            
+            if not data:
+                form = cls(initial=initial)
+            else:
+                form = cls(data)
+        
+        if chain:
+            out = chain.execute(form=form, cls=cls, initial=initial, data=data, **kwargs)
+            out = out.get('form', form)
+        return form
 
     @view(r'^$')
     def results(self, chain, request, products=None, context=None, **kwargs):
@@ -57,7 +80,7 @@ class SearchModule(Module):
             raise Http404
             
     @chainable()
-    def search(self, chain, request, products, term, **kwargs):
+    def search(self, chain, products, term, **kwargs):
         def construct_search(field):
             if field.startswith('^'):
                 return "%s__istartswith" % field[1:]
@@ -78,6 +101,6 @@ class SearchModule(Module):
             products = products.distinct()
         
         if chain:
-            out = chain.execute(request=request, products=products, term=term, **kwargs)
+            out = chain.execute(products=products, term=term, **kwargs)
             products = out.get('products', products)
         return products

@@ -29,3 +29,4 @@ from django.utils.translation import ugettext_lazy as _
 #
 
 SEARCH_FIELDS = []
+SEARCH_FORM = 'sellmo.contrib.contrib_search.forms.SearchForm'

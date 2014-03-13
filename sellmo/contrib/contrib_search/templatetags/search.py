@@ -24,17 +24,24 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from django import template
+from django.core.urlresolvers import reverse
+
 #
 
 from sellmo import modules
-from sellmo.api.decorators import link
 
 #
 
-@link(namespace=modules.product.namespace)
-def list(products, query=None, **kwargs):
-    if 'search' in query:
-        products = modules.search.search(term=' '.join(query['search']), products=products)
-    return {
-        'products' : products
+register = template.Library()
+
+#
+
+@register.inclusion_tag('search/search_form.html', takes_context=True)
+def search_form(context, **kwargs):
+    form = modules.search.get_search_form(**kwargs)
+    inner = {
+        'form' : form,
     }
+    inner.update(kwargs)
+    return inner

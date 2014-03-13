@@ -24,6 +24,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import logging
 from decimal import Decimal
 import types
 
@@ -41,6 +42,10 @@ from sellmo.api.decorators import view, chainable, link
 from sellmo.api.pricing import Currency, Price, PriceType, StampableProperty
 from sellmo.api.pricing.index import PriceIndex, PrefetchedPriceIndex
 from sellmo.api.pricing.models import PriceIndexBase
+
+#
+
+logger = logging.getLogger('sellmo')
 
 #
 
@@ -75,7 +80,7 @@ class PricingModule(sellmo.Module):
         
         # Initialize indexes
         for index in self.indexes.values():
-            index.add_kwarg('currency', field_name='price_currency')
+            index.add_kwarg('currency', field_name='price_currency', transform=lambda value : value.code)
             index._build()
             self.register(index.model.__name__, index.model)
     
@@ -192,6 +197,7 @@ class PricingModule(sellmo.Module):
         kwargs = { key : value for key, value in out.iteritems() if index.is_kwarg(key)}
             
         # Now invalidate
+        logger.info("Invalidating {1} indexes for index '{0}'".format(index, invalidations.count()))
         invalidations.invalidate()
         
         # Create and index all combinations
@@ -254,7 +260,7 @@ class PricingModule(sellmo.Module):
             if isinstance(index, PrefetchedPriceIndex):
                 price = index.lookup(currency=currency.code, **kwargs)
             else:
-                price = self.get_index(index).lookup(currency=currency.code, **kwargs)
+                price = self.get_index(index).lookup(currency=currency, **kwargs)
             if price is not None:
                 return price
             
@@ -267,16 +273,23 @@ class PricingModule(sellmo.Module):
         
         # Price indexing
         if index and not isinstance(index, PrefetchedPriceIndex):
-            self.get_index(index).index(price, currency=currency.code, **kwargs)
+            self.get_index(index).index(price, currency=currency, **kwargs)
         
         return price
         
     @link(namespace='product', name='list')
-    def list_products(self, products, currency=None, index=None, index_relation='product', **kwargs):
+    def list_products(self, products, query=None, currency=None, index=None, index_relation='product', **kwargs):
         if currency is None:
             currency = self.get_currency()
         if index is not None:
             products = self.get_index(index).query(products, index_relation, currency=currency, **kwargs)
+        if query is not None:
+            # See if we need to sort on price
+            if ('sort', 'price') in query:
+                products = products.order_indexes_by('price_amount')
+            elif ('sort', '-price') in query:
+                products = products.order_indexes_by('-price_amount')
+                
         return {
             'products' : products
         }

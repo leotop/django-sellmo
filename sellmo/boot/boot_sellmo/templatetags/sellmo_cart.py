@@ -35,6 +35,7 @@ from classytags.arguments import Argument, MultiKeywordArgument
 #
 
 from sellmo import modules
+from sellmo.api.http.query import QueryString
 
 #
 
@@ -72,15 +73,15 @@ def add_to_cart_formset(context, product, next=None, invalid=None, **kwargs):
     if invalid is None:
         invalid = context['request'].path
     
-    params = []
+    query = QueryString()
     if next is not None:
-        params.append('next=%s' % next)
-    params.append('invalid=%s' % invalid)
+        query['next'] = next
+    query['invalid'] = invalid
         
     inner = {
         'formset' : formset,
         'product' : product,
-        'params' : params,
+        'query' : query,
     }
     
     inner.update(kwargs)
@@ -96,15 +97,15 @@ def edit_purchase_form(context, purchase, next=None, invalid=None, **kwargs):
     if invalid is None:
         invalid = context['request'].path
     
-    params = []
+    query = QueryString()
     if next is not None:
-        params.append('next=%s' % next)
-    params.append('invalid=%s' % invalid)
+        query['next'] = next
+    query['invalid'] = invalid
     
     inner = {
         'form' : form,
         'purchase' : purchase,
-        'params' : params,
+        'query' : query,
     }
     
     inner.update(kwargs)

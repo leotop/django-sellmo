@@ -28,7 +28,7 @@ from django.conf import settings
 
 #
 
-from sellmo.contrib.contrib_attribute.config import defaults
+from sellmo.contrib.contrib_search.config import defaults
 
 #
 
@@ -37,5 +37,6 @@ debug = getattr(settings, 'DEBUG', False)
 #
 
 SEARCH_FIELDS = getattr(settings, 'SELLMO_SEARCH_FIELDS', defaults.SEARCH_FIELDS)
+SEARCH_FORM = getattr(settings, 'SELLMO_SEARCH_FORM', defaults.SEARCH_FORM)
 
 #

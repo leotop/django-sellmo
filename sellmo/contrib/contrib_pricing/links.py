@@ -68,4 +68,4 @@ if settings.CELERY_ENABLED and not getattr(params, 'worker_mode', False):
         yield override_update_index
     
 def override_update_index(module, chain, index, invalidations, **kwargs):
-    tasks.queue_update.apply_async((index, invalidations, kwargs))
+    tasks.queue_update.apply_async((index, invalidations), kwargs)
