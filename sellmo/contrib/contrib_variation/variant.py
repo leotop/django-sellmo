@@ -30,6 +30,7 @@ from sellmo.contrib.contrib_variation.utils import is_unique_slug
 #
 
 from django.db import models
+from django.db.models.signals import m2m_changed
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from django.utils.encoding import smart_text
@@ -55,14 +56,31 @@ class VariantMixin(object):
     _is_variant = True
     
     @classmethod
+    def setup(cls):
+        for field in cls.get_variable_fields():
+            descriptor = field.model.__dict__.get(field.name, None)
+            setattr(cls, field.name, VariantFieldDescriptor(field, descriptor=descriptor))
+            cls.add_to_class(get_differs_field_name(field.name), models.BooleanField(editable=False, auto_created=True, default=False))
+        for field, reverse in cls.get_m2m_fields():
+            modules.variation.mirror_m2m_field(field, reverse)
+    
+    @classmethod
     def get_variable_fields(cls):
-        fields = cls._meta.many_to_many + cls._meta.fields
+        fields = cls._meta.fields
         for field in fields:
-            if (not field.auto_created 
-            and not field.name in cls.non_variable_fields 
-            and not field.__class__ in cls.non_variable_field_types 
+            if (not field.auto_created
+            and not field.name in cls.non_variable_fields
+            and not field.__class__ in cls.non_variable_field_types
             and not field in modules.variation.Variant._meta.fields):
                 yield field
+                
+    @classmethod
+    def get_m2m_fields(cls):
+        fields = [(field, False) for field in cls._meta.many_to_many]
+        fields += [(m2m.field, True) for m2m, model in cls._meta.get_all_related_m2m_objects_with_model()]
+        for field, reverse in fields:
+            if not reverse or not field.rel.related_name.endswith('+'):
+                yield field, reverse
     
     def get_product(self):
         if hasattr(self, 'product_id') and self.product_id != None:
@@ -93,45 +111,31 @@ class VariantMixin(object):
         def assign_field(field, val, product_val):
             differs = getattr(self, get_differs_field_name(field.name))
             
-            # Empty field will always copy it's parent field
             if not val:
+                # Empty field will always copy it's parent field.
                 val = product_val
                 differs = False
-               
-            if not exists and val != product_val:
-                # Newly created and we already differ
+            elif not exists and val != product_val:
+                # Descriptor won't work for newly created variants.
+                # Set differs to True manually
                 differs = True
-               
-            # See if we need to copy our parent's field
-            if not differs and val != product_val:
+            elif not differs and val != product_val:
+                # Parent has changed, copy field value.
                 val = product_val
+            elif differs and val == product_val:
+                # We don't differ anymore
+                differs = False
             
             setattr(self, field.name, val)
             setattr(self, get_differs_field_name(field.name), differs)
                 
-        
+        # Copy fields
         for field in self.__class__.get_variable_fields():
-            # Handle all fields except many to many
-            if isinstance(field, models.ManyToManyField):
-                continue
-            
             val = getattr(self, field.name)
             product_val = getattr(product, field.name)
             assign_field(field, val, product_val)
                 
         super(VariantMixin, self).save(*args, **kwargs)
-        
-        for field in self.__class__.get_variable_fields():
-            # Handle many to many 
-            if not isinstance(field, models.ManyToManyField):
-                continue
-            
-            val = getattr(self, field.name)
-            product_val = getattr(product, field.name)
-            val = list(val.all())
-            product_val = list(product_val.all())
-            assign_field(field, val, product_val)
-            
 
     class Meta:
         app_label = 'product'

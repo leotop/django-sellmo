@@ -68,6 +68,7 @@ class ProductAttributeFormMixin(object):
             instance.attributes[attribute.key] = value
         if commit:
             instance.save()
+            self.save_m2m()
         return instance
 
 class ProductAttributeFormFactory(FormFactory):

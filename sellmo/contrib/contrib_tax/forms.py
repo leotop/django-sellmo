@@ -49,9 +49,8 @@ class ProductTaxesForm(forms.ModelForm):
             
     def save(self, commit=True):
         product = super(ProductTaxesForm, self).save(commit=False)
+        product.taxes = self.cleaned_data['taxes']
         if commit:
             product.save()
-        if product.pk:
-            product.taxes = self.cleaned_data['taxes']
             self.save_m2m()
         return product

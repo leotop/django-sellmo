@@ -70,14 +70,10 @@ def load_model():
         def save(self, *args, **kwargs):
             super(Product, self).save(*args, **kwargs)
             
-            # Check kwargs
-            ignore_variants = False
-            if kwargs.has_key('ignore_variants'):
-                ignore_variants = kwargs.pop('ignore_variants')
-            
             # Try to update variants
-            if not ignore_variants and hasattr(self, 'variants') and self.variants.count() > 0:
-                for variant in self.variants.all():
+            downcasted = self.downcast()
+            if hasattr(downcasted, 'variants') and downcasted.variants.count() > 0:
+                for variant in downcasted.variants.all():
                     variant.save()
         
         class Meta(modules.product.Product.Meta):
@@ -146,7 +142,6 @@ def load_model():
             @property
             def variations(self):
                 return self.get_variations()
-            
                 
 @load(action='load_variants')
 @load(after='setup_variants')
@@ -170,11 +165,7 @@ def load_variants():
         }
         
         model = type(name, (VariantMixin, modules.variation.Variant, subtype,), attr_dict)
-        for field in model.get_variable_fields():
-            descriptor = field.model.__dict__.get(field.name, None)
-            setattr(model, field.name, VariantFieldDescriptor(field, descriptor=descriptor))
-            model.add_to_class(get_differs_field_name(field.name), models.BooleanField(editable=False, auto_created=True, default=False))
-        
+        model.setup()
         modules.variation.subtypes.append(model)
         setattr(modules.variation, name, model)
         

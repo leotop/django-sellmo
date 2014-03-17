@@ -55,8 +55,11 @@ def on_tax_post_save(sender, instance, **kwargs):
     invalidate_indexes(instance)
     
 def on_tax_m2m_changed(sender, instance, action, reverse, **kwargs):
-    if not reverse and action.startswith('post_'):
-        invalidate_indexes(instance)
+    if action.startswith('post_'):
+        if not reverse:
+            invalidate_indexes(instance)
+        else:
+            modules.pricing.get_index('product_price').update(product=[instance])
     
 def on_tax_pre_delete(sender, instance, **kwargs):
    invalidate_indexes(instance)

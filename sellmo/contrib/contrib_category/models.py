@@ -156,10 +156,14 @@ def load_manager():
         modules.category.register('CategoryQuerySet', CategoryQuerySet)
         modules.category.register('CategoryManager', CategoryManager)
 
-# Admin will not call "post_remove", this will cause an issue if all categories are unassigned.
-def on_categories_changed(sender, instance, action, **kwargs):
-    if action == 'post_add' or action == 'post_remove':
-        instance.update_primary_category(instance)
+def on_categories_changed(sender, instance, action, reverse, pk_set, **kwargs):
+    if action in ('post_add', 'post_remove'):
+        if not reverse:
+            instance.update_primary_category()
+        else:
+            for pk in pk_set:
+                product = modules.product.Product.objects.get(pk=pk)
+                product.update_primary_category()
     
 @load(after='finalize_product_Product')
 def load_model():
@@ -170,32 +174,30 @@ def load_model():
 def load_model():
     class Product(modules.product.Product):
         
-        @staticmethod
-        def find_primary_category(product):
-            q = product.categories.all().order_by('-level')
+        def find_primary_category(self):
+            q = self.categories.all().order_by('-level')
             if q:
                 return q[0]
             return None
             
-        @staticmethod
-        def update_primary_category(product):
+        def update_primary_category(self):
             if (
-                (product.primary_category is None
-                or product.categories.filter(pk=product.primary_category.pk).count() == 0)
-                and not getattr(product, '_primary_category_found', False)
-                and product.categories.count() > 0
+                (self.primary_category is None
+                or self.categories.filter(pk=self.primary_category.pk).count() == 0)
+                and not getattr(self, '_primary_category_found', False)
+                and self.categories.count() > 0
             ):
                 # Find best suitable category
-                found = product.find_primary_category(product)
-                if product.primary_category != found:
-                    product.primary_category = found
-                    setattr(product, '_primary_category_found', True)
-                    product.save()
-            elif not product.primary_category is None and product.categories.count() == 0:
+                found = self.find_primary_category()
+                if self.primary_category != found:
+                    self.primary_category = found
+                    setattr(self, '_primary_category_found', True)
+                    self.save()
+            elif not self.primary_category is None and self.categories.count() == 0:
                 # Unassign
-                product.primary_category = None
-                setattr(product, '_primary_category_found', True)
-                product.save()
+                self.primary_category = None
+                setattr(self, '_primary_category_found', True)
+                self.save()
         
         categories = models.ManyToManyField(
             modules.category.Category,

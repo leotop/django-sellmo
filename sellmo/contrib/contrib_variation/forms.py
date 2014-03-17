@@ -180,6 +180,7 @@ class ProductVariationFormMixin(object):
                 field.save(instance, attribute, values)
         if commit:
             instance.save()
+            self.save_m2m()
             save_variations()
         else:
             self.save_variations = save_variations
@@ -212,6 +213,7 @@ class VariantAttributeFormMixin(object):
             instance.attributes[attribute.key] = value
         if commit:
             instance.save()
+            self.save_m2m()
         return instance
             
     def clean(self):
@@ -241,4 +243,3 @@ class VariantAttributeFormMixin(object):
                 self.data[self.add_prefix('slug')] = cleaned_data['slug']
         
         return cleaned_data
-                

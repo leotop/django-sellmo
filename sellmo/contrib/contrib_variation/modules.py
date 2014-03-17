@@ -37,6 +37,7 @@ from django.utils.translation import ugettext_lazy as _
 #
 
 from django.db.models import Q
+from django.db.models.signals import post_save, m2m_changed
 
 #
 
@@ -53,10 +54,62 @@ class VariationModule(Module):
     VariationsState = VariationsState
     product_subtypes = []
     subtypes = []
+    m2m_relations = {}
+    
+    def __init__(self, *args, **kwargs):
+        for field, reverse in self.m2m_relations.values():
+            m2m_changed.connect(self.on_m2m_changed, sender=field.rel.through)
+        for subtype in self.subtypes:
+            post_save.connect(self.on_variant_post_save, sender=subtype)
+            
+    def on_m2m_changed(self, sender, instance, action, reverse, pk_set, **kwargs):        
+        if action in ('pre_clear', 'pre_remove', 'post_add'):
+            field, field_reverse = self.m2m_relations[str(sender)]
+            relation = field.name
+            products = [instance]
+            action = action.split('_')[1]
+            
+            if (reverse ^ field_reverse):
+                if field_reverse:
+                    products = list(getattr(instance, field.name).all())
+                    relation = field.rel.related_name
+                else:
+                    products = list(getattr(instance, field.rel.related_name).all())
+                pk_set = set([instance.pk])
+                if action == 'clear':
+                    action = 'remove'
+                
+            elif reverse and field_reverse:
+                relation = field.rel.related_name
+            
+            for product in products:
+                downcasted = product.downcast()
+                if not getattr(downcasted, '_is_variant', False):
+                    for variant in downcasted.variants.all():
+                        m2m = getattr(variant, relation)
+                        if action == 'clear':
+                            m2m.clear()
+                        elif action == 'remove':
+                            m2m.remove(*pk_set)
+                        elif action == 'add':
+                            m2m.add(*pk_set)
+                    
+    def on_variant_post_save(self, sender, instance, created, raw=False, **kwargs):
+        if not raw and created:
+            for field, reverse in self.m2m_relations.values():
+                relation = field.name if not reverse else field.rel.related_name
+                relation = field.name if not reverse else field.rel.related_name
+                getattr(instance, relation).add(*list(getattr(instance.product, relation).all()))
+                instance.save()
         
     @classmethod
     def register_product_subtype(self, subtype):
         self.product_subtypes.append(subtype)
+        
+    @classmethod
+    def mirror_m2m_field(self, field, reverse):
+        if str(field.rel.through) not in self.m2m_relations:
+            self.m2m_relations[str(field.rel.through)] = (field, reverse)
     
     @chainable()
     def get_variations(self, chain, product, grouped=False, variations=None, **kwargs):
