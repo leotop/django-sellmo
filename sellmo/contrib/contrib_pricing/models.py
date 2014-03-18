@@ -83,7 +83,7 @@ class QtyPriceBase(models.Model):
         raise NotImplementedError()
     
     def __unicode__(self):
-        return _("%s qty or more") % unicode(self.qty)
+        return _("{0} qty or more").format(self.qty)
     
     class Meta:
         ordering = ['qty']
@@ -189,6 +189,7 @@ def setup_indexes():
 class PriceIndexHandle(models.Model):
     
     index = models.CharField(
+        editable = False,
         max_length = 255,
         unique = True,
         verbose_name = _("index"),
@@ -198,6 +199,14 @@ class PriceIndexHandle(models.Model):
         editable = False,
         null = True
     )
+    
+    updated = models.DateTimeField(
+        editable = False,
+        null = True
+    )
+    
+    def __unicode__(self):
+        return self.index
     
     class Meta:
         abstract = True

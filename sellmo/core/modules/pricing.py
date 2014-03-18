@@ -186,25 +186,23 @@ class PricingModule(sellmo.Module):
         return self.indexes[identifier]
     
     @chainable()
-    def update_index(self, chain, index, invalidations, **kwargs):
+    def update_index(self, chain, index, invalidations, delay=False, **kwargs):
         
         # Collect index kwargs
         out = {}
+        out.update(kwargs)
         if chain:
             out.update(chain.execute(index=index, invalidations=invalidations, **kwargs))
-            
-        # Filter out kwargs
-        kwargs = { key : value for key, value in out.iteritems() if index.is_kwarg(key)}
             
         # Get actual index
         index = self.get_index(index)
             
-        # Now invalidate
-        logger.info("Invalidating {1} indexes for index '{0}'".format(index, invalidations.count()))
-        invalidations.invalidate()
+        # Filter out kwargs
+        iargs = { key : value for key, value in out.iteritems() if index.is_kwarg(key)}
         
-        # Create and index all combinations
-        def do(remaining, combination=None):
+        # Create all possible combinations
+        combinations = []
+        def combine(remaining, combination=None):
             if combination is None:
                 combination = {}
             if remaining:
@@ -212,10 +210,19 @@ class PricingModule(sellmo.Module):
                 for value in values:
                     merged = {key : value}
                     merged.update(combination)
-                    do(dict(remaining), merged)
+                    combine(dict(remaining), merged)
             else:
+                combinations.append(combination)
+        combine(iargs)
+                
+        if not delay:
+            # Invalidate indexes
+            invalidations.invalidate()
+            # Create indexes
+            for combination in combinations:
                 index.index(self.get_price(**combination), **combination)
-        do(kwargs)
+        else:
+            return invalidations, combinations
         
     @chainable()
     def retrieve(self, chain, stampable, prop, price=None, **kwargs):

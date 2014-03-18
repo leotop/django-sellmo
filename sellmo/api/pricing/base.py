@@ -50,6 +50,9 @@ class Currency(object):
         self.name = name
         self._format = format
         
+    def __eq__(self, other):
+        return self.code == other.code
+        
     def __str__(self):
         return self.code
         

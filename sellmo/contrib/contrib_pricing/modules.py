@@ -25,6 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import logging
+from datetime import datetime
 
 #
 
@@ -134,13 +135,40 @@ class PriceIndexingModule(Module):
         
     @chainable()
     def handle_updates(self, chain, **kwargs):
-        for index in modules.pricing.indexes.keys():
+        for key, index in modules.pricing.indexes.iteritems():
             with transaction.atomic():
-                handle = self._get_handle(index)
+                handle = self._get_handle(key)
                 if handle.updates is None:
                     continue
                 updates = self._read_updates(handle)
                 self._write_updates(handle, None)
             
-            modules.pricing.update_index(index=index, invalidations=updates['invalidations'], **updates['kwargs'])
+            logger.info("Index '{0}' is updating.".format(key))
+            
+            invalidations, combinations = modules.pricing.update_index(
+                index=key,
+                invalidations=updates['invalidations'],
+                delay=True,
+                **updates['kwargs']
+            )
+            
+            with transaction.atomic():
+                logger.info("Invalidating {1} indexes for index '{0}'".format(key, invalidations.count()))
+                invalidations.invalidate()
+                
+                logger.info("Creating {1} indexes for index '{0}'".format(key, len(combinations)))
+                for combination in combinations:
+                    price = modules.pricing.get_price(**combination)
+                    signature = ", ".join(str(value) for value in combination.values())
+                    if index.index(price, **combination):
+                        logger.info("Index {1}={2} created for index '{0}'".format(key, signature, price.amount))
+                    else:
+                        logger.info("Index {1}={2} omitted for index '{0}'".format(key, signature, price.amount))
+            
+            with transaction.atomic():
+                handle = self._get_handle(key)
+                handle.updated = datetime.now()
+                handle.save()
+                
+            logger.info("Index '{0}' updated.".format(index))
     
