@@ -50,7 +50,11 @@ class QueryArgumentsValue(list):
         if self.query is None:
             query = QueryString()
         else:
-            query = self.query.resolve(context).clone()
+            query = self.query.resolve(context)
+            if isinstance(query, QueryString):
+                query = query.clone()
+            else:
+                query = QueryString()
         for value in self:
             key = value[0]
             operator = value[1]
