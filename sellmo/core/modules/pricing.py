@@ -80,7 +80,12 @@ class PricingModule(sellmo.Module):
         
         # Initialize indexes
         for index in self.indexes.values():
-            index.add_kwarg('currency', field_name='price_currency', transform=lambda value : value.code)
+            index.add_kwarg(
+                'currency',
+                field_name='price_currency',
+                transform=lambda value : value.code,
+                default=self.currencies.values()
+            )
             index._build()
             self.register(index.model.__name__, index.model)
     
@@ -181,20 +186,18 @@ class PricingModule(sellmo.Module):
         return self.indexes[identifier]
     
     @chainable()
-    def update_index(self, chain, index, invalidations, currency=None, **kwargs):
-        index = self.get_index(index)
+    def update_index(self, chain, index, invalidations, **kwargs):
         
         # Collect index kwargs
         out = {}
-        if currency is None:
-            currency = self.currencies.values()
-        out['currency'] = currency
-        out.update(kwargs)
         if chain:
             out.update(chain.execute(index=index, invalidations=invalidations, **kwargs))
             
         # Filter out kwargs
         kwargs = { key : value for key, value in out.iteritems() if index.is_kwarg(key)}
+            
+        # Get actual index
+        index = self.get_index(index)
             
         # Now invalidate
         logger.info("Invalidating {1} indexes for index '{0}'".format(index, invalidations.count()))

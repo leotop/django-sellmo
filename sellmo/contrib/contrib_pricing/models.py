@@ -31,6 +31,7 @@ from decimal import Decimal
 from sellmo import modules
 from sellmo.api.decorators import load
 from sellmo.api.pricing import Price
+from sellmo.contrib.contrib_pricing.config import settings
 
 #
 
@@ -178,9 +179,12 @@ class ProductQtyPrice(models.Model):
 @load(after='finalize_product_Product')
 def setup_indexes():
     index = modules.pricing.get_index('product_price')
-    index.add_kwarg('qty', models.PositiveIntegerField(
-        null = True
-    ), required = False)
+    index.add_kwarg(
+        'qty',
+        models.PositiveIntegerField(null=True),
+        required=False,
+        default=settings.INDEXABLE_QTYS
+    )
     
 class PriceIndexHandle(models.Model):
     

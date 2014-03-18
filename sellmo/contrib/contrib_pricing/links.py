@@ -52,15 +52,6 @@ def get_price(price, product=None, currency=None, qty=1, **kwargs):
         return {
             'price' : price
         }
-        
-@link()
-def update_index(index, qty=None, **kwargs):
-    if qty is None:
-        qty = []
-    qty.append(1)
-    return {
-        'qty' : qty
-    }
     
 if settings.CELERY_ENABLED and not getattr(params, 'worker_mode', False):
     @link(capture=True)

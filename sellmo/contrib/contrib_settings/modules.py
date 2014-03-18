@@ -35,6 +35,7 @@ from sellmo.core.local import get_context
 from sellmo.magic import ModelMixin
 from sellmo.api.decorators import view, chainable
 from sellmo.contrib.contrib_settings.models import SiteSettings
+from sellmo.contrib.contrib_settings.signals import setting_changed
 
 #
 
@@ -63,11 +64,29 @@ class SettingsModule(Module):
             )
         
         # Hookup invalidation
-        pre_save.connect(self.on_site_settings_invalidated, sender=self.SiteSettings)
-        pre_delete.connect(self.on_site_settings_invalidated, sender=self.SiteSettings)
+        pre_save.connect(self.on_settings_pre_save, sender=self.SiteSettings)
+        pre_delete.connect(self.on_settings_pre_delete, sender=self.SiteSettings)
 
-    def on_site_settings_invalidated(self, sender, instance, **kwargs):
-        # Clear cache
+    def on_settings_pre_save(self, sender, instance, created=False, **kwargs):
+        self.on_cache_invalidated(instance)
+        old = None
+        if not created:
+            old = self.SiteSettings.objects.get(pk=instance.pk)
+        self.on_settings_changed(old, instance)
+        
+    def on_settings_pre_delete(self, sender, instance, **kwargs):
+        self.on_cache_invalidated(instance)
+        self.on_settings_changed(instance, None)
+        
+    def on_settings_changed(self, old, new):
+        site = old.site if old is not None else new.site
+        for key, field, group in self._settings:
+            old_val = getattr(old, key, None) if old is not None else None
+            new_val = getattr(new, key, None) if new is not None else None
+            if old_val != new_val:
+                setting_changed.send(sender=self, setting=key, old=old_val, new=new_val, site=site)
+
+    def on_cache_invalidated(self, instance):
         cache.delete('site_settings_{0}'.format(instance.site.pk))
         
     def get_settings(self):

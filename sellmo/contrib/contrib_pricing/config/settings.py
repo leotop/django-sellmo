@@ -24,49 +24,18 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#
-
-from sellmo import modules
-from sellmo.api.decorators import load
-from sellmo.contrib.contrib_settings.signals import setting_changed
+from django.conf import settings
 
 #
 
-from django.db import models
-from django.utils.translation import ugettext_lazy as _
+from sellmo.contrib.contrib_pricing.config import defaults
 
 #
 
-group = _("Taxes")
+debug = getattr(settings, 'DEBUG', False)
 
-@load(after='finalize_tax_Tax')
-def finalize_model():
+#
 
-    modules.settings.add_setting('payment_costs_tax', models.ForeignKey(
-        modules.tax.Tax,
-        related_name = '+',
-        null = True,
-        blank = True,
-        verbose_name = _("payment costs tax"),
-    ), group)
+INDEXABLE_QTYS = getattr(settings, 'SELLMO_INDEXABLE_QTYS', defaults.INDEXABLE_QTYS)
 
-    modules.settings.add_setting('shipping_costs_tax', models.ForeignKey(
-        modules.tax.Tax,
-        related_name = '+',
-        null = True,
-        blank = True,
-        verbose_name = _("shipping costs tax"),
-    ), group)
-
-
-modules.settings.add_setting('tax_inclusive', models.BooleanField(
-    default = False,
-    verbose_name = _("tax inclusive"),
-), group)
-
-def on_setting_changed(sender, setting, old, new, site, **kwargs):
-    if setting == 'tax_inclusive':
-        modules.pricing.get_index('product_price').update()
-
-setting_changed.connect(on_setting_changed)
-
+#

@@ -41,6 +41,9 @@ from sellmo.core.polymorphism import PolymorphicModel, PolymorphicManager, Polym
 @load(action='load_product_subtypes', after='finalize_product_Product')
 def load_product_subtypes():
     pass
+    
+def get_indexable_products():
+    return modules.product.Product.objects.all()
 
 @load(action='finalize_product_Product')
 def finalize_model():
@@ -52,9 +55,11 @@ def finalize_model():
     
     modules.product.Product = Product
     index = modules.pricing.create_index('product_price')
-    index.add_kwarg('product', models.ForeignKey(
-        Product
-    ))
+    index.add_kwarg(
+        'product',
+        models.ForeignKey(Product),
+        default=get_indexable_products,
+    )
     
 class ProductQuerySet(PolymorphicQuerySet):
     def for_relatable(self, relatable):

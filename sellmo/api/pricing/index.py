@@ -220,7 +220,7 @@ class PriceIndex(object):
                 fargs[field_name] = None
         return fargs, complete
 
-    def add_kwarg(self, name, field=None, field_name=None, required=True, transform=None):
+    def add_kwarg(self, name, field=None, field_name=None, required=True, transform=None, default=None):
         if name in ('relation', 'nullable'):
             raise Exception("Resereved kwarg name '{0}".format(name))
         if name in self.kwargs:
@@ -236,7 +236,8 @@ class PriceIndex(object):
             'field_name' : field_name,
             'required' : required,
             'field' : field,
-            'transform' : transform
+            'transform' : transform,
+            'default' : default
         }
     
     def is_kwarg(self, name):
@@ -276,6 +277,15 @@ class PriceIndex(object):
         # First query invalidations
         q, complete = self._get_query(nullable=True, **kwargs)
         invalidations = self.model.objects.filter(q)
+        
+        # Fill defaults
+        for key, value in self.kwargs.iteritems():
+            if key not in kwargs and value['default']:
+                default = value['default']
+                if callable(default):
+                    kwargs[key] = default()
+                else:
+                    kwargs[key] = default
         
         # Make sure kwargs is either a QuerySet, or a list
         for key, value in kwargs.iteritems():
