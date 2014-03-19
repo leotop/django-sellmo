@@ -106,7 +106,7 @@ class Product(PolymorphicModel):
         return 'product.details', (self.slug,)
     
     def get_price(self, currency=None, **kwargs):
-        return modules.pricing.get_price(product=self, currency=currency, index='product_price', **kwargs)
+        return modules.pricing.get_price(product=self, currency=currency, **kwargs)
     
     class Meta:
         ordering = ['slug']
