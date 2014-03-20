@@ -87,18 +87,11 @@ class PriceIndexingModule(Module):
         handle.updates = updates
         handle.save()
         
-    def _ensure_query_set(self, values):
-        if not isinstance(values, QuerySet):
-            return values[0].__class__.objects.filter(pk__in=[value.pk for value in values])
-        return values
-        
     def _merge_kwarg(self, key, existing, new):
-        if isinstance(existing, QuerySet) or isinstance(new, QuerySet):
-            existing = self._ensure_query_set(existing)
-            new = self._ensure_query_set(new)
+        if isinstance(existing, QuerySet) and isinstance(new, QuerySet):
             # Make sure we are dealing with the same model
             if existing.model != new.model:
-                raise Exception("Cannot merge kwarg '{0}'.".format(key))
+                raise Exception("Cannot merge query sets '{0}'.".format(key))
             merged = [pk for pk in existing.values_list('pk', flat=True)]
             merged.extend([pk for pk in new.values_list('pk', flat=True) if pk not in merged])
             merged = existing.model.objects.filter(pk__in=merged)

@@ -59,6 +59,7 @@ def finalize_model():
         'product',
         models.ForeignKey(Product),
         default=get_indexable_products,
+        model=Product
     )
     
 class ProductQuerySet(PolymorphicQuerySet):

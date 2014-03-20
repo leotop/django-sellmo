@@ -220,7 +220,7 @@ class PriceIndex(object):
                 fargs[field_name] = None
         return fargs, complete
 
-    def add_kwarg(self, name, field=None, field_name=None, required=True, transform=None, default=None):
+    def add_kwarg(self, name, field=None, field_name=None, required=True, transform=None, default=None, model=None):
         if name in ('relation', 'nullable'):
             raise Exception("Resereved kwarg name '{0}".format(name))
         if name in self.kwargs:
@@ -237,7 +237,8 @@ class PriceIndex(object):
             'required' : required,
             'field' : field,
             'transform' : transform,
-            'default' : default
+            'default' : default,
+            'model' : model,
         }
     
     def is_kwarg(self, name):
@@ -293,6 +294,13 @@ class PriceIndex(object):
                 raise ValueError("Index '{0}' update kwarg '{1}' is not valid.".format(self, key))
             if not isinstance(value, (list, tuple, QuerySet)):
                 raise TypeError("Index '{0}' update kwarg '{1}' must be a list or QuerySet.".format(self, key))
+            if self.kwargs[key].get('model', None) is not None:
+                model = self.kwargs[key]['model']
+                if isinstance(value, QuerySet) and not value.model is model:
+                    raise ValueError("Index '{0}' update kwarg '{1}' is not a valid QuerySet.".format(self, key)) 
+                elif not isinstance(value, QuerySet):
+                    # Yes this is safe
+                    kwargs[key] = model.objects.filter(pk__in=[el.pk for el in value])
         
         # Now update with provided kwargs
         modules.pricing.update_index(index=self.identifier, invalidations=invalidations, **kwargs)

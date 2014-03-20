@@ -147,3 +147,4 @@ class Purchase(PolymorphicModel, Cloneable):
     
     class Meta:
         abstract = True
+        ordering = ['id']
