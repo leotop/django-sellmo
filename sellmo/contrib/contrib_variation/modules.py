@@ -28,7 +28,7 @@ from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable
 from sellmo.api.pricing import Price
 from sellmo.utils.formatting import call_or_format
-from sellmo.contrib.contrib_variation.models import Variant, Variation, VariationsState
+from sellmo.contrib.contrib_variation.models import Variant, Variation, VariationsState, VariationPurchase
 from sellmo.contrib.contrib_attribute.query import ProductQ
 
 from django.http import Http404
@@ -52,6 +52,7 @@ class VariationModule(Module):
     Variant = Variant
     Variation = Variation
     VariationsState = VariationsState
+    VariationPurchase = VariationPurchase
     product_subtypes = []
     subtypes = []
     m2m_relations = {}

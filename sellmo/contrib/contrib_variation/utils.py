@@ -28,6 +28,10 @@ from sellmo import modules
 
 #
 
+from django.utils.text import slugify
+
+#
+
 def generate_slug(product, values=None, unique=False, full=False, short=False):
 
     if not values:
@@ -44,6 +48,8 @@ def generate_slug(product, values=None, unique=False, full=False, short=False):
             'attributes' : attributes,
             'prefix' : product.slug
         }
+        
+        slug = slugify(slug)
         
         if not unique or VariantMixin.is_unique_slug(slug, ignore=product):
             return slug

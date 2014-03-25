@@ -716,8 +716,35 @@ class VariationsState(models.Model):
     def __unicode__(self):
         return unicode(self.product)
     
+class VariationPurchase(models.Model):
+    
+    variation_key = models.CharField(
+        max_length = 255
+    )
+    
+    # Auto generated description, usefull when variation is unavailable
+    variation_description = models.CharField(
+        max_length = 255
+    )
+    
+    def describe(self):
+        return self.variation_description
+        
+    def merge_with(self, purchase):
+        super(VariationPurchase, self).merge_with(purchase)
+        
+    def clone(self, cls=None, clone=None):
+        clone = super(VariationPurchase, self).clone(cls=cls, clone=clone)
+        clone.variation_key = self.variation_key
+        clone.variation_description = self.variation_description
+        return clone
+        
+    class Meta:
+        abstract = True
+    
 @load(after='finalize_store_Purchase')
-def load_model():
+@load(action='finalize_variation_VariationPurchase')
+def finalize_model():
     
     qs = modules.store.Purchase.objects.get_query_set()
     
@@ -729,32 +756,11 @@ def load_model():
         def get_query_set(self):
             return VariationPurchaseQuerySet(self.model)
     
-    class VariationPurchase(modules.store.Purchase):
+    class VariationPurchase(modules.variation.VariationPurchase, modules.store.Purchase):
         
         objects = VariationPurchaseManager()
-        
-        variation_key = models.CharField(
-            max_length = 255
-        )
-        
-        # Auto generated description, usefull when variation is unavailable
-        variation_description = models.CharField(
-            max_length = 255
-        )
-        
-        def describe(self):
-            return self.variation_description
-            
-        def merge_with(self, purchase):
-            super(VariationPurchase, self).merge_with(purchase)
-            
-        def clone(self, cls=None, clone=None):
-            clone = super(VariationPurchase, self).clone(cls=cls, clone=clone)
-            clone.variation_key = self.variation_key
-            clone.variation_description = self.variation_description
-            return clone
-        
-        class Meta(modules.store.Purchase.Meta):
+                
+        class Meta(modules.variation.VariationPurchase.Meta, modules.store.Purchase.Meta):
             app_label = 'store'
             verbose_name = _("variation purchase")
             verbose_name_plural = _("variation purchases")
