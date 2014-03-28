@@ -106,9 +106,6 @@ class Product(PolymorphicModel):
     def get_absolute_url(self):
         return 'product.details', (self.slug,)
     
-    def get_price(self, currency=None, **kwargs):
-        return modules.pricing.get_price(product=self, currency=currency, **kwargs)
-    
     class Meta:
         ordering = ['slug']
         abstract = True

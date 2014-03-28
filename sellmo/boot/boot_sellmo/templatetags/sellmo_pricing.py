@@ -41,10 +41,6 @@ from sellmo.api.pricing import Price
 register = template.Library()
 
 #
-
-@register.filter
-def price(value):
-    return value.get_price()
     
 @register.filter
 def price_format(price, align=-1):

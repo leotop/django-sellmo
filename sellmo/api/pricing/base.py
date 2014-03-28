@@ -192,4 +192,7 @@ class Price(object):
     
     def __unicode__(self):
         return self.currency.format(self.amount)
+        
+    def __repr__(self):
+        return str(self.amount)
     

@@ -105,7 +105,7 @@ class Purchase(PolymorphicModel, Cloneable):
     
     def calculate(self, total=None, save=True):
         if total is None:
-            total = self.product.get_price(qty=self.qty) * self.qty
+            total = modules.pricing.get_price(product=self.product, qty=self.qty) * self.qty
             total = modules.pricing.get_price(price=total, purchase=self)
             
         self.total = total

@@ -28,54 +28,22 @@ from django import template
 
 #
 
-from classytags.core import Tag, Options
-from classytags.arguments import Argument, MultiKeywordArgument
-
-#
-
-from sellmo import modules
-from sellmo.api.pricing import Price
-
-#
-
 register = template.Library()
 
 #
 
-class TiersTag(Tag):
-    name = 'tiers'
-    options = Options(
-        MultiKeywordArgument('kwargs', required=False),
-        'as',
-        Argument('varname', default='tiers', required=False, resolve=False),
-        blocks = [('endtiers', 'nodelist')],
-    )
-
-    def render_tag(self, context, kwargs, varname, nodelist):
-        tiers = modules.qty_pricing.get_tiers(**kwargs)
-        context.push()
-        context[varname] = tiers
-        output = nodelist.render(context)
-        context.pop()
-        return output
-
-register.tag(TiersTag)
-
-class TierTag(Tag):
-    name = 'tier'
-    options = Options(
-        MultiKeywordArgument('kwargs', required=False),
-        'as',
-        Argument('varname', default='tier', required=False, resolve=False),
-        blocks = [('endtier', 'nodelist')],
-    )
-
-    def render_tag(self, context, kwargs, varname, nodelist):
-        tier = modules.qty_pricing.get_tier(**kwargs)
-        context.push()
-        context[varname] = tier
-        output = nodelist.render(context)
-        context.pop()
-        return output
-
-register.tag(TierTag)
+@register.filter
+def add(value, other):
+    return value + other
+    
+@register.filter
+def sub(value, other):
+    return value - other
+    
+@register.filter
+def mul(value, other):
+    return value * other
+    
+@register.filter
+def div(value, other):
+    return value / other

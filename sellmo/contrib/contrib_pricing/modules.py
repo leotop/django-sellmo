@@ -53,16 +53,25 @@ class QtyPricingModule(Module):
     ProductQtyPrice = ProductQtyPrice
     
     @chainable()
-    def get_qty_tiers(self, chain, product, tiers=None, **kwargs):
+    def get_tiers(self, chain, product, tiers=None, **kwargs):
         if not tiers:
-            q = product.qty_prices.all()
-            if q:
-                tiers =  q
+            tiers = product.qty_prices.all()
         if chain:
             out = chain.execute(product=product, tiers=tiers, **kwargs)
-            if out.has_key('tiers'):
-                tiers = out['tiers']
+            tiers = out.get('tiers', tiers)
         return tiers
+        
+    @chainable()
+    def get_tier(self, chain, product, qty, tier=None, **kwargs):
+        if not tier:
+            try:
+                tier = product.qty_prices.for_qty(qty)
+            except self.ProductQtyPrice.DoesNotExist:
+                pass
+        if chain:
+            out = chain.execute(product=product, qty=qty, tier=tier, **kwargs)
+            tier = out.get('tier', tier)
+        return tier
         
 class PriceIndexingModule(Module):
     namespace = 'price_indexing'
