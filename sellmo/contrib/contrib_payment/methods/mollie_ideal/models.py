@@ -26,7 +26,7 @@
 
 from sellmo import modules
 from sellmo.api.decorators import load
-from sellmo.contrib.contrib_payment.methods.ideal.mollie_ideal import MollieIdealPaymentMethod
+from sellmo.contrib.contrib_payment.methods.mollie_ideal import MollieIdealPaymentMethod
 
 #
 

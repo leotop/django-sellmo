@@ -34,7 +34,7 @@ from django.contrib.sites.models import Site
 
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable
-from sellmo.contrib.contrib_payment.methods.ideal.mollie_ideal.models import MollieIdealPayment
+from sellmo.contrib.contrib_payment.methods.mollie_ideal.models import MollieIdealPayment
 
 #
 

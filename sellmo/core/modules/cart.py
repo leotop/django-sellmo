@@ -108,6 +108,7 @@ class CartModule(sellmo.Module):
                 formset = AddToCartFormSet(initial=initial)
             else:
                 formset = AddToCartFormSet(data)
+        
         formset.set_redirect_key('add_to_cart_formset_%s' % product.pk)
         if chain:
             out = chain.execute(formset=formset, cls=cls, product=product, initial=initial, data=data, **kwargs)
@@ -282,10 +283,6 @@ class CartModule(sellmo.Module):
         if purchases is None:
             
             purchases = []
-            
-            # We require a formset
-            if not formset:
-                raise Http404
             
             # We require a valid formset
             if formset.is_valid():
