@@ -40,9 +40,21 @@ class CheckoutMailingModule(Module):
     def render_order_confirmation(self, chain, format, order, data=None, **kwargs):
         if chain:
             out = chain.execute(format=format, order=order, data=data, **kwargs)
-            if 'data' in out:
-                data = out['data']
+            data = out.get('data', data)
+        return data
         
+    @chainable()
+    def render_order_notification(self, chain, format, order, data=None, **kwargs):
+        if chain:
+            out = chain.execute(format=format, order=order, data=data, **kwargs)
+            data = out.get('data', data)
+        return data
+        
+    @chainable()
+    def render_shipping_notification(self, chain, format, order, data=None, **kwargs):
+        if chain:
+            out = chain.execute(format=format, order=order, data=data, **kwargs)
+            data = out.get('data', data)
         return data
     
     def __init__(self):
@@ -56,10 +68,8 @@ class CheckoutReportingModule(Module):
         pass
         
     @chainable()
-    def render_invoice(self, chain, order, data=None, **kwargs):
+    def render_invoice(self, chain, order, internal=False, data=None, **kwargs):
         if chain:
-            out = chain.execute(order=order, data=data, **kwargs)
-            if 'data' in out:
-                data = out['data']
-        
+            out = chain.execute(order=order, internal=internal, data=data, **kwargs)
+            data = out.get('data', data)
         return data

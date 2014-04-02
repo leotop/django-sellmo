@@ -37,9 +37,10 @@ class InvoiceWriter(ReportWriter):
 
     format = 'html'
     
-    def __init__(self, output_format, order):
+    def __init__(self, output_format, order, internal=False):
         self.output_format = output_format
         self.order = order
+        self.internal = internal
         
     def get_name(self):
         return "invoice_{0}".format(self.order.pk)
@@ -48,4 +49,4 @@ class InvoiceWriter(ReportWriter):
         return super(InvoiceWriter, self).negotiate_param(key, value, **params)
         
     def get_data(self, **params):
-        return modules.checkout_reporting.render_invoice(order=self.order)
+        return modules.checkout_reporting.render_invoice(order=self.order, internal=self.internal)

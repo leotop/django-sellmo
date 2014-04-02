@@ -96,3 +96,44 @@ class OrderConfirmationWriter(MailWriter):
         return [
             (report.filename, report.data, report.mimetype)
         ]
+        
+class OrderNotificationWriter(MailWriter):
+
+    formats = ['html', 'text']
+
+    def __init__(self, order):
+        self.order = order
+
+    def get_subject(self):
+        return _("Order notification")
+
+    def get_body(self, format):
+        return modules.checkout_mailing.render_order_notification(format=format, order=self.order)
+
+    def get_to(self):
+        return settings.NOTIFICATION_MAIL_TO
+
+    def get_attachments(self):
+        report = reporter.get_report('invoice', context={
+            'order' : self.order,
+            'internal' : True,
+        })
+        return [
+            (report.filename, report.data, report.mimetype)
+        ]
+        
+class ShippingNotificationWriter(MailWriter):
+
+    formats = ['html', 'text']
+
+    def __init__(self, order):
+        self.order = order
+
+    def get_subject(self):
+        return _("Shipping notification")
+
+    def get_body(self, format):
+        return modules.checkout_mailing.render_shipping_notification(format=format, order=self.order)
+
+    def get_to(self):
+        return self.order.email
