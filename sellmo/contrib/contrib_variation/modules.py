@@ -116,7 +116,6 @@ class VariationModule(Module):
     def get_variations(self, chain, product, grouped=False, variations=None, **kwargs):
         if variations is None:
             variations = modules.variation.Variation.objects.for_product(product)
-            print variations
             if grouped:
                 attributes = modules.attribute.Attribute.objects.which_variate(product=product)
                 group = attributes.filter(groups=True).first()
