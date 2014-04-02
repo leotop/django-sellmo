@@ -57,7 +57,7 @@ def trackable(session_key):
 
 class TrackingManager(models.Manager):
     
-    def __init__(self, session_key, *args, **kwargs):
+    def __init__(self, session_key=None, *args, **kwargs):
         self._session_key = session_key
         super(TrackingManager, self).__init__(*args, **kwargs)
     
