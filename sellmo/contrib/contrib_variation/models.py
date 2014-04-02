@@ -32,7 +32,7 @@ from sellmo.magic import ModelMixin
 from sellmo.core.polymorphism import PolymorphicModel, PolymorphicManager
 from sellmo.contrib.contrib_variation.variant import VariantFieldDescriptor, VariantMixin, get_differs_field_name
 from sellmo.contrib.contrib_variation.utils import generate_slug
-from sellmo.contrib.contrib_variation.signals import variations_deprecating, variations_deprecated
+from sellmo.contrib.contrib_variation.signals import variations_deprecating, variations_invalidated
 from sellmo.contrib.contrib_variation.helpers import AttributeHelper, VariantAttributeHelper, VariationAttributeHelper
 from sellmo.contrib.contrib_attribute.query import ProductQ
 
@@ -134,10 +134,10 @@ def load_model():
             def variated_by(self):
                 return modules.attribute.Attribute.objects.which_variate(self)
             
-            def get_variations(self, deprecated=False):
+            def get_variations(self, invalidated=False):
                 if getattr(self, '_is_variant', False):
-                    return modules.variation.Variation.objects.for_product(self.product, deprecated=deprecated).filter(variant=self)
-                return modules.variation.Variation.objects.for_product(self, deprecated=deprecated)
+                    return modules.variation.Variation.objects.for_product(self.product, invalidated=invalidated).filter(variant=self)
+                return modules.variation.Variation.objects.for_product(self, invalidated=invalidated)
             
             @property
             def variations(self):
@@ -204,10 +204,10 @@ def on_value_pre_save(sender, instance, raw=False, *args, **kwargs):
         
 def on_value_post_save(sender, instance, raw=False, *args, **kwargs):
     if not raw:
-        modules.variation.Variation.objects.deprecate(instance.base_product if instance.base_product else instance.product)
+        modules.variation.Variation.objects.invalidate(instance.base_product if instance.base_product else instance.product)
     
 def on_value_pre_delete(sender, instance, *args, **kwargs):
-    modules.variation.Variation.objects.deprecate(instance.base_product if instance.base_product else instance.product)
+    modules.variation.Variation.objects.invalidate(instance.base_product if instance.base_product else instance.product)
         
 @load(after='finalize_attribute_Value')
 def listen():
@@ -271,7 +271,7 @@ def load_model():
             super(Attribute, self).save(*args, **kwargs)
             if self.variates or old and old.variates:
                 for product in modules.product.Product.objects.filter(ProductQ(attribute=self, product_field='base_product')):
-                    modules.variation.Variation.objects.deprecate(product)
+                    modules.variation.Variation.objects.invalidate(product)
         
         class Meta(modules.attribute.Attribute.Meta):
             abstract = True
@@ -514,27 +514,31 @@ class VariationManager(models.Manager):
             if not values:
                 continue
             
+            # Find variant
             variant = product
-            explicits = []
+            exact = Q() # Will match a variant who matches all this variation's values
+            best = Q() # Will match a variant who matches all this variations's values EXCEPT the color
             for value in values:
-                current = value.product.downcast()
-                if getattr(current, '_is_variant', False):
-                    explicits.append(value)
-             
-            if explicits:
-                # Find the one variant which defines all the explicit values
-                # If not, we are dealing with mutliple non overlapping variants
-                qargs = []
-                for value in values:
-                    if value in explicits:
-                        q = ProductQ(value.attribute, value.get_value())
+                if getattr(value.product.downcast(), '_is_variant', False):
+                    exact &= ProductQ(value.attribute, value.get_value())
+                    if value.attribute != group:
+                        best &= ProductQ(value.attribute, value.get_value())
                     else:
-                        q = ~ProductQ(value.attribute)
-                    qargs.append(q)
-                try:
-                    variant = product.variants.get(*qargs)
-                except (modules.product.Product.DoesNotExist, modules.product.Product.MultipleObjectsReturned) as ex:
-                    variant = product
+                        best &= ~ProductQ(value.attribute)
+                else:
+                    exact &= ~ProductQ(value.attribute)
+                    best &= ~ProductQ(value.attribute)
+                    
+            # Try to find exact match
+            for q in (exact, best):
+                if q:
+                    try:
+                        variant = product.variants.get(q)
+                    except (modules.product.Product.DoesNotExist, modules.product.Product.MultipleObjectsReturned):
+                        continue
+                    else:
+                        break
+
             
             # Query values (this will order them according to attribute order)
             values = list(modules.attribute.Value.objects.filter(pk__in=[value.pk for value in values]).order_by('attribute'))
@@ -581,18 +585,18 @@ class VariationManager(models.Manager):
                 variations.update(group_variant=variant)
                 
         # Finally update product
-        product.variations_deprecated = False
+        product.variations_invalidated = False
     
-    def deprecate(self, product):
-        if not product.variations_deprecated:
+    def invalidate(self, product):
+        if not product.variations_invalidated:
             variations_deprecating.send(self, product=product)
-            product.variations_deprecated = True
-            variations_deprecated.send(self, product=product)
+            product.variations_invalidated = True
+            variations_invalidated.send(self, product=product)
         
     def get_query_set(self):
         return VariationQuerySet(self.model)
     
-    def for_product(self, product, deprecated=False):
+    def for_product(self, product, invalidated=False):
         product = product.downcast()
         
         # Capture IntegrityError's as these are caused by concurrency.
@@ -603,14 +607,14 @@ class VariationManager(models.Manager):
             except IntegrityError as ex:
                 pass
         
-        if not deprecated and product.variations_deprecated:
-            # Variations deprecated, rebuild
+        if not invalidated and product.variations_invalidated:
+            # Variations invalidated, rebuild
             build()
             
         # Get variations
         variations = self.get_query_set().for_product(product)
         
-        if not deprecated and variations.count() == 0:
+        if not invalidated and variations.count() == 0:
             # No variations, build
             build()
             variations = self.get_query_set().for_product(product)
@@ -681,22 +685,22 @@ def load_model():
     
     class Product(modules.product.Product):
         
-        def get_variations_deprecated(self):
+        def get_variations_invalidated(self):
             try:
                 variations_state = self.variations_state
             except modules.variation.VariationsState.DoesNotExist:
                 variations_state = modules.variation.VariationsState.objects.create(product=self)
-            return variations_state.deprecated
+            return variations_state.invalidated
             
-        def set_variations_deprecated(self, value):
+        def set_variations_invalidated(self, value):
             try:
                 variations_state = self.variations_state
             except modules.variation.VariationsState.DoesNotExist:
                 variations_state = modules.variation.VariationsState.objects.create(product=self)
-            variations_state.deprecated = value
+            variations_state.invalidated = value
             variations_state.save()
             
-        variations_deprecated = property(get_variations_deprecated, set_variations_deprecated)
+        variations_invalidated = property(get_variations_invalidated, set_variations_invalidated)
         
         class Meta(modules.product.Product.Meta):
             abstract = True
@@ -705,7 +709,7 @@ def load_model():
 
 class VariationsState(models.Model):
     
-    deprecated = models.BooleanField(
+    invalidated = models.BooleanField(
         default = False,
         editable = False,
     )

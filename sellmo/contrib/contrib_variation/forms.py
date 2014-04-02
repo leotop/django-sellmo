@@ -53,7 +53,7 @@ from sellmo.contrib.contrib_variation.utils import generate_slug
 
 class SaveFieldMixin(object):
 
-    def get_deprecated_values(self, product, attribute, values):
+    def get_invalidated_values(self, product, attribute, values):
         field = '%s__in' % (attribute.value_field, )
         kwargs = {
             field : values
@@ -74,8 +74,8 @@ class SaveFieldMixin(object):
         return modules.attribute.Value.objects.filter(attribute=attribute, product=product, variates=True).filter(q)
 
     def save(self, product, attribute, values):
-        deprecated = self.get_deprecated_values(product, attribute, values)
-        deprecated.delete()
+        invalidated = self.get_invalidated_values(product, attribute, values)
+        invalidated.delete()
         
         existing = [value.get_value() for value in self.get_existing_values(product, attribute, values)]
         for value in values:
