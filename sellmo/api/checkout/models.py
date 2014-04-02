@@ -65,7 +65,7 @@ def load_model():
             ('total', _("total")),
         ]
     )
-        
+    
     class Order(modules.checkout.Order):
         paid = modules.pricing.construct_pricing_field(
             verbose_name = _("paid")
@@ -73,6 +73,7 @@ def load_model():
         
         class Meta(modules.checkout.Order.Meta):
             abstract = True
+    
     modules.checkout.Order = Order
     
 @load(before='finalize_checkout_Payment')
@@ -93,9 +94,11 @@ def load_model():
         ]
     )
     
-@load(after='finalize_checkout_Payment', before='finalize_checkout_Order')
-@load(after='finalize_checkout_Shipment', before='finalize_checkout_Order')
+@load(after='finalize_checkout_Payment')
+@load(after='finalize_checkout_Shipment')
+@load(before='finalize_checkout_Order')
 def load_model():
+    
     class Order(modules.checkout.Order):
         payment = models.OneToOneField(
             modules.checkout.Payment,
@@ -117,15 +120,17 @@ def load_model():
         
         class Meta(modules.checkout.Order.Meta):
             abstract = True
+    
     modules.checkout.Order = Order
     
-@load(after='finalize_customer_Customer', before='finalize_checkout_Order')
-@load(after='finalize_customer_Contactable', before='finalize_checkout_Order')
+@load(after='finalize_customer_Customer')
+@load(after='finalize_customer_Contactable')
+@load(before='finalize_checkout_Order')
 def load_model():
     
     class Order(modules.checkout.Order):
         
-        customer =  models.ForeignKey(
+        customer = models.ForeignKey(
             modules.customer.Customer,
             null = not settings.CUSTOMER_REQUIRED,
             blank = not settings.CUSTOMER_REQUIRED,
@@ -148,13 +153,14 @@ def load_model():
             
     if not settings.CUSTOMER_REQUIRED:
         class Order(modules.checkout.Order, modules.customer.Contactable):
-            class Meta(modules.checkout.Order.Meta):
+            class Meta(modules.checkout.Order.Meta, modules.customer.Contactable.Meta):
                 abstract = True
     
         modules.checkout.Order = Order
     
 @load(after='finalize_customer_Address', before='finalize_checkout_Order')
 def load_model():
+    
     for type in settings.ADDRESS_TYPES:
         name = '{0}_address'.format(type)
         modules.checkout.Order.add_to_class(name,
@@ -514,6 +520,7 @@ class Order(trackable('sellmo_order')):
         return _("order #{0}").format(unicode(self.pk))
     
     class Meta:
+        ordering = ['-pk']
         abstract = True
         
 class Shipment(PolymorphicModel):

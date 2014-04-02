@@ -450,7 +450,21 @@ class CheckoutModule(sellmo.Module):
             if 'can_change' in out:
                 can_change = out['can_change']
         return can_change
-    
+        
+    @link(namespace='customer')
+    def registration(self, request, customer, processed, redirection, **kwargs):
+        if processed:
+            # Retrieve order from session data
+            order = request.session.get('completed_order')
+            try:
+                order = self.Order.objects.get(id=order)
+            except self.Order.DoesNotExist:
+                pass
+            else:
+                order.customer = customer
+                order.save()
+        if redirection:
+            return redirection
             
     @link(namespace='customer')
     def get_customer(self, request, customer=None, **kwargs):

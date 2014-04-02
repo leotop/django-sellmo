@@ -70,14 +70,6 @@ def load_model():
 @load(action='finalize_customer_Customer')
 def finalize_model():
     class Customer(modules.customer.Customer):
-        
-        if settings.AUTH_ENABLED:
-            user = models.OneToOneField(
-                User,
-                related_name = 'customer',
-                verbose_name = _("user"),
-            )
-        
         class Meta(modules.customer.Customer.Meta):
             app_label = 'customer'
             verbose_name = _("customer")
@@ -86,6 +78,13 @@ def finalize_model():
     modules.customer.Customer = Customer
     
 class Customer(models.Model, Cloneable):
+
+    if settings.AUTH_ENABLED:
+        user = models.OneToOneField(
+            User,
+            related_name = 'customer',
+            verbose_name = _("user"),
+        )
 
     def get_address(self, type):
         try:

@@ -273,7 +273,7 @@ class CustomerModule(sellmo.Module):
     # REGISTRATION LOGIC
         
     @chainable()
-    def handle_user_registration(self, chain, prefix=None, data=None, user=None, **kwargs):
+    def handle_user_creation(self, chain, prefix=None, data=None, user=None, **kwargs):
         processed = False
         form = self.get_user_form(prefix=prefix, data=data)
         if data and form.is_valid():
@@ -284,6 +284,7 @@ class CustomerModule(sellmo.Module):
             out = chain.execute(prefix=prefix, data=data, user=user, form=form, processed=processed, **kwargs)
             user, form, processed = out.get('user', user), out.get('form', form), out.get('processed', processed)
         return user, form, processed
+    
     
     @method_decorator(csrf_protect)
     @method_decorator(never_cache)
@@ -306,7 +307,7 @@ class CustomerModule(sellmo.Module):
         processed = True
             
         if settings.AUTH_ENABLED:
-            user, user_form, user_processed = self.handle_user_registration(data=data)
+            user, user_form, user_processed = self.handle_user_creation(data=data)
             context['user_form'] = user_form
             processed &= user_processed
         
@@ -341,7 +342,6 @@ class CustomerModule(sellmo.Module):
         else:
             # We don't render anything
             raise Http404
-        
         
     # ACCOUNT LOGIC
     
