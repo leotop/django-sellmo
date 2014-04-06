@@ -72,7 +72,7 @@ class Sellmo(object):
         loading.loader.load()
         
         # 5. Make sure every sellmo module registered to the mountpoint is instanciated.
-        modules.init_pending_modules()
+        modules.init_modules()
         
         # 6. Load link modules
         for module_name in self.links:

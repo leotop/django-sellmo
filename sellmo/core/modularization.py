@@ -26,10 +26,7 @@
 
 import sys
 import imp
-
-#
-
-from django.db import models
+import inspect
 
 #
 
@@ -38,28 +35,32 @@ from sellmo.signals.core import module_created, module_init
 
 #
 
+_registry_module = 'sellmo.registry'
+
 @singleton
 class MountPoint(object):
 
     def __init__(self):
-        self._pending = []
-        self._modules = []
-        self.create_module('sellmo_registry', True)
+        self._modules = {}
+        self._create_registry(_registry_module, True)
+        # Python module loading
         sys.meta_path.append(self)
-        
+    
+    # Python module loading
     def find_module(self, fullname, path=None):
-        if fullname.startswith('sellmo_registry'):
+        if fullname.startswith(_registry_module):
             return self
         return None
-        
+       
+    # Python module loading 
     def load_module(self, fullname):
         if fullname in sys.modules:
             return sys.modules[fullname]
         raise ImportError()
-        
-    def create_module(self, fullname, package=False):
+    
+    def _create_registry(self, fullname, package=False):
         module = sys.modules.setdefault(fullname, imp.new_module(fullname))
-        module.__file__ = '<sellmo_registry>'
+        module.__file__ = '<sellmo>'
         module.__loader__ = self
         if package:
             module.__path__ = []
@@ -68,43 +69,41 @@ class MountPoint(object):
             module.__package__ = fullname.rpartition('.')[0]
         return module
 
-    def on_module_class(self, module):
-        setattr(self, module.namespace, module)
-        self._pending.append(module)
-        self._modules.append(module)
-        
-        # Create module
-        module.registry = self.create_module('sellmo_registry.{0}'.format(module.namespace))
-        setattr(sys.modules['sellmo_registry'], module.namespace, module.registry)
+    def _on_module_class(self, module):
+        self._modules[module.namespace] = module
         
         # Signal
         module_created.send(sender=self, module=module)
 
-    def on_module_init(self, module, instance):
-        setattr(self, module.namespace, instance)
-
-        # Remove class based module and add instance based module
-        self._pending.remove(module)
-        self._modules.remove(module)
-        self._modules.append(instance)
-        
-        # Signal
-        module_init.send(sender=self, module=instance)
-
-    def init_pending_modules(self):
-        while self._pending:
-            module = self._pending[0]
-            module()
+    def init_modules(self):
+        for module in self._modules.values():
+            # Make sure module hasn't been initialized already
+            if not inspect.isclass(module):
+                raise Exception("Module '{0}' has already been init.".format(module))
+                
+            # Initialize
+            instance = module()
+            
+            # Override class based module with instance based module
+            self._modules[module.namespace] = instance
+            
+            # Signal
+            module_init.send(sender=self, module=instance)
+            
+    def __getattr__(self, name):
+        if name in self._modules:
+            return self._modules[name]
+        raise AttributeError()
 
     def __iter__(self):
-        for module in self._modules:
+        for module in self._modules.itervalues():
             yield module
 
 class _ModuleMeta(SingletonMeta):
 
-    def __new__(cls, name, bases, dict):
-        out = super(_ModuleMeta, cls).__new__(cls, name, bases, dict)
-
+    def __new__(cls, name, bases, attrs):
+        out = super(_ModuleMeta, cls).__new__(cls, name, bases, attrs)
+        
         # __new__ will also be called for the Module class. Do not proceed
         # with any further initialization. Ignore it..
         if out.__ignore__:
@@ -120,14 +119,23 @@ class _ModuleMeta(SingletonMeta):
         if not out.namespace:
             raise Exception("No namespace defined for module '{0}'".format(out))
         
-        # Notify mountpoint
-        modules.on_module_class(out)
-
+        # Create the registry (python)module for this module
+        out.registry = modules._create_registry('{0}.{1}'.format(_registry_module, out.namespace))
+        setattr(sys.modules[_registry_module], out.namespace, out.registry)
+        
+        # Register attributes
+        for name, value in attrs.iteritems():
+            out._handle_attribute(name, value)
+        
+        modules._on_module_class(out)
         return out
+        
+    def _handle_attribute(cls, name, value):
+        if isinstance(value, type) and (not value.__module__ or not value.__module__.startswith('django.')):
+            cls.register(name, value)
     
     def __setattr__(cls, name, value):
-        if isinstance(value, type) and issubclass(value, models.Model):
-            cls.register(name, value)
+        cls._handle_attribute(name, value)
         super(_ModuleMeta, cls).__setattr__(name, value)
 
 class Module(object):
@@ -140,17 +148,14 @@ class Module(object):
     enabled = True
     namespace = None
     prefix = None
-
-    def __new__(cls, *args, **kwargs):
-        if not cls.enabled:
-            return None
-
-        module = super(Module, cls).__new__(cls)
-        modules.on_module_init(cls, module)
-        return module
         
     @classmethod
     def register(cls, name, value):
+        # Safety checks
+        if not isinstance(value, type):
+            raise Exception("Cannot register '{0}', only types can be registered.".format(value))
+        if value.__module__ and value.__module__.startswith('django.'):
+            raise Exception("Cannot register '{0}', this is a django type.".format(value))
         value.__module__ = cls.registry.__name__
         setattr(cls.registry, name, value)
         

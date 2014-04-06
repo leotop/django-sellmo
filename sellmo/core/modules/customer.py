@@ -34,6 +34,7 @@ from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 from django.utils.decorators import method_decorator
+from django.utils.module_loading import import_by_path
 
 #
 
@@ -43,9 +44,7 @@ from sellmo.config import settings
 from sellmo.core.mailing import mailer
 from sellmo.api.decorators import view, chainable, link
 from sellmo.api.customer.models import Addressee, Address, Contactable, Customer
-
-# Need this in order for forms to load
-from sellmo.api.customer.forms import *
+from sellmo.api.customer.forms import CustomerForm, ContactableForm, AddressForm
 
 #
 
@@ -60,9 +59,9 @@ class CustomerModule(sellmo.Module):
     Contactable = Contactable
     Customer = Customer
     
-    CustomerForm = None
-    ContactableForm = None
-    AddressForm = None
+    CustomerForm = CustomerForm
+    ContactableForm = ContactableForm
+    AddressForm = AddressForm
     
     # Django Auth forms
     AuthenticationForm = AuthenticationForm
@@ -71,8 +70,10 @@ class CustomerModule(sellmo.Module):
     UserCreationForm = UserCreationForm
     PasswordChangeForm = PasswordChangeForm
     
-    def __init__(self, *args, **kwargs):        
-        pass
+    def __init__(self, *args, **kwargs):
+        self.CustomerForm = import_by_path(settings.CUSTOMER_FORM)
+        self.ContactableForm = import_by_path(settings.CONTACTABLE_FORM)
+        self.AddressForm = import_by_path(settings.ADDRESS_FORM)
         
     # Forms
         
@@ -193,7 +194,7 @@ class CustomerModule(sellmo.Module):
             processed = True
             
         if chain:
-            out = chain.execute(request=request, prefix=prefix, data=data, address=address, form=form, processed=processed, **kwargs)
+            out = chain.execute(prefix=prefix, data=data, address=address, form=form, processed=processed, **kwargs)
             address, form, processed = out.get('address', address), out.get('form', form), out.get('processed', processed)
         return address, form, processed
       

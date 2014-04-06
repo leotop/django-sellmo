@@ -43,6 +43,7 @@ from sellmo.utils.tracking import UntrackableError
 from sellmo.utils.formatting import call_or_format
 from sellmo.api.decorators import view, chainable, link
 from sellmo.api.checkout.models import Order, Shipment, Payment, ORDER_NEW
+from sellmo.api.checkout.forms import ShippingMethodForm, PaymentMethodForm
 from sellmo.signals.checkout import order_state_changed
 
 #
@@ -55,17 +56,19 @@ class CheckoutModule(sellmo.Module):
     namespace = 'checkout'
     prefix = 'checkout'
     enabled = True
+    
     Order = Order
     Shipment = Shipment
     Payment = Payment
+    ShippingMethodForm = ShippingMethodForm
+    PaymentMethodForm = PaymentMethodForm
     
     CheckoutProcess = None
     
-    ShippingMethodForm = None
-    PaymentMethodForm = None
-    
     def __init__(self, *args, **kwargs):
         # Configure
+        self.ShippingMethodForm = import_by_path(settings.SHIPPING_METHOD_FORM)
+        self.PaymentMethodForm = import_by_path(settings.PAYMENT_METHOD_FORM)
         if not self.CheckoutProcess:
             if not settings.CHECKOUT_PROCESS:
                 raise ImproperlyConfigured("No checkout process configured")

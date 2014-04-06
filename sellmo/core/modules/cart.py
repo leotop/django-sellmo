@@ -40,6 +40,7 @@ from sellmo.config import settings
 from sellmo import modules
 from sellmo.api.decorators import view, chainable, link
 from sellmo.api.cart.models import Cart
+from sellmo.api.cart.forms import AddToCartForm, EditPurchaseForm
 from sellmo.api.forms import RedirectableFormSet
 
 #
@@ -51,6 +52,8 @@ class CartModule(sellmo.Module):
     enabled = True
     
     Cart = Cart
+    AddToCartForm = AddToCartForm
+    EditPurchaseForm = EditPurchaseForm
     
     def __init__(self, *args, **kwargs):
         self.AddToCartForm = import_by_path(settings.ADD_TO_CART_FORM)

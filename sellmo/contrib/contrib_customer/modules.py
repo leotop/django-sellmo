@@ -24,17 +24,9 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-
-from django import forms
-
-#
-
 from sellmo import modules
 
 #
 
-class ShippingMethodForm(forms.Form):
-    pass
-    
-class PaymentMethodForm(forms.Form):
+class CustomerModule(modules.customer):
     pass

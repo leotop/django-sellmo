@@ -32,8 +32,13 @@ from django.utils.translation import ugettext_lazy as _
 
 CURRENCY = ('eur', _(u"euro"), _(u"\u20ac {amount:\u00a0>{align}.2f}"))
 
-ADD_TO_CART_FORM = 'sellmo.api.cart.forms.AddToCartForm'
-EDIT_PURCHASE_FORM = 'sellmo.api.cart.forms.EditPurchaseForm'
+ADD_TO_CART_FORM = 'sellmo.registry.cart.AddToCartForm'
+EDIT_PURCHASE_FORM = 'sellmo.registry.cart.EditPurchaseForm'
+SHIPPING_METHOD_FORM = 'sellmo.registry.checkout.ShippingMethodForm'
+PAYMENT_METHOD_FORM = 'sellmo.registry.checkout.PaymentMethodForm'
+CUSTOMER_FORM = 'sellmo.registry.customer.CustomerForm'
+CONTACTABLE_FORM = 'sellmo.registry.customer.ContactableForm'
+ADDRESS_FORM = 'sellmo.registry.customer.AddressForm'
 
 def method_choice_format(method, costs, **kwargs):
     if costs:

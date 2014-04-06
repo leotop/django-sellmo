@@ -65,11 +65,9 @@ class Chainer(object):
         self._links = {}
         self._chains = {}
         self._modules = []
-        module_created.connect(self.on_module_created)
         module_init.connect(self.on_module_init)
         
     def hookup(self):
-        
         # Fix bound links
         for module in self._modules:
             for name in dir(module):
@@ -140,14 +138,10 @@ class Chainer(object):
         
     def on_module_init(self, sender, module, **kwargs):
         self._modules.append(module)
-        
-    def on_module_created(self, sender, module, **kwargs):
-        for key in module.__dict__:
-            attr = module.__dict__[key]
+        for name, attr in inspect.getmembers(type(module)):
             # Handle chain
             if hasattr(attr, '_chain'):
                 chain = attr._chain
-                
                 # Map chain
                 path = '{0}.{1}'.format(module.namespace, chain._func.__name__)
                 self._chains[path] = chain
