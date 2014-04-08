@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -33,15 +33,17 @@ from sellmo import modules
 from sellmo.config import settings
 
 #
-    
+
+
 class AddressInline(admin.StackedInline):
     model = modules.customer.Address
-    
-    
+
+
 class CustomerAdmin(ReverseModelAdmin):
     inline_type = 'stacked'
-    inline_reverse = ['{0}_address'.format(address) for address in settings.ADDRESS_TYPES]
-    
+    inline_reverse = ['{0}_address'.format(address)
+                      for address in settings.ADDRESS_TYPES]
+
     if settings.AUTH_ENABLED:
         raw_id_fields = ['user']
         autocomplete_lookup_fields = {

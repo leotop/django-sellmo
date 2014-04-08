@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -43,13 +43,15 @@ from django.contrib.admin.sites import NotRegistered
 from django.contrib.contenttypes.models import ContentType
 
 #
-            
+
+
 class ProductAttributeMixin(object):
-    
+
     form = ProductAttributeFormFactory(prefix='attribute')
-    
+
     def get_fieldsets(self, request, obj=None):
-        fieldsets = super(ProductAttributeMixin, self).get_fieldsets(request, obj)
+        fieldsets = super(
+            ProductAttributeMixin, self).get_fieldsets(request, obj)
         fields = [
             'attribute_{0}'.format(key) for key in modules.attribute.Attribute.objects.values_list('key', flat=True)
         ]
@@ -58,23 +60,24 @@ class ProductAttributeMixin(object):
 
 #
 
+
 class AttributeAdmin(admin.ModelAdmin):
-    
+
     list_display = ['name', 'type', 'required', 'key']
-    
+
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         if db_field.name == 'object_choices':
             kwargs['queryset'] = ValueObject.objects.polymorphic().all()
         return super(AttributeAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
 
+
 class ValueAdmin(admin.ModelAdmin):
-    
+
     list_display = ['product', 'attribute', 'value']
     list_filter = ['attribute']
-    
+
     def value(self, obj):
         return obj.get_value()
 
 admin.site.register(modules.attribute.Attribute, AttributeAdmin)
 admin.site.register(modules.attribute.Value, ValueAdmin)
-

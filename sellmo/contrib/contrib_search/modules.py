@@ -40,28 +40,30 @@ from sellmo.contrib.contrib_search.config import settings
 
 #
 
+
 class SearchModule(Module):
     namespace = 'search'
-    
+
     def __init__(self, *args, **kwargs):
         self.SearchForm = import_by_path(settings.SEARCH_FORM)
-        
+
     @chainable()
     def get_search_form(self, chain, form=None, cls=None, initial=None, data=None, **kwargs):
         if cls is None:
             cls = self.SearchForm
-            
+
         if form is None:
             if not data and not initial:
                 initial = {}
-            
+
             if not data:
                 form = cls(initial=initial)
             else:
                 form = cls(data)
-        
+
         if chain:
-            out = chain.execute(form=form, cls=cls, initial=initial, data=data, **kwargs)
+            out = chain.execute(
+                form=form, cls=cls, initial=initial, data=data, **kwargs)
             out = out.get('form', form)
         return form
 
@@ -69,16 +71,16 @@ class SearchModule(Module):
     def results(self, chain, request, products=None, context=None, **kwargs):
         if context is None:
             context = {}
-        
+
         if products is None:
             products = modules.product.list(request=request)
-        
+
         if chain:
             return chain.execute(request, products=products, context=context, **kwargs)
         else:
             # We don't render anything
             raise Http404
-            
+
     @chainable()
     def search(self, chain, products, term, **kwargs):
         def construct_search(field):
@@ -90,7 +92,7 @@ class SearchModule(Module):
                 return "%s__search" % field[1:]
             else:
                 return "%s__icontains" % field
-        
+
         fields = settings.SEARCH_FIELDS
         if fields and term:
             orm_lookups = [construct_search(str(field)) for field in fields]
@@ -99,7 +101,7 @@ class SearchModule(Module):
                               for orm_lookup in orm_lookups]
                 products = products.filter(reduce(operator.or_, or_queries))
             products = products.distinct()
-        
+
         if chain:
             out = chain.execute(products=products, term=term, **kwargs)
             products = out.get('products', products)

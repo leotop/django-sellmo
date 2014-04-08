@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -39,7 +39,7 @@ from django.conf.urls import *
 
 urlpatterns = patterns('sellmo')
 for module in modules:
-    
+
     urls = []
     for name in dir(module):
         attr = getattr(module, name)
@@ -50,13 +50,15 @@ for module in modules:
                 if isinstance(regex, basestring):
                     regex = [regex]
                 for regex in regex:
-                    urls.append(url(regex, attr, name='%s.%s' % (module.namespace, name)))
-    
+                    urls.append(
+                        url(regex, attr, name='%s.%s' % (module.namespace, name)))
+
     if urls:
         prefix = module.prefix
         if not prefix:
             prefix = module.namespace
-    
-        urlpatterns += patterns('modules', 
-            ('^%s/' % prefix, include(patterns(module.namespace, *urls))),
-        )
+
+        urlpatterns += patterns('modules',
+                                ('^%s/' %
+                                 prefix, include(patterns(module.namespace, *urls))),
+                                )

@@ -42,65 +42,71 @@ from sellmo.magic import ModelMixin
 #
 
 class Color(ValueObject):
-    
+
     name = models.CharField(
-        max_length = 100,
-        unique = True,
-        verbose_name = _("name")
+        max_length=100,
+        unique=True,
+        verbose_name=_("name")
     )
-    
+
     value = models.CharField(
-        max_length = 6,
-        verbose_name = _("value")
+        max_length=6,
+        verbose_name=_("value")
     )
-    
+
     def polymorphic_natural_key(self):
         return (self.name,)
-        
+
     def __unicode__(self):
         return self.name
-        
+
     class Meta:
         abstract = True
         app_label = 'attribute'
         ordering = ['name']
-        
+
+
 @load(action='finalize_color_Color')
 def finalize_model():
     class Color(modules.color.Color):
+
         class Meta(modules.color.Color.Meta):
             app_label = 'attribute'
             ordering = ['name']
 
     modules.color.Color = Color
-    
+
+
 @load(after='finalize_color_Color')
 def load_manager():
-    
+
     class ColorManager(modules.color.Color.objects.__class__):
+
         def get_by_polymorphic_natural_key(self, name):
             return self.get(name=name)
 
     class Color(ModelMixin):
         model = modules.color.Color
         objects = ColorManager()
-    
+
+
 class MultiColor(ValueObject):
-    
+
     name = models.CharField(
-        max_length = 100,
-        unique = True,
-        verbose_name = _("name")
+        max_length=100,
+        unique=True,
+        verbose_name=_("name")
     )
-    
+
     def polymorphic_natural_key(self):
         return (self.name,)
-    
+
     def __unicode__(self):
         return self.name
-    
+
     class Meta:
         abstract = True
+
 
 @load(before='finalize_color_MultiColor')
 @load(after='finalize_color_Color')
@@ -108,168 +114,182 @@ def load_model():
     class MultiColor(modules.color.MultiColor):
         colors = models.ManyToManyField(
             modules.color.Color,
-            verbose_name = _("colors")
+            verbose_name=_("colors")
         )
-        
+
         class Meta(modules.color.MultiColor.Meta):
             abstract = True
 
     modules.color.MultiColor = MultiColor
 
-        
+
 @load(action='finalize_color_MultiColor')
 def finalize_model():
     class MultiColor(modules.color.MultiColor):
+
         class Meta(modules.color.MultiColor.Meta):
             app_label = 'attribute'
             ordering = ['name']
 
     modules.color.MultiColor = MultiColor
 
+
 @load(after='finalize_color_MultiColor')
 def load_manager():
 
     class MultiColorManager(modules.color.MultiColor.objects.__class__):
+
         def get_by_polymorphic_natural_key(self, name):
             return self.get(name=name)
 
     class MultiColor(ModelMixin):
         model = modules.color.MultiColor
         objects = MultiColorManager()
-        
+
+
 class ColorMappingQuerySet(QuerySet):
-    
+
     def for_product(self, product):
         return self.filter(product=product)
-        
+
     def for_attribute(self, attribute):
         return self.filter(attribute=attribute)
-        
+
+
 class ColorMappingManager(models.Manager):
-    
+
     def get_query_set(self):
         return ColorMappingQuerySet(self.model)
-        
+
     def for_product(self, *args, **kwargs):
         return self.get_query_set().for_product(*args, **kwargs)
-        
+
     def for_attribute(self, *args, **kwargs):
         return self.get_query_set().for_attribute(*args, **kwargs)
-    
+
     def map_or_unmap(self, value, ignore_value=False):
         color = value.value
         if color is None or not isinstance(color, (Color, MultiColor)):
             return
-            
+
         colors = [color]
         if isinstance(color, MultiColor):
             colors = color.colors.all()
-        
+
         product = value.product.downcast()
         products = [product]
         if getattr(product, '_is_variant', False):
             products.append(product.product)
-            
+
         def do(product, color):
             if hasattr(modules, 'variation'):
-                exists = modules.attribute.Value.objects.for_product_or_variants_of(product)
+                exists = modules.attribute.Value.objects.for_product_or_variants_of(
+                    product)
             else:
                 exists = modules.attribute.Value.objects.for_product(product)
-            
+
             exists = exists.filter(ValueQ(value.attribute, value.value))
             if ignore_value:
                 exists = exists.exclude(pk=value.pk)
             exists = exists.count() > 0
-            
+
             kwargs = {
-                'color' : color,
-                'product' : product,
-                'attribute' : value.attribute,
+                'color': color,
+                'product': product,
+                'attribute': value.attribute,
             }
-            
+
             if exists:
                 # Ensure we have a mapping
                 self.get_or_create(**kwargs)
             else:
                 # Ensure no mapping is present
                 self.filter(**kwargs).delete()
-            
+
         for color in colors:
             for product in products:
                 do(product, color)
-                
+
 
 class ColorMapping(models.Model):
-    
+
     objects = ColorMappingManager()
-    
+
     def __unicode__(self):
         return u"{0} - {1} : {2}".format(self.product, self.attribute, self.color)
-    
+
     class Meta:
         abstract = True
-    
+
 #
+
 
 def on_value_pre_save(sender, instance, raw=False, update_fields=None, *args, **kwargs):
     if not raw and not instance.pk is None:
         value = modules.attribute.Value.objects.get(pk=instance.pk)
-        modules.color.ColorMapping.objects.map_or_unmap(value, ignore_value=True)
-        
+        modules.color.ColorMapping.objects.map_or_unmap(
+            value, ignore_value=True)
+
+
 def on_value_post_save(sender, instance, created, raw=False, update_fields=None, *args, **kwargs):
     if not raw:
         modules.color.ColorMapping.objects.map_or_unmap(instance)
-        
+
+
 def on_value_pre_delete(sender, instance, *args, **kwargs):
-    modules.color.ColorMapping.objects.map_or_unmap(instance, ignore_value=True)
+    modules.color.ColorMapping.objects.map_or_unmap(
+        instance, ignore_value=True)
+
 
 @load(after='finalize_attribute_Value')
 def listen():
     pre_save.connect(on_value_pre_save, sender=modules.attribute.Value)
     post_save.connect(on_value_post_save, sender=modules.attribute.Value)
     pre_delete.connect(on_value_pre_delete, sender=modules.attribute.Value)
-    
+
+
 @load(action='finalize_color_ColorMapping')
 @load(after='finalize_color_Color')
 @load(after='finalize_attribute_Attribute')
 @load(after='finalize_product_Product')
 def finalize_model():
     class ColorMapping(modules.color.ColorMapping):
-        
+
         color = models.ForeignKey(
             modules.color.Color,
-            db_index = True,
-            editable = False,
-            related_name = '+'
+            db_index=True,
+            editable=False,
+            related_name='+'
         )
-        
+
         product = models.ForeignKey(
             modules.product.Product,
-            db_index = True,
-            editable = False,
-            related_name = '+',
+            db_index=True,
+            editable=False,
+            related_name='+',
         )
-        
+
         attribute = models.ForeignKey(
             modules.attribute.Attribute,
-            db_index = True,
-            editable = False,
-            related_name = '+',
+            db_index=True,
+            editable=False,
+            related_name='+',
         )
-        
+
         class Meta(modules.color.ColorMapping.Meta):
             unique_together = ('product', 'attribute', 'color')
             app_label = 'color'
-            
+
     modules.color.ColorMapping = ColorMapping
-         
+
+
 @load(before='finalize_product_Product')
 def load_model():
     class Product(modules.product.Product):
 
         def get_colors(self, **kwargs):
             return modules.color.get_colors(product=self, **kwargs)
-        
+
         colors = property(get_colors)
 
         class Meta(modules.product.Product.Meta):

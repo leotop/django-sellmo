@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -28,15 +28,16 @@ from sellmo.core.local import new_context, release_context
 
 #
 
+
 class LocalContextMiddleware(object):
-    
+
     def process_request(self, request):
         new_context()
-    
+
     def process_response(self, request, response):
         release_context()
         return response
-        
+
     def process_exception(self, request, exception):
         release_context()
         return None

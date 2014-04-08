@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -31,9 +31,11 @@ from sellmo.api.decorators import link
 
 #
 
+
 @link(namespace=modules.product.namespace)
 def list(request, products, **kwargs):
-    keys = modules.attribute.Attribute.objects.all().values_list('key', flat=True)
+    keys = modules.attribute.Attribute.objects.all().values_list(
+        'key', flat=True)
     for key, value in request.GET.items():
         attr = None
         if key.startswith('attr__'):
@@ -48,7 +50,8 @@ def list(request, products, **kwargs):
                 operator = parts[1]
             elif len(parts) > 2:
                 continue
-            products = modules.attribute.filter(request=request, products=products, attr=attr, value=value, operator=operator)
+            products = modules.attribute.filter(
+                request=request, products=products, attr=attr, value=value, operator=operator)
     return {
-        'products' : products
+        'products': products
     }

@@ -31,10 +31,11 @@ from sellmo.contrib.contrib_variation import tasks
 
 #
 
+
 def on_variations_invalidated(sender, product, **kwargs):
     tasks.build_variations.apply_async((product,), countdown=60)
 
 if settings.CELERY_ENABLED:
     variations_invalidated.connect(on_variations_invalidated)
-    
+
 modules.product.reserved_url_params += ['variants']

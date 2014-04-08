@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -34,45 +34,54 @@ from sellmo.api.decorators import load
 
 #
 
+
 @load(action='load_customer_CustomerForm', after='finalize_customer_Customer')
 def load_form():
-    
+
     _exclude = []
     if settings.AUTH_ENABLED:
         _exclude.append('user')
-        
+
     for address in settings.ADDRESS_TYPES:
         _exclude.append('{0}_address'.format(address))
-    
+
     class CustomerForm(modules.customer.CustomerForm):
+
         class Meta:
             model = modules.customer.Customer
             exclude = _exclude
-    
+
     modules.customer.CustomerForm = CustomerForm
-    
+
+
 class CustomerForm(forms.ModelForm):
     pass
-    
+
+
 @load(action='load_customer_ContactableForm', after='finalize_customer_Contactable')
 def load_form():
     class ContactableForm(modules.customer.ContactableForm):
+
         class Meta:
             model = modules.customer.Contactable
 
     modules.customer.ContactableForm = ContactableForm
-    
+
+
 class ContactableForm(forms.ModelForm):
     pass
-    
+
+
 @load(action='load_customer_AddressForm', after='finalize_customer_Address')
 def load_form():
     class AddressForm(modules.customer.AddressForm):
+
         class Meta:
             model = modules.customer.Address
             exclude = ('customer', 'type')
 
     modules.customer.AddressForm = AddressForm
+
 
 class AddressForm(forms.ModelForm):
     pass

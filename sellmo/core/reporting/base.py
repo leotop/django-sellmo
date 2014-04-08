@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -33,6 +33,7 @@ from sellmo.config import settings
 
 #
 
+
 @singleton
 class Reporter(object):
 
@@ -42,21 +43,21 @@ class Reporter(object):
 
     def __init__(self):
         pass
-        
+
     def map_generators(self):
-        
+
         if self.input_format_mapping is not None:
             return
-        
+
         self.input_format_mapping = {}
         self.output_format_mapping = {}
-        
+
         # Map generators
         for generator in settings.REPORT_GENERATORS:
             generator = import_by_path(generator)
             if not generator.input_formats or not generator.output_formats:
                 raise Exception("Generator needs input and output formats")
-            
+
             # Map to input formats
             for format in generator.input_formats:
                 if format not in self.input_format_mapping:
@@ -69,50 +70,52 @@ class Reporter(object):
                 self.output_format_mapping[format].add(generator)
 
     def get_report(self, report_type, format=None, context=None):
-        
+
         self.map_generators()
-        
+
         # Assign defaults
         if context is None:
-            context = {}    
+            context = {}
         if format is None:
             format = settings.REPORT_FORMAT
-    
+
         # Find all acceptable formats
         input_formats = set([format])
         if format in self.output_format_mapping:
             for generator in self.output_format_mapping[format]:
                 input_formats = set(generator.input_formats) | input_formats
-        
+
         # Find writer
         if not report_type in self.writers:
-            raise Exception("No writer for report type '{0}'".format(report_type))
+            raise Exception(
+                "No writer for report type '{0}'".format(report_type))
         for input_format in input_formats:
             if input_format in self.writers[report_type]:
                 writer = self.writers[report_type][input_format]
                 break
         else:
             raise Exception("Format '{0}' is not supported".format(format))
-        
+
         # Find the generator with both correct input and output
-        generators = self.output_format_mapping[format] & self.input_format_mapping[writer.format]
+        generators = self.output_format_mapping[
+            format] & self.input_format_mapping[writer.format]
         generator = list(generators)[0]
-        
+
         # Create a new generator and generate report
         generator = generator(writer)
         return generator.generate_report(format, context)
-        
+
     def register(self, report_type, writer):
         if isinstance(writer, (str, unicode)):
             writer = import_by_path(writer)
-        
+
         if not writer.format:
             raise Exception("Writer needs format")
-        
+
         # Map writer to report_type and writer format
         if report_type not in self.writers:
             self.writers[report_type] = {}
         self.writers[report_type][writer.format] = writer
-        
+
 
 reporter = Reporter()

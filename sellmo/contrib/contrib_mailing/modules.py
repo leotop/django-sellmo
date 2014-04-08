@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -30,7 +30,8 @@ from sellmo.contrib.contrib_mailing.models import MailStatus
 
 #
 
-class MailingModule(Module):  
+
+class MailingModule(Module):
 
     namespace = 'mailing'
     MailStatus = MailStatus

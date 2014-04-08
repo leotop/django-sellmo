@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -35,30 +35,33 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
+
 @load(before='finalize_checkout_mailing_OrderMail')
 @load(after='finalize_checkout_Order')
 @load(after='finalize_mailing_MailStatus')
 def load_model():
     class OrderMail(modules.checkout_mailing.OrderMail):
-        
+
         order = models.ForeignKey(
             modules.checkout.Order,
-            editable = False,
+            editable=False,
         )
-        
+
         status = models.ForeignKey(
             modules.mailing.MailStatus,
-            editable = False,
+            editable=False,
         )
-        
+
         class Meta(modules.checkout_mailing.OrderMail.Meta):
             abstract = True
-    
+
     modules.checkout_mailing.OrderMail = OrderMail
-    
+
+
 @load(action='finalize_checkout_mailing_OrderMail')
 def finalize_model():
     class OrderMail(modules.checkout_mailing.OrderMail):
+
         class Meta(modules.checkout_mailing.OrderMail.Meta):
             app_label = 'checkout'
             verbose_name = _("order mail")
@@ -66,7 +69,8 @@ def finalize_model():
 
     modules.checkout_mailing.OrderMail = OrderMail
 
+
 class OrderMail(models.Model):
-    
+
     class Meta:
         abstract = True

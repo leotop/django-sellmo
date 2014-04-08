@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -28,11 +28,14 @@ from sellmo.config import settings
 
 #
 
+
 class Report(object):
+
     def __init__(self, filename, data, mimetype):
         self.filename = filename
         self.data = data
         self.mimetype = mimetype
+
 
 class ReportGenerator(object):
 
@@ -41,50 +44,51 @@ class ReportGenerator(object):
 
     def __init__(self, writer):
         self.writer = writer
-    
+
     def generate_report(self, format, context=None):
         """
         Returns a Report instance
         """
         raise NotImplementedError()
- 
+
+
 class ReportWriter(object):
-    
+
     """
     The format this writer will output
     """
     format = None
     params = {}
-    
+
     @classmethod
     def open(cls, output_format, context=None):
         if context is None:
             context = {}
         return cls(output_format, **context)
-    
+
     def __init__(self, output_format,  **context):
         self.output_format = output_format
         self.context = context
-    
+
     def __enter__(self):
         self.setup()
         return self
-    
+
     def __exit__(self, type, value, traceback):
         self.teardown()
-    
+
     def setup(self):
         pass
-        
+
     def teardown(self):
         pass
-        
+
     def get_name(self):
         raise NotImplementedError()
-        
+
     def get_data(self, **params):
         raise NotImplementedError()
-        
+
     def negotiate_param(self, key, value, **params):
         """
         False if we don't understand. The same value if we accept or a
@@ -93,6 +97,3 @@ class ReportWriter(object):
         if key in self.params:
             return self.params[key]
         return False
-            
-        
-        

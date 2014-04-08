@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -36,6 +36,7 @@ from sellmo.api.http.query import QueryString
 
 #
 
+
 class ProductModule(sellmo.Module):
 
     namespace = 'product'
@@ -44,14 +45,14 @@ class ProductModule(sellmo.Module):
     ProductRelatable = ProductRelatable
     subtypes = []
     reserved_url_params = ['sort']
-        
+
     @classmethod
     def register_subtype(self, subtype):
         self.subtypes.append(subtype)
-        
+
         # Shouldn't be a problem if Capital cased classnames are used.
         setattr(self, subtype.__name__, subtype)
-        
+
     @chainable()
     def list(self, chain, request, products=None, query=None, **kwargs):
         if products is None:
@@ -59,11 +60,12 @@ class ProductModule(sellmo.Module):
         if query is None:
             query = QueryString(request)
         if chain:
-            out = chain.execute(request=request, products=products, query=query, **kwargs)
+            out = chain.execute(
+                request=request, products=products, query=query, **kwargs)
             if out.has_key('products'):
                 products = out['products']
         return products
-        
+
     @chainable()
     def single(self, chain, request, products=None, **kwargs):
         if products is None:
@@ -73,16 +75,17 @@ class ProductModule(sellmo.Module):
             if out.has_key('products'):
                 products = out['products']
         return products
-    
+
     @view(r'^(?P<product_slug>[-a-zA-Z0-9_]+)$')
     def details(self, chain, request, product_slug, context=None, **kwargs):
         if context is None:
             context = {}
         try:
-            product = self.single(request=request).polymorphic().get(slug=product_slug)
+            product = self.single(
+                request=request).polymorphic().get(slug=product_slug)
         except self.Product.DoesNotExist:
             raise Http404("""Product '%s' not found.""" % product_slug)
-        
+
         if chain:
             return chain.execute(request, product=product, context=context, **kwargs)
         else:

@@ -40,20 +40,22 @@ from django.utils.functional import allow_lazy
 
 _local = local()
 
+
 class PolymorphicOverride(object):
-    
+
     def __init__(self, polymorphic=True):
         self._polymorphic = polymorphic
-    
+
     def __enter__(self):
         if not hasattr(_local, 'overrides'):
             _local.overrides = deque()
         _local.overrides.append(self._polymorphic)
-        
+
     def __exit__(self, exc_type, exc_value, traceback):
         _local.overrides.pop()
         if not _local.overrides:
             del _local.overrides
+
 
 class PolymorphicQuerySet(QuerySet):
 
@@ -67,12 +69,12 @@ class PolymorphicQuerySet(QuerySet):
     def iterator(self):
         override = None
         if hasattr(_local, 'overrides'):
-            override = _local.overrides[-1] # peek
+            override = _local.overrides[-1]  # peek
         downcast = (
             self._downcast and override is not False
             or override is True
         )
-        
+
         if not downcast:
             return super(PolymorphicQuerySet, self).iterator()
         else:
@@ -99,14 +101,14 @@ class PolymorphicQuerySet(QuerySet):
 
             for pk in order:
                 result.append(downcasts[pk])
-            
+
             return result
 
     def _clone(self, *args, **kwargs):
         clone = super(PolymorphicQuerySet, self)._clone(*args, **kwargs)
         clone._downcast = self._downcast
         return clone
-        
+
     def delete(self, *args, **kwargs):
         with PolymorphicOverride(False):
             super(PolymorphicQuerySet, self).delete(*args, **kwargs)
@@ -118,6 +120,7 @@ class PolymorphicQuerySet(QuerySet):
         clone._downcast = polymorphic
         return clone
 
+
 class PolymorphicManager(models.Manager):
 
     use_for_related_fields = True
@@ -126,10 +129,10 @@ class PolymorphicManager(models.Manager):
         self._downcast = downcast
         self._cls = cls
         super(PolymorphicManager, self).__init__()
-        
+
     def get_by_polymorphic_natural_key(self, *args):
         raise NotImplementedError()
-        
+
     def get_by_natural_key(self, content_type, key):
         content_type = ContentType.objects.get_by_natural_key(*content_type)
         return content_type.model_class().objects.get_by_polymorphic_natural_key(*key)
@@ -142,7 +145,7 @@ class PolymorphicManager(models.Manager):
 
     def polymorphic(self, *args, **kwargs):
         return self.get_query_set().polymorphic(*args, **kwargs)
-        
+
 
 class PolymorphicModel(models.Model):
 
@@ -153,20 +156,23 @@ class PolymorphicModel(models.Model):
     @classmethod
     def get_admin_url(cls, content_type, object_id):
         if cls._meta.parents.keys():
-            content_type = ContentType.objects.get_for_model(cls._meta.parents.keys()[-1])
+            content_type = ContentType.objects.get_for_model(
+                cls._meta.parents.keys()[-1])
         return "%s/%s/%s/" % (content_type.app_label, content_type.model, quote(object_id))
 
     def save(self, *args, **kwargs):
         if self.content_type_id is None:
-            self.content_type = ContentType.objects.get_for_model(self.__class__)
+            self.content_type = ContentType.objects.get_for_model(
+                self.__class__)
         super(PolymorphicModel, self).save(*args, **kwargs)
-    
+
     def delete(self, *args, **kwargs):
-        assert self._get_pk_val() is not None, "%s object can't be deleted because its %s attribute is set to None." % (self._meta.object_name, self._meta.pk.attname)
+        assert self._get_pk_val() is not None, "%s object can't be deleted because its %s attribute is set to None." % (
+            self._meta.object_name, self._meta.pk.attname)
         with PolymorphicOverride(False):
             upcasted = self.__class__.objects.get(pk=self.pk)
             super(PolymorphicModel, upcasted).delete(*args, **kwargs)
-    
+
     def downcast(self):
         if not self._downcasted:
             downcasted = self
@@ -176,10 +182,11 @@ class PolymorphicModel(models.Model):
                     try:
                         downcasted = model.objects.get(pk=self.pk)
                     except model.DoesNotExist:
-                        raise Exception("Could not downcast to model class '{0}', lookup failed for pk '{1}'".format(model, self.pk))
-            self._downcasted = downcasted    
+                        raise Exception(
+                            "Could not downcast to model class '{0}', lookup failed for pk '{1}'".format(model, self.pk))
+            self._downcasted = downcasted
         return self._downcasted
-        
+
     def can_downcast(self):
         if not self.content_type_id is None:
             model = self.content_type.model_class()
@@ -191,12 +198,12 @@ class PolymorphicModel(models.Model):
             return self.content_type
         else:
             return ContentType.objects.get_for_model(self.__class__)
-            
+
     def polymorphic_natural_key(self):
         raise NotImplementedError()
 
     def natural_key(self):
         return (self.content_type.natural_key(), self.downcast().polymorphic_natural_key())
-    
+
     class Meta:
         abstract = True

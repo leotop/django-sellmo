@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -34,14 +34,16 @@ from sellmo.api.pricing import Price
 
 namespace = modules.pricing.namespace
 
+
 @link()
 def get_price(price, product=None, **kwargs):
     if product:
         try:
-            discount = modules.discount.Discount.objects.polymorphic().best_for_product(product)
+            discount = modules.discount.Discount.objects.polymorphic().best_for_product(
+                product)
         except modules.discount.Discount.DoesNotExist:
             pass
         else:
             return {
-                'price' : discount.apply(price)
+                'price': discount.apply(price)
             }

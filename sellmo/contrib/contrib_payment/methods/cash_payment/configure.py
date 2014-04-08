@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -34,8 +34,7 @@ from sellmo import modules
 #
 
 modules.settings.add_setting('cash_payment_name', models.CharField(
-    max_length = 80,
-    default = _("Cash payment"),
-    verbose_name = _("cash payment name")
+    max_length=80,
+    default=_("Cash payment"),
+    verbose_name=_("cash payment name")
 ), _("Cash Payment"))
-

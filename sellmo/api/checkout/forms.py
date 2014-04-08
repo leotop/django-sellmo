@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -33,8 +33,10 @@ from sellmo import modules
 
 #
 
+
 class ShippingMethodForm(forms.Form):
     pass
-    
+
+
 class PaymentMethodForm(forms.Form):
     pass

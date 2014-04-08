@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -34,12 +34,14 @@ from sellmo.api.pricing import Price
 
 namespace = modules.pricing.namespace
 
+
 @link()
 def get_price(price, product=None, shipping_method=None, payment_method=None, **kwargs):
     taxes = []
     if product:
         try:
-            tax = modules.tax.Tax.objects.polymorphic().best_for_product(product)
+            tax = modules.tax.Tax.objects.polymorphic().best_for_product(
+                product)
             taxes.append(tax)
         except modules.tax.Tax.DoesNotExist:
             pass
@@ -49,10 +51,10 @@ def get_price(price, product=None, shipping_method=None, payment_method=None, **
             taxes = [settings.shipping_costs_tax.downcast()]
         elif shipping_method and settings.payment_costs_tax:
             taxes = [settings.payment_costs_tax.downcast()]
-    
+
     for tax in taxes:
         price = tax.apply(price)
-        
+
     return {
-        'price' : price
+        'price': price
     }

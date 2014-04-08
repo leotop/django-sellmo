@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -33,20 +33,21 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
+
 class InvoiceWriter(ReportWriter):
 
     format = 'html'
-    
+
     def __init__(self, output_format, order, internal=False):
         self.output_format = output_format
         self.order = order
         self.internal = internal
-        
+
     def get_name(self):
         return "invoice_{0}".format(self.order.pk)
-        
+
     def negotiate_param(self, key, value, **params):
         return super(InvoiceWriter, self).negotiate_param(key, value, **params)
-        
+
     def get_data(self, **params):
         return modules.checkout_reporting.render_invoice(order=self.order, internal=self.internal)

@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -42,43 +42,48 @@ from django.core.exceptions import PermissionDenied
 
 #
 
+
 class ReverseInlineFormSet(BaseModelFormSet):
     model = None
     parent_fk_name = None
+
     def __init__(self, data=None, files=None, instance=None, prefix=None, queryset=None, save_as_new=False):
         try:
             obj = getattr(instance, self.parent_fk_name)
         except self.model.DoesNotExist:
             obj = None
-            
+
         if obj:
             queryset = self.model.objects.filter(pk=obj.id)
         else:
             queryset = self.model.objects.none()
-        
+
         if queryset.count() == 0:
             self.extra = 1
-        super(ReverseInlineFormSet, self).__init__(data, files, prefix=prefix, queryset=queryset)
+        super(ReverseInlineFormSet, self).__init__(
+            data, files, prefix=prefix, queryset=queryset)
 
-def reverse_inlineformset_factory(parent_model, model, parent_fk_name, form=ModelForm, fields=None, exclude=None, formfield_callback=lambda f:f.formfield()):
+
+def reverse_inlineformset_factory(parent_model, model, parent_fk_name, form=ModelForm, fields=None, exclude=None, formfield_callback=lambda f: f.formfield()):
     kwargs = {
-        'form' : form,
-        'formfield_callback' : formfield_callback,
-        'formset' : ReverseInlineFormSet,
-        'extra' : 0,
-        'can_delete' : False,
-        'can_order' : False,
-        'fields' : fields,
-        'exclude' : exclude,
-        'max_num' : 1,
+        'form': form,
+        'formfield_callback': formfield_callback,
+        'formset': ReverseInlineFormSet,
+        'extra': 0,
+        'can_delete': False,
+        'can_order': False,
+        'fields': fields,
+        'exclude': exclude,
+        'max_num': 1,
     }
-    
+
     FormSet = modelformset_factory(model, **kwargs)
     FormSet.parent_fk_name = parent_fk_name
     return FormSet
 
+
 class ReverseInlineModelAdmin(InlineModelAdmin):
-    
+
     def __init__(self, parent_model, parent_fk_name, model, admin_site, inline_type):
         self.template = 'admin/edit_inline/%s.html' % inline_type
         self.parent_fk_name = parent_fk_name
@@ -92,7 +97,7 @@ class ReverseInlineModelAdmin(InlineModelAdmin):
             self.verbose_name = self.verbose_name_plural
         super(ReverseInlineModelAdmin, self).__init__(parent_model, admin_site)
 
-    def get_formset(self, request, obj = None, **kwargs):
+    def get_formset(self, request, obj=None, **kwargs):
         if self.declared_fieldsets:
             fields = flatten_fieldsets(self.declared_fieldsets)
         else:
@@ -116,15 +121,17 @@ class ReverseInlineModelAdmin(InlineModelAdmin):
                                              self.parent_fk_name,
                                              **defaults)
 
+
 class ReverseModelAdmin(ModelAdmin):
-    
+
     def __init__(self, *args, **kwargs):
         super(ReverseModelAdmin, self).__init__(*args, **kwargs)
         if self.exclude is None:
             self.exclude = []
-    
+
     def get_inline_instances(self, request, obj=None):
-        inline_instances = super(ReverseModelAdmin, self).get_inline_instances(request, obj)
+        inline_instances = super(
+            ReverseModelAdmin, self).get_inline_instances(request, obj)
         for field_name in self.inline_reverse:
             kwargs = {}
             if isinstance(field_name, tuple):
@@ -138,10 +145,11 @@ class ReverseModelAdmin(ModelAdmin):
             if isinstance(field, (OneToOneField, ForeignKey)):
                 name = field.name
                 parent = field.related.parent_model
-                inline = ReverseInlineModelAdmin(self.model, name, parent, self.admin_site, self.inline_type)
+                inline = ReverseInlineModelAdmin(
+                    self.model, name, parent, self.admin_site, self.inline_type)
                 if kwargs:
                     inline.__dict__.update(kwargs)
                 inline_instances.append(inline)
                 self.exclude.append(name)
-        
+
         return inline_instances

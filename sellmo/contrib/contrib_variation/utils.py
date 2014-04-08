@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -32,34 +32,37 @@ from django.utils.text import slugify
 
 #
 
+
 def generate_slug(product, values=None, unique=False, full=False, short=False):
 
     if not values:
         values = list(product.attributes)
-        
+
     sequences = []
     if not full:
         sequences.append('-'.join([unicode(value.value) for value in values]))
     if not short:
-        sequences.append('_'.join([u'%s-%s' % (value.attribute.key, unicode(value.value)) for value in values]))
-    
+        sequences.append('_'.join(
+            [u'%s-%s' % (value.attribute.key, unicode(value.value)) for value in values]))
+
     for attributes in sequences:
         slug = u'%(prefix)s-%(attributes)s' % {
-            'attributes' : attributes,
-            'prefix' : product.slug
+            'attributes': attributes,
+            'prefix': product.slug
         }
-        
+
         slug = slugify(slug)
-        
+
         if not unique or VariantMixin.is_unique_slug(slug, ignore=product):
             return slug
-    
+
     return slug
+
 
 def is_unique_slug(slug, ignore=None):
     try:
         existing = modules.product.Product.objects.polymorphic().get(slug=slug)
     except modules.product.Product.DoesNotExist:
         return True
-    
+
     return existing == ignore

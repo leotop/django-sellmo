@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -35,26 +35,34 @@ from sellmo.api.decorators import load
 
 #
 
+
 @load(action='finalize_pricing_PriceIndexBase')
 def finalize_model():
     class PriceIndexBase(modules.pricing.PriceIndexBase):
+
         class Meta(modules.pricing.PriceIndexBase.Meta):
             abstract = True
             app_label = 'pricing'
     modules.pricing.PriceIndexBase = PriceIndexBase
-    
+
+
 class PriceIndexQuerySet(QuerySet):
+
     def invalidate(self, **kwargs):
         return self.delete()
 
+
 class PriceIndexManager(models.Manager):
+
     def invalidate(self, *args, **kwargs):
         return self.get_query_set().all().invalidate(*args, **kwargs)
 
     def get_query_set(self):
         return PriceIndexQuerySet(self.model)
 
+
 class PriceIndexBase(models.Model):
     objects = PriceIndexManager()
+
     class Meta:
         abstract = True

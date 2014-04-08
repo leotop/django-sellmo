@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -31,6 +31,7 @@ from celery import shared_task
 from sellmo import modules
 
 #
+
 
 @shared_task
 def build_variations(product):

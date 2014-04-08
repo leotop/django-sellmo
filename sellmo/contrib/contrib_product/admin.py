@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -35,8 +35,10 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
+
 class ProductAdminBase(admin.ModelAdmin):
     pass
+
 
 class ProductParentAdminBase(PolymorphicParentModelAdmin):
     base_model = modules.product.Product
@@ -49,4 +51,3 @@ class ProductParentAdminBase(PolymorphicParentModelAdmin):
 
     def queryset(self, queryset):
         return modules.product.Product.objects.all()
-

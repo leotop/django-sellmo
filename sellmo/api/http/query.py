@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -35,23 +35,24 @@ else:
     from urlparse import urlparse, parse_qsl, urlunparse
     from urllib import urlencode
 
+
 class QueryString(object):
-    
+
     def __init__(self, request=None):
         self.params = {}
         if request:
             for key in request.GET.keys():
                 self[key] = request.GET.getlist(key)
-        
+
     def __contains__(self, param):
         if isinstance(param, tuple):
             return param[1] in self.params.get(param[0], set())
         else:
             return param in self.params
-    
+
     def add_param(self, key, value):
         self[key] = list(self.get_param(key, [])) + [value]
-        
+
     def remove_param(self, key, value=None):
         if key not in self.params:
             raise ValueError("No such param {0}".format(key))
@@ -61,27 +62,27 @@ class QueryString(object):
             self.params[key].remove(value)
         else:
             del self.params[key]
-    
+
     def set_param(self, key, value):
         self[key] = value
-        
+
     def get_param(self, param, default=None):
         if param in self:
             return self[param]
         return default
-            
+
     def __getitem__(self, key):
         return frozenset(self.params[key])
-        
+
     def __setitem__(self, key, value):
         if not isinstance(value, (tuple, list, set)):
             value = [value]
         self.params[key] = set([smart_str(el) for el in value if el])
-        
+
     def __iter__(self):
         for key in self.params.keys():
             yield key, self[key]
-            
+
     def __repr__(self):
         params = []
         for key, values in self:
@@ -89,7 +90,7 @@ class QueryString(object):
                 value = smart_str(value)
                 params.append((key, value))
         return urlencode(params)
-        
+
     def __le__(self, other):
         for key in self.params.keys():
             if key not in other.params:
@@ -97,7 +98,7 @@ class QueryString(object):
             if not self.params[key] <= other.params[key]:
                 return False
         return True
-        
+
     def __ge__(self, other):
         for key in other.params.keys():
             if key not in self.params:
@@ -105,7 +106,7 @@ class QueryString(object):
             if not self.params[key] >= other.params[key]:
                 return False
         return True
-        
+
     def __eq__(self, other):
         if set(self.params.keys()) != set(other.params.keys()):
             return False
@@ -113,8 +114,8 @@ class QueryString(object):
             if not self.params[key] == other.params[key]:
                 return False
         return True
-            
+
     def clone(self):
         clone = QueryString()
-        clone.params = {key : set(value) for key, value in self}
+        clone.params = {key: set(value) for key, value in self}
         return clone

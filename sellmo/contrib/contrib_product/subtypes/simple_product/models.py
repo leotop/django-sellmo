@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -34,12 +34,14 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
+
 @load(action='load_product_subtypes', after='finalize_product_Product')
 def load_product_subtypes():
     class SimpleProduct(modules.product.Product):
+
         class Meta(modules.product.Product.Meta):
             app_label = 'product'
             verbose_name = _("product")
             verbose_name_plural = _("products")
-    
+
     modules.product.register_subtype(SimpleProduct)

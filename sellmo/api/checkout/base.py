@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -37,33 +37,35 @@ __all__ = [
 
 #
 
+
 class MethodBase(object):
-    
+
     def get_name(self):
         raise NotImplementedError()
     name = property(get_name)
-    
+
     def get_identifier(self):
         raise NotImplementedError()
     identifier = property(get_identifier)
-        
+
     def get_costs(self, order, **kwargs):
         raise NotImplementedError()
-        
+
     def is_available(self, order, **kwargs):
         return True
-        
+
     def process(self, request, order, next_step):
         return next_step
-        
+
     def __unicode__(self):
         return unicode(self.name)
 
+
 class ShippingMethod(MethodBase):
-        
+
     def new_shipment(self, order):
         raise NotImplementedError()
-        
+
     def ship(self, order):
         if not self.is_available(order):
             raise Exception(_("Invalid shipping method for this order"))
@@ -74,12 +76,13 @@ class ShippingMethod(MethodBase):
             order.shipment.delete()
         order.shipment = shipment
         order.save()
-        
+
+
 class PaymentMethod(MethodBase):
-        
+
     def new_payment(self, order):
         raise NotImplementedError()
-        
+
     def pay(self, order):
         if not self.is_available(order):
             raise Exception(_("Invalid payment method for this order"))

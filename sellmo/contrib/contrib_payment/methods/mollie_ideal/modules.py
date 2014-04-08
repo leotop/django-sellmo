@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -44,18 +44,19 @@ from lxml import objectify
 
 #
 
+
 class MollieIdealModule(Module):
     namespace = 'mollie_ideal'
-    
+
     #
     BankSelectForm = forms.Form
     MollieIdealPayment = MollieIdealPayment
-    
+
     #
     mollie_banklist_url = 'https://secure.mollie.nl/xml/ideal?a=banklist'
     mollie_fetch_url = 'https://www.mollie.nl//xml/ideal?a=fetch'
     mollie_check_url = 'https://secure.mollie.nl/xml/ideal?a=check'
-    
+
     @view()
     def bank_select(self, chain, request, context=None, **kwargs):
         if context is None:
@@ -65,7 +66,7 @@ class MollieIdealModule(Module):
         else:
             # We don't render anything
             raise Http404
-            
+
     @view()
     def pending(self, chain, request, context=None, **kwargs):
         if context is None:
@@ -75,7 +76,7 @@ class MollieIdealModule(Module):
         else:
             # We don't render anything
             raise Http404
-            
+
     @view()
     def failure(self, chain, request, context=None, **kwargs):
         if context is None:
@@ -85,54 +86,56 @@ class MollieIdealModule(Module):
         else:
             # We don't render anything
             raise Http404
-        
+
     @view(r'^report$')
     def report(self, chain, request, **kwargs):
         transaction_id = request.GET.get('transaction_id', None)
-        
+
         # Find a payment
         try:
-            payment = self.MollieIdealPayment.objects.get(transaction_id=transaction_id)
+            payment = self.MollieIdealPayment.objects.get(
+                transaction_id=transaction_id)
         except self.MollieIdealPayment.DoesNotExist:
             raise Http404
-            
+
         # We received a report, save now
         payment.transaction_report = True
         payment.save()
-            
+
         # Get the order
         order = payment.order
-        
+
         # Now get status
         settings = modules.settings.get_settings()
-        
+
         payload = {
-            'partnerid' : settings.mollie_partner_id,
-            'transaction_id' : payment.transaction_id,
+            'partnerid': settings.mollie_partner_id,
+            'transaction_id': payment.transaction_id,
         }
-        
+
         if settings.test_mode:
             payload['testmode'] = 'true'
-        
+
         req = requests.get(self.mollie_check_url, params=payload)
         if req.status_code != requests.codes.ok:
             raise Exception()
-        
+
         root = objectify.fromstring(req.text)
-        
+
         # Verify for order node
         if not hasattr(root, 'order'):
             # Something went wrong
-            raise Exception("Mollie returned errorcode {0}: {1}".format(root.item.errorcode, root.item.message))
-        
+            raise Exception("Mollie returned errorcode {0}: {1}".format(
+                root.item.errorcode, root.item.message))
+
         # Verify transaction_id
         if root.order.transaction_id.text != payment.transaction_id:
             raise Exception("Transaction id's did not match")
-        
+
         # Verify order amount
         if root.order.amount != int(order.total.amount * 100):
             raise Exception("Order amount was not correctly transfered")
-        
+
         # See if the order is payed and update order
         if root.order.payed:
             order.paid = order.total.amount
@@ -140,72 +143,74 @@ class MollieIdealModule(Module):
             status = self.MollieIdealPayment.SUCCESS
         else:
             status = self.MollieIdealPayment.FAILED
-        
+
         # Complete the payment, successful or not
         payment.complete_transaction(status)
-        
+
         return HttpResponse('')
-        
+
     @view(r'^back$')
     def back(self, chain, request, **kwargs):
         transaction_id = request.GET.get('transaction_id', None)
-        
+
         # Find a payment
         try:
-            payment = self.MollieIdealPayment.objects.get(transaction_id=transaction_id)
+            payment = self.MollieIdealPayment.objects.get(
+                transaction_id=transaction_id)
         except self.MollieIdealPayment.DoesNotExist:
             raise Http404
-        
+
         # Hand over to checkout process
         return redirect(reverse('checkout.checkout'))
-            
+
     @view()
     def redirect(self, chain, request, order, **kwargs):
         settings = modules.settings.get_settings()
-        
+
         payment = order.payment.downcast()
         payload = {
-            'partnerid' : settings.mollie_partner_id,
-            'amount' : int(order.total.amount * 100),
-            'bank_id' : payment.bank_id,
-            'description' : unicode(order),
-            'reporturl' : request.build_absolute_uri(reverse('mollie_ideal.report')),
-            'returnurl' : request.build_absolute_uri(reverse('mollie_ideal.back')),
+            'partnerid': settings.mollie_partner_id,
+            'amount': int(order.total.amount * 100),
+            'bank_id': payment.bank_id,
+            'description': unicode(order),
+            'reporturl': request.build_absolute_uri(reverse('mollie_ideal.report')),
+            'returnurl': request.build_absolute_uri(reverse('mollie_ideal.back')),
         }
-        
+
         if settings.test_mode:
             payload['testmode'] = 'true'
-            
+
         if settings.mollie_profile_key:
             payload['profile_key'] = settings.mollie_profile_key,
-        
+
         req = requests.get(self.mollie_fetch_url, params=payload)
         if req.status_code != requests.codes.ok:
             raise Exception()
-        
+
         root = objectify.fromstring(req.text)
-        
+
         # Verify for order node
         if not hasattr(root, 'order'):
             # Something went wrong
-            raise Exception("Mollie returned errorcode {0}: {1}".format(root.item.errorcode, root.item.message))
-        
+            raise Exception("Mollie returned errorcode {0}: {1}".format(
+                root.item.errorcode, root.item.message))
+
         # Verify order amount
         if root.order.amount != int(order.total.amount * 100):
             raise Exception("Order amount was not correctly transfered")
-            
+
         # Get the redirect url
         url = root.order.URL.text
-        
+
         # Keep track of transaction id
         transaction_id = root.order.transaction_id.text
         payment.begin_transaction(transaction_id)
-        
+
         if chain:
             return chain.execute(request=request, **kwargs)
         else:
             return redirect(url)
-            
+
     @chainable()
     def get_bank_select_form(self, chain, prefix=None, data=None, form=None, bank=None, banks=None, **kwargs):
         if banks is None:
@@ -213,8 +218,8 @@ class MollieIdealModule(Module):
         if form is None:
             class BankSelectForm(self.BankSelectForm):
                 bank = forms.ChoiceField(
-                    widget = forms.RadioSelect(),
-                    choices = [(bank[0], bank[1]) for bank in banks.values()]
+                    widget=forms.RadioSelect(),
+                    choices=[(bank[0], bank[1]) for bank in banks.values()]
                 )
             initial = {}
             if bank:
@@ -225,18 +230,18 @@ class MollieIdealModule(Module):
             if out.has_key('form'):
                 form = out['form']
         return form
-            
+
     @chainable()
     def get_banks(self, chain):
         settings = modules.settings.get_settings()
-        
+
         payload = {
-            
+
         }
-        
+
         if settings.test_mode:
             payload['testmode'] = 'true'
-        
+
         req = requests.get(self.mollie_banklist_url, params=payload)
         root = objectify.fromstring(req.text)
         banks = {}
@@ -244,18 +249,19 @@ class MollieIdealModule(Module):
             bank_id = str(bank.bank_id)
             banks[bank_id] = (bank_id, bank.bank_name)
         return banks
-    
+
     @chainable()
     def process_bank_select(self, chain, request, payment, prefix=None, data=None, bank=None, **kwargs):
         banks = self.get_banks()
         processed = False
         initial = None
-        
+
         if not payment.bank_id is None:
             initial = payment.bank_id
-        
-        form = self.get_bank_select_form(prefix=prefix, data=data, banks=banks, bank=initial)
-        
+
+        form = self.get_bank_select_form(
+            prefix=prefix, data=data, banks=banks, bank=initial)
+
         if data and form.is_valid():
             # Resolve bank
             bank = form.cleaned_data['bank']
@@ -263,7 +269,7 @@ class MollieIdealModule(Module):
             payment.bank_id = bank[0].zfill(4)
             payment.bank_name = bank[1]
             processed = True
-        
+
         if chain:
             out = chain.execute(
                 request=request,
@@ -275,6 +281,6 @@ class MollieIdealModule(Module):
                 processed=processed,
                 **kwargs
             )
-            bank, form, processed = out.get('bank', bank), out.get('form', form), out.get('processed', processed)
+            bank, form, processed = out.get('bank', bank), out.get(
+                'form', form), out.get('processed', processed)
         return bank, form, processed
-    

@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -34,11 +34,12 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
+
 class BankTransferPaymentMethod(PaymentMethod):
 
     identifier = 'bank_transfer'
     name = _("bank transfer")
-    
+
     def process(self, order, request, next_step):
         return next_step
 

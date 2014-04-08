@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -26,28 +26,33 @@
 
 #
 
+
 class ValueComparator(object):
+
     def __init__(self, value):
         self.value = value
-        
+
     def __eq__(self, other):
         a = self.value
         b = self.value
         return a.value == b.value and a.attribute.key == b.attribute.key
-        
+
     def __hash__(self):
         return hash(u"attr_{0}_value_{1}".format(self.value.attribute.key, self.value.value))
 
+
 class ValueSet(set):
+
     def __init__(self, values):
         values = [ValueComparator(value) for value in list(values)]
         super(ValueSet, self).__init__(values)
-    
+
     def extract(self):
         for comparator in self:
             yield comparator.value
-            
+
 #
+
 
 def _ordered(func):
     def wrap(a, b):
@@ -59,16 +64,17 @@ def _ordered(func):
         return out
     return wrap
 
+
 @_ordered
 def difference(a, b):
     return a - b
 
-@_ordered  
+
+@_ordered
 def intersection(a, b):
     return a & b
-    
+
+
 @_ordered
 def union(a, b):
     return a + b
-    
-    

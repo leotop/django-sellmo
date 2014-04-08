@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -34,14 +34,15 @@ from sellmo.contrib.contrib_discount.models import Discount
 
 #
 
+
 class DiscountModule(Module):
     namespace = 'discount'
     Discount = Discount
     subtypes = []
-    
+
     @classmethod
     def register_subtype(self, subtype):
         self.subtypes.append(subtype)
-        
+
         # Shouldn't be a problem if Capital cased classnames are used.
         setattr(self, subtype.__name__, subtype)

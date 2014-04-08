@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -40,70 +40,77 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
+
 @load(action='load_discount_subtypes', after='finalize_discount_Discount')
 def load_tax_subtypes():
     pass
 
-# Make sure to load directly after finalize_discount_Discount and thus 
+# Make sure to load directly after finalize_discount_Discount and thus
 # directly after finalize_product_Product
+
+
 @load(after='finalize_discount_Discount', directly=True)
 def load_model():
     class ProductMixin(ModelMixin):
         model = modules.product.Product
         discount = models.ForeignKey(
             modules.discount.Discount,
-            blank = True,
-            null = True,
-            on_delete = models.SET_NULL,
-            related_name = 'products',
-            verbose_name = _("discount"),
+            blank=True,
+            null=True,
+            on_delete=models.SET_NULL,
+            related_name='products',
+            verbose_name=_("discount"),
         )
 
-# Make sure to load directly after finalize_product_ProductRelatable and thus 
-# directly after finalize_product_Product          
+# Make sure to load directly after finalize_product_ProductRelatable and thus
+# directly after finalize_product_Product
+
+
 @load(action='finalize_discount_Discount', after='finalize_product_ProductRelatable', directly=True)
 def finalize_model():
-    
+
     class DiscountQuerySet(ProductRelatableQuerySet, PolymorphicQuerySet):
         pass
-    
+
     class DiscountManager(ProductRelatableManager, PolymorphicManager):
+
         def get_query_set(self):
             return DiscountQuerySet(self.model)
-    
+
     class Discount(modules.discount.Discount, modules.product.ProductRelatable):
-        
+
         objects = DiscountManager()
-        
+
         @classmethod
         def get_for_product_query(cls, product):
             return super(Discount, cls).get_for_product_query(product) | Q(products=product)
-            
+
         @classmethod
         def get_best_for_product(cls, product, matches):
             better = matches.filter(products=product)
             if better:
                 matches = better
             return super(Discount, cls).get_best_for_product(product=product, matches=matches)
-        
+
         class Meta(modules.discount.Discount.Meta):
             app_label = 'discount'
             verbose_name = _("discount")
             verbose_name_plural = _("discounts")
-    
+
     modules.discount.Discount = Discount
     modules.discount.register('DiscountQuerySet', DiscountQuerySet)
     modules.discount.register('DiscountManager', DiscountManager)
-        
+
+
 class Discount(PolymorphicModel):
-    
+
     name = models.CharField(
-        max_length = 80,
-        verbose_name = _("name"),
+        max_length=80,
+        verbose_name=_("name"),
     )
-    
+
     class Meta:
         abstract = True
-    
+
     def __unicode__(self):
-        return self.name            
+        return self.name

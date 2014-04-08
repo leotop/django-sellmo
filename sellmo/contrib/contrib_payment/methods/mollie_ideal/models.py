@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -34,107 +34,107 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 #
-    
+
+
 @load(action='finalize_mollie_ideal_Payment', after='finalize_checkout_Payment')
 def finalize_model():
-    
+
     class MollieIdealPayment(modules.checkout.Payment, modules.mollie_ideal.MollieIdealPayment):
-        
+
         def get_method(self):
             return MollieIdealPaymentMethod()
-            
+
         def __unicode__(self):
             return unicode(self.get_method())
-        
+
         class Meta(modules.mollie_ideal.MollieIdealPayment.Meta):
             app_label = 'checkout'
             verbose_name = _("mollie ideal payment")
             verbose_name_plural = _("mollie ideal payments")
-        
+
     modules.mollie_ideal.MollieIdealPayment = MollieIdealPayment
 
-    
+
 class MollieIdealPayment(models.Model):
-    
+
     SUCCESS = 10
     FAILED = 20
     EXPIRED = 30
     CANCELED = 40
-    
+
     STATUS_CODES = (
         (SUCCESS, _("success")),
         (FAILED, _("failed")),
         (EXPIRED, _("expired")),
         (CANCELED, _("canceled")),
     )
-    
+
     bank_id = models.CharField(
-        max_length = 4,
-        editable = False,
+        max_length=4,
+        editable=False,
     )
-    
+
     bank_name = models.CharField(
-        max_length = 255,
-        editable = False,
+        max_length=255,
+        editable=False,
     )
-    
+
     def begin_transaction(self, transaction_id, save=True):
         self.transaction_id = transaction_id
         self.transaction_status = None
         self.transaction_report = False
         if save:
             self.save()
-        
+
     def abort_transaction(self, save=True):
         self.transaction_id = ''
         self.transaction_status = None
         self.transaction_report = False
         if save:
             self.save()
-        
+
     def retry(self, save=True):
         self.abort_transaction()
         self.bank_id = ''
         self.bank_name
         if save:
             self.save()
-            
+
     def complete_transaction(self, status, save=True):
         self.transaction_status = status
         self.transaction_report = True
         if save:
             self.save()
-    
+
     transaction_id = models.CharField(
-        max_length = 32,
-        editable = False,
+        max_length=32,
+        editable=False,
     )
-    
+
     transaction_report = models.BooleanField(
-        default = False,
-        editable = False
+        default=False,
+        editable=False
     )
-    
+
     transaction_status = models.PositiveIntegerField(
-        null = True,
-        editable = False,
-        choices = STATUS_CODES
+        null=True,
+        editable=False,
+        choices=STATUS_CODES
     )
-    
+
     @property
     def is_pending(self):
         if self.transaction_id and not self.transaction_report:
             return True
         return False
-        
+
     @property
     def is_success(self):
         return self.transaction_status == self.SUCCESS
-        
+
     @property
     def is_completed(self):
         return not self.transaction_status is None
-    
+
     class Meta:
         abstract = True
-        

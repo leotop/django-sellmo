@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -45,30 +45,35 @@ from django.contrib.contenttypes.models import ContentType
 
 #
 
+
 class VariantAttributeMixin(ProductAttributeMixin):
-    form = ProductAttributeFormFactory(mixin=VariantAttributeFormMixin, prefix='attribute')
-    
+    form = ProductAttributeFormFactory(
+        mixin=VariantAttributeFormMixin, prefix='attribute')
+
+
 class ProductVariationMixin(object):
-    
-    form = ProductVariationFormFactory(mixin=ProductVariationFormMixin, prefix='variations')
-    
+
+    form = ProductVariationFormFactory(
+        mixin=ProductVariationFormMixin, prefix='variations')
+
     def save_model(self, request, obj, form, change):
         obj.save()
         form.save_variations()
-    
+
     def get_fieldsets(self, request, obj=None):
-        fieldsets = super(ProductVariationMixin, self).get_fieldsets(request, obj)
+        fieldsets = super(
+            ProductVariationMixin, self).get_fieldsets(request, obj)
         fields = [
             'variations_{0}'.format(key) for key in modules.attribute.Attribute.objects.filter(variates=True).values_list('key', flat=True)
         ]
         fieldsets += ((_("Variations"), {'fields': fields}),)
         return fieldsets
-        
+
 #
+
 
 class VariationAdmin(admin.ModelAdmin):
     pass
-    
+
 
 admin.site.register(modules.variation.Variation, VariationAdmin)
-

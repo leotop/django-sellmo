@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -36,8 +36,11 @@ debug = getattr(settings, 'DEBUG', False)
 
 #
 
-SEND_MAIL_RETRY_ENABLED = getattr(settings, 'SELLMO_SEND_MAIL_RETRY_ENABLED', defaults.SEND_MAIL_RETRY_ENABLED)
-SEND_MAIL_RETRY_DELAY = getattr(settings, 'SELLMO_SEND_MAIL_RETRY_DELAY', defaults.SEND_MAIL_RETRY_DELAY)
-SEND_MAIL_RETRY_LIMIT = getattr(settings, 'SELLMO_SEND_MAIL_RETRY_LIMIT', defaults.SEND_MAIL_RETRY_LIMIT)
+SEND_MAIL_RETRY_ENABLED = getattr(
+    settings, 'SELLMO_SEND_MAIL_RETRY_ENABLED', defaults.SEND_MAIL_RETRY_ENABLED)
+SEND_MAIL_RETRY_DELAY = getattr(
+    settings, 'SELLMO_SEND_MAIL_RETRY_DELAY', defaults.SEND_MAIL_RETRY_DELAY)
+SEND_MAIL_RETRY_LIMIT = getattr(
+    settings, 'SELLMO_SEND_MAIL_RETRY_LIMIT', defaults.SEND_MAIL_RETRY_LIMIT)
 
 #

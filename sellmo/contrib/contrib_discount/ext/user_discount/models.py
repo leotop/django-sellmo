@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -34,6 +34,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 #
+
 
 @load(before='finalize_discount_Discount')
 def load_model():

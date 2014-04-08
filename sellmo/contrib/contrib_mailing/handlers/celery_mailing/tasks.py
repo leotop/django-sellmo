@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -32,7 +32,8 @@ from sellmo.contrib.contrib_mailing.config import settings
 from sellmo.core.mailing.handlers import MailHandlerBase
 from sellmo.core.mailing import mailer
 
-# 
+#
+
 
 @shared_task
 def send_mail(message_type, message_reference, context):

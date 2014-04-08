@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -31,11 +31,12 @@ from sellmo.api.decorators import link
 
 namespace = modules.checkout.namespace
 
+
 @link()
 def get_shipping_methods(order, methods, **kwargs):
     for method in modules.shipping.ShippingMethod.objects.polymorphic().filter(active=True):
         for sub_method in method.get_methods():
             methods[sub_method.identifier] = sub_method
     return {
-        'methods' : methods
+        'methods': methods
     }

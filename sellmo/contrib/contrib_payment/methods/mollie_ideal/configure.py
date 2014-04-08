@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -36,18 +36,18 @@ from sellmo import modules
 group = _("Mollie iDeal")
 
 modules.settings.add_setting('mollie_ideal_name', models.CharField(
-    max_length = 80,
-    default = _("iDeal"),
-    verbose_name = _("mollie ideal name")
+    max_length=80,
+    default=_("iDeal"),
+    verbose_name=_("mollie ideal name")
 ), group)
 
 modules.settings.add_setting('mollie_partner_id', models.CharField(
-    max_length = 20,
-    verbose_name = _("mollie partner-id")
+    max_length=20,
+    verbose_name=_("mollie partner-id")
 ), group)
 
 modules.settings.add_setting('mollie_profile_key', models.CharField(
-    max_length = 20,
-    blank = True,
-    verbose_name = _("mollie profile key")
+    max_length=20,
+    blank=True,
+    verbose_name=_("mollie profile key")
 ), group)

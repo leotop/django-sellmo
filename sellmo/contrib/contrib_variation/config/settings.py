@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -36,8 +36,11 @@ debug = getattr(settings, 'DEBUG', False)
 
 #
 
-VARIATION_CHOICE_FORMAT = getattr(settings, 'SELLMO_VARIATION_CHOICE_FORMAT', defaults.VARIATION_CHOICE_FORMAT)
-VARIATION_DESCRIPTION_FORMAT = getattr(settings, 'SELLMO_VARIATION_DESCRIPTION_FORMAT', defaults.VARIATION_DESCRIPTION_FORMAT)
-VARIATION_VALUE_SEPERATOR = getattr(settings, 'SELLMO_VARIATION_VALUE_SEPERATOR', defaults.VARIATION_VALUE_SEPERATOR)
+VARIATION_CHOICE_FORMAT = getattr(
+    settings, 'SELLMO_VARIATION_CHOICE_FORMAT', defaults.VARIATION_CHOICE_FORMAT)
+VARIATION_DESCRIPTION_FORMAT = getattr(
+    settings, 'SELLMO_VARIATION_DESCRIPTION_FORMAT', defaults.VARIATION_DESCRIPTION_FORMAT)
+VARIATION_VALUE_SEPERATOR = getattr(
+    settings, 'SELLMO_VARIATION_VALUE_SEPERATOR', defaults.VARIATION_VALUE_SEPERATOR)
 
 #

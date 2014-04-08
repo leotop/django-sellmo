@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -34,26 +34,27 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
-class AttributeModule(Module):  
+
+class AttributeModule(Module):
 
     namespace = 'attribute'
     Attribute = Attribute
     Value = Value
-        
+
     @chainable()
     def get_sorted_values(self, chain, values, attribute=None, **kwargs):
         if chain:
             out = chain.execute(values=values, attribute=attribute, **kwargs)
             values = out.get('values', values)
         return values
-        
+
     @chainable()
     def get_sorted_attributes(self, chain, attributes, **kwargs):
         if chain:
             out = chain.execute(attributes=attributes, **kwargs)
             attributes = out.get('attributes', attributes)
         return attributes
-        
+
     @chainable()
     def filter(self, chain, request, products, attr, value, attribute=None, operator=None, **kwargs):
         if not attribute:
@@ -70,13 +71,13 @@ class AttributeModule(Module):
                 q = ProductQ(attribute, value)
             else:
                 qargs = {
-                    operator : value
+                    operator: value
                 }
                 q = ProductQ(attribute, **qargs)
             return products.filter(q)
-        
+
         if chain:
-            out = chain.execute(request=request, products=products, attr=attr, value=value, attribute=attribute, operator=operator, **kwargs)
+            out = chain.execute(request=request, products=products, attr=attr,
+                                value=value, attribute=attribute, operator=operator, **kwargs)
             products = out.get('products', products)
         return products
-        

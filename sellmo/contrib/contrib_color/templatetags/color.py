@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -41,13 +41,14 @@ register = template.Library()
 
 #
 
+
 class ColorsTag(Tag):
     name = 'colors'
     options = Options(
         MultiKeywordArgument('kwargs', required=False),
         'as',
         Argument('varname', default='colors', required=False, resolve=False),
-        blocks = [('endcolors', 'nodelist')],
+        blocks=[('endcolors', 'nodelist')],
     )
 
     def render_tag(self, context, kwargs, varname, nodelist):

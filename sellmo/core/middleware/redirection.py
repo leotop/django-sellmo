@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -28,6 +28,8 @@ from sellmo.core.redirection import RedirectionAccess
 
 #
 
+
 class RedirectionMiddleware(object):
+
     def process_request(self, request):
         request.redirection = RedirectionAccess(request.session)

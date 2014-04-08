@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -44,14 +44,15 @@ logger = logging.getLogger('sellmo')
 
 #
 
+
 class QtyPricingModule(Module):
     namespace = 'qty_pricing'
-    
+
     QtyPriceBase = QtyPriceBase
     QtyPrice = QtyPrice
     QtyPriceRatio = QtyPriceRatio
     ProductQtyPrice = ProductQtyPrice
-    
+
     @chainable()
     def get_tiers(self, chain, product, tiers=None, **kwargs):
         if not tiers:
@@ -60,7 +61,7 @@ class QtyPricingModule(Module):
             out = chain.execute(product=product, tiers=tiers, **kwargs)
             tiers = out.get('tiers', tiers)
         return tiers
-        
+
     @chainable()
     def get_tier(self, chain, product, qty, tier=None, **kwargs):
         if not tier:
@@ -72,55 +73,59 @@ class QtyPricingModule(Module):
             out = chain.execute(product=product, qty=qty, tier=tier, **kwargs)
             tier = out.get('tier', tier)
         return tier
-        
+
+
 class PriceIndexingModule(Module):
     namespace = 'price_indexing'
-    
+
     PriceIndexHandle = PriceIndexHandle
-    
+
     def _get_handle(self, index):
         if self.PriceIndexHandle.objects.filter(index=index).count() == 0:
             self.PriceIndexHandle.objects.create(index=index)
         return self.PriceIndexHandle.objects.select_for_update().get(index=index)
-        
+
     def _read_updates(self, handle):
         if handle.updates:
             return handle.updates
         else:
             return {
-                'invalidations' : modules.pricing.get_index(handle.index).model.objects.none(),
-                'kwargs' : {},
+                'invalidations': modules.pricing.get_index(handle.index).model.objects.none(),
+                'kwargs': {},
             }
-            
+
     def _write_updates(self, handle, updates):
         handle.updates = updates
         handle.save()
-        
+
     def _merge_kwarg(self, key, existing, new):
         if isinstance(existing, QuerySet) and isinstance(new, QuerySet):
             # Make sure we are dealing with the same model
             if existing.model != new.model:
                 raise Exception("Cannot merge query sets '{0}'.".format(key))
             merged = [pk for pk in existing.values_list('pk', flat=True)]
-            merged.extend([pk for pk in new.values_list('pk', flat=True) if pk not in merged])
+            merged.extend(
+                [pk for pk in new.values_list('pk', flat=True) if pk not in merged])
             merged = existing.model.objects.filter(pk__in=merged)
         else:
             merged = list(existing)
             merged.extend([value for value in new if value not in existing])
         return merged
-    
+
     @chainable()
     def queue_update(self, chain, index, invalidations, **kwargs):
         with transaction.atomic():
             handle = self._get_handle(index)
             updates = self._read_updates(handle)
-            
+
             # Merge invalidations
             existing = updates['invalidations']
             merged = [pk for pk in existing.values_list('pk', flat=True)]
-            merged.extend([pk for pk in invalidations.values_list('pk', flat=True) if pk not in merged])
-            updates['invalidations'] = modules.pricing.get_index(index).model.objects.filter(pk__in=merged)
-            
+            merged.extend(
+                [pk for pk in invalidations.values_list('pk', flat=True) if pk not in merged])
+            updates['invalidations'] = modules.pricing.get_index(
+                index).model.objects.filter(pk__in=merged)
+
             # merge kwargs
             merged = dict(updates['kwargs'])
             for key, value in kwargs.iteritems():
@@ -133,8 +138,7 @@ class PriceIndexingModule(Module):
                     merged[key] = self._merge_kwarg(key, merged[key], value)
             updates['kwargs'] = merged
             self._write_updates(handle, updates)
-        
-        
+
     @chainable()
     def handle_updates(self, chain, **kwargs):
         for identifier, index in modules.pricing.indexes.iteritems():
@@ -144,43 +148,49 @@ class PriceIndexingModule(Module):
                     continue
                 updates = self._read_updates(handle)
                 self._write_updates(handle, None)
-            
+
             logger.info("Index '{0}' is updating.".format(identifier))
-            
+
             # Requery kwargs (query could have become invalid)
             for key, value in updates['kwargs'].iteritems():
                 if index.kwargs[key].get('model', None) is not None:
                     model = index.kwargs[key]['model']
-                    updates['kwargs'][key] = model.objects.filter(pk__in=value.values_list('pk', flat=True))
-                    
+                    updates['kwargs'][key] = model.objects.filter(
+                        pk__in=value.values_list('pk', flat=True))
+
             # Requery invalidations
             invalidations = updates['invalidations']
-            updates['invalidations'] = invalidations.model.objects.filter(pk__in=invalidations.values_list('pk', flat=True))
-            
+            updates['invalidations'] = invalidations.model.objects.filter(
+                pk__in=invalidations.values_list('pk', flat=True))
+
             invalidations, combinations = modules.pricing.update_index(
                 index=identifier,
                 invalidations=updates['invalidations'],
                 delay=True,
                 **updates['kwargs']
             )
-            
+
             with transaction.atomic():
-                logger.info("Invalidating {1} indexes for index '{0}'".format(identifier, invalidations.count()))
+                logger.info("Invalidating {1} indexes for index '{0}'".format(
+                    identifier, invalidations.count()))
                 invalidations.invalidate()
-                
-                logger.info("Creating {1} indexes for index '{0}'".format(identifier, len(combinations)))
+
+                logger.info(
+                    "Creating {1} indexes for index '{0}'".format(identifier, len(combinations)))
                 for combination in combinations:
                     price = modules.pricing.get_price(**combination)
-                    signature = ", ".join(str(value) for value in combination.values())
+                    signature = ", ".join(str(value)
+                                          for value in combination.values())
                     if index.index(price, **combination):
-                        logger.info("Index {1}={2} created for index '{0}'".format(identifier, signature, price.amount))
+                        logger.info("Index {1}={2} created for index '{0}'".format(
+                            identifier, signature, price.amount))
                     else:
-                        logger.info("Index {1}={2} omitted for index '{0}'".format(identifier, signature, price.amount))
-            
+                        logger.info("Index {1}={2} omitted for index '{0}'".format(
+                            identifier, signature, price.amount))
+
             with transaction.atomic():
                 handle = self._get_handle(identifier)
                 handle.updated = datetime.now()
                 handle.save()
-                
+
             logger.info("Index '{0}' updated.".format(index))
-    

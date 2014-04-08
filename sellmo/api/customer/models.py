@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -41,49 +41,58 @@ from sellmo.api.decorators import load
 # Customer model
 #
 
+
 @load(before='finalize_customer_Customer', after='finalize_customer_Address')
 def load_model():
     for type in settings.ADDRESS_TYPES:
         name = '{0}_address'.format(type)
-        modules.customer.Customer.add_to_class(name, 
-            models.ForeignKey(
-                modules.customer.Address,
-                related_name='+',
-            )
-        )
+        modules.customer.Customer.add_to_class(name,
+                                               models.ForeignKey(
+                                                   modules.customer.Address,
+                                                   related_name='+',
+                                               )
+                                               )
+
+
 @load(after='finalize_customer_Addressee', before='finalize_customer_Customer')
 def load_model():
     class Customer(modules.customer.Customer, modules.customer.Addressee):
-        class Meta(modules.customer.Customer.Meta):
-            abstract = True
-        
-    modules.customer.Customer = Customer
-    
-@load(after='finalize_customer_Contactable', before='finalize_customer_Customer')
-def load_model():
-    class Customer(modules.customer.Customer, modules.customer.Contactable):
+
         class Meta(modules.customer.Customer.Meta):
             abstract = True
 
     modules.customer.Customer = Customer
-        
+
+
+@load(after='finalize_customer_Contactable', before='finalize_customer_Customer')
+def load_model():
+    class Customer(modules.customer.Customer, modules.customer.Contactable):
+
+        class Meta(modules.customer.Customer.Meta):
+            abstract = True
+
+    modules.customer.Customer = Customer
+
+
 @load(action='finalize_customer_Customer')
 def finalize_model():
     class Customer(modules.customer.Customer):
+
         class Meta(modules.customer.Customer.Meta):
             app_label = 'customer'
             verbose_name = _("customer")
             verbose_name_plural = _("customers")
-            
+
     modules.customer.Customer = Customer
-    
+
+
 class Customer(models.Model, Cloneable):
 
     if settings.AUTH_ENABLED:
         user = models.OneToOneField(
             User,
-            related_name = 'customer',
-            verbose_name = _("user"),
+            related_name='customer',
+            verbose_name=_("user"),
         )
 
     def get_address(self, type):
@@ -94,7 +103,7 @@ class Customer(models.Model, Cloneable):
 
     def set_address(self, type, value):
         setattr(self, '{0}_address'.format(type), value)
-        
+
     def clone(self, cls=None, clone=None):
         clone = super(Customer, self).clone(cls=cls, clone=clone)
         if settings.AUTH_ENABLED:
@@ -104,29 +113,34 @@ class Customer(models.Model, Cloneable):
     class Meta:
         ordering = ['last_name', 'first_name']
         abstract = True
-    
+
 #
 # Address model
 #
-    
+
+
 @load(after='finalize_customer_Addressee', before='finalize_customer_Address')
 def load_model():
     class Address(modules.customer.Address, modules.customer.Addressee):
+
         class Meta(modules.customer.Address.Meta):
             abstract = True
 
     modules.customer.Address = Address
-    
+
+
 @load(action='finalize_customer_Address')
 def finalize_model():
     class Address(modules.customer.Address):
+
         class Meta(modules.customer.Address.Meta):
             app_label = 'customer'
             verbose_name = _("address")
             verbose_name_plural = _("addresses")
-    
+
     modules.customer.Address = Address
-    
+
+
 class Address(models.Model, Cloneable):
 
     def clone(self, cls=None, clone=None):
@@ -136,49 +150,53 @@ class Address(models.Model, Cloneable):
     class Meta:
         ordering = ['last_name', 'first_name']
         abstract = True
-    
+
 #
 # Contactable model
 #
 
+
 @load(action='finalize_customer_Contactable')
 def finalize_model():
     class Contactable(modules.customer.Contactable):
-        
+
         email = models.EmailField(
-            blank = not settings.EMAIL_REQUIRED,
-            verbose_name = _("email address"),
+            blank=not settings.EMAIL_REQUIRED,
+            verbose_name=_("email address"),
         )
-        
+
         class Meta(modules.customer.Contactable.Meta):
             abstract = True
 
     modules.customer.Contactable = Contactable
-    
+
+
 class Contactable(models.Model, Cloneable):
-    
+
     def clone(self, cls=None, clone=None):
         clone = super(Contactable, self).clone(cls=cls, clone=clone)
         clone.email = self.email
         return clone
-        
+
     class Meta:
         abstract = True
-  
+
 #
 # Addressee model
-#  
+#
+
 
 @load(action='finalize_customer_Addressee')
 def finalize_model():
     class Addressee(modules.customer.Addressee):
-        
+
         if settings.BUSINESSES_ALLOWED:
             company_name = models.CharField(
-                max_length = 50,
-                verbose_name = _("company name"),
-                blank = not settings.BUSINESSES_ONLY,
+                max_length=50,
+                verbose_name=_("company name"),
+                blank=not settings.BUSINESSES_ONLY,
             )
+
             @property
             def is_business(self):
                 return bool(self.company_name)
@@ -186,24 +204,25 @@ def finalize_model():
             @property
             def is_business(self):
                 return False
-        
+
         class Meta(modules.customer.Addressee.Meta):
             abstract = True
 
-    modules.customer.Addressee = Addressee     
+    modules.customer.Addressee = Addressee
+
 
 class Addressee(models.Model, Cloneable):
 
     first_name = models.CharField(
-        max_length = 30,
-        verbose_name = _("first name")
+        max_length=30,
+        verbose_name=_("first name")
     )
-    
+
     last_name = models.CharField(
-        max_length = 30,
-        verbose_name = _("last name")
+        max_length=30,
+        verbose_name=_("last name")
     )
-    
+
     def clone(self, cls=None, clone=None):
         clone = super(Addressee, self).clone(cls=cls, clone=clone)
         clone.first_name = self.first_name
@@ -211,9 +230,9 @@ class Addressee(models.Model, Cloneable):
         if settings.BUSINESSES_ALLOWED:
             clone.company_name = self.company_name
         return clone
-    
+
     def __unicode__(self):
         return u"{0} {1}".format(self.first_name, self.last_name)
-    
+
     class Meta:
         abstract = True

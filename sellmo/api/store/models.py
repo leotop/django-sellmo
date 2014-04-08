@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -43,94 +43,103 @@ from sellmo.utils.cloning import Cloneable
 
 #
 
+
 @load(after='finalize_product_Product', before='finalize_store_Purchase')
 def load_model():
     class Purchase(modules.store.Purchase):
         product = models.ForeignKey(
             modules.product.Product,
-            verbose_name = _("product"),
+            verbose_name=_("product"),
         )
-        
+
         class Meta(modules.store.Purchase.Meta):
             abstract = True
-    
+
     modules.store.Purchase = Purchase
-        
+
+
 @load(action='finalize_store_Purchase')
 def finalize_model():
-    
+
     modules.store.Purchase = modules.pricing.make_stampable(
-        model = modules.store.Purchase,
-        properties = [
+        model=modules.store.Purchase,
+        properties=[
             ('total', _("total"))
         ]
     )
-    
+
     class Purchase(modules.store.Purchase):
+
         class Meta(modules.store.Purchase.Meta):
             app_label = 'store'
             verbose_name = _("purchase")
             verbose_name_plural = ("purchases")
-    
+
     modules.store.Purchase = Purchase
-    
+
+
 class PurchaseQuerySet(PolymorphicQuerySet):
+
     def mergeable_with(self, purchase):
         return self.get(~Q(pk=purchase.pk), content_type=purchase.resolve_content_type(), product=purchase.product)
 
+
 class PurchaseManager(PolymorphicManager):
+
     def get_query_set(self):
         return PurchaseQuerySet(self.model)
 
     def mergeable_with(self, *args, **kwargs):
         return self.get_query_set().mergeable_with(*args, **kwargs)
 
+
 class Purchase(PolymorphicModel, Cloneable):
-    
+
     objects = PurchaseManager()
-    
+
     """
     Timestamp when this purchase was last calculated.
     """
     calculated = models.DateTimeField(
-        editable = False,
-        null = True,
-        verbose_name = _("calculated at"),
+        editable=False,
+        null=True,
+        verbose_name=_("calculated at"),
     )
-    
+
     qty = models.PositiveIntegerField(
-        default = 1,
-        verbose_name = _("qty"),
+        default=1,
+        verbose_name=_("qty"),
     )
-    
+
     def calculate(self, total=None, save=True):
         if total is None:
-            total = modules.pricing.get_price(product=self.product, qty=self.qty) * self.qty
+            total = modules.pricing.get_price(
+                product=self.product, qty=self.qty) * self.qty
             total = modules.pricing.get_price(price=total, purchase=self)
-            
+
         self.total = total
-        
+
         # Update calculcated timestamp and save
         self.calculated = datetime.datetime.now()
         if save:
             self.save()
-    
+
     def merge_with(self, purchase):
         self.qty += purchase.qty
         self.total = Price()
         self.calculated = None
-    
+
     @property
     def qty_price(self):
         return self.total / self.qty
-    
+
     @property
     def description(self):
         return self.describe()
-    
+
     def describe(self):
         return unicode(self.product)
-        
+
     def clone(self, cls=None, clone=None):
         clone = super(Purchase, self).clone(cls=cls, clone=clone)
         clone.product = self.product
@@ -138,13 +147,13 @@ class Purchase(PolymorphicModel, Cloneable):
         clone.total = self.total
         clone.calculated = self.calculated
         return clone
-        
+
     def is_stale(self, **kwargs):
         return True
-    
+
     def __unicode__(self):
         return u"%s x %s" % (self.qty, self.description)
-    
+
     class Meta:
         abstract = True
         ordering = ['id']

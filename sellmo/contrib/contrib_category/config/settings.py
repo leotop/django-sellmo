@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -32,4 +32,5 @@ from sellmo.contrib.contrib_category.config import defaults
 
 #
 
-MAX_EXPIRE_TIME = getattr(settings, 'SELLMO_CATEGORY_MAX_EXPIRE_TIME', defaults.MAX_EXPIRE_TIME)
+MAX_EXPIRE_TIME = getattr(
+    settings, 'SELLMO_CATEGORY_MAX_EXPIRE_TIME', defaults.MAX_EXPIRE_TIME)

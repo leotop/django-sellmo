@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -36,9 +36,13 @@ debug = getattr(settings, 'DEBUG', False)
 
 #
 
-INVOICE_WRITER = getattr(settings, 'SELLMO_INVOICE_WRITER', defaults.INVOICE_WRITER)
-CHECKOUT_MAILS = getattr(settings, 'SELLMO_CHECKOUT_MAILS', defaults.CHECKOUT_MAILS)
-ACCEPT_TERMS_ENABLED = getattr(settings, 'SELLMO_ACCEPT_TERMS_ENABLED', defaults.ACCEPT_TERMS_ENABLED)
-NOTIFICATION_MAIL_TO = getattr(settings, 'SELLMO_NOTIFICATION_MAIL_TO', defaults.NOTIFICATION_MAIL_TO)
+INVOICE_WRITER = getattr(
+    settings, 'SELLMO_INVOICE_WRITER', defaults.INVOICE_WRITER)
+CHECKOUT_MAILS = getattr(
+    settings, 'SELLMO_CHECKOUT_MAILS', defaults.CHECKOUT_MAILS)
+ACCEPT_TERMS_ENABLED = getattr(
+    settings, 'SELLMO_ACCEPT_TERMS_ENABLED', defaults.ACCEPT_TERMS_ENABLED)
+NOTIFICATION_MAIL_TO = getattr(
+    settings, 'SELLMO_NOTIFICATION_MAIL_TO', defaults.NOTIFICATION_MAIL_TO)
 
 #

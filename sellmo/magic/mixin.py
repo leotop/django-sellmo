@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -28,21 +28,24 @@ from django.db.models import fields
 
 #
 
+
 class _ModelMixin(type):
+
     def __new__(meta, name, bases, dict):
         cls = type.__new__(meta, name, bases, dict)
-        
+
         if name != 'ModelMixin':
             assert 'model' in dict
             model = dict.pop('model')
 
             for name, member in dict.iteritems():
-                if name not in ModelMixin.__dict__:                 
+                if name not in ModelMixin.__dict__:
                     model.add_to_class(name, member)
                     if name == 'objects':
                         model._default_manager = member
-        
+
         return cls
+
 
 class ModelMixin(object):
     __metaclass__ = _ModelMixin

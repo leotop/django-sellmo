@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -35,32 +35,37 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
+
 @load(action='finalize_settings_SiteSettings')
 def finalize_model():
     class SiteSettings(modules.settings.SiteSettings):
+
         class Meta(modules.settings.SiteSettings.Meta):
             app_label = 'settings'
             verbose_name = _("site settings")
             verbose_name_plural = _("site settings")
-            
+
     modules.settings.SiteSettings = SiteSettings
 
+
 class SiteSettingsManager(models.Manager):
+
     def get_by_natural_key(self, site):
         return self.get(site=Site.objects.get_by_natural_key(site))
+
 
 class SiteSettings(models.Model):
     site = models.OneToOneField(
         Site,
-        related_name = 'settings',
+        related_name='settings',
     )
-    
+
     def natural_key(self):
         return (self.site.natural_key(),)
     natural_key.dependencies = ['sites.site']
-    
+
     def __unicode__(self):
         return unicode(self.site)
-    
+
     class Meta:
         abstract = True

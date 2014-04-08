@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -35,26 +35,27 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
+
 @load(before='finalize_customer_Addressee')
 def load_model():
-        
+
     class Addressee(modules.customer.Addressee):
-        
+
         if settings.NAME_PREFIX_ENABLED:
             prefix = models.CharField(
-                max_length = 20,
-                verbose_name = _("prefix"),
-                blank = not settings.NAME_PREFIX_REQUIRED,
-                choices = settings.NAME_PREFIX_CHOICES,
-                default = settings.NAME_PREFIX_CHOICES[0][0]
+                max_length=20,
+                verbose_name=_("prefix"),
+                blank=not settings.NAME_PREFIX_REQUIRED,
+                choices=settings.NAME_PREFIX_CHOICES,
+                default=settings.NAME_PREFIX_CHOICES[0][0]
             )
-        
+
         suffix = models.CharField(
-            max_length = 10,
-            blank = True,
-            verbose_name = _("suffx"),
+            max_length=10,
+            blank=True,
+            verbose_name=_("suffx"),
         )
-        
+
         def clone(self, cls=None, clone=None):
             clone = super(Addressee, self).clone(cls=cls, clone=clone)
             clone.suffix = self.suffix

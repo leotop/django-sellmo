@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -40,6 +40,7 @@ CUSTOMER_FORM = 'sellmo.registry.customer.CustomerForm'
 CONTACTABLE_FORM = 'sellmo.registry.customer.ContactableForm'
 ADDRESS_FORM = 'sellmo.registry.customer.AddressForm'
 
+
 def method_choice_format(method, costs, **kwargs):
     if costs:
         return u"{method} +{costs}".format(method=method, costs=costs)
@@ -56,45 +57,45 @@ ADDRESS_TYPES = ['shipping', 'billing']
 AUTH_ENABLED = True
 
 ORDER_STATUSES = {
-    'new' : (_("New"), {
-        'initial' : True,
-        'flow' : ['awaiting_payment', 'processing', 'completed', 'canceled'],
-        'state' : 'new',
+    'new': (_("New"), {
+        'initial': True,
+        'flow': ['awaiting_payment', 'processing', 'completed', 'canceled'],
+        'state': 'new',
     }),
-    'awaiting_payment' : (_("Awaiting payment"), {
-        'flow' : ['canceled', 'payment_received'],
-        'on_pending' : True,
-        'state' : 'pending',
+    'awaiting_payment': (_("Awaiting payment"), {
+        'flow': ['canceled', 'payment_received'],
+        'on_pending': True,
+        'state': 'pending',
     }),
-    'payment_received' : (_("Payment received"), {
-        'flow' : ['processing'],
-        'on_paid' : True,
-        'state' : 'pending',
+    'payment_received': (_("Payment received"), {
+        'flow': ['processing'],
+        'on_paid': True,
+        'state': 'pending',
     }),
-    'processing' : (_("Processing"), {
-        'flow' : ['canceled', 'completed', 'on_hold'],
-        'state' : 'pending',
+    'processing': (_("Processing"), {
+        'flow': ['canceled', 'completed', 'on_hold'],
+        'state': 'pending',
     }),
-    'on_hold' : (_("On hold"), {
-        'flow' : ['processing', 'completed'],
-        'state' : 'pending',
+    'on_hold': (_("On hold"), {
+        'flow': ['processing', 'completed'],
+        'state': 'pending',
     }),
-    'completed' : (_("Completed"), {
-        'flow' : ['closed', 'shipped'],
-        'state' : 'completed',
-        'on_completed' : True,
+    'completed': (_("Completed"), {
+        'flow': ['closed', 'shipped'],
+        'state': 'completed',
+        'on_completed': True,
     }),
-    'shipped' : (_("Shipped"), {
-        'flow' : ['closed'],
-        'state' : 'completed',
+    'shipped': (_("Shipped"), {
+        'flow': ['closed'],
+        'state': 'completed',
     }),
-    'canceled' : (_("Canceled"), {
-        'state' : 'canceled',
-        'on_canceled' : True,
+    'canceled': (_("Canceled"), {
+        'state': 'canceled',
+        'on_canceled': True,
     }),
-    'closed' : (_("Closed"), {
-        'state' : 'closed',
-        'on_closed' : True,
+    'closed': (_("Closed"), {
+        'state': 'closed',
+        'on_closed': True,
     }),
 }
 
@@ -118,7 +119,7 @@ CELERY_ENABLED = False
 MAIL_HANDLER = 'sellmo.core.mailing.handlers.DefaultMailHandler'
 MAIL_FROM = django_settings.DEFAULT_FROM_EMAIL
 
-# 
+#
 
 REPORT_GENERATORS = []
 REPORT_FORMAT = 'pdf'

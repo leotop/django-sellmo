@@ -32,8 +32,9 @@ from sellmo.config import settings
 
 #
 
+
 class MultiStepCheckoutProcess(CheckoutProcess):
-    
+
     def get_first_step(self):
         if not settings.AUTH_ENABLED or self.order.email:
             key = 'information'
@@ -42,109 +43,117 @@ class MultiStepCheckoutProcess(CheckoutProcess):
             key = 'login'
             step = LoginStep(order=self.order, request=self.request)
         return modules.multistep_checkout.get_step(key=key, order=self.order, request=self.request, step=step)
-    
+
+
 class LoginStep(CheckoutStep):
-    
+
     invalid_context = None
     key = 'login'
-    
+
     def is_definitive(self):
         return self.order.is_pending
-    
+
     def is_completed(self):
         return self.request.user.is_authenticated()
-        
+
     def can_skip(self):
         return True
-        
+
     def get_next_step(self):
         step = InformationStep(order=self.order, request=self.request)
         return modules.multistep_checkout.get_step(key='information', order=self.order, request=self.request, step=step)
-        
+
     def contextualize_or_complete(self, request, context, data=None, success=True):
-        user, form, processed = modules.customer.process_login(request=request, prefix='login', data=data)
+        user, form, processed = modules.customer.process_login(
+            request=request, prefix='login', data=data)
         context['login_form'] = form
         success &= processed
-        
+
         if success:
             modules.customer.login_user(request=request, user=user)
-        
+
         return success
-        
+
     def complete(self, data):
         self.invalid_context = {}
         return self.contextualize_or_complete(self.request, self.invalid_context, data)
-        
+
     def render(self, request, context):
         if self.invalid_context is None:
             self.contextualize_or_complete(request, context)
         else:
             context.update(self.invalid_context)
         return modules.multistep_checkout.login(request=request, context=context)
-        
+
+
 class InformationStep(CheckoutStep):
-    
+
     invalid_context = None
     key = 'information'
-    
+
     def is_completed(self):
         for type in settings.ADDRESS_TYPES:
             if self.order.get_address(type) is None:
-                return False    
+                return False
         if self.order.needs_shipping and self.order.shipment is None:
             return False
         return True
-        
+
     def is_definitive(self):
         return self.order.is_pending
-        
+
     def get_next_step(self):
         step = PaymentMethodStep(order=self.order, request=self.request)
-        next_step = modules.multistep_checkout.get_step(key='payment_method', order=self.order, request=self.request, step=step)
+        next_step = modules.multistep_checkout.get_step(
+            key='payment_method', order=self.order, request=self.request, step=step)
         if self.order.needs_shipping:
             return self.order.shipment.get_method().process(request=self.request, order=self.order, next_step=next_step)
         else:
             return next_step
-        
+
     def contextualize_or_complete(self, request, context, data=None, success=True):
         addresses = {}
-        
-        contactable, form, processed = modules.customer.process_contactable(request=request, prefix='contactable', contactable=self.order, data=data)
+
+        contactable, form, processed = modules.customer.process_contactable(
+            request=request, prefix='contactable', contactable=self.order, data=data)
         context['contactable_form'] = form
         success &= processed
-        
+
         if self.order.needs_shipping:
-            method, form, processed = modules.checkout.process_shipping_method(request=request, order=self.order, prefix='shipping_method', data=data)
+            method, form, processed = modules.checkout.process_shipping_method(
+                request=request, order=self.order, prefix='shipping_method', data=data)
             context['shipping_method_form'] = form
             success &= processed
-        
+
         for type in settings.ADDRESS_TYPES:
-            address, form, processed = modules.customer.process_address(request=request, type=type, prefix='{0}_address'.format(type), address=self.order.get_address(type), data=data)
+            address, form, processed = modules.customer.process_address(
+                request=request, type=type, prefix='{0}_address'.format(type), address=self.order.get_address(type), data=data)
             context['{0}_address_form'.format(type)] = form
             success &= processed
             addresses[type] = address
-        
+
         if data is not None and success:
             for type in settings.ADDRESS_TYPES:
                 address = addresses[type]
                 address.save()
                 self.order.set_address(type, address)
             self.order.save()
-        
+
         return success
-        
+
     def complete(self, data):
         self.invalid_context = {}
         return self.contextualize_or_complete(self.request, self.invalid_context, data)
-        
+
     def render(self, request, context):
         if self.invalid_context is None:
             self.contextualize_or_complete(request, context)
         else:
             context.update(self.invalid_context)
-        
+
         return modules.multistep_checkout.information(request=request, context=context)
-        
+
+
 class PaymentMethodStep(CheckoutStep):
 
     invalid_context = None
@@ -154,22 +163,23 @@ class PaymentMethodStep(CheckoutStep):
         if self.order.payment is None:
             return False
         return True
-        
+
     def is_definitive(self):
         return self.order.is_pending
-        
+
     def get_next_step(self):
         step = SummaryStep(order=self.order, request=self.request)
         return modules.multistep_checkout.get_step(key='summary', order=self.order, request=self.request, step=step)
 
     def contextualize_or_complete(self, request, context, data=None, success=True):
-        method, form, processed = modules.checkout.process_payment_method(request=request, order=self.order, prefix='payment_method', data=data)
+        method, form, processed = modules.checkout.process_payment_method(
+            request=request, order=self.order, prefix='payment_method', data=data)
         context['payment_method_form'] = form
         success &= processed
 
         if data is not None and success:
             self.order.save()
-        
+
         return success
 
     def complete(self, data):
@@ -182,21 +192,22 @@ class PaymentMethodStep(CheckoutStep):
         else:
             context.update(self.invalid_context)
         return modules.multistep_checkout.payment_method(request=request, context=context)
-        
+
+
 class SummaryStep(CheckoutStep):
-    
+
     invalid_context = None
     key = 'summary'
-    
+
     def is_completed(self):
         return self.order.is_pending
-        
+
     def is_definitive(self):
         return True
-        
+
     def get_next_step(self):
         return self.order.payment.get_method().process(request=self.request, order=self.order, next_step=None)
-    
+
     def contextualize_or_complete(self, request, context, data=None, success=True):
         if checkout_settings.ACCEPT_TERMS_ENABLED:
             form = AcceptTermsForm(data, prefix='accept_terms')
@@ -205,20 +216,19 @@ class SummaryStep(CheckoutStep):
                 success &= form.is_valid()
             else:
                 success = False
-        
+
         if data is not None and success:
             self.order.place()
         return success
-    
+
     def complete(self, data):
         self.invalid_context = {}
         return self.contextualize_or_complete(self.request, self.invalid_context, data)
-    
+
     def render(self, request, context):
         if self.invalid_context is None:
             self.contextualize_or_complete(request, context)
         else:
             context.update(self.invalid_context)
-        
+
         return modules.multistep_checkout.summary(request=request, context=context)
-    

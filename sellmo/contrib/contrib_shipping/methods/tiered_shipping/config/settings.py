@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -36,6 +36,7 @@ debug = getattr(settings, 'DEBUG', False)
 
 #
 
-SHIPPING_TIER_ATTRIBUTES = getattr(settings, 'SELLMO_SHIPPING_TIER_ATTRIBUTES', defaults.SHIPPING_TIER_ATTRIBUTES)
+SHIPPING_TIER_ATTRIBUTES = getattr(
+    settings, 'SELLMO_SHIPPING_TIER_ATTRIBUTES', defaults.SHIPPING_TIER_ATTRIBUTES)
 
 #

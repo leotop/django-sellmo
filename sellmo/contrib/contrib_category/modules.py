@@ -35,10 +35,11 @@ from sellmo.contrib.contrib_category.models import Category
 
 #
 
+
 class CategoryModule(Module):
     namespace = 'category'
     Category = Category
-    
+
     @chainable()
     def list(self, chain, parent=None, categories=None, nested=False, **kwargs):
         if categories is None:
@@ -48,31 +49,33 @@ class CategoryModule(Module):
                 if nested:
                     categories = self.Category.objects.all()
                 else:
-                    categories = self.Category.objects.root_nodes().flat_ordered()
-        
+                    categories = self.Category.objects.root_nodes(
+                    ).flat_ordered()
+
         categories = categories.active()
-        
+
         if chain:
-            out = chain.execute(parent=parent, categories=categories, nested=nested, **kwargs)
+            out = chain.execute(
+                parent=parent, categories=categories, nested=nested, **kwargs)
             categories = out.get('categories', categories)
         return categories
-        
+
     @view(r'^$')
     def index(self, chain, request, context=None, **kwargs):
         if context is None:
             context = {}
-        
+
         if chain:
             return chain.execute(request, context=context, **kwargs)
         else:
             # We don't render anything
             raise Http404
-    
+
     @view(r'^(?P<full_slug>[-a-zA-Z0-9_/]+)/$')
     def category(self, chain, request, full_slug, category=None, context=None, **kwargs):
         if context is None:
             context = {}
-        
+
         if category is None:
             parents = None
             categories = self.Category.objects.all()
@@ -82,20 +85,21 @@ class CategoryModule(Module):
                     categories = categories.filter(parent__isnull=True)
                 else:
                     categories = categories.filter(parent__in=parents)
-                
+
                 # Get parent id's
                 parents = categories.values_list('id', flat=True)
                 if not parents:
                     break
-                    
+
             count = categories.count()
             if count == 0:
                 raise Http404("Category '{0}' not found.".format(full_slug))
             elif count > 1:
-                raise Http404("Category '{0}' could not be resolved.".format(full_slug))
-        
+                raise Http404(
+                    "Category '{0}' could not be resolved.".format(full_slug))
+
             category = categories[0]
-        
+
         if chain:
             return chain.execute(request, category=category, full_slug=full_slug, context=context, **kwargs)
         else:

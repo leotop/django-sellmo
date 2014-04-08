@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -34,13 +34,15 @@ from sellmo.api.checkout.process import CheckoutProcess, CheckoutStep
 
 #
 
+
 class MollieIdealBankSelectStep(CheckoutStep):
 
     invalid_context = None
     key = 'ideal_bank_select'
 
     def __init__(self, order, request, next_step):
-        super(MollieIdealBankSelectStep, self).__init__(order=order, request=request)
+        super(MollieIdealBankSelectStep, self).__init__(
+            order=order, request=request)
         self.next_step = next_step
         self.payment = self.order.payment.downcast()
 
@@ -56,7 +58,8 @@ class MollieIdealBankSelectStep(CheckoutStep):
     def _contextualize_or_complete(self, request, context, data=None):
         success = True
 
-        bank, form, processed = modules.mollie_ideal.process_bank_select(request=request, payment=self.payment, prefix='bank_select', data=data)
+        bank, form, processed = modules.mollie_ideal.process_bank_select(
+            request=request, payment=self.payment, prefix='bank_select', data=data)
         context['bank_select_form'] = form
         success &= processed
 
@@ -84,7 +87,8 @@ class MollieIdealRedirectStep(CheckoutStep):
     key = 'ideal_redirect'
 
     def __init__(self, order, request, next_step):
-        super(MollieIdealRedirectStep, self).__init__(order=order, request=request)
+        super(MollieIdealRedirectStep, self).__init__(
+            order=order, request=request)
         self.next_step = next_step
 
     def is_completed(self):
@@ -99,13 +103,15 @@ class MollieIdealRedirectStep(CheckoutStep):
     def render(self, request, context):
         return modules.mollie_ideal.redirect(request=request, order=self.order, contex=context)
 
+
 class MollieIdealPendingStep(CheckoutStep):
 
     invalid_context = None
     key = 'ideal_pending'
 
     def __init__(self, order, request, next_step):
-        super(MollieIdealPendingStep, self).__init__(order=order, request=request)
+        super(MollieIdealPendingStep, self).__init__(
+            order=order, request=request)
         self.next_step = next_step
         self.payment = self.order.payment.downcast()
 
@@ -123,23 +129,24 @@ class MollieIdealPendingStep(CheckoutStep):
 
     def _contextualize_or_complete(self, request, context, data=None):
         success = True
-        
+
         if data and 'pay_again' in data:
             self.payment.retry()
-        
+
         return success
-    
+
     def complete(self, data):
         self.invalid_context = {}
         return self._contextualize_or_complete(self.request, self.invalid_context, data)
-    
+
     def render(self, request, context):
         if self.invalid_context is None:
             self._contextualize_or_complete(request, context)
         else:
             context.update(self.invalid_context)
-    
+
         return modules.mollie_ideal.pending(request=request, order=self.order, context=context)
+
 
 class MollieIdealFailureStep(CheckoutStep):
 
@@ -147,7 +154,8 @@ class MollieIdealFailureStep(CheckoutStep):
     key = 'ideal_failure'
 
     def __init__(self, order, request, next_step):
-        super(MollieIdealFailureStep, self).__init__(order=order, request=request)
+        super(MollieIdealFailureStep, self).__init__(
+            order=order, request=request)
         self.next_step = next_step
         self.payment = self.order.payment.downcast()
 

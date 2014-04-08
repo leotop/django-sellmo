@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -37,8 +37,10 @@ from django.contrib.contenttypes.models import ContentType
 
 #
 
+
 class LogEntryMixin(ModelMixin):
     model = LogEntry
+
     def get_admin_url(self):
         if self.content_type and self.object_id:
             model = self.content_type.model_class()

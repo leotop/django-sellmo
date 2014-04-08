@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -40,23 +40,26 @@ from sellmo.contrib.contrib_pricing import tasks
 
 namespace = modules.pricing.namespace
 
+
 @link()
 def get_price(price, product=None, currency=None, qty=1, **kwargs):
     if product and not price:
         try:
-            qty_price = modules.qty_pricing.ProductQtyPrice.objects.filter(product=product).for_qty(qty)
+            qty_price = modules.qty_pricing.ProductQtyPrice.objects.filter(
+                product=product).for_qty(qty)
         except modules.qty_pricing.ProductQtyPrice.DoesNotExist:
             pass
         else:
             price = qty_price.apply(price)
         return {
-            'price' : price
+            'price': price
         }
-    
+
 if settings.CELERY_ENABLED and not getattr(params, 'worker_mode', False):
     @link(capture=True)
     def update_index(index, invalidations, **kwargs):
         yield override_update_index
-    
+
+
 def override_update_index(module, chain, index, invalidations, **kwargs):
     tasks.queue_update.apply_async((index, invalidations), kwargs)

@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -37,7 +37,7 @@ from sellmo.core.params import params
 if settings.CELERY_ENABLED and getattr(params, 'worker_mode', False):
     from sellmo.boot.boot_sellmo.boot import celery_app as app
     app.conf.update(
-        CELERYBEAT_SCHEDULE = {
+        CELERYBEAT_SCHEDULE={
             'handle-updates-every-5-minutes': {
                 'task': 'sellmo.contrib.contrib_pricing.tasks.handle_updates',
                 'schedule': datetime.timedelta(minutes=5),

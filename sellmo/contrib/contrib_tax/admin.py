@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -34,10 +34,14 @@ from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy as _
 
 # Base admin for every payment method subtype
+
+
 class TaxAdminBase(admin.ModelAdmin):
     pass
 
 # Admin for payment method
+
+
 class TaxParentAdmin(PolymorphicParentModelAdmin):
     base_model = modules.tax.Tax
     child_models = []
@@ -51,4 +55,3 @@ class TaxParentAdmin(PolymorphicParentModelAdmin):
         return modules.tax.Tax.objects.all()
 
 admin.site.register(modules.tax.Tax, TaxParentAdmin)
-

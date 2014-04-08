@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -37,6 +37,7 @@ from sellmo.signals.core import module_created, module_init
 
 _registry_module = 'sellmo.registry'
 
+
 @singleton
 class MountPoint(object):
 
@@ -45,19 +46,19 @@ class MountPoint(object):
         self._create_registry(_registry_module, True)
         # Python module loading
         sys.meta_path.append(self)
-    
+
     # Python module loading
     def find_module(self, fullname, path=None):
         if fullname.startswith(_registry_module):
             return self
         return None
-       
-    # Python module loading 
+
+    # Python module loading
     def load_module(self, fullname):
         if fullname in sys.modules:
             return sys.modules[fullname]
         raise ImportError()
-    
+
     def _create_registry(self, fullname, package=False):
         module = sys.modules.setdefault(fullname, imp.new_module(fullname))
         module.__file__ = '<sellmo>'
@@ -71,7 +72,7 @@ class MountPoint(object):
 
     def _on_module_class(self, module):
         self._modules[module.namespace] = module
-        
+
         # Signal
         module_created.send(sender=self, module=module)
 
@@ -79,17 +80,18 @@ class MountPoint(object):
         for module in self._modules.values():
             # Make sure module hasn't been initialized already
             if not inspect.isclass(module):
-                raise Exception("Module '{0}' has already been init.".format(module))
-                
+                raise Exception(
+                    "Module '{0}' has already been init.".format(module))
+
             # Initialize
             instance = module()
-            
+
             # Override class based module with instance based module
             self._modules[module.namespace] = instance
-            
+
             # Signal
             module_init.send(sender=self, module=instance)
-            
+
     def __getattr__(self, name):
         if name in self._modules:
             return self._modules[name]
@@ -99,17 +101,18 @@ class MountPoint(object):
         for module in self._modules.itervalues():
             yield module
 
+
 class _ModuleMeta(SingletonMeta):
 
     def __new__(cls, name, bases, attrs):
         out = super(_ModuleMeta, cls).__new__(cls, name, bases, attrs)
-        
+
         # __new__ will also be called for the Module class. Do not proceed
         # with any further initialization. Ignore it..
         if out.__ignore__:
             out.__ignore__ = False
             return out
-            
+
         # See if this module is enabled. If not, no further initialization
         # is needed.
         if not out.enabled:
@@ -117,26 +120,29 @@ class _ModuleMeta(SingletonMeta):
 
         # Validate the module
         if not out.namespace:
-            raise Exception("No namespace defined for module '{0}'".format(out))
-        
+            raise Exception(
+                "No namespace defined for module '{0}'".format(out))
+
         # Create the registry (python)module for this module
-        out.registry = modules._create_registry('{0}.{1}'.format(_registry_module, out.namespace))
+        out.registry = modules._create_registry(
+            '{0}.{1}'.format(_registry_module, out.namespace))
         setattr(sys.modules[_registry_module], out.namespace, out.registry)
-        
+
         # Register attributes
         for name, value in attrs.iteritems():
             out._handle_attribute(name, value)
-        
+
         modules._on_module_class(out)
         return out
-        
+
     def _handle_attribute(cls, name, value):
         if isinstance(value, type) and (not value.__module__ or not value.__module__.startswith('django.')):
             cls.register(name, value)
-    
+
     def __setattr__(cls, name, value):
         cls._handle_attribute(name, value)
         super(_ModuleMeta, cls).__setattr__(name, value)
+
 
 class Module(object):
 
@@ -148,16 +154,17 @@ class Module(object):
     enabled = True
     namespace = None
     prefix = None
-        
+
     @classmethod
     def register(cls, name, value):
         # Safety checks
         if not isinstance(value, type):
-            raise Exception("Cannot register '{0}', only types can be registered.".format(value))
+            raise Exception(
+                "Cannot register '{0}', only types can be registered.".format(value))
         if value.__module__ and value.__module__.startswith('django.'):
-            raise Exception("Cannot register '{0}', this is a django type.".format(value))
+            raise Exception(
+                "Cannot register '{0}', this is a django type.".format(value))
         value.__module__ = cls.registry.__name__
         setattr(cls.registry, name, value)
-        
+
 modules = MountPoint()
-        

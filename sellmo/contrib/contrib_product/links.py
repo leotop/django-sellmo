@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -31,16 +31,18 @@ from sellmo.api.decorators import link
 
 #
 
+
 @link(namespace=modules.product.namespace)
 def list(request, products, **kwargs):
     products = products.filter(active=True)
     return {
-        'products' : products
+        'products': products
     }
-    
+
+
 @link(namespace=modules.product.namespace)
 def single(request, products, **kwargs):
     products = products.filter(active=True)
     return {
-        'products' : products
+        'products': products
     }

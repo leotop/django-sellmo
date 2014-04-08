@@ -42,70 +42,74 @@ from sellmo.utils.tracking import trackable
 
 #
 
+
 @load(after='finalize_cart_Cart', before='finalize_store_Purchase')
 def load_model():
     class Purchase(modules.store.Purchase):
         cart = models.ForeignKey(
             modules.cart.Cart,
-            null = True,
-            editable = False,
+            null=True,
+            editable=False,
             on_delete=models.SET_NULL,
-            related_name = 'purchases',
+            related_name='purchases',
         )
-        
+
         def is_stale(self, ignore_cart=False, **kwargs):
             return super(Purchase, self).is_stale(**kwargs) and (self.cart is None or ignore_cart)
-        
+
         class Meta(modules.store.Purchase.Meta):
             abstract = True
-        
+
     modules.store.Purchase = Purchase
-        
+
+
 @load(action='finalize_cart_Cart')
 def finalize_model():
-    
+
     modules.cart.Cart = modules.pricing.make_stampable(
-        model = modules.cart.Cart,
-        properties = [
+        model=modules.cart.Cart,
+        properties=[
             ('total', _("total"))
         ]
     )
-    
+
     class Cart(modules.cart.Cart):
+
         class Meta(modules.cart.Cart.Meta):
             app_label = 'cart'
             verbose_name = _("cart")
             verbose_name_plural = _("carts")
-    
+
     modules.cart.Cart = Cart
 
+
 class Cart(trackable('sellmo_cart')):
-    
+
     created = models.DateTimeField(
-        auto_now_add = True,
-        editable = False,
-        verbose_name = _("created at"),
+        auto_now_add=True,
+        editable=False,
+        verbose_name=_("created at"),
     )
-    
+
     modified = models.DateTimeField(
-        auto_now = True,
-        editable = False,
-        verbose_name = _("modified at"),
+        auto_now=True,
+        editable=False,
+        verbose_name=_("modified at"),
     )
-    
+
     #
-    
+
     """
     Timestamp when this cart was last calculated.
     """
     calculated = models.DateTimeField(
-        editable = False,
-        null = True,
-        verbose_name = _("calculated at"),
+        editable=False,
+        null=True,
+        verbose_name=_("calculated at"),
     )
-    
+
     #
-       
+
     def add(self, purchase, save=True, calculate=True):
         if self.pk is None:
             self.save()
@@ -114,7 +118,7 @@ class Cart(trackable('sellmo_cart')):
             purchase.save()
             if calculate:
                 self.calculate()
-        
+
     def update(self, purchase, save=True, calculate=True):
         if purchase.cart != self:
             raise Exception("We don't own this purchase")
@@ -124,7 +128,7 @@ class Cart(trackable('sellmo_cart')):
             purchase.save()
             if calculate:
                 self.calculate()
-        
+
     def remove(self, purchase, save=True, calculate=True):
         if purchase.cart != self:
             raise Exception("We don't own this purchase")
@@ -133,50 +137,50 @@ class Cart(trackable('sellmo_cart')):
             purchase.save()
             if calculate:
                 self.calculate()
-        
+
     def clear(self, save=True, calculate=True):
         for purchase in self:
             self.remove(purchase, save=save, calculate=False)
         if save:
             if calculate:
                 self.calculate()
-            
+
     def calculate(self, total=None, save=True):
         if total is None:
             total = Price()
             for purchase in self:
                 if not purchase.calculated:
                     # Sanity check
-                    raise Exception("Cannot calculate cart, purchase was not calculated.")
+                    raise Exception(
+                        "Cannot calculate cart, purchase was not calculated.")
                 total += purchase.total
             total = modules.pricing.get_price(price=total, cart=self)
-        
+
         self.total = total
-        
+
         # Update calculcated timestamp and save
         self.calculated = datetime.datetime.now()
         if save:
             self.save()
-        
+
     def __contains__(self, purchase):
         return purchase.cart == self
-    
+
     def __iter__(self):
         if hasattr(self, 'purchases'):
             for purchase in self.purchases.polymorphic().all():
                 yield purchase
-                
+
     def __len__(self):
         return self.purchases.count()
-                
+
     def __nonzero__(self):
         return len(self) > 0
-        
+
     #
-    
+
     def __unicode__(self):
         return unicode(self.modified)
-    
+
     class Meta:
         abstract = True
-        

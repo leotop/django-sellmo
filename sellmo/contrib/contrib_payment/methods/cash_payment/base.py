@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -34,14 +34,15 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
+
 class CashPaymentMethod(PaymentMethod):
 
     identifier = 'cash'
     name = _("cash payment")
-    
+
     def process(self, order, request, next_step):
         return next_step
-        
+
     def is_available(self, order):
         if order.shipment:
             identifier = order.shipment.get_method().identifier.split('_')[0]

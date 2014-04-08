@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -36,13 +36,14 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
+
 def send_order_mails(order, event_signature=None):
     # Update event_signature
     if event_signature is None:
         event_signature = {}
     if order.payment:
         event_signature['instant_payment'] = order.payment.instant
-    
+
     for mail, config in settings.CHECKOUT_MAILS.iteritems():
         for event in config['send_events']:
             for key, value in event.iteritems():
@@ -56,7 +57,7 @@ def send_order_mails(order, event_signature=None):
             # Did not found a match
             continue
         # Did have a match
-        
+
         send_once = config.get('send_once', False)
         if send_once:
             send_mails = modules.checkout_mailing.OrderMail.objects.filter(
@@ -67,36 +68,37 @@ def send_order_mails(order, event_signature=None):
             if send_mails.count() > 0:
                 # Do not send
                 continue
-            
+
         mailer.send_mail(mail, {
-            'order' : order
+            'order': order
         })
-                
+
 
 class OrderConfirmationWriter(MailWriter):
-    
+
     formats = ['html', 'text']
-    
+
     def __init__(self, order):
         self.order = order
-        
+
     def get_subject(self):
         return _("Order confirmation")
-        
+
     def get_body(self, format):
         return modules.checkout_mailing.render_order_confirmation(format=format, order=self.order)
-    
+
     def get_to(self):
         return self.order.email
-        
+
     def get_attachments(self):
         report = reporter.get_report('invoice', context={
-            'order' : self.order
+            'order': self.order
         })
         return [
             (report.filename, report.data, report.mimetype)
         ]
-        
+
+
 class OrderNotificationWriter(MailWriter):
 
     formats = ['html', 'text']
@@ -115,13 +117,14 @@ class OrderNotificationWriter(MailWriter):
 
     def get_attachments(self):
         report = reporter.get_report('invoice', context={
-            'order' : self.order,
-            'internal' : True,
+            'order': self.order,
+            'internal': True,
         })
         return [
             (report.filename, report.data, report.mimetype)
         ]
-        
+
+
 class ShippingNotificationWriter(MailWriter):
 
     formats = ['html', 'text']

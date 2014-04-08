@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -42,12 +42,12 @@ from django.utils.translation import ugettext_lazy as _
 
 @load(action='load_tax_subtypes', after='finalize_tax_Tax')
 def load_subtypes():
-    
+
     class PercentTax(modules.tax.Tax):
 
         rate = modules.pricing.construct_decimal_field(
-            default = Decimal('0.0'),
-            verbose_name = _("rate"),
+            default=Decimal('0.0'),
+            verbose_name=_("rate"),
         )
 
         def apply(self, price):
@@ -55,7 +55,8 @@ def load_subtypes():
             if settings.tax_inclusive:
                 price /= (1 + self.rate)
             amount = price.amount * self.rate
-            tax = Price(amount, currency=price.currency, type='tax', context={'tax' : self})
+            tax = Price(
+                amount, currency=price.currency, type='tax', context={'tax': self})
             return price + tax
 
         class Meta(modules.tax.Tax.Meta):

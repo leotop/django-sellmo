@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -36,15 +36,16 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
+
 @load(action='load_shipping_subtypes', after='finalize_shipping_ShippingMethod')
 def load_subtypes():
-    
+
     class FlatShippingMethod(modules.shipping.ShippingMethod):
 
         costs = modules.pricing.construct_pricing_field(
-            verbose_name = _("shipping rate"),
+            verbose_name=_("shipping rate"),
         )
-        
+
         def get_method(self, carrier=None):
             name = self.name
             identifier = self.identifier

@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -34,6 +34,7 @@ from sellmo.contrib.contrib_payment.methods.bank_transfer.models import BankTran
 
 #
 
+
 class BankTransferModule(Module):
     namespace = 'bank_transfer'
     BankTransferPayment = BankTransferPayment
@@ -47,7 +48,7 @@ class BankTransferModule(Module):
         else:
             # We don't render anything
             raise Http404
-            
+
     @link(namespace='checkout')
     def complete(self, request, order=None, context=None, **kwargs):
         if isinstance(order.payment, self.BankTransferPayment):

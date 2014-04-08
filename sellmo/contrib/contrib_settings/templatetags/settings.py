@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -41,12 +41,13 @@ register = template.Library()
 
 #
 
+
 class SettingsTag(Tag):
     name = 'settings'
     options = Options(
         'as',
         Argument('varname', default='settings', required=False, resolve=False),
-        blocks = [('endsettings', 'nodelist')],
+        blocks=[('endsettings', 'nodelist')],
     )
 
     def render_tag(self, context, varname, nodelist):

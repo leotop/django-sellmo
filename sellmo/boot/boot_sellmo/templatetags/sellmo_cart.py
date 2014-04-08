@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -42,15 +42,16 @@ from sellmo.api.http.query import QueryString
 register = template.Library()
 
 #
-    
+
+
 class CartTag(Tag):
     name = 'cart'
     options = Options(
         MultiKeywordArgument('kwargs', required=False),
         'as',
         Argument('varname', default='cart', required=False, resolve=False),
-        blocks = [('endcart', 'nodelist')],
-        true_values = ['yes', 'true'],
+        blocks=[('endcart', 'nodelist')],
+        true_values=['yes', 'true'],
     )
 
     def render_tag(self, context, kwargs, varname, nodelist):
@@ -63,50 +64,54 @@ class CartTag(Tag):
 
 register.tag(CartTag)
 
+
 @register.inclusion_tag('cart/add_to_cart_formset.html', takes_context=True)
 def add_to_cart_formset(context, product, next=None, invalid=None, **kwargs):
-    formset = modules.cart.get_add_to_cart_formset(product=product, **kwargs) 
+    formset = modules.cart.get_add_to_cart_formset(product=product, **kwargs)
     data = formset.get_redirect_data(context['request'])
     if data:
-        formset = modules.cart.get_add_to_cart_formset(product=product, data=data, **kwargs) 
-    
+        formset = modules.cart.get_add_to_cart_formset(
+            product=product, data=data, **kwargs)
+
     if invalid is None:
         invalid = context['request'].path
-    
+
     query = QueryString()
     if next is not None:
         query['next'] = next
     query['invalid'] = invalid
-        
+
     inner = {
-        'formset' : formset,
-        'product' : product,
-        'query' : query,
+        'formset': formset,
+        'product': product,
+        'query': query,
     }
-    
+
     inner.update(kwargs)
     return inner
-    
+
+
 @register.inclusion_tag('cart/edit_purchase_form.html', takes_context=True)
 def edit_purchase_form(context, purchase, next=None, invalid=None, **kwargs):
     form = modules.cart.get_edit_purchase_form(purchase=purchase, **kwargs)
     data = form.get_redirect_data(context['request'])
     if data:
-        form = modules.cart.get_edit_purchase_form(purchase=purchase, data=data, **kwargs)
-    
+        form = modules.cart.get_edit_purchase_form(
+            purchase=purchase, data=data, **kwargs)
+
     if invalid is None:
         invalid = context['request'].path
-    
+
     query = QueryString()
     if next is not None:
         query['next'] = next
     query['invalid'] = invalid
-    
+
     inner = {
-        'form' : form,
-        'purchase' : purchase,
-        'query' : query,
+        'form': form,
+        'purchase': purchase,
+        'query': query,
     }
-    
+
     inner.update(kwargs)
     return inner

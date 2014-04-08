@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -34,12 +34,15 @@ from django.contrib import admin
 
 #
 
+
 class TieredShippingTierInline(admin.TabularInline):
     model = modules.shipping.TieredShippingTier
 
+
 class TieredShippingMethodAdmin(ShippingMethodAdminBase):
     inlines = ShippingMethodAdminBase.inlines + [TieredShippingTierInline]
-    
+
 #
 
-ShippingMethodParentAdmin.child_models += [(modules.shipping.TieredShippingMethod, TieredShippingMethodAdmin)]
+ShippingMethodParentAdmin.child_models += [
+    (modules.shipping.TieredShippingMethod, TieredShippingMethodAdmin)]

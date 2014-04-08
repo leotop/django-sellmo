@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -37,12 +37,14 @@ register = template.Library()
 
 #
 
+
 @register.filter
 def tax(value):
     if 'tax' in value:
         return value['tax']
     return Price(0, currency=value.currency, type='tax')
-    
+
+
 @register.filter
 def taxless(value):
     if 'tax' in value:

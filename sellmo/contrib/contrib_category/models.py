@@ -46,30 +46,34 @@ from mptt.models import MPTTModel, TreeForeignKey, TreeManager
 
 #
 
+
 @load(after='finalize_category_Category', before='finalize_product_ProductRelatable')
 def load_model():
     class ProductRelatable(modules.product.ProductRelatable):
-        m2m_invalidations = modules.product.ProductRelatable.m2m_invalidations + ['categories']
-        
+        m2m_invalidations = modules.product.ProductRelatable.m2m_invalidations + \
+            ['categories']
+
         categories = models.ManyToManyField(
             modules.category.Category,
-            related_name = '+',
-            blank = True,
+            related_name='+',
+            blank=True,
         )
-        
+
         def get_related_products_query(self):
             # Get categories including descendants
             q = Q()
             for category in self.categories.all():
-                q |= Q(categories__in=category.get_descendants(include_self=True))
+                q |= Q(
+                    categories__in=category.get_descendants(include_self=True))
             return super(ProductRelatable, self).get_related_products_query() | q
-        
+
         @classmethod
         def get_for_product_query(cls, product):
             # Get categories including ancestors
             q = Q()
             for category in product.categories.all():
-                q |= Q(categories__in=category.get_ancestors(include_self=True))
+                q |= Q(
+                    categories__in=category.get_ancestors(include_self=True))
             return super(ProductRelatable, cls).get_for_product_query(product) | q
 
         @classmethod
@@ -87,74 +91,82 @@ def on_cache_invalidation(sender, instance, **kwargs):
     cache_keys = cache.get('categories_cache_keys', [])
     cache.delete_many(cache_keys + ['navigation_cache_keys'])
 
+
 @load(action='finalize_category_Category')
 def finalize_model():
-    
+
     class Category(modules.category.Category):
-        
+
         class MPTTMeta(modules.category.Category.Meta):
             pass
-        
+
         class Meta(modules.category.Category.Meta):
             app_label = 'category'
             verbose_name = _("category")
             verbose_name_plural = _("categories")
-    
+
     # Hookup signals
     post_save.connect(on_cache_invalidation, sender=Category)
     post_delete.connect(on_cache_invalidation, sender=Category)
-    
+
     modules.category.Category = Category
-    
+
+
 @load(after='finalize_product_Product')
 def load_manager():
-    
+
     qs = modules.product.Product.objects.get_query_set()
-    
+
     class ProductQuerySet(qs.__class__):
+
         def in_category(self, category, recurse=True):
             if recurse:
                 return self.filter(categories__in=category.get_descendants(include_self=True))
             else:
                 return self.filter(categories__in=[category])
-    
+
     class ProductManager(modules.product.Product.objects.__class__):
+
         def in_category(self, *args, **kwargs):
             return self.get_query_set().in_category(*args, **kwargs)
-    
+
         def get_query_set(self):
             return ProductQuerySet(self.model)
-    
+
     class Product(ModelMixin):
         model = modules.product.Product
         objects = ProductManager()
-    
+
     # Register
     modules.product.register('ProductQuerySet', ProductQuerySet)
     modules.product.register('ProductManager', ProductManager)
-        
+
+
 @load(after='finalize_category_Category')
 def load_manager():
     if getattr(params, 'dumpdata', False):
         # Override manager with specialized dumpdata manager
         qs = modules.category.Category.objects.get_query_set()
-        
+
         class CategoryQuerySet(qs.__class__):
+
             def order_by(self, *args, **kwargs):
                 # Ignore pk ordering request by dumpdata command
                 return super(CategoryQuerySet, self).order_by('tree_id', 'lft')
-    
+
         class CategoryManager(modules.category.Category.objects.__class__):
+
             def get_query_set(self):
                 return CategoryQuerySet(self.model)
-    
+
         class Category(ModelMixin):
             model = modules.category.Category
             objects = CategoryManager()
-            
+
         # Register
         modules.category.register('CategoryQuerySet', CategoryQuerySet)
         modules.category.register('CategoryManager', CategoryManager)
+
 
 def on_categories_changed(sender, instance, action, reverse, pk_set, **kwargs):
     if action in ('post_add', 'post_remove'):
@@ -164,26 +176,29 @@ def on_categories_changed(sender, instance, action, reverse, pk_set, **kwargs):
             for pk in pk_set:
                 product = modules.product.Product.objects.get(pk=pk)
                 product.update_primary_category()
-    
+
+
 @load(after='finalize_product_Product')
 def load_model():
     if not getattr(params, 'loaddata', False):
-        m2m_changed.connect(on_categories_changed, sender=modules.product.Product.categories.through)
-    
+        m2m_changed.connect(
+            on_categories_changed, sender=modules.product.Product.categories.through)
+
+
 @load(before='finalize_product_Product', after='finalize_category_Category')
 def load_model():
     class Product(modules.product.Product):
-        
+
         def find_primary_category(self):
             q = self.categories.all().order_by('-level')
             if q:
                 return q[0]
             return None
-            
+
         def update_primary_category(self):
             if (
                 (self.primary_category is None
-                or self.categories.filter(pk=self.primary_category.pk).count() == 0)
+                 or self.categories.filter(pk=self.primary_category.pk).count() == 0)
                 and not getattr(self, '_primary_category_found', False)
                 and self.categories.count() > 0
             ):
@@ -198,88 +213,92 @@ def load_model():
                 self.primary_category = None
                 setattr(self, '_primary_category_found', True)
                 self.save()
-        
+
         categories = models.ManyToManyField(
             modules.category.Category,
-            blank = True,
-            null = True,
-            related_name = 'products',
-            verbose_name = _("categories"),
+            blank=True,
+            null=True,
+            related_name='products',
+            verbose_name=_("categories"),
         )
-        
+
         primary_category = models.ForeignKey(
             modules.category.Category,
-            blank = True,
-            null = True,
-            on_delete = models.SET_NULL,
-            related_name = '+',
-            verbose_name = _("primary category"),
+            blank=True,
+            null=True,
+            on_delete=models.SET_NULL,
+            related_name='+',
+            verbose_name=_("primary category"),
         )
-        
+
         class Meta(modules.product.Product.Meta):
             abstract = True
-    
+
     modules.product.Product = Product
-    
+
+
 class CategoryQuerySet(QuerySet):
+
     def in_parent(self, category, recurse=True):
         q = self.filter(tree_id=category.tree_id)
         if recurse:
             return q.filter(level__gt=category.level)
         else:
             return q.filter(level=category.level + 1)
-            
+
     def active(self):
         return self.filter(active=True)
-        
+
     def flat_ordered(self):
         return self.order_by('tree_id', 'lft')
-    
+
+
 class CategoryManager(TreeManager):
-    
+
     def get_by_natural_key(self, full_slug):
         parts = full_slug.split('/')
         category = None
         for slug in parts:
             category = self.get(parent=category, slug=slug)
         return category
-    
+
     def in_parent(self, *args, **kwargs):
         return self.get_query_set().in_parent(*args, **kwargs)
-        
+
     def active(self, *args, **kwargs):
         return self.get_query_set().active(*args, **kwargs)
 
     def get_query_set(self):
         return CategoryQuerySet(self.model)
 
+
 class Category(MPTTModel):
-    
+
     objects = CategoryManager()
-    
+
     sort_order = models.SmallIntegerField(
-        default = 0,
-        verbose_name = _("sort order"),
+        default=0,
+        verbose_name=_("sort order"),
     )
-    
+
     parent = TreeForeignKey(
         'self',
-        blank = True,
-        null = True,
-        verbose_name = _("parent category"),
-        related_name = 'children'
+        blank=True,
+        null=True,
+        verbose_name=_("parent category"),
+        related_name='children'
     )
-    
+
     name = models.CharField(
-        max_length = 255,
-        verbose_name = _("name"),
+        max_length=255,
+        verbose_name=_("name"),
     )
-    
+
     slug = models.SlugField(
-        max_length = 80,
-        db_index = True,
-        verbose_name = _("slug"),
-        help_text = _(
+        max_length=80,
+        db_index=True,
+        verbose_name=_("slug"),
+        help_text=_(
             "Slug will be used in the address of"
             " the category page. It should be"
             " URL-friendly (letters, numbers,"
@@ -287,57 +306,56 @@ class Category(MPTTModel):
             " descriptive for the SEO needs."
         )
     )
-    
+
     active = models.BooleanField(
-        default = True,
-        verbose_name = _("active"),
-        help_text = (
+        default=True,
+        verbose_name=_("active"),
+        help_text=(
             "Inactive categories will be hidden from the site."
         )
     )
-    
+
     @property
     def descendants(self):
         qs = modules.category.Category.objects.get_query_set()
         return self.get_descendants()._clone(klass=qs.__class__)
-        
+
     @property
     def ancestors(self):
         qs = modules.category.Category.objects.get_query_set()
         return self.get_ancestors()._clone(klass=qs.__class__)
-        
+
     def get_full_name(self, ancestors=None):
         if ancestors is None:
             ancestors = self.get_ancestors(include_self=True)
         else:
             ancestors = ancestors + [self]
         return " | ".join(category.name for category in ancestors)
-        
+
     full_name = property(get_full_name)
-        
+
     def get_full_slug(self, ancestors=None):
         if ancestors is None:
             ancestors = self.get_ancestors(include_self=True)
         else:
             ancestors = ancestors + [self]
         return "/".join(category.slug for category in ancestors)
-        
+
     full_slug = property(get_full_slug)
-    
+
     def get_absolute_url(self, slug=None):
         if slug is None:
             slug = self.full_slug
         return reverse('category.category', args=[slug])
-        
+
     def natural_key(self):
         return (self.get_full_slug(),)
-    
+
     def __unicode__(self):
         return self.full_name
-        
+
     class MPTTMeta:
         order_insertion_by = ['sort_order', 'name']
-    
+
     class Meta:
         abstract = True
-        

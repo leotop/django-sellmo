@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -48,35 +48,36 @@ from sellmo.api.customer.forms import CustomerForm, ContactableForm, AddressForm
 
 #
 
+
 class CustomerModule(sellmo.Module):
 
     namespace = 'customer'
     prefix = 'customer'
     enabled = True
-    
+
     Addressee = Addressee
     Address = Address
     Contactable = Contactable
     Customer = Customer
-    
+
     CustomerForm = CustomerForm
     ContactableForm = ContactableForm
     AddressForm = AddressForm
-    
+
     # Django Auth forms
     AuthenticationForm = AuthenticationForm
     PasswordResetForm = PasswordResetForm
     SetPasswordForm = SetPasswordForm
     UserCreationForm = UserCreationForm
     PasswordChangeForm = PasswordChangeForm
-    
+
     def __init__(self, *args, **kwargs):
         self.CustomerForm = import_by_path(settings.CUSTOMER_FORM)
         self.ContactableForm = import_by_path(settings.CONTACTABLE_FORM)
         self.AddressForm = import_by_path(settings.ADDRESS_FORM)
-        
+
     # Forms
-        
+
     @chainable()
     def get_user_form(self, chain, prefix=None, data=None, user=None, form=None, **kwargs):
         if form is None:
@@ -85,34 +86,38 @@ class CustomerModule(sellmo.Module):
             out = chain.execute(prefix=prefix, data=data, form=form, **kwargs)
             form = out.get('form', form)
         return form
-        
+
     @chainable()
     def get_customer_form(self, chain, prefix=None, data=None, customer=None, form=None, **kwargs):
         if form is None:
             form = self.CustomerForm(data, prefix=prefix, instance=customer)
         if chain:
-            out = chain.execute(prefix=prefix, data=data, customer=customer, form=form, **kwargs)
+            out = chain.execute(
+                prefix=prefix, data=data, customer=customer, form=form, **kwargs)
             form = out.get('form', form)
         return form
-        
+
     @chainable()
     def get_contactable_form(self, chain, prefix=None, data=None, contactable=None, form=None, **kwargs):
         if form is None:
-            form = self.ContactableForm(data, prefix=prefix, instance=contactable)
+            form = self.ContactableForm(
+                data, prefix=prefix, instance=contactable)
         if chain:
-            out = chain.execute(prefix=prefix, data=data, contactable=contactable, form=form, **kwargs)
+            out = chain.execute(
+                prefix=prefix, data=data, contactable=contactable, form=form, **kwargs)
             form = out.get('form', form)
         return form
-        
+
     @chainable()
     def get_address_form(self, chain, prefix=None, data=None, address=None, form=None, **kwargs):
         if form is None:
             form = self.AddressForm(data, prefix=prefix, instance=address)
         if chain:
-            out = chain.execute(prefix=prefix, data=data, address=address, form=form, **kwargs)
+            out = chain.execute(
+                prefix=prefix, data=data, address=address, form=form, **kwargs)
             form = out.get('form', form)
         return form
-        
+
     @chainable()
     def get_login_form(self, chain, request, prefix=None, data=None, form=None, **kwargs):
         if form is None:
@@ -121,13 +126,13 @@ class CustomerModule(sellmo.Module):
             out = chain.execute(prefix=prefix, data=data, form=form, **kwargs)
             form = out.get('form', form)
         return form
-    
+
     # CUSTOMER LOGIC
-    
+
     @chainable()
     def get_customer(self, chain, request, customer=None, **kwargs):
         user = None
-        
+
         if settings.AUTH_ENABLED:
             if request.user.is_authenticated():
                 user = request.user
@@ -141,65 +146,73 @@ class CustomerModule(sellmo.Module):
             out = chain.execute(request=request, customer=customer, **kwargs)
             customer = out.get('customer', customer)
         return customer
-        
-        
+
     @chainable()
     def process_customer(self, chain, request, prefix=None, data=None, customer=None, **kwargs):
         # Try and get customer from request
         customer = self.get_customer(request=request)
-        
+
         processed = False
-        form = self.get_customer_form(prefix=prefix, data=data, customer=customer)
+        form = self.get_customer_form(
+            prefix=prefix, data=data, customer=customer)
         if data and form.is_valid():
             customer = form.save(commit=False)
             processed = True
-        
+
         if chain:
-            out = chain.execute(request=request, prefix=prefix, data=data, customer=customer, form=form, processed=processed, **kwargs)
-            customer, form, processed = out.get('customer', customer), out.get('form', form), out.get('processed', processed)
+            out = chain.execute(request=request, prefix=prefix, data=data,
+                                customer=customer, form=form, processed=processed, **kwargs)
+            customer, form, processed = out.get('customer', customer), out.get(
+                'form', form), out.get('processed', processed)
         return customer, form, processed
-        
+
     # CONTACTABLE LOGIC
-        
+
     @chainable()
     def process_contactable(self, chain, request, prefix=None, data=None, contactable=None, **kwargs):
         processed = False
-        form = self.get_contactable_form(prefix=prefix, data=data, contactable=contactable)
+        form = self.get_contactable_form(
+            prefix=prefix, data=data, contactable=contactable)
         if data and form.is_valid():
             contactable = form.save(commit=False)
             processed = True
-            
+
         if chain:
-            out = chain.execute(request=request, prefix=prefix, data=data, contactable=contactable, form=form, processed=processed, **kwargs)
-            contactable, form, processed = out.get('contactable', contactable), out.get('form', form), out.get('processed', processed)
+            out = chain.execute(request=request, prefix=prefix, data=data,
+                                contactable=contactable, form=form, processed=processed, **kwargs)
+            contactable, form, processed = out.get('contactable', contactable), out.get(
+                'form', form), out.get('processed', processed)
         return contactable, form, processed
-        
+
     # ADDRESS LOGIC
-        
+
     @chainable()
     def process_address(self, chain, request, type, customer=None, prefix=None, data=None, address=None, **kwargs):
         if type not in settings.ADDRESS_TYPES:
             raise ValueError("Invalid address type.")
-        
+
         # See if we can resolve an existing address from customer
         if address is None and customer:
             address = customer.get_address(type)
-        
+
         processed = False
-        form = self.get_address_form(type=type, prefix=prefix, data=data, address=address)
+        form = self.get_address_form(
+            type=type, prefix=prefix, data=data, address=address)
         if data and form.is_valid():
             address = form.save(commit=False)
             address.type = type
             address.customer = customer
             processed = True
-            
+
         if chain:
-            out = chain.execute(request=request, prefix=prefix, data=data, address=address, form=form, processed=processed, **kwargs)
-            address, form, processed = out.get('address', address), out.get('form', form), out.get('processed', processed)
+            out = chain.execute(request=request, prefix=prefix, data=data,
+                                address=address, form=form, processed=processed, **kwargs)
+            address, form, processed = out.get('address', address), out.get(
+                'form', form), out.get('processed', processed)
         return address, form, processed
-      
+
     # LOGIN LOGIC
-        
+
     @chainable()
     def process_login(self, chain, request, prefix=None, data=None, user=None, **kwargs):
         processed = False
@@ -217,16 +230,17 @@ class CustomerModule(sellmo.Module):
                 processed=processed,
                 **kwargs
             )
-            user, form, processed = out.get('user', user), out.get('form', form), out.get('processed', processed)
+            user, form, processed = out.get('user', user), out.get(
+                'form', form), out.get('processed', processed)
         return user, form, processed
-        
+
     @chainable()
     def login_user(self, chain, request, user, **kwargs):
         if settings.AUTH_ENABLED:
             auth_login(request, user)
         if chain:
             chain.execute(request=request, user=user, **kwargs)
-    
+
     @method_decorator(csrf_protect)
     @method_decorator(never_cache)
     @view(r'^login/$')
@@ -234,34 +248,34 @@ class CustomerModule(sellmo.Module):
         next = request.GET.get('next', 'customer.account')
         if context is None:
             context = {}
-        
+
         data = None
         if request.method == 'POST':
             data = request.POST
-            
+
         user, form, processed = self.process_login(request=request, data=data)
         context['form'] = form
-        
+
         if processed:
             self.login_user(request=request, user=user)
         redirection = redirect(next)
-        
+
         if chain:
             return chain.execute(request, user=user, form=form, processed=processed, context=context, redirection=redirection, **kwargs)
         elif processed:
             return redirection
         else:
             raise Http404
-            
+
     # LOGOUT LOGIC
-    
+
     @chainable()
     def logout_user(self, chain, request, user, **kwargs):
         if settings.AUTH_ENABLED:
             auth_logout(request)
         if chain:
             chain.execute(request=request, user=user, **kwargs)
-    
+
     @method_decorator(csrf_protect)
     @method_decorator(never_cache)
     @view(r'^logout/$')
@@ -269,17 +283,17 @@ class CustomerModule(sellmo.Module):
         next = request.GET.get('next', 'customer.login')
         if context is None:
             context = {}
-        
+
         self.logout_user(request=request, user=request.user)
         redirection = redirect(next)
-        
+
         if chain:
             return chain.execute(request, context=context, redirection=redirection, **kwargs)
         else:
             return redirection
-    
+
     # REGISTRATION LOGIC
-        
+
     @chainable()
     def process_user_creation(self, chain, request, prefix=None, data=None, user=None, **kwargs):
         processed = False
@@ -287,49 +301,53 @@ class CustomerModule(sellmo.Module):
         if data and form.is_valid():
             user = form.save(commit=False)
             processed = True
-        
+
         if chain:
-            out = chain.execute(request=request, prefix=prefix, data=data, user=user, form=form, processed=processed, **kwargs)
-            user, form, processed = out.get('user', user), out.get('form', form), out.get('processed', processed)
+            out = chain.execute(request=request, prefix=prefix, data=data,
+                                user=user, form=form, processed=processed, **kwargs)
+            user, form, processed = out.get('user', user), out.get(
+                'form', form), out.get('processed', processed)
         return user, form, processed
-    
-    
+
     @method_decorator(csrf_protect)
     @method_decorator(never_cache)
     @view(r'^registration/$')
     def registration(self, chain, request, context=None, **kwargs):
         next = request.GET.get('next', 'customer.login')
         redirection = None
-        
+
         customer = self.get_customer(request=request)
         if customer and customer.pk:
             raise Http404("Already registered")
-        
+
         if context is None:
             context = {}
-        
+
         data = None
         if request.method == 'POST':
             data = request.POST
-        
+
         processed = True
-            
+
         if settings.AUTH_ENABLED:
-            user, user_form, user_processed = self.process_user_creation(request=request, data=data)
+            user, user_form, user_processed = self.process_user_creation(
+                request=request, data=data)
             context['user_form'] = user_form
             processed &= user_processed
-        
-        customer, customer_form, customer_processed = self.process_customer(request=request, data=data)
+
+        customer, customer_form, customer_processed = self.process_customer(
+            request=request, data=data)
         context['customer_form'] = customer_form
         processed &= customer_processed
-        
+
         addresses = {}
         for type in settings.ADDRESS_TYPES:
-            address, form, address_processed = self.process_address(request=request, type=type, prefix='{0}_address'.format(type), customer=customer, data=data)
+            address, form, address_processed = self.process_address(
+                request=request, type=type, prefix='{0}_address'.format(type), customer=customer, data=data)
             context['{0}_address_form'.format(type)] = form
             processed &= address_processed
             addresses[type] = address
-            
+
         if processed:
             # Create user, customer and addresses
             if settings.AUTH_ENABLED:
@@ -339,40 +357,40 @@ class CustomerModule(sellmo.Module):
                 address = addresses[type]
                 address.save()
                 customer.set_address(type, address)
-            
+
             customer.save()
             redirection = redirect(next)
-        
+
         if chain:
-            return chain.execute(request, customer=customer, context=context, processed=processed, redirection=redirection, **kwargs)  
+            return chain.execute(request, customer=customer, context=context, processed=processed, redirection=redirection, **kwargs)
         elif redirection:
             return redirection
         else:
             # We don't render anything
             raise Http404
-        
+
     # ACCOUNT LOGIC
-    
+
     @view(r'^account/$')
     def account(self, chain, request, customer=None, context=None, **kwargs):
         if context is None:
             context = {}
-            
+
         if not customer:
             customer = self.get_customer(request=request)
         if not customer or not customer.pk:
             raise Http404("Not a customer")
-            
+
         context['customer'] = customer
-        
+
         if chain:
             return chain.execute(request, customer=customer, context=context, **kwargs)
         else:
             # We don't render anything
             raise Http404
-           
+
     #
-    
+
     @link(namespace='checkout')
     def get_order(self, request, order=None, **kwargs):
         customer = self.get_customer(request=request)
@@ -380,12 +398,12 @@ class CustomerModule(sellmo.Module):
             if customer and customer.pk:
                 order = self.Contactable.clone(customer, clone=order)
                 for address in settings.ADDRESS_TYPES:
-                    order.set_address(address, customer.get_address(address).clone())
-        
+                    order.set_address(
+                        address, customer.get_address(address).clone())
+
         if customer and customer.pk:
             order.customer = customer
-        
+
         return {
-            'order' : order
+            'order': order
         }
-        

@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -40,8 +40,9 @@ from sellmo.signals.core import post_init
 app = Celery()
 app.config_from_object(settings)
 
+
 def on_post_init(sender, **kwargs):
     # Will load tasks.py after sellmo has been initialized
     app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
-    
+
 post_init.connect(on_post_init)

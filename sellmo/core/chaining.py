@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -43,10 +43,12 @@ logger = logging.getLogger('sellmo')
 
 #
 
+
 def validate_func(func):
     if not callable(func):
-        logger.warning("Link '{0}.{1}' must be callable".format(func.__module__, func.__name__))
-    
+        logger.warning(
+            "Link '{0}.{1}' must be callable".format(func.__module__, func.__name__))
+
     try:
         argspec = inspect.getargspec(func)
     except TypeError:
@@ -56,7 +58,9 @@ def validate_func(func):
             argspec = None
     if argspec:
         if argspec[2] is None:
-            logger.warning("Link '{0}.{1}' must accept **kwargs".format(func.__module__, func.__name__))
+            logger.warning(
+                "Link '{0}.{1}' must accept **kwargs".format(func.__module__, func.__name__))
+
 
 @singleton
 class Chainer(object):
@@ -66,7 +70,7 @@ class Chainer(object):
         self._chains = {}
         self._modules = []
         module_init.connect(self.on_module_init)
-        
+
     def hookup(self):
         # Fix bound links
         for module in self._modules:
@@ -75,59 +79,62 @@ class Chainer(object):
                 if hasattr(attr, '_linked'):
                     path = attr._link_path
                     links = self._links[path]
-                    link = filter(lambda el : el['func'] == attr.__func__, links)[0]
+                    link = filter(
+                        lambda el: el['func'] == attr.__func__, links)[0]
                     link['func'] = attr
-        
+
         # Hookup links
         for path, links in self._links.iteritems():
             # Find chain for this path
             if path not in self._chains:
                 for link in links:
                     func = link['func']
-                    logger.warning("Could not link '{0}.{1}' to '{2}'".format(func.__module__, func.__name__, path))
+                    logger.warning("Could not link '{0}.{1}' to '{2}'".format(
+                        func.__module__, func.__name__, path))
                 continue
-            
+
             # Hookup links to chain
             chain = self._chains[path]
             for link in links:
                 validate_func(link['func'])
                 chain.hookup(link['func'], capture=link['capture'])
-                
+
         # Cleanup
         self._links = None
         self._chains = None
         self._modules = None
-        
+
     def link(self, func, name=None, namespace=None, capture=False):
         if namespace is None:
             # Resolve namespace from func
             module = inspect.getmodule(func)
             if not module or not hasattr(module, 'namespace'):
-                raise Exception("Link '{0}.{1}' has no target namespace.".format(func.__module__, func.__name__))
-            
+                raise Exception("Link '{0}.{1}' has no target namespace.".format(
+                    func.__module__, func.__name__))
+
             namespace = module.namespace
-            
+
         if name is None:
             # Resolve name from func
             name = func.__name__
-        
+
         # Map link
         path = '{0}.{1}'.format(namespace, name)
         if not path in self._links:
             self._links[path] = []
         self._links[path].append({
-            'func' : func,
-            'capture' : capture
+            'func': func,
+            'capture': capture
         })
-        
+
         # Flag this function so we can find it again and see if't a module's
         # instancemethod
         if inspect.isfunction(func):
             func._linked = True
             func._link_path = path
-        
+
         return func
-        
+
     def chain(self, chain):
         def wrapper(*args, **kwargs):
             return chain.handle(*args, **kwargs)
@@ -135,7 +142,7 @@ class Chainer(object):
         # Assign chain to wrapper, this allows us to map later on
         wrapper._chain = chain
         return wrapper
-        
+
     def on_module_init(self, sender, module, **kwargs):
         self._modules.append(module)
         for name, attr in inspect.getmembers(type(module)):
@@ -145,19 +152,20 @@ class Chainer(object):
                 # Map chain
                 path = '{0}.{1}'.format(module.namespace, chain._func.__name__)
                 self._chains[path] = chain
-        
+
 
 chainer = Chainer()
 
 #
 
+
 class Chain(object):
-    
+
     def __init__(self, func):
         self._queue = []
         self._capture_queue = []
         self._func = func
-    
+
     def hookup(self, link, capture=False):
         if capture:
             # Last link is captured first
@@ -165,10 +173,10 @@ class Chain(object):
         else:
             # Last link is executed last
             self._queue.append(link)
-            
+
     def handle(self, module, **kwargs):
         func = self._func
-        
+
         # Capture
         out = self._loop(reversed(self._capture_queue), **kwargs)
         if not out[1] is None:
@@ -176,10 +184,10 @@ class Chain(object):
                 func = out[1]
             else:
                 return out[1]
-        
+
         kwargs = out[0]
         return func(module, self, **kwargs)
-        
+
     def _loop(self, queue, **kwargs):
         for func in queue:
             # We allow for yieldable output
@@ -202,52 +210,53 @@ class Chain(object):
                     # Nothing to do, just keep on looping
                     continue
                 else:
-                    raise Exception("Func '%s' gave an unexpected response '%s'." % (func, response))
+                    raise Exception(
+                        "Func '%s' gave an unexpected response '%s'." % (func, response))
             else:
                 # No break in inner loop, continue
                 continue
             # SKIP (2)
             break
         return (kwargs, None)
-    
+
     def execute(self, **kwargs):
         out = self._loop(self._queue, **kwargs)
         if not out[1] is None:
             return out[1]
         return out[0]
-        
+
     @property
     def can_execute(self):
         return len(self._queue) > 0
-    
+
     @property
     def can_capture(self):
         return len(self._capture_queue) > 0
-        
+
     def should_return(self, response):
         return inspect.isfunction(response)
-        
+
     def __nonzero__(self):
         return self.can_execute
-        
+
     def __repr__(self):
         return repr(self._func)
-        
+
+
 class ViewChain(Chain):
-    
+
     def __init__(self, func, regex=None, **kwargs):
         super(ViewChain, self).__init__(func, **kwargs)
         self.regex = regex if not regex is None else []
-        
+
     def handle(self, module, request, **kwargs):
         return super(ViewChain, self).handle(module=module, request=request, **kwargs)
-    
+
     def capture(self, request, **kwargs):
         return super(ViewChain, self).capture(request=request, **kwargs)
-        
+
     def execute(self, request, **kwargs):
         return super(ViewChain, self).execute(request=request, **kwargs)
-    
+
     def should_return(self, response):
         return isinstance(response, HttpResponse) or super(ViewChain, self).should_return(response)
-        

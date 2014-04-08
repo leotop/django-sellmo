@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -34,35 +34,35 @@ INVOICE_WRITER = 'sellmo.contrib.contrib_checkout.reporting.InvoiceWriter'
 NOTIFICATION_MAIL_TO = django_settings.DEFAULT_FROM_EMAIL
 
 CHECKOUT_MAILS = {
-    'order_confirmation' : {
-        'writer' : 'sellmo.contrib.contrib_checkout.mailing.OrderConfirmationWriter',
-        'send_once' : True,
-        'send_events' : [
+    'order_confirmation': {
+        'writer': 'sellmo.contrib.contrib_checkout.mailing.OrderConfirmationWriter',
+        'send_once': True,
+        'send_events': [
             {
-                'on_paid' : True,
-                'instant_payment' : True
+                'on_paid': True,
+                'instant_payment': True
             },
             {
-                'on_pending' : True,
-                'instant_payment' : False
+                'on_pending': True,
+                'instant_payment': False
             }
         ]
     },
-    'order_notification' : {
-        'writer' : 'sellmo.contrib.contrib_checkout.mailing.OrderNotificationWriter',
-        'send_once' : True,
-        'send_events' : [
+    'order_notification': {
+        'writer': 'sellmo.contrib.contrib_checkout.mailing.OrderNotificationWriter',
+        'send_once': True,
+        'send_events': [
             {
-                'on_pending' : True,
+                'on_pending': True,
             }
         ]
     },
-    'shipping_notification' : {
-        'writer' : 'sellmo.contrib.contrib_checkout.mailing.ShippingNotificationWriter',
-        'send_once' : True,
-        'send_events' : [
+    'shipping_notification': {
+        'writer': 'sellmo.contrib.contrib_checkout.mailing.ShippingNotificationWriter',
+        'send_once': True,
+        'send_events': [
             {
-                'status' : 'shipped',
+                'status': 'shipped',
             }
         ]
     }

@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -43,6 +43,7 @@ register = template.Library()
 
 #
 
+
 class CustomerTag(Tag):
     name = 'customer'
     options = Options(
@@ -50,7 +51,7 @@ class CustomerTag(Tag):
         MultiKeywordArgument('kwargs', required=False),
         'as',
         Argument('varname', default='customer', required=False, resolve=False),
-        blocks = [('endcustomer', 'nodelist')],
+        blocks=[('endcustomer', 'nodelist')],
     )
 
     def render_tag(self, context, authenticated, kwargs, varname, nodelist):
@@ -62,8 +63,9 @@ class CustomerTag(Tag):
             if request.user.is_authenticated() and hasattr(request.user, 'customer'):
                 customer = request.user.customer
         else:
-            customer = modules.customer.get_customer(request=context['request'], **kwargs)
-        
+            customer = modules.customer.get_customer(
+                request=context['request'], **kwargs)
+
         context.push()
         context[varname] = customer
         output = nodelist.render(context)

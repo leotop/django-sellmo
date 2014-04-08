@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -32,10 +32,13 @@ from sellmo import modules
 
 #
 
+
 @shared_task
 def queue_update(index, invalidations, **kwargs):
-    modules.price_indexing.queue_update(index=index, invalidations=invalidations, **kwargs)
-    
+    modules.price_indexing.queue_update(
+        index=index, invalidations=invalidations, **kwargs)
+
+
 @shared_task
 def handle_updates():
     modules.price_indexing.handle_updates()

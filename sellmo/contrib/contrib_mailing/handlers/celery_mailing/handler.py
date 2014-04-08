@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -29,6 +29,9 @@ from sellmo.contrib.contrib_mailing.handlers.celery_mailing import tasks
 
 #
 
+
 class CeleryMailHandler(MailHandlerBase):
+
     def handle_mail(self, message_type, message_reference, context):
-        tasks.send_mail.delay(message_type=message_type, message_reference=message_reference, context=context)
+        tasks.send_mail.delay(
+            message_type=message_type, message_reference=message_reference, context=context)

@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -36,14 +36,15 @@ from django.utils.text import capfirst
 
 #
 
+
 class AttributeHelper(object):
-    
+
     def __init__(self, product):
         self._product = product
         self._values = {}
         self._attributes = {}
         self._populated = False
-        
+
     def get_attribute(self, key):
         if not self._attributes.has_key(key):
             try:
@@ -52,29 +53,31 @@ class AttributeHelper(object):
                 self._attributes[key] = None
             else:
                 self._attributes[key] = attribute
-        
+
         if self._attributes[key] is None:
             raise AttributeError(key)
         else:
             return self._attributes[key]
-        
+
     def get_value(self, key):
         attribute = self.get_attribute(key)
         if not self._values.has_key(attribute.key):
             try:
-                value = modules.attribute.Value.objects.get(attribute=attribute, product=self._product)
+                value = modules.attribute.Value.objects.get(
+                    attribute=attribute, product=self._product)
             except modules.attribute.Value.DoesNotExist:
-                self._values[attribute.key] = modules.attribute.Value(product=self._product, attribute=attribute)
+                self._values[attribute.key] = modules.attribute.Value(
+                    product=self._product, attribute=attribute)
             else:
                 self._values[attribute.key] = value
         return self._values[attribute.key]
-        
+
     def get_value_value(self, key):
         return self.get_value(key).value
-        
+
     def set_value_value(self, key, value):
         self.get_value(key).value = value
-            
+
     def populate(self):
         if not self.__dict__['_populated']:
             self.__dict__['_populated'] = True
@@ -83,25 +86,25 @@ class AttributeHelper(object):
                 self._attributes[attribute.key] = attribute
                 if not self._values.has_key(attribute.key):
                     self._values[attribute.key] = value
-        
+
     def __getitem__(self, key):
         return self.get_value_value(key)
-        
+
     def __setitem__(self, key, value):
         self.set_value_value(key, value)
-        
+
     def __iter__(self):
         self.populate()
         for value in self._values.values():
             if value.is_assigned:
                 yield value
-                
+
     def __len__(self):
         count = 0
         for value in self:
             count += 1
         return count
-    
+
     def save(self):
         for value in self._values.values():
             value.save_value()

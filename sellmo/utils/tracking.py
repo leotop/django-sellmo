@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -32,35 +32,37 @@ from django.db import models
 
 #
 
+
 class UntrackableError(Exception):
     pass
 
+
 def trackable(session_key):
-    
+
     class TrackableModel(models.Model):
-        
+
         objects = TrackingManager(session_key)
-    
+
         def track(self, request):
             if self.pk is None:
                 raise UntrackableError("Cannot track non persistent object")
             request.session[session_key] = self.pk
-    
+
         def untrack(self, request):
             request.session[session_key] = None
-            
+
         class Meta:
             abstract = True
-            
+
     return TrackableModel
-    
+
 
 class TrackingManager(models.Manager):
-    
+
     def __init__(self, session_key=None, *args, **kwargs):
         self._session_key = session_key
         super(TrackingManager, self).__init__(*args, **kwargs)
-    
+
     def exists(self, request):
         return request.session.get(self._session_key, False) != False
 
@@ -70,10 +72,9 @@ class TrackingManager(models.Manager):
         except self.model.DoesNotExist:
             obj = self.model()
         return obj
-    
+
     def from_request(self, request):
         if self.exists(request):
             return self.existing(request)
         else:
             return self.model()
-    

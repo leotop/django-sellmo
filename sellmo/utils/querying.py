@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -24,6 +24,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 def list_from_pks(queryset, pks):
     mapping = {}
     out = []
@@ -32,6 +33,7 @@ def list_from_pks(queryset, pks):
     for el in pks:
         out.append(mapping[el])
     return out
-    
+
+
 def queryset_from_pks(queryset, pks):
     raise NotImplementedError()

@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -32,10 +32,12 @@ from sellmo import modules
 
 #
 
+
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
         options = []
         for product in modules.product.Product.objects.all().variants(exclude=True):
-            self.stdout.write("Building variations for product '{0}'.".format(product.slug))
+            self.stdout.write(
+                "Building variations for product '{0}'.".format(product.slug))
             modules.variation.Variation.objects.build(product)

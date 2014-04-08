@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -52,16 +52,18 @@ for status, entry in settings.ORDER_STATUSES.iteritems():
             raise Exception("Only one order status can be defined as initial.")
         initial_status = status
     if 'state' in config:
-        status_states[status] = config['state'] 
+        status_states[status] = config['state']
     if 'flow' in config:
         # Check flow
         for allowed in config['flow']:
             if allowed not in settings.ORDER_STATUSES:
-                raise Exception("Order status '{0}' does not exist.".format(allowed))
+                raise Exception(
+                    "Order status '{0}' does not exist.".format(allowed))
     for event in events:
         if event in config:
             if event in status_events:
-               raise Exception("Can only have one status responding to '{0}'.".format(event))
+                raise Exception(
+                    "Can only have one status responding to '{0}'.".format(event))
             status_events[event] = status
 
     status_choices.append((status, entry[0]))

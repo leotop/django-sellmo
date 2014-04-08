@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -38,21 +38,25 @@ from sellmo.core.polymorphism import PolymorphicModel, PolymorphicManager, Polym
 
 #
 
+
 @load(action='load_product_subtypes', after='finalize_product_Product')
 def load_product_subtypes():
     pass
-    
+
+
 def get_indexable_products():
     return modules.product.Product.objects.all()
+
 
 @load(action='finalize_product_Product')
 def finalize_model():
     class Product(modules.product.Product):
+
         class Meta(modules.product.Product.Meta):
             app_label = 'product'
             verbose_name = _("product")
             verbose_name_plural = _("products")
-    
+
     modules.product.Product = Product
     index = modules.pricing.create_index('product_price')
     index.add_kwarg(
@@ -61,33 +65,38 @@ def finalize_model():
         default=get_indexable_products,
         model=Product
     )
-    
+
+
 class ProductQuerySet(PolymorphicQuerySet):
+
     def for_relatable(self, relatable):
         return self.filter(pk__in=relatable.get_related_products())
-    
+
+
 class ProductManager(PolymorphicManager):
+
     def __init__(self, cls=ProductQuerySet, **kwargs):
         super(ProductManager, self).__init__(cls=cls, **kwargs)
-    
+
     def for_relatable(self, *args, **kwargs):
         return self.get_query_set().for_relatable(*args, **kwargs)
-    
+
     def get_by_polymorphic_natural_key(self, slug):
         return self.get(slug=slug)
 
+
 class Product(PolymorphicModel):
-    
+
     objects = ProductManager()
-    
+
     #
-    
+
     slug = models.SlugField(
-        max_length = 80,
-        db_index = True,
-        unique = True,
-        verbose_name = _("slug"),
-        help_text = _(
+        max_length=80,
+        db_index=True,
+        unique=True,
+        verbose_name=_("slug"),
+        help_text=_(
             "Slug will be used in the address of"
             " the product page. It should be"
             " URL-friendly (letters, numbers,"
@@ -95,73 +104,78 @@ class Product(PolymorphicModel):
             " descriptive for the SEO needs."
         )
     )
-    
+
     def __unicode__(self):
         return self.slug
-        
+
     def polymorphic_natural_key(self):
         return (self.slug,)
-        
+
     @models.permalink
     def get_absolute_url(self):
         return 'product.details', (self.slug,)
-    
+
     class Meta:
         ordering = ['slug']
         abstract = True
-        
+
+
 class ProductRelatableQuerySet(QuerySet):
+
     def for_product(self, product):
         return self.filter(self.model.get_for_product_query(product=product)).distinct()
-    
+
     def best_for_product(self, product):
         matches = self.for_product(product)
         if matches:
             return self.model.get_best_for_product(product=product, matches=matches)
         raise self.model.DoesNotExist(
             "%s matching query does not exist." %
-            self.model._meta.object_name) 
-        
+            self.model._meta.object_name)
+
+
 class ProductRelatableManager(models.Manager):
+
     def for_product(self, *args, **kwargs):
         return self.get_query_set().for_product(*args, **kwargs)
-        
+
     def best_for_product(self, *args, **kwargs):
         return self.get_query_set().best_for_product(*args, **kwargs)
-    
+
     def get_query_set(self):
         return ProductRelatableQuerySet(self.model)
-        
+
+
 class ProductRelatable(models.Model):
     objects = ProductRelatableManager()
     m2m_invalidations = ['products']
-    
+
     all_products = models.BooleanField(
-        default = False,
-        verbose_name = _("all products"),
+        default=False,
+        verbose_name=_("all products"),
     )
-    
+
     def get_related_products(self):
         products = modules.product.Product.objects.get_query_set()
         if self.all_products:
             return products.all()
         else:
             return products.filter(self.get_related_products_query())
-    
+
     def get_related_products_query(self):
         return Q()
-    
+
     @classmethod
     def get_for_product_query(cls, product):
         return Q(all_products=True) | Q(products=product)
-        
+
     @classmethod
     def sort_best_for_product(cls, product, matches):
         return matches.order_by('all_products')
-        
+
     @classmethod
     def get_best_for_product(cls, product, matches):
         return cls.sort_best_for_product(product, matches)[0]
-    
+
     class Meta:
         abstract = True

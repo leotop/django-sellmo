@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -37,7 +37,9 @@ from django.utils.text import capfirst
 
 #
 
+
 class AttributeHelper(AttributeHelperBase):
+
     def populate(self):
         if self.__dict__['_populated']:
             return
@@ -52,20 +54,24 @@ class AttributeHelper(AttributeHelperBase):
         attribute = self.get_attribute(key)
         if not self._values.has_key(attribute.key):
             try:
-                value = modules.attribute.Value.objects.get(attribute=attribute, product=self._product, variates=False)
+                value = modules.attribute.Value.objects.get(
+                    attribute=attribute, product=self._product, variates=False)
             except modules.attribute.Value.DoesNotExist:
-                self._values[attribute.key] = modules.attribute.Value(product=self._product, attribute=attribute)
+                self._values[attribute.key] = modules.attribute.Value(
+                    product=self._product, attribute=attribute)
             else:
                 self._values[attribute.key] = value
         return self._values[attribute.key]
-        
-class VariantAttributeHelper(AttributeHelper):    
+
+
+class VariantAttributeHelper(AttributeHelper):
+
     def get_value_value(self, key):
         value = self.get_value(key)
         if not value.is_assigned:
             value = self._product.product.attributes.get_value(key)
         return value.value
-        
+
     def set_value_value(self, key, value):
         product_value = self._product.product.attributes.get_value(key)
         if product_value.value == value or product_value.old_value == value:
@@ -74,7 +80,7 @@ class VariantAttributeHelper(AttributeHelper):
         else:
             # Make sure we have this value set
             self.get_value(key).value = value
-            
+
     def __iter__(self):
         values = {}
         for value in super(VariantAttributeHelper, self).__iter__():
@@ -85,12 +91,14 @@ class VariantAttributeHelper(AttributeHelper):
         for value in values.values():
             if value.is_assigned:
                 yield value
-        
+
+
 class VariationAttributeHelper(object):
+
     def __init__(self, variation):
         self._variation = variation
         self._variant = variation.variant.downcast()
-        
+
     def __iter__(self):
         values = {}
         for value in self._variation.values.all():
@@ -101,4 +109,3 @@ class VariationAttributeHelper(object):
         for value in values.values():
             if value.is_assigned:
                 yield value
-    

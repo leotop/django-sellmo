@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -35,34 +35,36 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
+
 @load(before='finalize_shipping_ShippingMethod')
 def load_model():
-    
+
     class ShippingMethod(modules.shipping.ShippingMethod):
-        
+
         allow_cash_payment = models.BooleanField(
-            default = False,
-            verbose_name = _("allow cash payment")
+            default=False,
+            verbose_name=_("allow cash payment")
         )
-        
+
         class Meta(modules.shipping.ShippingMethod.Meta):
             abstract = True
-            
+
     modules.shipping.ShippingMethod = ShippingMethod
+
 
 @load(action='finalize_cash_payment_Payment', after='finalize_checkout_Payment')
 def finalize_model():
 
     class CashPayment(modules.checkout.Payment, modules.cash_payment.CashPayment):
-        
+
         instant = False
-        
+
         def get_method(self):
             return CashPaymentMethod()
-            
+
         def __unicode__(self):
             return unicode(self.get_method())
-        
+
         class Meta(modules.cash_payment.CashPayment.Meta):
             app_label = 'checkout'
             verbose_name = _("cash payment")
@@ -70,8 +72,8 @@ def finalize_model():
 
     modules.cash_payment.CashPayment = CashPayment
 
+
 class CashPayment(models.Model):
-    
+
     class Meta:
         abstract = True
-        

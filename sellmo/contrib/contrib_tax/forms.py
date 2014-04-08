@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -35,27 +35,29 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 
 #
 
+
 class ProductTaxesForm(forms.ModelForm):
     taxes = forms.ModelMultipleChoiceField(
-        queryset = modules.tax.Tax.objects.all(), 
-        required = False,
-        label = _("taxes")
+        queryset=modules.tax.Tax.objects.all(),
+        required=False,
+        label=_("taxes")
     )
-    
+
     def __init__(self, *args, **kwargs):
         super(ProductTaxesForm, self).__init__(*args, **kwargs)
         if self.instance and self.instance.pk:
             self.fields['taxes'].initial = self.instance.taxes.all()
-            
+
     def save(self, commit=True):
         product = super(ProductTaxesForm, self).save(commit=False)
-        
+
         _save_m2m = getattr(self, 'save_m2m', None)
+
         def save_m2m():
             if _save_m2m:
                 _save_m2m()
             product.taxes = self.cleaned_data['taxes']
-        
+
         if commit:
             product.save()
             save_m2m()

@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -29,23 +29,28 @@
 from sellmo.core.loading import loader
 from sellmo.core.chaining import chainer, Chain, ViewChain
 
+
 def load(action=None, after=None, before=None, directly=False):
     def decorator(func):
-        loader.register(func, action=action, after=after, before=before, directly=directly)
+        loader.register(
+            func, action=action, after=after, before=before, directly=directly)
         return func
     return decorator
-    
+
+
 def link(name=None, namespace=None, capture=False):
     def decorator(func):
         return chainer.link(func, name, namespace, capture)
     return decorator
-    
+
+
 def view(regex=None):
     def decorator(func):
         chain = ViewChain(func, regex)
         return chainer.chain(chain)
     return decorator
-    
+
+
 def chainable():
     def decorator(func):
         chain = Chain(func)

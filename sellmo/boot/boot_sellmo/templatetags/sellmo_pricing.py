@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -41,14 +41,17 @@ from sellmo.api.pricing import Price
 register = template.Library()
 
 #
-    
+
+
 @register.filter
 def price_format(price, align=-1):
     return price.currency.format(price.amount, align=align)
-    
+
+
 @register.filter
 def as_price(value):
     return Price(value)
+
 
 class PriceTag(Tag):
     name = 'price'
@@ -56,7 +59,7 @@ class PriceTag(Tag):
         MultiKeywordArgument('kwargs', required=False),
         'as',
         Argument('varname', default='price', required=False, resolve=False),
-        blocks = [('endprice', 'nodelist')],
+        blocks=[('endprice', 'nodelist')],
     )
 
     def render_tag(self, context, kwargs, varname, nodelist):

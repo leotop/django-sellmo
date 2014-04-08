@@ -45,6 +45,7 @@ from sellmo.contrib.contrib_variation.config import settings
 
 #
 
+
 class VariationModule(Module):
 
     namespace = 'variation'
@@ -56,33 +57,34 @@ class VariationModule(Module):
     product_subtypes = []
     subtypes = []
     m2m_relations = {}
-    
+
     def __init__(self, *args, **kwargs):
         for field, reverse in self.m2m_relations.values():
             m2m_changed.connect(self.on_m2m_changed, sender=field.rel.through)
         for subtype in self.subtypes:
             post_save.connect(self.on_variant_post_save, sender=subtype)
-            
-    def on_m2m_changed(self, sender, instance, action, reverse, pk_set, **kwargs):        
+
+    def on_m2m_changed(self, sender, instance, action, reverse, pk_set, **kwargs):
         if action in ('pre_clear', 'pre_remove', 'post_add'):
             field, field_reverse = self.m2m_relations[str(sender)]
             relation = field.name
             products = [instance]
             action = action.split('_')[1]
-            
+
             if (reverse ^ field_reverse):
                 if field_reverse:
                     products = list(getattr(instance, field.name).all())
                     relation = field.rel.related_name
                 else:
-                    products = list(getattr(instance, field.rel.related_name).all())
+                    products = list(
+                        getattr(instance, field.rel.related_name).all())
                 pk_set = set([instance.pk])
                 if action == 'clear':
                     action = 'remove'
-                
+
             elif reverse and field_reverse:
                 relation = field.rel.related_name
-            
+
             for product in products:
                 downcasted = product.downcast()
                 if not getattr(downcasted, '_is_variant', False):
@@ -94,77 +96,86 @@ class VariationModule(Module):
                             m2m.remove(*pk_set)
                         elif action == 'add':
                             m2m.add(*pk_set)
-                    
+
     def on_variant_post_save(self, sender, instance, created, raw=False, **kwargs):
         if not raw and created:
             for field, reverse in self.m2m_relations.values():
                 relation = field.name if not reverse else field.rel.related_name
                 relation = field.name if not reverse else field.rel.related_name
-                getattr(instance, relation).add(*list(getattr(instance.product, relation).all()))
+                getattr(instance, relation).add(
+                    *list(getattr(instance.product, relation).all()))
                 instance.save()
-        
+
     @classmethod
     def register_product_subtype(self, subtype):
         self.product_subtypes.append(subtype)
-        
+
     @classmethod
     def mirror_m2m_field(self, field, reverse):
         if str(field.rel.through) not in self.m2m_relations:
             self.m2m_relations[str(field.rel.through)] = (field, reverse)
-    
+
     @chainable()
     def get_variations(self, chain, product, grouped=False, variations=None, **kwargs):
         if variations is None:
-            variations = modules.variation.Variation.objects.for_product(product)
+            variations = modules.variation.Variation.objects.for_product(
+                product)
             if grouped:
-                attributes = modules.attribute.Attribute.objects.which_variate(product=product)
+                attributes = modules.attribute.Attribute.objects.which_variate(
+                    product=product)
                 group = attributes.filter(groups=True).first()
                 if group:
                     result = []
-                    values = modules.attribute.Value.objects.which_variate(product).for_attribute(attribute=group, distinct=True)
-                    values = modules.attribute.get_sorted_values(values=values, attribute=group)
+                    values = modules.attribute.Value.objects.which_variate(
+                        product).for_attribute(attribute=group, distinct=True)
+                    values = modules.attribute.get_sorted_values(
+                        values=values, attribute=group)
                     for value in values:
-                        # Get variations for this grouped attribute / value combination
+                        # Get variations for this grouped attribute / value
+                        # combination
                         qargs = {
-                            'values__attribute' : group,
-                            'values__%s' % group.value_field : value.get_value(),
-                            'product' : product,
+                            'values__attribute': group,
+                            'values__%s' % group.value_field: value.get_value(),
+                            'product': product,
                         }
-                        
-                        variations = modules.variation.Variation.objects.filter(**qargs)
+
+                        variations = modules.variation.Variation.objects.filter(
+                            **qargs)
                         if not variations:
                             continue
-                        
+
                         # Build grouped result
                         result += [{
-                            'attribute' : group,
-                            'value' : value,
-                            'variations' : variations,
-                            'variant' : variations[0].group_variant.downcast(),
+                            'attribute': group,
+                            'value': value,
+                            'variations': variations,
+                            'variant': variations[0].group_variant.downcast(),
                         }]
                     variations = result
                 else:
                     return None
-        
+
         if chain:
-            out = chain.execute(product=product, grouped=grouped, variations=variations, **kwargs)
+            out = chain.execute(
+                product=product, grouped=grouped, variations=variations, **kwargs)
             if out.has_key('variations'):
                 variations = out['variations']
-        
+
         return variations
-    
+
     @chainable()
-    def get_variation_choice(self, chain, variation, choice=None, **kwargs):   
+    def get_variation_choice(self, chain, variation, choice=None, **kwargs):
         if choice is None:
-            choice = self.generate_variation_choice(variation=variation, choice=choice)
-        
+            choice = self.generate_variation_choice(
+                variation=variation, choice=choice)
+
         if chain:
-             out = chain.execute(variation=variation, choice=choice, **kwargs)
-             if out.has_key('choice'):
-                 choice = out['choice']
-                 
+            out = chain.execute(variation=variation, choice=choice, **kwargs)
+            if out.has_key('choice'):
+                choice = out['choice']
+
         return choice
-        
+
     @chainable()
     def generate_variation_choice(self, chain, variation, choice=None, **kwargs):
         if choice is None:
@@ -172,42 +183,42 @@ class VariationModule(Module):
             price_adjustment = None
             if hasattr(variant, '_is_variant') and variant.price_adjustment:
                 price_adjustment = Price(variant.price_adjustment)
-            
+
             values = settings.VARIATION_VALUE_SEPERATOR.join(
-                [unicode(value) for value in variation.values.all().order_by('attribute')]
+                [unicode(value)
+                 for value in variation.values.all().order_by('attribute')]
             )
-            
+
             choice = call_or_format(settings.VARIATION_CHOICE_FORMAT,
-                variation=variation,
-                variant=variant,
-                values=values,
-                price_adjustment=price_adjustment
-            )
-        
+                                    variation=variation,
+                                    variant=variant,
+                                    values=values,
+                                    price_adjustment=price_adjustment
+                                    )
+
         if chain:
             out = chain.execute(variation=variation, choice=choice, **kwargs)
             if out.has_key('choice'):
                 choice = out['choice']
         return choice
-        
+
     @chainable()
     def generate_variation_description(self, chain, product, values, description=None, **kwargs):
         if description is None:
-            
+
             values = settings.VARIATION_VALUE_SEPERATOR.join(
                 [unicode(value) for value in values]
             )
-            
+
             description = call_or_format(settings.VARIATION_DESCRIPTION_FORMAT,
-                product=product,
-                values=values
-            )
-            
+                                         product=product,
+                                         values=values
+                                         )
+
         if chain:
-            out = chain.execute(product=product, values=values, description=description, **kwargs)
+            out = chain.execute(
+                product=product, values=values, description=description, **kwargs)
             if out.has_key('description'):
                 description = out['description']
-        
+
         return description
-    
-        

@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -30,14 +30,16 @@ from collections import deque
 
 #
 
+
 class ProcessError(Exception):
     pass
 
+
 class Process(object):
-    
+
     def __init__(self):
         self._current_step = None
-        
+
     def step_to(self, key):
         """
         Tries to move one forward from the first step, untill the given step is matched.
@@ -54,9 +56,9 @@ class Process(object):
         else:
             # When step is none
             raise ProcessError("Step '{0}' was not found.".format(key))
-        
+
         self.current_step = step
-        
+
     def step_to_latest(self):
         """
         Moves forward to the latest step that is not completed.
@@ -68,47 +70,50 @@ class Process(object):
                 if next_step:
                     step = next_step
                     continue
-            
+
             # Step found
             break
-        
+
         self.current_step = step
-        
+
     def feed(self, data, *args, **kwargs):
         """
         Tries to complete the current step and if so move on to the next step.
         """
         if self.current_step.is_completed() and self.current_step.is_definitive():
-            raise ProcessError("Step '{0}' is definitive.".format(self.current_step.key))
+            raise ProcessError(
+                "Step '{0}' is definitive.".format(self.current_step.key))
         if self.current_step.complete(data, *args, **kwargs):
             if not self.current_step.is_completed():
-                raise ProcessError("Step '{0}' was completed but did not change it's state.".format(self.current_step.key))
+                raise ProcessError(
+                    "Step '{0}' was completed but did not change it's state.".format(self.current_step.key))
             if self.current_step.has_deviated:
                 # Rewind the process
                 self.step_to_latest()
             else:
-                # Move on to the next step, if no further step; stay at this step
+                # Move on to the next step, if no further step; stay at this
+                # step
                 next_step = self.next_step
                 if not next_step is None:
                     self.current_step = next_step
             return True
         return False
-                
+
     def render(self, request, *args, **kwargs):
         """
         Renders the current step in this process.
         """
         if self.current_step.is_completed() and self.current_step.is_definitive():
-            raise ProcessError("Step '{0}' is definitive.".format(self.current_step.key))
+            raise ProcessError(
+                "Step '{0}' is definitive.".format(self.current_step.key))
         return self.current_step.render(request, *args, **kwargs)
-        
-        
+
     def get_first_step(self):
         """
         Should return the first step in this process.
         """
         raise NotImplementedError()
-    
+
     def get_current_step(self):
         if self._current_step is None:
             step = self.get_first_step()
@@ -116,15 +121,15 @@ class Process(object):
                 raise ValueError()
             self._current_step = step
         return self._current_step
-        
+
     def set_current_step(self, value):
         if not value:
             raise ValueError()
         self._current_step = value
         self._current_step.hookup(self)
-    
+
     current_step = property(get_current_step, set_current_step)
-        
+
     @property
     def next_step(self):
         if self.current_step:
@@ -133,7 +138,7 @@ class Process(object):
                 step.hookup(self)
             return step
         return None
-        
+
     @property
     def previous_step(self):
         if self.current_step:
@@ -142,85 +147,86 @@ class Process(object):
                 step.hookup(self)
             return step
         return None
-        
+
     @property
     def completed(self):
         return self.current_step.is_completed() and self.next_step is None
-        
+
     def resolve_url(self, step):
         """
         Resolves the url for the given step
         """
-        raise NotImplementedError() 
+        raise NotImplementedError()
 #
 
+
 class ProcessStep(object):
-    
+
     key = None
     process = None
-    
+
     def __init__(self, key=None):
         if key:
             self.key = key
         if self.key is None:
             raise ValueError("Key for this step is not given.")
-            
+
     def hookup(self, process):
         self.process = process
-            
+
     @property
     def url(self):
         return self.resolve_url()
-        
+
     def has_deviated(self):
         """
         Indicates if this step has deviated from the process's path,
         this will cause the process to rewind after this step has completed.
         """
         return False
-        
+
     def is_completed(self):
         """
         Indicates if this step is completed successfully.
         """
         raise NotImplementedError()
-    
+
     def can_skip(self):
         """
         Indicates if this step can be visited again.
         """
         return False
-        
+
     def is_definitive(self):
         """
         Indicates if this step can be visited again.
         """
         return False
-        
+
     def complete(self, request, data, *args, **kwargs):
         """
         Attempts to complete this step with the given data.
         """
         raise NotImplementedError()
-        
+
     def render(self, request, *args, **kwargs):
         """
         Renders this step in it's current state.
         """
         raise NotImplementedError()
-    
+
     def resolve_url(self):
         """
         Resolves the url for this step.
         """
         return self.process.resolve_url(self)
-        
+
     def get_next_step(self):
         """
         Returns the next step (if any).
         """
         return None
-        
+
     def get_previous_step(self):
         """
         Returns the previous step (if any).

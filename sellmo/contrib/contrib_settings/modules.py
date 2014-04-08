@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -39,11 +39,12 @@ from sellmo.contrib.contrib_settings.signals import setting_changed
 
 #
 
+
 class SettingsModule(Module):
     namespace = 'settings'
     SiteSettings = SiteSettings
     _settings = []
-    
+
     def __init__(self, *args, **kwargs):
         # Add settings to SiteSettings
         grouped = {}
@@ -53,19 +54,20 @@ class SettingsModule(Module):
             if group not in grouped:
                 grouped[group] = []
             grouped[group].append(setting[0])
-        
+
         self.fieldsets = tuple()
         for group in sorted(grouped.iterkeys()):
             fields = grouped[group]
             self.fieldsets += (
                 (group, {
-                    'fields' : fields   
+                    'fields': fields
                 }),
             )
-        
+
         # Hookup invalidation
         pre_save.connect(self.on_settings_pre_save, sender=self.SiteSettings)
-        pre_delete.connect(self.on_settings_pre_delete, sender=self.SiteSettings)
+        pre_delete.connect(
+            self.on_settings_pre_delete, sender=self.SiteSettings)
 
     def on_settings_pre_save(self, sender, instance, created=False, **kwargs):
         self.on_cache_invalidated(instance)
@@ -73,42 +75,43 @@ class SettingsModule(Module):
         if not created:
             old = self.SiteSettings.objects.get(pk=instance.pk)
         self.on_settings_changed(old, instance)
-        
+
     def on_settings_pre_delete(self, sender, instance, **kwargs):
         self.on_cache_invalidated(instance)
         self.on_settings_changed(instance, None)
-        
+
     def on_settings_changed(self, old, new):
         site = old.site if old is not None else new.site
         for key, field, group in self._settings:
             old_val = getattr(old, key, None) if old is not None else None
             new_val = getattr(new, key, None) if new is not None else None
             if old_val != new_val:
-                setting_changed.send(sender=self, setting=key, old=old_val, new=new_val, site=site)
+                setting_changed.send(
+                    sender=self, setting=key, old=old_val, new=new_val, site=site)
 
     def on_cache_invalidated(self, instance):
         cache.delete('site_settings_{0}'.format(instance.site.pk))
-        
+
     def get_settings(self):
         context = get_context()
         settings = context.get('site_settings', None)
         if settings is None:
             site = Site.objects.get_current()
             if not site:
-                raise Exception("Could not retrieve settings, no current site.")
+                raise Exception(
+                    "Could not retrieve settings, no current site.")
             key = 'site_settings_{0}'.format(site.pk)
             settings = cache.get(key)
             if settings is None:
                 try:
                     settings = self.SiteSettings.objects.get(site=site)
                 except self.SiteSettings.DoesNotExist:
-                    raise Exception("Could not retrieve settings, no settings found for site '{0}'".format(site))
+                    raise Exception(
+                        "Could not retrieve settings, no settings found for site '{0}'".format(site))
                 cache.set(key, settings)
             context['site_settings'] = settings
         return settings
-    
+
     @classmethod
     def add_setting(self, key, field, group=None):
         self._settings.append((key, field, group))
-        
-        

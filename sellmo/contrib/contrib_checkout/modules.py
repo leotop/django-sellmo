@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -30,46 +30,52 @@ from sellmo.contrib.contrib_checkout.models import OrderMail
 
 #
 
-class CheckoutMailingModule(Module):  
+
+class CheckoutMailingModule(Module):
 
     namespace = 'checkout_mailing'
-    
+
     OrderMail = OrderMail
 
     @chainable()
     def render_order_confirmation(self, chain, format, order, data=None, **kwargs):
         if chain:
-            out = chain.execute(format=format, order=order, data=data, **kwargs)
+            out = chain.execute(
+                format=format, order=order, data=data, **kwargs)
             data = out.get('data', data)
         return data
-        
+
     @chainable()
     def render_order_notification(self, chain, format, order, data=None, **kwargs):
         if chain:
-            out = chain.execute(format=format, order=order, data=data, **kwargs)
+            out = chain.execute(
+                format=format, order=order, data=data, **kwargs)
             data = out.get('data', data)
         return data
-        
+
     @chainable()
     def render_shipping_notification(self, chain, format, order, data=None, **kwargs):
         if chain:
-            out = chain.execute(format=format, order=order, data=data, **kwargs)
+            out = chain.execute(
+                format=format, order=order, data=data, **kwargs)
             data = out.get('data', data)
         return data
-    
+
     def __init__(self):
         pass
-        
-class CheckoutReportingModule(Module):  
+
+
+class CheckoutReportingModule(Module):
 
     namespace = 'checkout_reporting'
 
     def __init__(self):
         pass
-        
+
     @chainable()
     def render_invoice(self, chain, order, internal=False, data=None, **kwargs):
         if chain:
-            out = chain.execute(order=order, internal=internal, data=data, **kwargs)
+            out = chain.execute(
+                order=order, internal=internal, data=data, **kwargs)
             data = out.get('data', data)
         return data

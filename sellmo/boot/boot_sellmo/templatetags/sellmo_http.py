@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -41,11 +41,13 @@ register = template.Library()
 
 #
 
+
 class QueryArgumentsValue(list):
+
     def __init__(self, query=None):
         list.__init__(self)
         self.query = query
-    
+
     def resolve(self, context):
         if self.query is None:
             query = QueryString()
@@ -65,14 +67,15 @@ class QueryArgumentsValue(list):
                 query.add_param(key, value)
             elif operator == '-=' and key in query:
                 query.remove_param(key, value)
-        return query    
+        return query
+
 
 class QueryArguments(Argument):
-    
+
     def __init__(self, name, default=None, required=True, resolve=True, query=None):
         super(QueryArguments, self).__init__(name, default, required, resolve)
         self.query = query
-    
+
     def parse_token(self, parser, token):
         if '+=' in token:
             operator = '+='
@@ -84,16 +87,18 @@ class QueryArguments(Argument):
             raise template.TemplateSyntaxError(
                 "QueryArguments arguments require key(=, +=, -=)value pairs"
             )
-        
+
         key, raw_value = token.split(operator, 1)
         value = super(QueryArguments, self).parse_token(parser, raw_value)
         return key, operator, value
-    
+
     def parse(self, parser, token, tagname, kwargs):
         if self.name not in kwargs:
-            kwargs[self.name] = QueryArgumentsValue(kwargs[self.query] if self.query else None)
+            kwargs[self.name] = QueryArgumentsValue(
+                kwargs[self.query] if self.query else None)
         kwargs[self.name].append(self.parse_token(parser, token))
         return True
+
 
 class QueryTag(Tag):
     name = 'query'
@@ -101,7 +106,7 @@ class QueryTag(Tag):
         QueryArguments('query'),
         'as',
         Argument('varname', default='query', required=False, resolve=False),
-        blocks = [
+        blocks=[
             ('endquery', 'nodelist')
         ],
     )
@@ -112,7 +117,8 @@ class QueryTag(Tag):
         output = nodelist.render(context)
         context.pop()
         return output
-        
+
+
 class ModQueryTag(Tag):
     name = 'modquery'
     options = Options(
@@ -120,7 +126,7 @@ class ModQueryTag(Tag):
         QueryArguments('new', query='old'),
         'as',
         Argument('varname', default='query', required=False, resolve=False),
-        blocks = [
+        blocks=[
             ('endmodquery', 'nodelist')
         ],
     )
@@ -134,4 +140,3 @@ class ModQueryTag(Tag):
 
 register.tag(QueryTag)
 register.tag(ModQueryTag)
-

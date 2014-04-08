@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -36,10 +36,15 @@ debug = getattr(settings, 'DEBUG', False)
 
 #
 
-PHONE_NUMBER_ENABLED = getattr(settings, 'SELLMO_PHONE_NUMBER_ENABLED', defaults.PHONE_NUMBER_ENABLED)
-PHONE_NUMBER_REQUIRED = getattr(settings, 'SELLMO_PHONE_NUMBER_REQUIRED', defaults.PHONE_NUMBER_REQUIRED)
-NAME_PREFIX_ENABLED = getattr(settings, 'SELLMO_NAME_PREFIX_ENABLED', defaults.NAME_PREFIX_ENABLED)
-NAME_PREFIX_REQUIRED = getattr(settings, 'SELLMO_NAME_PREFIX_REQUIRED', defaults.NAME_PREFIX_REQUIRED)
-NAME_PREFIX_CHOICES = getattr(settings, 'SELLMO_NAME_PREFIX_CHOICES', defaults.NAME_PREFIX_CHOICES)
+PHONE_NUMBER_ENABLED = getattr(
+    settings, 'SELLMO_PHONE_NUMBER_ENABLED', defaults.PHONE_NUMBER_ENABLED)
+PHONE_NUMBER_REQUIRED = getattr(
+    settings, 'SELLMO_PHONE_NUMBER_REQUIRED', defaults.PHONE_NUMBER_REQUIRED)
+NAME_PREFIX_ENABLED = getattr(
+    settings, 'SELLMO_NAME_PREFIX_ENABLED', defaults.NAME_PREFIX_ENABLED)
+NAME_PREFIX_REQUIRED = getattr(
+    settings, 'SELLMO_NAME_PREFIX_REQUIRED', defaults.NAME_PREFIX_REQUIRED)
+NAME_PREFIX_CHOICES = getattr(
+    settings, 'SELLMO_NAME_PREFIX_CHOICES', defaults.NAME_PREFIX_CHOICES)
 
 #

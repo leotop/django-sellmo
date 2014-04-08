@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -33,24 +33,28 @@ from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy as _
 
+
 class ShippingMethodAdminBase(admin.ModelAdmin):
     pass
 
 # Admin for shipping method
+
+
 class ShippingMethodParentAdmin(PolymorphicParentModelAdmin):
     base_model = modules.shipping.ShippingMethod
     child_models = []
-    
+
     polymorphic_list = True
     list_display = ['name']
     list_display_links = ['name']
     search_fields = ['name']
 
 # Admin for shipping carrier
+
+
 class ShippingCarrierAdmin(admin.ModelAdmin):
     pass
 
 
 admin.site.register(modules.shipping.ShippingMethod, ShippingMethodParentAdmin)
 admin.site.register(modules.shipping.ShippingCarrier, ShippingCarrierAdmin)
-

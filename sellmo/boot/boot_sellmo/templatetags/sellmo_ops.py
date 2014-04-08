@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -32,18 +32,22 @@ register = template.Library()
 
 #
 
+
 @register.filter
 def add(value, other):
     return value + other
-    
+
+
 @register.filter
 def sub(value, other):
     return value - other
-    
+
+
 @register.filter
 def mul(value, other):
     return value * other
-    
+
+
 @register.filter
 def div(value, other):
     return value / other

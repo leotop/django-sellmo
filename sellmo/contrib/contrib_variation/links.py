@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -42,6 +42,8 @@ from sellmo.api.forms import RedirectableFormSet
 from sellmo.api.pricing import Price
 
 #
+
+
 @link(namespace=modules.attribute.namespace, name='filter', capture=True)
 def capture_filter(request, products, attr, value, attribute=None, operator=None, **kwargs):
     if not attribute:
@@ -49,13 +51,14 @@ def capture_filter(request, products, attr, value, attribute=None, operator=None
             attribute = modules.attribute.Attribute.objects.get(key=attr)
         except modules.attribute.Attribute.DoesNotExist:
             return
-        
+
     yield {
-        'attribute' : attribute
+        'attribute': attribute
     }
-    
+
     if attribute.variates:
         yield override_filter
+
 
 def override_filter(module, chain, request, products, attr, value, attribute, operator=None, **kwargs):
     try:
@@ -64,14 +67,17 @@ def override_filter(module, chain, request, products, attr, value, attribute, op
         pass
     else:
         if operator is None:
-            q = ProductQ(attribute, value) | ProductQ(attribute, value, product_field='base_product')
+            q = ProductQ(attribute, value) | ProductQ(
+                attribute, value, product_field='base_product')
         else:
             qargs = {
-                operator : value
+                operator: value
             }
-            q = ProductQ(attribute, **qargs) | ProductQ(attribute, product_field='base_product' **qargs)
+            q = ProductQ(attribute, **qargs) | ProductQ(attribute,
+                                                        product_field='base_product' ** qargs)
         return products.filter(q)
     return products
+
 
 @link(namespace=modules.product.namespace)
 def list(request, products, **kwargs):
@@ -84,8 +90,9 @@ def list(request, products, **kwargs):
         products = products.variants(exclude=True)
 
     return {
-        'products' : products
+        'products': products
     }
+
 
 @link(namespace=modules.pricing.namespace, name='get_price', capture=True)
 def capture_get_price(product=None, **kwargs):
@@ -95,102 +102,110 @@ def capture_get_price(product=None, **kwargs):
         if getattr(product, '_is_variant', False):
             out['variant'] = product
             product = product.product
-        
+
         out['product'] = product
         return out
-        
+
+
 @link(namespace=modules.pricing.namespace)
 def get_price(price, product=None, variant=None, **kwargs):
     if variant and variant.price_adjustment != 0:
         price += Price(variant.price_adjustment)
     return {
-        'price' : price
+        'price': price
     }
-    
+
+
 @link(namespace=modules.store.namespace)
 def make_purchase(purchase, variation=None, **kwargs):
     if variation:
         purchase = purchase.clone(cls=modules.variation.VariationPurchase)
         purchase.variation_key = variation.pk
         purchase.variation_description = variation.description
-        
+
     return {
-        'purchase' : purchase
+        'purchase': purchase
     }
+
 
 @link(namespace=modules.cart.namespace)
 def get_purchase_args(form, product, args, **kwargs):
     if form.__class__.__name__ == 'AddToCartVariationForm':
         # Dealing with a varation form
         try:
-            variation = modules.variation.Variation.objects.get(pk=form.cleaned_data['variation'])
+            variation = modules.variation.Variation.objects.get(
+                pk=form.cleaned_data['variation'])
         except modules.variation.Variation.DoesNotExist:
             raise Exception("Invalid variation")
         args['product'] = variation.variant.downcast()
         args['variation'] = variation
-        
+
     return args
+
 
 @link(namespace=modules.cart.namespace)
 def get_add_to_cart_formset(formset, cls, product, variations=None, initial=None, data=None, **kwargs):
-    
+
     if not variations:
         variations = product.variations
-    
-    # Before proceeding to custom form creation, check if we're dealing with a variation product
+
+    # Before proceeding to custom form creation, check if we're dealing with a
+    # variation product
     if not variations:
         return
-    
+
     # Create the custom form
     dict = {
-        'variations_key' : forms.CharField(widget = forms.HiddenInput)
+        'variations_key': forms.CharField(widget=forms.HiddenInput)
     }
-    
+
     # Add variation field as either a choice or as a hidden integer
     if not modules.variation.batch_buy_enabled and variations and len(variations) > 1:
         dict['variation'] = forms.ChoiceField(
-            choices = [(el.id, modules.variation.get_variation_choice(variation=el)) for el in variations]
+            choices=[(el.id, modules.variation.get_variation_choice(variation=el))
+                     for el in variations]
         )
     else:
-        dict['variation'] = forms.CharField(widget = forms.HiddenInput)
-    
-            
+        dict['variation'] = forms.CharField(widget=forms.HiddenInput)
+
     AddToCartForm = type('AddToCartVariationForm', (cls,), dict)
-        
+
     # Create the formset based upon the custom form
-    AddToCartFormSet = formset_factory(AddToCartForm, formset=RedirectableFormSet, extra=0)
+    AddToCartFormSet = formset_factory(
+        AddToCartForm, formset=RedirectableFormSet, extra=0)
     variations_key = '|'.join([variation.pk for variation in variations])
-    
+
     # Fill in initial data
     if not data:
         if modules.variation.batch_buy_enabled:
             initial = [{
-                'product' : product.pk,
-                'variation' : variation.pk,
-                'qty' : 1,
-                'variations_key' : variations_key,
+                'product': product.pk,
+                'variation': variation.pk,
+                'qty': 1,
+                'variations_key': variations_key,
             } for variation in variations]
         else:
             initial = [{
-                'product' : product.pk,
-                'variation' : variations[:1][0].pk,
-                'qty' : 1,
-                'variations_key' : variations_key,
+                'product': product.pk,
+                'variation': variations[:1][0].pk,
+                'qty': 1,
+                'variations_key': variations_key,
             }]
-            
+
         formset = AddToCartFormSet(initial=initial)
     else:
         formset = AddToCartFormSet(data)
-    
+
     key = 'add_to_cart_variation_formset_%s' % variations_key
     formset.set_redirect_key(key)
     return {
-        'formset' : formset,
+        'formset': formset,
     }
-    
+
+
 @link(namespace=modules.cart.namespace, name='add_to_cart', capture=True)
 def capture_add_to_cart(request, product_slug, product=None, formset=None, **kwargs):
-    
+
     if formset is None:
         if request.method == 'POST':
             data = request.POST
@@ -198,21 +213,24 @@ def capture_add_to_cart(request, product_slug, product=None, formset=None, **kwa
             data = request.GET
         variations_key = data.get('form-0-variations_key', None)
         if variations_key:
-            
+
             # Resolve product
             if product is None:
                 try:
-                    product = modules.product.Product.objects.polymorphic().get(slug=product_slug)
+                    product = modules.product.Product.objects.polymorphic().get(
+                        slug=product_slug)
                 except modules.product.Product.DoesNotExist:
                     raise Http404
-            
+
             # Resolve variations
-            variations = modules.variation.Variation.objects.filter(pk__in=variations_key.split('|'))
-            
+            variations = modules.variation.Variation.objects.filter(
+                pk__in=variations_key.split('|'))
+
             # Get formset
-            formset = modules.cart.get_add_to_cart_formset(product=product, variations=variations, data=data)
-            
+            formset = modules.cart.get_add_to_cart_formset(
+                product=product, variations=variations, data=data)
+
             return {
-                'product' : product,
-                'formset' : formset,
+                'product': product,
+                'formset': formset,
             }

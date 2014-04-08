@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -36,15 +36,18 @@ from django import template
 register = template.Library()
 
 #
-    
+
+
 @register.filter
 def difference(a, b):
     return comparison.difference(a, b)
-    
+
+
 @register.filter
 def intersection(a, b):
     return comparison.intersection(a, b)
-    
+
+
 @register.filter
 def union(a, b):
     return comparison.union(a, b)

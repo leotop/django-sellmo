@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -33,10 +33,12 @@ from sellmo.api.forms import RedirectableForm
 
 #
 
+
 class AddToCartForm(RedirectableForm):
-    product = forms.IntegerField(widget = forms.HiddenInput)
+    product = forms.IntegerField(widget=forms.HiddenInput)
     qty = forms.IntegerField(min_value=1, initial=1)
-    
+
+
 class EditPurchaseForm(RedirectableForm):
-    purchase = forms.IntegerField(widget = forms.HiddenInput)
+    purchase = forms.IntegerField(widget=forms.HiddenInput)
     qty = forms.IntegerField(min_value=0)

@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -41,18 +41,21 @@ register = template.Library()
 
 #
 
+
 class VariationsTag(Tag):
     name = 'variations'
     options = Options(
         Flag('grouped', default=False, true_values=['grouped']),
         MultiKeywordArgument('kwargs', required=False),
         'as',
-        Argument('varname', default='variations', required=False, resolve=False),
-        blocks = [('endvariations', 'nodelist')],
+        Argument(
+            'varname', default='variations', required=False, resolve=False),
+        blocks=[('endvariations', 'nodelist')],
     )
 
     def render_tag(self, context, grouped, kwargs, varname, nodelist):
-        variations = modules.variation.get_variations(grouped=grouped, **kwargs)
+        variations = modules.variation.get_variations(
+            grouped=grouped, **kwargs)
         context.push()
         context[varname] = variations
         output = nodelist.render(context)

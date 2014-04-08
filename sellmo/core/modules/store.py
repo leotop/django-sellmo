@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -44,57 +44,60 @@ class StoreModule(sellmo.Module):
 
     def __init__(self, *args, **kwargs):
         pass
-    
+
     @chainable()
     def merge_purchase(self, chain, purchase, existing_purchases, result=None, **kwargs):
-            
+
         for existing in existing_purchases:
             if not existing.pk:
                 raise Exception("Can only merge persistent existing purchases")
-        
+
         purchase = purchase.downcast()
         manager = purchase.__class__.objects
-        
-        # Ensure existing_purchases is a queryset of the given purchase's queryset type
-        existing_purchases = manager.filter(pk__in=[existing.pk for existing in existing_purchases])
-        
-        # Find an existing purchase 
+
+        # Ensure existing_purchases is a queryset of the given purchase's
+        # queryset type
+        existing_purchases = manager.filter(
+            pk__in=[existing.pk for existing in existing_purchases])
+
+        # Find an existing purchase
         try:
             result = existing_purchases.mergeable_with(purchase)
         except self.Purchase.DoesNotExist:
             return None
-        
+
         # Merge this existing purchase with the new purchase
         result.merge_with(purchase)
-        
+
         # Remake the purchase
         self.make_purchase(purchase=result)
-        
+
         if chain:
-            out = chain.execute(purchase=purchase, existing_purchases=existing_purchases, result=result, **kwargs)
+            out = chain.execute(
+                purchase=purchase, existing_purchases=existing_purchases, result=result, **kwargs)
             if out.has_key('result'):
                 result = out['result']
-                
+
         return result
-       
+
     @chainable()
     def make_purchase(self, chain, product=None, qty=None, purchase=None, **kwargs):
-        
+
         if purchase is None:
             purchase = self.Purchase()
-        
+
         if not product is None:
-            purchase.product = product    
-        
+            purchase.product = product
+
         if not qty is None:
             purchase.qty = qty
-        
+
         purchase.calculate(save=False)
-            
+
         if chain:
-            out = chain.execute(product=purchase.product, qty=purchase.qty, purchase=purchase, **kwargs)
+            out = chain.execute(
+                product=purchase.product, qty=purchase.qty, purchase=purchase, **kwargs)
             if out.has_key('purchase'):
                 purchase = out['purchase']
-        
+
         return purchase
-        

@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -35,17 +35,18 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
+
 @load(before='finalize_customer_Contactable')
 def load_model():
     class Contactable(modules.customer.Contactable):
 
         if settings.PHONE_NUMBER_ENABLED:
             phone_number = models.CharField(
-                max_length = 20,
-                blank = not settings.PHONE_NUMBER_REQUIRED,
-                verbose_name = _("phone number"),
+                max_length=20,
+                blank=not settings.PHONE_NUMBER_REQUIRED,
+                verbose_name=_("phone number"),
             )
-            
+
         def clone(self, cls=None, clone=None):
             clone = super(Contactable, self).clone(cls=cls, clone=clone)
             if settings.PHONE_NUMBER_ENABLED:

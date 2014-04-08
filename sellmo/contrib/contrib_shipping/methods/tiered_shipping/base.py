@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -34,11 +34,12 @@ from django.utils.translation import ugettext_lazy as _
 
 #
 
+
 class TieredShippingMethod(ShippingMethod):
-    
+
     identifier = None
     name = None
-    
+
     def new_shipment(self, order):
         return modules.shipping.Shipment(
             method=self.method,
@@ -50,7 +51,7 @@ class TieredShippingMethod(ShippingMethod):
         self.name = name
         self.method = method
         self.carrier = carrier
-        
+
     def is_available(self, order, **kwargs):
         try:
             costs = self.method.tiers.for_order(order).costs
@@ -64,7 +65,7 @@ class TieredShippingMethod(ShippingMethod):
             costs = self.method.tiers.for_order(order).costs
         except modules.shipping.TieredShippingTier.DoesNotExist:
             raise Exception(_("Cannot get shipping costs for this order"))
-            
+
         if self.carrier:
             costs += self.carrier.extra_costs
         return modules.pricing.get_price(price=Price(costs), shipping_method=self)

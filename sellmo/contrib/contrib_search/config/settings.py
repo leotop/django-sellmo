@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -36,7 +36,8 @@ debug = getattr(settings, 'DEBUG', False)
 
 #
 
-SEARCH_FIELDS = getattr(settings, 'SELLMO_SEARCH_FIELDS', defaults.SEARCH_FIELDS)
+SEARCH_FIELDS = getattr(
+    settings, 'SELLMO_SEARCH_FIELDS', defaults.SEARCH_FIELDS)
 SEARCH_FORM = getattr(settings, 'SELLMO_SEARCH_FORM', defaults.SEARCH_FORM)
 
 #

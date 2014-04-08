@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -27,7 +27,7 @@
 #
 
 from threading import local
-        
+
 #
 
 from sellmo.core.params import params
@@ -37,20 +37,23 @@ from sellmo.core.params import params
 _local = local()
 
 #
-        
+
+
 def new_context():
     if not hasattr(_local, 'context'):
         _local.context = {}
     else:
         raise Exception("Local context could not be created.")
-        
+
+
 def get_context():
     if not hasattr(_local, 'context'):
         if getattr(params, 'worker_mode', False):
             return {}
         raise Exception("Local context could not be retrieved.")
     return _local.context
-    
+
+
 def release_context():
     if hasattr(_local, 'context'):
         del _local.context

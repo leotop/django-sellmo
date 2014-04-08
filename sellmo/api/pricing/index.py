@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -51,6 +51,7 @@ camelize = re.compile(r'(?!^)_([a-zA-Z])')
 
 #
 
+
 class IndexedQuerySet(QuerySet):
 
     _order_indexes_by = []
@@ -60,7 +61,7 @@ class IndexedQuerySet(QuerySet):
     def _get_order(self):
         ordering = []
         if self.query.extra_order_by:
-            ordering = list(self.query.extra_order_by) 
+            ordering = list(self.query.extra_order_by)
         elif self.query.order_by:
             ordering = list(self.query.order_by)
         elif self.query.default_ordering and self.query.get_meta().ordering:
@@ -89,7 +90,7 @@ class IndexedQuerySet(QuerySet):
         if self._is_sliced:
             return self._indexes
         qargs = {
-            '{0}__in'.format(self._relation) : self
+            '{0}__in'.format(self._relation): self
         }
         return self._indexes.filter(**qargs).select_related(self._relation).order_by(*self._get_order())
 
@@ -115,9 +116,11 @@ class IndexedQuerySet(QuerySet):
         clone._relation = self._relation
         clone._order_indexes_by = self._order_indexes_by
         clone._is_sliced = self._is_sliced
-        # We explicitely do not clone the index, it can safely be shared accross querysets
+        # We explicitely do not clone the index, it can safely be shared
+        # accross querysets
         clone.index = self.index
         return clone
+
 
 def make_indexed(queryset, indexes, relation):
     # Decide correct mro
@@ -136,7 +139,9 @@ def make_indexed(queryset, indexes, relation):
     indexed.index = PrefetchedPriceIndex(relation)
     return indexed
 
+
 class PrefetchedPriceIndex(object):
+
     def __init__(self, relation):
         self.relation = relation
         self.indexes = {}
@@ -149,7 +154,9 @@ class PrefetchedPriceIndex(object):
     def index(self, pk, index):
         self.indexes[pk] = index
 
+
 class PriceIndex(object):
+
     def __init__(self, identifier):
         self.identifier = identifier
         self.kwargs = {}
@@ -158,11 +165,13 @@ class PriceIndex(object):
     def _build(self):
         class Meta(modules.pricing.PriceIndexBase.Meta):
             abstract = True
-            unique_together = tuple(value['field_name'] for value in self.kwargs.values())
+            unique_together = tuple(value['field_name']
+                                    for value in self.kwargs.values())
 
-        name = '{0}Index'.format(camelize.sub(lambda m: m.group(1).upper(), self.identifier.title()))
+        name = '{0}Index'.format(
+            camelize.sub(lambda m: m.group(1).upper(), self.identifier.title()))
         attr_dict = {
-            'Meta' : Meta,
+            'Meta': Meta,
             '__module__': modules.pricing.PriceIndexBase.__module__
         }
 
@@ -174,8 +183,8 @@ class PriceIndex(object):
 
         model = type(name, (modules.pricing.PriceIndexBase,), attr_dict)
         model = modules.pricing.make_stampable(
-            model = model,
-            properties = ['price']
+            model=model,
+            properties=['price']
         )
 
         # Now finalize
@@ -183,7 +192,7 @@ class PriceIndex(object):
             pass
 
         attr_dict = {
-            'Meta' : Meta,
+            'Meta': Meta,
             '__module__': model.__module__
         }
 
@@ -213,7 +222,8 @@ class PriceIndex(object):
             field_name = value['field_name']
             transform = value['transform']
             if key in kwargs and kwargs[key] is not None:
-                fargs[field_name] = kwargs[key] if not transform else transform(kwargs[key])
+                fargs[field_name] = kwargs[
+                    key] if not transform else transform(kwargs[key])
             elif value['required']:
                 complete = False
             else:
@@ -224,23 +234,25 @@ class PriceIndex(object):
         if name in ('relation', 'nullable'):
             raise Exception("Resereved kwarg name '{0}".format(name))
         if name in self.kwargs:
-            raise Exception("Index '{0}' already has a kwarg '{1}'".format(self, name))
+            raise Exception(
+                "Index '{0}' already has a kwarg '{1}'".format(self, name))
         if not field_name:
             field_name = name
         if self._model is not None:
             raise Exception("Index '{0}' is already build.".format(self))
         if not required and field.null is False:
-            raise Exception("Index '{0}' field '{1}' must be nullable.".format(self, field_name))
-    
+            raise Exception(
+                "Index '{0}' field '{1}' must be nullable.".format(self, field_name))
+
         self.kwargs[name] = {
-            'field_name' : field_name,
-            'required' : required,
-            'field' : field,
-            'transform' : transform,
-            'default' : default,
-            'model' : model,
+            'field_name': field_name,
+            'required': required,
+            'field': field,
+            'transform': transform,
+            'default': default,
+            'model': model,
         }
-    
+
     def is_kwarg(self, name):
         return name in self.kwargs
 
@@ -271,14 +283,15 @@ class PriceIndex(object):
     def query(self, queryset, relation, **kwargs):
         q, complete = self._get_query(relation=relation, **kwargs)
         if complete:
-            queryset = make_indexed(queryset, self.model.objects.filter(q), relation)
+            queryset = make_indexed(
+                queryset, self.model.objects.filter(q), relation)
         return queryset
-        
+
     def update(self, **kwargs):
         # First query invalidations
         q, complete = self._get_query(nullable=True, **kwargs)
         invalidations = self.model.objects.filter(q)
-        
+
         # Fill defaults
         for key, value in self.kwargs.iteritems():
             if key not in kwargs and value['default']:
@@ -287,23 +300,28 @@ class PriceIndex(object):
                     kwargs[key] = default()
                 else:
                     kwargs[key] = default
-        
+
         # Make sure kwargs is either a QuerySet, or a list
         for key, value in kwargs.iteritems():
             if not self.is_kwarg(key):
-                raise ValueError("Index '{0}' update kwarg '{1}' is not valid.".format(self, key))
+                raise ValueError(
+                    "Index '{0}' update kwarg '{1}' is not valid.".format(self, key))
             if not isinstance(value, (list, tuple, QuerySet)):
-                raise TypeError("Index '{0}' update kwarg '{1}' must be a list or QuerySet.".format(self, key))
+                raise TypeError(
+                    "Index '{0}' update kwarg '{1}' must be a list or QuerySet.".format(self, key))
             if self.kwargs[key].get('model', None) is not None:
                 model = self.kwargs[key]['model']
                 if isinstance(value, QuerySet) and not value.model is model:
-                    raise ValueError("Index '{0}' update kwarg '{1}' is not a valid QuerySet.".format(self, key)) 
+                    raise ValueError(
+                        "Index '{0}' update kwarg '{1}' is not a valid QuerySet.".format(self, key))
                 elif not isinstance(value, QuerySet):
                     # Yes this is safe
-                    kwargs[key] = model.objects.filter(pk__in=[el.pk for el in value])
-        
+                    kwargs[key] = model.objects.filter(
+                        pk__in=[el.pk for el in value])
+
         # Now update with provided kwargs
-        modules.pricing.update_index(index=self.identifier, invalidations=invalidations, **kwargs)
+        modules.pricing.update_index(
+            index=self.identifier, invalidations=invalidations, **kwargs)
 
     @property
     def model(self):

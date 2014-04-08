@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -29,25 +29,28 @@ from django.forms import formsets
 
 #
 
+
 class RedirectableMixin(object):
     redirect_key = None
+
     def redirect(self, request):
         request.redirection[self.get_redirect_key()] = self.data
-    
+
     def get_redirect_data(self, request):
         return request.redirection.get(self.get_redirect_key())
-        
+
     def get_redirect_key(self):
         if self.redirect_key is None:
             raise Exception("Redirect key was not set.")
         return self.redirect_key
-        
+
     def set_redirect_key(self, key):
         self.redirect_key = key
-        
-        
+
+
 class RedirectableForm(forms.Form, RedirectableMixin):
     pass
-    
+
+
 class RedirectableFormSet(formsets.BaseFormSet, RedirectableMixin):
     pass

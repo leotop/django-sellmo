@@ -50,6 +50,7 @@ register = template.Library()
 
 #
 
+
 class CategoriesTag(Tag):
     name = 'categories'
     options = Options(
@@ -57,23 +58,23 @@ class CategoriesTag(Tag):
         MultiKeywordArgument('kwargs', required=False),
         'cached',
         Argument('expire_time', default=False, required=False, resolve=False),
-        blocks = [
+        blocks=[
             ('node', 'pre_node'),
             ('endnode', 'node'),
             ('endcategories', 'post_node')
         ],
     )
-    
+
     def _render_category_node(self, category, ancestors, current, context, nodelist):
         context.push()
-        
+
         current_match = False
         if current:
             if current == category:
                 current_match = 'exact'
             elif category.is_ancestor_of(current):
                 current_match = True
-        
+
         bits = []
         for child in category.get_children():
             _ancestors = ancestors + [category]
@@ -85,31 +86,33 @@ class CategoriesTag(Tag):
                 context,
                 nodelist
             ))
-        
+
         context['node'] = category
         context['children'] = mark_safe(''.join(bits))
         context['current'] = current_match
         context['ancestors'] = ancestors
-        context['absolute_url'] = category.get_absolute_url(slug=category.get_full_slug(ancestors=ancestors))
+        context['absolute_url'] = category.get_absolute_url(
+            slug=category.get_full_slug(ancestors=ancestors))
         context['path'] = ancestors + [category]
         output = nodelist.render(context)
-        
+
         context.pop()
         return output
-        
+
     def _render_categories(self, context, categories, current, pre_node, node, post_node):
         context.push()
-        
+
         nodes = []
         if node:
-            nodes = [self._render_category_node(category, [], current, context, node) for category in categories]
-        
+            nodes = [self._render_category_node(
+                category, [], current, context, node) for category in categories]
+
         bits = [
             pre_node.render(context),
             mark_safe(''.join(nodes)),
             post_node.render(context)
         ]
-        
+
         output = mark_safe(''.join(bits))
         context.pop()
         return output
@@ -118,34 +121,39 @@ class CategoriesTag(Tag):
         current = None
         if 'current' in kwargs:
             current = kwargs.pop('current')
-        
+
         cache_key = False
         output = None
-        
+
         if not django_settings.DEBUG and expire_time is not False:
-            cache_key = make_template_fragment_key('categories', [nested, current, str(pre_node + node + post_node)])
+            cache_key = make_template_fragment_key(
+                'categories', [nested, current, str(pre_node + node + post_node)])
             output = cache.get(cache_key)
-    
+
         if not output:
             # Query categories
             categories = modules.category.list(nested=nested, **kwargs)
             if nested:
                 categories = cache_tree_children(categories)
-            output = self._render_categories(context, categories, current, pre_node, node, post_node)            
+            output = self._render_categories(
+                context, categories, current, pre_node, node, post_node)
             if cache_key:
                 if expire_time is not None:
                     expire_time = int(expire_time)
-                # Make sure we don't expire any longer than the categories_cache_keys entry
+                # Make sure we don't expire any longer than the
+                # categories_cache_keys entry
                 if not settings.MAX_EXPIRE_TIME is None:
                     if expire_time is None or expire_time > settings.MAX_EXPIRE_TIME:
-                        raise Exception("Expire time may not exceed {0}".format(settings.MAX_EXPIRE_TIME))
-                
+                        raise Exception(
+                            "Expire time may not exceed {0}".format(settings.MAX_EXPIRE_TIME))
+
                 cache.set(cache_key, output, expire_time)
                 cache_keys = cache.get('categories_cache_keys', [])
                 if cache_key not in cache_keys:
                     cache_keys.append(cache_key)
-                cache.set('categories_cache_keys', cache_keys, settings.MAX_EXPIRE_TIME)
-        
+                cache.set(
+                    'categories_cache_keys', cache_keys, settings.MAX_EXPIRE_TIME)
+
         return output
 
 register.tag(CategoriesTag)

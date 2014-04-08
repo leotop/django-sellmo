@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -38,13 +38,15 @@ import logging
 logger = logging.getLogger('weasyprint')
 logger.handlers = []
 
+
 class WeasyPrintReportGenerator(ReportGeneratorBase):
 
     input_formats = ['html']
     output_formats = ['pdf']
 
     def get_params(self, writer, format):
-        params = super(WeasyPrintReportGenerator, self).get_params(writer, format)
+        params = super(WeasyPrintReportGenerator, self).get_params(
+            writer, format)
         suggest_params = settings.REPORTING_PARAMS.get(format, {})
 
         for param, suggest in suggest_params.iteritems():

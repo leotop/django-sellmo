@@ -49,10 +49,13 @@ logger = logging.getLogger('sellmo')
 
 #
 
+
 def get_default_currency():
     return str(modules.pricing.get_currency())
 
+
 class PricingModule(sellmo.Module):
+
     """
     Routes pricing logic to higher level modules.
     """
@@ -61,45 +64,45 @@ class PricingModule(sellmo.Module):
     currencies = {}
     types = []
     indexes = {}
-    
+
     PriceIndexBase = PriceIndexBase
-    
+
     #: Configures the max digits for a pricing (decimal) field
     decimal_max_digits = 9
     #: Configures the amount of decimal places for a pricing (decimal) field
     decimal_places = 2
-    
+
     def __init__(self, *args, **kwargs):
         # Configure
         if self.currency is None:
             self.currency = Currency(*settings.CURRENCY)
         if not self.currencies:
             self.currencies = {
-                self.currency.code : self.currency
+                self.currency.code: self.currency
             }
-        
+
         # Initialize indexes
         for index in self.indexes.values():
             index.add_kwarg(
                 'currency',
                 field_name='price_currency',
-                transform=lambda value : value.code,
+                transform=lambda value: value.code,
                 default=self.currencies.values()
             )
             index._build()
             self.register(index.model.__name__, index.model)
-    
+
     @classmethod
     def construct_decimal_field(self, **kwargs):
         """
         Constructs a decimal field.
         """
         return models.DecimalField(
-            max_digits = modules.pricing.decimal_max_digits,
-            decimal_places = modules.pricing.decimal_places,
+            max_digits=modules.pricing.decimal_max_digits,
+            decimal_places=modules.pricing.decimal_places,
             **kwargs
         )
-        
+
     @classmethod
     def construct_pricing_field(self, **kwargs):
         """
@@ -108,69 +111,73 @@ class PricingModule(sellmo.Module):
         if not kwargs.has_key('default'):
             kwargs['default'] = Decimal('0.0')
         return self.construct_decimal_field(**kwargs)
-        
+
     @classmethod
     def construct_currency_field(self, **kwargs):
         """
         Constructs a currency field.
         """
-        choices = [(currency.code, currency.name) for currency in self.currencies]
+        choices = [(currency.code, currency.name)
+                   for currency in self.currencies]
         return models.CharField(
-            max_length = 3,
-            default = get_default_currency,
-            choices = choices,
+            max_length=3,
+            default=get_default_currency,
+            choices=choices,
             **kwargs
         )
-        
+
     @classmethod
     def make_stampable(self, model, properties, **kwargs):
-        
+
         class Meta(model.Meta):
             abstract = True
-        
+
         name = model.__name__
         attr_dict = {
-            'Meta' : Meta,
-            '__module__' : model.__module__
+            'Meta': Meta,
+            '__module__': model.__module__
         }
-        
+
         for prop in properties:
             verbose_name = None
             if isinstance(prop, (types.ListType, types.TupleType)):
                 if len(prop) > 1:
                     verbose_name = prop[1]
                 prop = prop[0]
-            
+
             #
             attr_dict[prop] = StampableProperty(prop)
-            
+
             # Construct price currency field
             fargs = {}
             if verbose_name:
-                fargs['verbose_name'] = string_concat(verbose_name, ' ', _("currency"))
+                fargs['verbose_name'] = string_concat(
+                    verbose_name, ' ', _("currency"))
             else:
                 fargs['verbose_name'] = _("currency")
-            
-            attr_dict['{0}_currency'.format(prop)] = self.construct_currency_field(**fargs)
-            
+
+            attr_dict['{0}_currency'.format(prop)] = self.construct_currency_field(
+                **fargs)
+
             # Construct price type fields (including the standard amount field)
             for key in self.types + ['amount']:
                 field = '{0}_{1}'.format(prop, key)
                 fargs = {}
-                
+
                 if key == 'amount':
-                    fargs['verbose_name'] = verbose_name  
+                    fargs['verbose_name'] = verbose_name
                 elif hasattr(key, 'name'):
                     if verbose_name:
-                        fargs['verbose_name'] = string_concat(verbose_name, ' ', key.name)
+                        fargs['verbose_name'] = string_concat(
+                            verbose_name, ' ', key.name)
                     else:
                         fargs['verbose_name'] = key.name
-                    
+
                 attr_dict[field] = self.construct_pricing_field(**fargs)
-            
+
         out = type(name, (model,), attr_dict)
         return out
-        
+
     @classmethod
     def create_index(self, identifier):
         if identifier in self.indexes:
@@ -178,43 +185,46 @@ class PricingModule(sellmo.Module):
         index = PriceIndex(identifier)
         self.indexes[identifier] = index
         return index
-        
+
     @classmethod
     def get_index(self, identifier):
         if identifier not in self.indexes:
             raise Exception("Index '{0}' not found.".format(identifier))
         return self.indexes[identifier]
-    
+
     @chainable()
     def update_index(self, chain, index, invalidations, delay=False, **kwargs):
-        
+
         # Collect index kwargs
         out = {}
         out.update(kwargs)
         if chain:
-            out.update(chain.execute(index=index, invalidations=invalidations, **kwargs))
-            
+            out.update(
+                chain.execute(index=index, invalidations=invalidations, **kwargs))
+
         # Get actual index
         index = self.get_index(index)
-            
+
         # Filter out kwargs
-        iargs = { key : value for key, value in out.iteritems() if index.is_kwarg(key)}
-        
+        iargs = {
+            key: value for key, value in out.iteritems() if index.is_kwarg(key)}
+
         # Create all possible combinations
         combinations = []
+
         def combine(remaining, combination=None):
             if combination is None:
                 combination = {}
             if remaining:
                 key, values = remaining.popitem()
                 for value in values:
-                    merged = {key : value}
+                    merged = {key: value}
                     merged.update(combination)
                     combine(dict(remaining), merged)
             else:
                 combinations.append(combination)
         combine(iargs)
-                
+
         if not delay:
             # Invalidate indexes
             invalidations.invalidate()
@@ -223,7 +233,7 @@ class PricingModule(sellmo.Module):
                 index.index(self.get_price(**combination), **combination)
         else:
             return invalidations, combinations
-        
+
     @chainable()
     def retrieve(self, chain, stampable, prop, price=None, **kwargs):
         if price is None:
@@ -231,16 +241,18 @@ class PricingModule(sellmo.Module):
             currency = getattr(stampable, '{0}_currency'.format(prop))
             price = Price(amount, currency=self.currencies[currency])
             for key in self.types:
-                price[key] = Price(getattr(stampable, '{0}_{1}'.format(prop, key)))
+                price[key] = Price(
+                    getattr(stampable, '{0}_{1}'.format(prop, key)))
         if chain:
-            out = chain.execute(stampable=stampable, prop=prop, price=price, **kwargs)
+            out = chain.execute(
+                stampable=stampable, prop=prop, price=price, **kwargs)
             price = out.get('price', price)
         return price
-            
+
     @chainable()
     def stamp(self, chain, stampable, prop, price, **kwargs):
         setattr(stampable, '{0}_amount'.format(prop), price.amount)
-        setattr(stampable, '{0}_currency'.format(prop), price.currency.code )
+        setattr(stampable, '{0}_currency'.format(prop), price.currency.code)
         for key in self.types:
             if key in price:
                 amount = price[key].amount
@@ -248,8 +260,9 @@ class PricingModule(sellmo.Module):
                 amount = Decimal(0.0)
             setattr(stampable, '{0}_{1}'.format(prop, key), amount)
         if chain:
-            chain.execute(stampable=stampable, prop=prop, price=price, **kwargs)
-        
+            chain.execute(
+                stampable=stampable, prop=prop, price=price, **kwargs)
+
     @chainable()
     def get_currency(self, chain, request=None, currency=None, **kwargs):
         if currency is None:
@@ -259,47 +272,49 @@ class PricingModule(sellmo.Module):
             if out.has_key('currency'):
                 currency = out['currency']
         return currency
-            
+
     @chainable()
     def get_price(self, chain, currency=None, price=None, index=None, **kwargs):
         if currency is None:
             currency = self.get_currency()
-        
+
         # Price indexing
         if index:
             if isinstance(index, PrefetchedPriceIndex):
                 price = index.lookup(currency=currency.code, **kwargs)
             else:
-                price = self.get_index(index).lookup(currency=currency, **kwargs)
+                price = self.get_index(index).lookup(
+                    currency=currency, **kwargs)
             if price is not None:
                 return price
-            
+
         if price is None:
             price = Price(0, currency=currency)
         if chain:
             out = chain.execute(price=price, currency=currency, **kwargs)
             if out.has_key('price'):
                 price = out['price']
-        
+
         # Price indexing
         if index and not isinstance(index, PrefetchedPriceIndex):
             self.get_index(index).index(price, currency=currency, **kwargs)
-        
+
         return price
-        
+
     @link(namespace='product', name='list')
     def list_products(self, products, query=None, currency=None, index=None, index_relation='product', **kwargs):
         if currency is None:
             currency = self.get_currency()
         if index is not None:
-            products = self.get_index(index).query(products, index_relation, currency=currency, **kwargs)
+            products = self.get_index(index).query(
+                products, index_relation, currency=currency, **kwargs)
         if query is not None:
             # See if we need to sort on price
             if ('sort', 'price') in query:
                 products = products.order_indexes_by('price_amount')
             elif ('sort', '-price') in query:
                 products = products.order_indexes_by('-price_amount')
-                
+
         return {
-            'products' : products
+            'products': products
         }

@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -30,15 +30,17 @@ import subprocess
 
 #
 
+
 class PipeError(Exception):
     pass
 
 
 def pipe(command, input=None, cwd=None, *args, **kwargs):
-    
-    handle = subprocess.Popen(command, shell=True, cwd=cwd, stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE, *args, **kwargs)
+
+    handle = subprocess.Popen(command, shell=True, cwd=cwd, stdout=subprocess.PIPE,
+                              stdin=subprocess.PIPE, stderr=subprocess.PIPE, *args, **kwargs)
     out, err = handle.communicate(input=input)
-    
+
     if handle.returncode != 0:
         error = err
         if not error:

@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -34,29 +34,29 @@ from sellmo.api.decorators import load
 
 #
 
+
 @load(after='load_product_Product', before='finalize_product_Product')
 def load_model():
-    
+
     class Product(modules.product.Product):
-        
+
         active = models.BooleanField(
-            default = True,
-            verbose_name = _("active"),
-            help_text = _(
+            default=True,
+            verbose_name=_("active"),
+            help_text=_(
                 "Inactive products will be hidden from the site."
             )
         )
-        
+
         featured = models.BooleanField(
-            default = False,
-            verbose_name = _("featured"),
-            help_text = _(
+            default=False,
+            verbose_name=_("featured"),
+            help_text=_(
                 "Marks this product as featured allowing additional showcasing across the site."
             )
         )
-        
+
         class Meta(modules.product.Product.Meta):
             abstract = True
-    
+
     modules.product.Product = Product
-    

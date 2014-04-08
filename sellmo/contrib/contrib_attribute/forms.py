@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -44,8 +44,9 @@ from django.contrib.contenttypes.models import ContentType
 
 #
 
+
 class ProductAttributeFormMixin(object):
-    
+
     def __init__(self, *args, **kwargs):
         initial = {}
         if 'initial' in kwargs:
@@ -55,73 +56,75 @@ class ProductAttributeFormMixin(object):
             instance = kwargs['instance']
         if instance:
             initial.update({
-                self.__attribute_field_names[attribute.key] : instance.attributes[attribute.key] 
+                self.__attribute_field_names[attribute.key]: instance.attributes[attribute.key]
                 for attribute in self.__attributes
             })
         kwargs['initial'] = initial
         super(ProductAttributeFormMixin, self).__init__(*args, **kwargs)
-    
+
     def save(self, commit=True):
         instance = super(ProductAttributeFormMixin, self).save(commit=False)
         for attribute in self.__attributes:
-            value = self.cleaned_data.get(self.__attribute_field_names[attribute.key])
+            value = self.cleaned_data.get(
+                self.__attribute_field_names[attribute.key])
             instance.attributes[attribute.key] = value
         if commit:
             instance.save()
             self.save_m2m()
         return instance
 
+
 class ProductAttributeFormFactory(FormFactory):
-    
+
     FIELD_CLASSES = {
-        modules.attribute.Attribute.TYPE_STRING : forms.CharField,
-        modules.attribute.Attribute.TYPE_INT : forms.IntegerField,
-        modules.attribute.Attribute.TYPE_FLOAT : forms.FloatField,
-        modules.attribute.Attribute.TYPE_OBJECT : forms.ModelChoiceField,
+        modules.attribute.Attribute.TYPE_STRING: forms.CharField,
+        modules.attribute.Attribute.TYPE_INT: forms.IntegerField,
+        modules.attribute.Attribute.TYPE_FLOAT: forms.FloatField,
+        modules.attribute.Attribute.TYPE_OBJECT: forms.ModelChoiceField,
     }
-    
+
     def __init__(self, form=forms.ModelForm, mixin=ProductAttributeFormMixin, prefix=None):
         self.form = form
         self.mixin = mixin
         self.prefix = prefix
-        
+
     def get_attributes(self):
         return modules.attribute.Attribute.objects.all()
-        
+
     def get_attribute_field(self, attribute):
         field = self.FIELD_CLASSES[attribute.type]
         field = field(
             *self.get_attribute_field_args(attribute, field),
             **self.get_attribute_field_kwargs(attribute, field)
         )
-        
+
         return field
-        
+
     def get_attribute_field_kwargs(self, attribute, field):
         kwargs = {
-            'label' : attribute.label,
-            'required' : attribute.required,
-            'help_text' : attribute.help_text,
-            'validators' : attribute.validators,
+            'label': attribute.label,
+            'required': attribute.required,
+            'help_text': attribute.help_text,
+            'validators': attribute.validators,
         }
-        
+
         return kwargs
-        
+
     def get_attribute_field_args(self, attribute, field):
         args = []
         if field is forms.ModelChoiceField:
             args.append(attribute.get_object_choices())
-        
+
         return args
-        
+
     def factory(self):
         attributes = self.get_attributes()
         names = {}
         fields = {}
         attr_dict = {
-            '_{0}__attributes'.format(self.mixin.__name__) : attributes,
-            '_{0}__attribute_field_names'.format(self.mixin.__name__) : names,
-            '_{0}__attribute_fields'.format(self.mixin.__name__) : fields,
+            '_{0}__attributes'.format(self.mixin.__name__): attributes,
+            '_{0}__attribute_field_names'.format(self.mixin.__name__): names,
+            '_{0}__attribute_fields'.format(self.mixin.__name__): fields,
         }
         for attribute in attributes:
             field = self.get_attribute_field(attribute)
@@ -131,5 +134,5 @@ class ProductAttributeFormFactory(FormFactory):
             names[attribute.key] = name
             fields[attribute.key] = field
             attr_dict[name] = field
-        
+
         return type('ProductAttributeForm', (self.mixin, self.form), attr_dict)

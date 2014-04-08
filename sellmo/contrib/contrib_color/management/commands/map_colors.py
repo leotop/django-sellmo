@@ -1,6 +1,6 @@
 # Copyright (c) 2012, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -31,6 +31,7 @@ from django.core.management.base import BaseCommand, CommandError
 from sellmo import modules
 
 #
+
 
 class Command(BaseCommand):
 
