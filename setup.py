@@ -12,6 +12,7 @@ from distutils.sysconfig import get_python_lib
 import os
 import sys
 
+
 class osx_install_data(install_data):
     # On MacOS, the platform-specific lib dir is /System/Library/Framework/Python/.../
     # which is wrong. Python 2.5 supplied with MacOS 10.5 has an Apple-specific fix
@@ -29,6 +30,7 @@ if sys.platform == "darwin":
     cmdclasses = {'install_data': osx_install_data}
 else:
     cmdclasses = {'install_data': install_data}
+
 
 def fullsplit(path, result=None):
     """
@@ -66,7 +68,8 @@ for dirpath, dirnames, filenames in os.walk(code_dir):
     if '__init__.py' in filenames:
         packages.append('.'.join(fullsplit(dirpath)))
     elif filenames:
-        data_files.append([dirpath, [os.path.join(dirpath, f) for f in filenames]])
+        data_files.append(
+            [dirpath, [os.path.join(dirpath, f) for f in filenames]])
 
 # Small hack for working with bdist_wininst.
 # See http://mail.python.org/pipermail/distutils-sig/2004-August/004134.html
@@ -86,16 +89,16 @@ if not using_dist:
     kwargs['install_requires'] = install_requires
 
 setup(
-    name = "Sellmo",
-    version = '0.0.1.1600',
-    url = 'http://www.adaptiv.nl/',
-    author = 'Adaptiv Design',
-    author_email = 'raymond@adaptiv.nl',
-    description = '',
-    download_url = '',
-    packages = packages,
-    cmdclass = cmdclasses,
-    data_files = data_files,
-    scripts = [],
+    name="Sellmo",
+    version='0.0.1.1600',
+    url='http://www.adaptiv.nl/',
+    author='Adaptiv Design',
+    author_email='raymond@adaptiv.nl',
+    description='',
+    download_url='',
+    packages=packages,
+    cmdclass=cmdclasses,
+    data_files=data_files,
+    scripts=[],
     **kwargs
 )

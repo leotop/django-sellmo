@@ -55,7 +55,8 @@ def load_model():
         )
 
         def is_stale(self, ignore_cart=False, **kwargs):
-            return super(Purchase, self).is_stale(**kwargs) and (self.cart is None or ignore_cart)
+            return (super(Purchase, self).is_stale(**kwargs) 
+                    and (self.cart is None or ignore_cart))
 
         class Meta(modules.store.Purchase.Meta):
             abstract = True

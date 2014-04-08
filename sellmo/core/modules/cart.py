@@ -258,19 +258,9 @@ class CartModule(sellmo.Module):
         return redirection
 
     @view(r'^add/(?P<product_slug>[-a-zA-Z0-9_]+)$')
-    def add_to_cart(
-            self,
-            chain,
-            request,
-            product_slug,
-            product=None,
-            formset=None,
-            purchases=None,
-            context=None,
-            next='cart.cart',
-            invalid='cart.cart',
-            **kwargs
-    ):
+    def add_to_cart(self, chain, request, product_slug, product=None, formset=None,
+                    purchases=None, context=None, next='cart.cart',
+                    invalid='cart.cart', **kwargs):
 
         next = request.GET.get('next', next)
         invalid = request.GET.get('invalid', invalid)
