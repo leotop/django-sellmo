@@ -56,7 +56,7 @@ class MollieIdealBankSelectStep(CheckoutStep):
     def _contextualize_or_complete(self, request, context, data=None):
         success = True
 
-        bank, form, processed = modules.mollie_ideal.handle_bank_select(request=request, payment=self.payment, prefix='bank_select', data=data)
+        bank, form, processed = modules.mollie_ideal.process_bank_select(request=request, payment=self.payment, prefix='bank_select', data=data)
         context['bank_select_form'] = form
         success &= processed
 

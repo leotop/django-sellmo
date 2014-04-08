@@ -62,7 +62,7 @@ class LoginStep(CheckoutStep):
         return modules.multistep_checkout.get_step(key='information', order=self.order, request=self.request, step=step)
         
     def contextualize_or_complete(self, request, context, data=None, success=True):
-        user, form, processed = modules.customer.handle_login(request=request, prefix='login', data=data)
+        user, form, processed = modules.customer.process_login(request=request, prefix='login', data=data)
         context['login_form'] = form
         success &= processed
         
@@ -109,17 +109,17 @@ class InformationStep(CheckoutStep):
     def contextualize_or_complete(self, request, context, data=None, success=True):
         addresses = {}
         
-        contactable, form, processed = modules.customer.handle_contactable(prefix='contactable', contactable=self.order, data=data)
+        contactable, form, processed = modules.customer.process_contactable(request=request, prefix='contactable', contactable=self.order, data=data)
         context['contactable_form'] = form
         success &= processed
         
         if self.order.needs_shipping:
-            method, form, processed = modules.checkout.handle_shipping_method(order=self.order, prefix='shipping_method', data=data)
+            method, form, processed = modules.checkout.process_shipping_method(request=request, order=self.order, prefix='shipping_method', data=data)
             context['shipping_method_form'] = form
             success &= processed
         
         for type in settings.ADDRESS_TYPES:
-            address, form, processed = modules.customer.handle_address(type=type, prefix='{0}_address'.format(type), address=self.order.get_address(type), data=data)
+            address, form, processed = modules.customer.process_address(request=request, type=type, prefix='{0}_address'.format(type), address=self.order.get_address(type), data=data)
             context['{0}_address_form'.format(type)] = form
             success &= processed
             addresses[type] = address
@@ -163,7 +163,7 @@ class PaymentMethodStep(CheckoutStep):
         return modules.multistep_checkout.get_step(key='summary', order=self.order, request=self.request, step=step)
 
     def contextualize_or_complete(self, request, context, data=None, success=True):
-        method, form, processed = modules.checkout.handle_payment_method(order=self.order, prefix='payment_method', data=data)
+        method, form, processed = modules.checkout.process_payment_method(request=request, order=self.order, prefix='payment_method', data=data)
         context['payment_method_form'] = form
         success &= processed
 

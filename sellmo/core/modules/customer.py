@@ -144,7 +144,7 @@ class CustomerModule(sellmo.Module):
         
         
     @chainable()
-    def handle_customer(self, chain, request, prefix=None, data=None, customer=None, **kwargs):
+    def process_customer(self, chain, request, prefix=None, data=None, customer=None, **kwargs):
         # Try and get customer from request
         customer = self.get_customer(request=request)
         
@@ -155,14 +155,14 @@ class CustomerModule(sellmo.Module):
             processed = True
         
         if chain:
-            out = chain.execute(prefix=prefix, data=data, customer=customer, form=form, processed=processed, **kwargs)
+            out = chain.execute(request=request, prefix=prefix, data=data, customer=customer, form=form, processed=processed, **kwargs)
             customer, form, processed = out.get('customer', customer), out.get('form', form), out.get('processed', processed)
         return customer, form, processed
         
     # CONTACTABLE LOGIC
         
     @chainable()
-    def handle_contactable(self, chain, prefix=None, data=None, contactable=None, **kwargs):
+    def process_contactable(self, chain, request, prefix=None, data=None, contactable=None, **kwargs):
         processed = False
         form = self.get_contactable_form(prefix=prefix, data=data, contactable=contactable)
         if data and form.is_valid():
@@ -170,14 +170,14 @@ class CustomerModule(sellmo.Module):
             processed = True
             
         if chain:
-            out = chain.execute(prefix=prefix, data=data, contactable=contactable, form=form, processed=processed, **kwargs)
+            out = chain.execute(request=request, prefix=prefix, data=data, contactable=contactable, form=form, processed=processed, **kwargs)
             contactable, form, processed = out.get('contactable', contactable), out.get('form', form), out.get('processed', processed)
         return contactable, form, processed
         
     # ADDRESS LOGIC
         
     @chainable()
-    def handle_address(self, chain, type, customer=None, prefix=None, data=None, address=None, **kwargs):
+    def process_address(self, chain, request, type, customer=None, prefix=None, data=None, address=None, **kwargs):
         if type not in settings.ADDRESS_TYPES:
             raise ValueError("Invalid address type.")
         
@@ -194,14 +194,14 @@ class CustomerModule(sellmo.Module):
             processed = True
             
         if chain:
-            out = chain.execute(prefix=prefix, data=data, address=address, form=form, processed=processed, **kwargs)
+            out = chain.execute(request=request, prefix=prefix, data=data, address=address, form=form, processed=processed, **kwargs)
             address, form, processed = out.get('address', address), out.get('form', form), out.get('processed', processed)
         return address, form, processed
       
     # LOGIN LOGIC
         
     @chainable()
-    def handle_login(self, chain, request, prefix=None, data=None, user=None, **kwargs):
+    def process_login(self, chain, request, prefix=None, data=None, user=None, **kwargs):
         processed = False
         form = self.get_login_form(request=request, prefix=prefix, data=data)
         if data and form.is_valid():
@@ -209,7 +209,14 @@ class CustomerModule(sellmo.Module):
             if user is None:
                 user = form.get_user()
         if chain:
-            out = chain.execute(request=request, prefix=prefix, data=data, user=user, form=form, processed=processed, **kwargs)
+            out = chain.execute(
+                request=request,
+                prefix=prefix,
+                data=data, user=user,
+                form=form,
+                processed=processed,
+                **kwargs
+            )
             user, form, processed = out.get('user', user), out.get('form', form), out.get('processed', processed)
         return user, form, processed
         
@@ -232,7 +239,7 @@ class CustomerModule(sellmo.Module):
         if request.method == 'POST':
             data = request.POST
             
-        user, form, processed = self.handle_login(request=request, data=data)
+        user, form, processed = self.process_login(request=request, data=data)
         context['form'] = form
         
         if processed:
@@ -274,7 +281,7 @@ class CustomerModule(sellmo.Module):
     # REGISTRATION LOGIC
         
     @chainable()
-    def handle_user_creation(self, chain, prefix=None, data=None, user=None, **kwargs):
+    def process_user_creation(self, chain, request, prefix=None, data=None, user=None, **kwargs):
         processed = False
         form = self.get_user_form(prefix=prefix, data=data)
         if data and form.is_valid():
@@ -282,7 +289,7 @@ class CustomerModule(sellmo.Module):
             processed = True
         
         if chain:
-            out = chain.execute(prefix=prefix, data=data, user=user, form=form, processed=processed, **kwargs)
+            out = chain.execute(request=request, prefix=prefix, data=data, user=user, form=form, processed=processed, **kwargs)
             user, form, processed = out.get('user', user), out.get('form', form), out.get('processed', processed)
         return user, form, processed
     
@@ -308,17 +315,17 @@ class CustomerModule(sellmo.Module):
         processed = True
             
         if settings.AUTH_ENABLED:
-            user, user_form, user_processed = self.handle_user_creation(data=data)
+            user, user_form, user_processed = self.process_user_creation(request=request, data=data)
             context['user_form'] = user_form
             processed &= user_processed
         
-        customer, customer_form, customer_processed = self.handle_customer(request=request, data=data)
+        customer, customer_form, customer_processed = self.process_customer(request=request, data=data)
         context['customer_form'] = customer_form
         processed &= customer_processed
         
         addresses = {}
         for type in settings.ADDRESS_TYPES:
-            address, form, address_processed = self.handle_address(request=request, type=type, prefix='{0}_address'.format(type), customer=customer, data=data)
+            address, form, address_processed = self.process_address(request=request, type=type, prefix='{0}_address'.format(type), customer=customer, data=data)
             context['{0}_address_form'.format(type)] = form
             processed &= address_processed
             addresses[type] = address

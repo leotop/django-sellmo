@@ -330,13 +330,16 @@ class CheckoutModule(sellmo.Module):
         return methods
         
     @chainable()
-    def handle_shipping_method(self, chain, order, prefix=None, data=None, method=None, **kwargs):
+    def process_shipping_method(self, chain, request, order, prefix=None, data=None, method=None, **kwargs):
         methods = self.get_shipping_methods(order=order)
         processed = False
         initial = None
+        
         if order.shipment:
             initial = order.shipment.get_method()
+        
         form = self.get_shipping_method_form(order=order, prefix=prefix, data=data, methods=methods, method=initial)
+        
         if data and form.is_valid():
             # Resolve shipping method
             method = form.cleaned_data['method']
@@ -345,8 +348,18 @@ class CheckoutModule(sellmo.Module):
             method.ship(order)
             order.calculate(subtotal=order.subtotal)
             processed = True
+            
         if chain:
-            out = chain.execute(order=order, prefix=prefix, data=data, method=method, form=form, processed=processed, **kwargs)
+            out = chain.execute(
+                request=request,
+                order=order,
+                prefix=prefix,
+                data=data,
+                method=method,
+                form=form,
+                processed=processed,
+                **kwargs
+            )
             method, form, processed = out.get('method', method), out.get('form', form), out.get('processed', processed)
         return method, form, processed
         
@@ -363,13 +376,16 @@ class CheckoutModule(sellmo.Module):
         return methods
         
     @chainable()
-    def handle_payment_method(self, chain, order, prefix=None, data=None, method=None, **kwargs):
+    def process_payment_method(self, chain, request, order, prefix=None, data=None, method=None, **kwargs):
         methods = self.get_payment_methods(order=order)
         processed = False
         initial = None
+        
         if order.payment:
             initial = order.payment.get_method()
+        
         form = self.get_payment_method_form(order=order, prefix=prefix, data=data, methods=methods, method=initial)
+        
         if data and form.is_valid():
             # Resolve payment method
             method = form.cleaned_data['method']
@@ -377,8 +393,18 @@ class CheckoutModule(sellmo.Module):
             method.pay(order)
             order.calculate(subtotal=order.subtotal)
             processed = True
+        
         if chain:
-            out = chain.execute(order=order, prefix=prefix, data=data, method=method, form=form, processed=processed, **kwargs)
+            out = chain.execute(
+                request=request,
+                order=order,
+                prefix=prefix,
+                data=data,
+                method=method,
+                form=form,
+                processed=processed,
+                **kwargs
+            )
             method, form, processed = out.get('method', method), out.get('form', form), out.get('processed', processed)
         return method, form, processed
         

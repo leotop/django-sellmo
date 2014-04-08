@@ -161,7 +161,6 @@ class MollieIdealModule(Module):
             
     @view()
     def redirect(self, chain, request, order, **kwargs):
-        
         settings = modules.settings.get_settings()
         
         payment = order.payment.downcast()
@@ -229,7 +228,6 @@ class MollieIdealModule(Module):
             
     @chainable()
     def get_banks(self, chain):
-        
         settings = modules.settings.get_settings()
         
         payload = {
@@ -248,13 +246,16 @@ class MollieIdealModule(Module):
         return banks
     
     @chainable()
-    def handle_bank_select(self, chain, payment, prefix=None, data=None, bank=None, **kwargs):
+    def process_bank_select(self, chain, request, payment, prefix=None, data=None, bank=None, **kwargs):
         banks = self.get_banks()
         processed = False
         initial = None
+        
         if not payment.bank_id is None:
             initial = payment.bank_id
+        
         form = self.get_bank_select_form(prefix=prefix, data=data, banks=banks, bank=initial)
+        
         if data and form.is_valid():
             # Resolve bank
             bank = form.cleaned_data['bank']
@@ -262,8 +263,18 @@ class MollieIdealModule(Module):
             payment.bank_id = bank[0].zfill(4)
             payment.bank_name = bank[1]
             processed = True
+        
         if chain:
-            return chain.execute(payment=payment, prefix=prefix, data=data, bank=bank, form=form, processed=processed, **kwargs)
+            out = chain.execute(
+                request=request,
+                payment=payment,
+                prefix=prefix,
+                data=data,
+                bank=bank,
+                form=form,
+                processed=processed,
+                **kwargs
+            )
+            bank, form, processed = out.get('bank', bank), out.get('form', form), out.get('processed', processed)
         return bank, form, processed
-    
     
