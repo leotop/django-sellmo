@@ -27,11 +27,7 @@
 
 from django import forms
 
-#
-
 from sellmo import modules
-
-#
 
 
 class ShippingMethodForm(forms.Form):

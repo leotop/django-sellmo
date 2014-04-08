@@ -24,23 +24,17 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import datetime
 
-#
+import datetime
 
 from django import dispatch
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-
-#
-
 from sellmo import modules
 from sellmo.api.decorators import load
 from sellmo.api.pricing import Price
 from sellmo.utils.tracking import trackable
-
-#
 
 
 @load(after='finalize_cart_Cart', before='finalize_store_Purchase')
@@ -55,7 +49,7 @@ def load_model():
         )
 
         def is_stale(self, ignore_cart=False, **kwargs):
-            return (super(Purchase, self).is_stale(**kwargs) 
+            return (super(Purchase, self).is_stale(**kwargs)
                     and (self.cart is None or ignore_cart))
 
         class Meta(modules.store.Purchase.Meta):
@@ -97,9 +91,7 @@ class Cart(trackable('sellmo_cart')):
         editable=False,
         verbose_name=_("modified at"),
     )
-
-    #
-
+    
     """
     Timestamp when this cart was last calculated.
     """
@@ -108,8 +100,6 @@ class Cart(trackable('sellmo_cart')):
         null=True,
         verbose_name=_("calculated at"),
     )
-
-    #
 
     def add(self, purchase, save=True, calculate=True):
         if self.pk is None:
@@ -177,8 +167,6 @@ class Cart(trackable('sellmo_cart')):
 
     def __nonzero__(self):
         return len(self) > 0
-
-    #
 
     def __unicode__(self):
         return unicode(self.modified)

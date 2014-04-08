@@ -25,17 +25,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-#
-
 import datetime
-
-#
 
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
-
-#
 
 from sellmo import modules
 from sellmo.config import settings
@@ -46,15 +40,12 @@ from sellmo.api.checkout import statuses
 from sellmo.core.polymorphism import PolymorphicModel, PolymorphicManager
 from sellmo.utils.tracking import trackable
 
-#
 
 ORDER_NEW = 'new'
 ORDER_PENDING = 'pending'
 ORDER_COMPLETED = 'completed'
 ORDER_CLOSED = 'closed'
 ORDER_CANCELED = 'canceled'
-
-#
 
 
 @load(before='finalize_checkout_Order')
@@ -158,8 +149,9 @@ def load_model():
 
     if not settings.CUSTOMER_REQUIRED:
         class Order(modules.checkout.Order, modules.customer.Contactable):
-
-            class Meta(modules.checkout.Order.Meta, modules.customer.Contactable.Meta):
+            class Meta(
+                    modules.checkout.Order.Meta,
+                    modules.customer.Contactable.Meta):
                 abstract = True
 
         modules.checkout.Order = Order
@@ -170,15 +162,16 @@ def load_model():
 
     for type in settings.ADDRESS_TYPES:
         name = '{0}_address'.format(type)
-        modules.checkout.Order.add_to_class(name,
-                                            models.ForeignKey(
-                                                modules.customer.Address,
-                                                null=True,
-                                                related_name='+',
-                                                verbose_name=_(
-                                                    "{0} address".format(type)),
-                                            )
-                                            )
+        modules.checkout.Order.add_to_class(
+            name,
+            models.ForeignKey(
+                modules.customer.Address,
+                null=True,
+                related_name='+',
+                verbose_name=_(
+                    "{0} address".format(type)),
+            )
+        )
 
 
 @load(after='finalize_checkout_Order', before='finalize_store_Purchase')
@@ -193,7 +186,8 @@ def load_model():
         )
 
         def is_stale(self, ignore_order=False, **kwargs):
-            return super(Purchase, self).is_stale(**kwargs) and (self.order is None or ignore_order)
+            return (super(Purchase, self).is_stale(**kwargs)
+                    and (self.order is None or ignore_order))
 
         class Meta(modules.store.Purchase.Meta):
             abstract = True
@@ -440,12 +434,13 @@ class Order(trackable('sellmo_order')):
         old = None
         if self.pk:
             old = modules.checkout.Order.objects.get(pk=self.pk)
-        if old is not None:
-            if self.status != old.status:
-                if not modules.checkout.can_change_order_status(order=old, status=self.status):
-                    raise ValidationError(
-                        "Cannot transition order status from '{0}' to '{1}'".format(old.status, self.status))
-
+        if old is not None and self.status != old.status:
+            if (not modules.checkout.can_change_order_status(
+                    order=old, status=self.status)):
+                raise ValidationError(
+                    "Cannot transition order status "
+                    "from '{0}' to '{1}'".format(old.status, self.status))
+    
     def save(self, *args, **kwargs):
         old = None
         if self.pk:
@@ -454,9 +449,11 @@ class Order(trackable('sellmo_order')):
         # See if status is explicitly changed
         if old is not None and self.status != old.status:
             # Make sure this change is a valid flow
-            if not modules.checkout.can_change_order_status(order=old, status=self.status):
-                raise Exception("Cannot transition order status from '{0}' to '{1}'".format(
-                    old.status, self.status))
+            if (not modules.checkout.can_change_order_status(
+                    order=old, status=self.status)):
+                raise Exception(
+                    "Cannot transition order "
+                    "status from '{0}' to '{1}'".format(old.status, self.status))
 
         # Check for new status
         status_changed = (
@@ -474,15 +471,18 @@ class Order(trackable('sellmo_order')):
         now_paid = (old is None or not old.is_paid) and self.is_paid
 
         # Get new status from new state
-        if not status_changed and state_changed and 'on_{0}'.format(self.state) in statuses.status_events:
+        if (not status_changed and state_changed and
+                'on_{0}'.format(self.state) in statuses.status_events):
             self.status = statuses.status_events['on_{0}'.format(self.state)]
 
         # Get new status from on_paid
-        if not status_changed and now_paid and 'on_paid' in statuses.status_events:
+        if (not status_changed and now_paid and 
+                'on_paid' in statuses.status_events):
             self.status = statuses.status_events['on_paid']
 
         # Get new state from new status
-        if not state_changed and status_changed and self.status in statuses.status_states:
+        if (not state_changed and status_changed and
+                self.status in statuses.status_states):
             self.state = statuses.status_states[self.status]
 
         # Check for new status (again)
@@ -497,11 +497,14 @@ class Order(trackable('sellmo_order')):
         # Finally signal
         if status_changed:
             order_status_changed.send(
-                sender=self, order=self, new_status=self.status, old_status=old.status if old is not None else None)
+                sender=self, order=self, new_status=self.status,
+                old_status=old.status if old else None)
 
         if state_changed:
             order_state_changed.send(
-                sender=self, order=self, new_state=self.state, old_state=old.state if old is not None else None)
+                sender=self, order=self, new_state=self.state,
+                old_state=old.state if old else None)
+            
             # Handle shortcuts
             if self.state == ORDER_PENDING:
                 order_pending.send(sender=self, order=self)
@@ -516,7 +519,6 @@ class Order(trackable('sellmo_order')):
             order_paid.send(sender=self, order=self)
 
     # Overrides
-
     def __contains__(self, purchase):
         return purchase.order == self
 
