@@ -24,23 +24,19 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from decimal import Decimal
 
-#
+from decimal import Decimal
 
 from sellmo import modules
 from sellmo.api.decorators import load
 from sellmo.api.pricing import Price
 
-#
-
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 
-#
-
-@load(action='load_tax_subtypes', after='finalize_tax_Tax')
+@load(action='load_tax_subtypes')
+@load(after='finalize_tax_Tax')
 def load_subtypes():
 
     class PercentTax(modules.tax.Tax):
@@ -56,7 +52,8 @@ def load_subtypes():
                 price /= (1 + self.rate)
             amount = price.amount * self.rate
             tax = Price(
-                amount, currency=price.currency, type='tax', context={'tax': self})
+                amount, currency=price.currency, type='tax', 
+                context={'tax': self})
             return price + tax
 
         class Meta(modules.tax.Tax.Meta):

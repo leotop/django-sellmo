@@ -24,26 +24,24 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable
 from sellmo.api.pricing import Price
 from sellmo.utils.formatting import call_or_format
-from sellmo.contrib.contrib_variation.models import Variant, Variation, VariationsState, VariationPurchase
+from sellmo.contrib.contrib_variation.models import (Variant,
+                                                     Variation,
+                                                     VariationsState,
+                                                     VariationPurchase)
 from sellmo.contrib.contrib_attribute.query import ProductQ
 
 from django.http import Http404
 from django.utils.translation import ugettext_lazy as _
 
-#
-
 from django.db.models import Q
 from django.db.models.signals import post_save, m2m_changed
 
-#
-
 from sellmo.contrib.contrib_variation.config import settings
-
-#
 
 
 class VariationModule(Module):
@@ -64,7 +62,8 @@ class VariationModule(Module):
         for subtype in self.subtypes:
             post_save.connect(self.on_variant_post_save, sender=subtype)
 
-    def on_m2m_changed(self, sender, instance, action, reverse, pk_set, **kwargs):
+    def on_m2m_changed(self, sender, instance, action, reverse, pk_set,
+                       **kwargs):
         if action in ('pre_clear', 'pre_remove', 'post_add'):
             field, field_reverse = self.m2m_relations[str(sender)]
             relation = field.name
@@ -97,11 +96,14 @@ class VariationModule(Module):
                         elif action == 'add':
                             m2m.add(*pk_set)
 
-    def on_variant_post_save(self, sender, instance, created, raw=False, **kwargs):
+    def on_variant_post_save(self, sender, instance, created, raw=False,
+                             **kwargs):
         if not raw and created:
             for field, reverse in self.m2m_relations.values():
-                relation = field.name if not reverse else field.rel.related_name
-                relation = field.name if not reverse else field.rel.related_name
+                relation = (field.name if not reverse else 
+                            field.rel.related_name)
+                relation = (field.name if not reverse else
+                            field.rel.related_name)
                 getattr(instance, relation).add(
                     *list(getattr(instance.product, relation).all()))
                 instance.save()
@@ -116,18 +118,21 @@ class VariationModule(Module):
             self.m2m_relations[str(field.rel.through)] = (field, reverse)
 
     @chainable()
-    def get_variations(self, chain, product, grouped=False, variations=None, **kwargs):
+    def get_variations(self, chain, product, grouped=False, variations=None,
+                       **kwargs):
         if variations is None:
             variations = modules.variation.Variation.objects.for_product(
                 product)
             if grouped:
-                attributes = modules.attribute.Attribute.objects.which_variate(
-                    product=product)
+                attributes = modules.attribute.Attribute.objects \
+                                    .which_variate(product=product)
                 group = attributes.filter(groups=True).first()
                 if group:
                     result = []
-                    values = modules.attribute.Value.objects.which_variate(
-                        product).for_attribute(attribute=group, distinct=True)
+                    values = modules.attribute.Value.objects \
+                                    .which_variate(product) \
+                                    .for_attribute(
+                                        attribute=group, distinct=True)
                     values = modules.attribute.get_sorted_values(
                         values=values, attribute=group)
                     for value in values:
@@ -135,12 +140,13 @@ class VariationModule(Module):
                         # combination
                         qargs = {
                             'values__attribute': group,
-                            'values__%s' % group.value_field: value.get_value(),
+                            'values__{0}'.format(group.value_field): 
+                                value.get_value(),
                             'product': product,
                         }
 
-                        variations = modules.variation.Variation.objects.filter(
-                            **qargs)
+                        variations = modules.variation.Variation.objects \
+                                            .filter(**qargs)
                         if not variations:
                             continue
 
@@ -157,7 +163,8 @@ class VariationModule(Module):
 
         if chain:
             out = chain.execute(
-                product=product, grouped=grouped, variations=variations, **kwargs)
+                product=product, grouped=grouped,
+                variations=variations, **kwargs)
             if out.has_key('variations'):
                 variations = out['variations']
 
@@ -177,10 +184,12 @@ class VariationModule(Module):
         return choice
 
     @chainable()
-    def generate_variation_choice(self, chain, variation, choice=None, **kwargs):
+    def generate_variation_choice(self, chain, variation, choice=None,
+                                  **kwargs):
         if choice is None:
             variant = variation.variant.downcast()
             price_adjustment = None
+            
             if hasattr(variant, '_is_variant') and variant.price_adjustment:
                 price_adjustment = Price(variant.price_adjustment)
 
@@ -189,12 +198,12 @@ class VariationModule(Module):
                  for value in variation.values.all().order_by('attribute')]
             )
 
-            choice = call_or_format(settings.VARIATION_CHOICE_FORMAT,
-                                    variation=variation,
-                                    variant=variant,
-                                    values=values,
-                                    price_adjustment=price_adjustment
-                                    )
+            choice = call_or_format(
+                settings.VARIATION_CHOICE_FORMAT,
+                variation=variation,
+                variant=variant,
+                values=values,
+                price_adjustment=price_adjustment)
 
         if chain:
             out = chain.execute(variation=variation, choice=choice, **kwargs)
@@ -203,21 +212,23 @@ class VariationModule(Module):
         return choice
 
     @chainable()
-    def generate_variation_description(self, chain, product, values, description=None, **kwargs):
+    def generate_variation_description(self, chain, product, values,
+                                       description=None, **kwargs):
         if description is None:
 
             values = settings.VARIATION_VALUE_SEPERATOR.join(
                 [unicode(value) for value in values]
             )
 
-            description = call_or_format(settings.VARIATION_DESCRIPTION_FORMAT,
-                                         product=product,
-                                         values=values
-                                         )
+            description = call_or_format(
+                settings.VARIATION_DESCRIPTION_FORMAT,
+                product=product,
+                values=values)
 
         if chain:
             out = chain.execute(
-                product=product, values=values, description=description, **kwargs)
+                product=product, values=values,
+                description=description, **kwargs)
             if out.has_key('description'):
                 description = out['description']
 

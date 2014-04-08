@@ -24,11 +24,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#
 
 from sellmo import modules
-
-#
 
 from django.db.models import Q
 from django import forms
@@ -43,13 +40,9 @@ from django.contrib.admin.widgets import ForeignKeyRawIdWidget
 from django.contrib.contenttypes.models import ContentType
 from django.core.validators import EMPTY_VALUES
 
-#
-
 from sellmo.contrib.contrib_attribute.models import ValueObject
 from sellmo.contrib.contrib_attribute.forms import ProductAttributeFormFactory
 from sellmo.contrib.contrib_variation.utils import generate_slug
-
-#
 
 
 class SaveFieldMixin(object):
@@ -62,7 +55,8 @@ class SaveFieldMixin(object):
 
         q = ~Q(**kwargs)
 
-        return modules.attribute.Value.objects.filter(attribute=attribute, product=product, variates=True).filter(q)
+        return modules.attribute.Value.objects.filter(
+            attribute=attribute, product=product, variates=True).filter(q)
 
     def get_existing_values(self, product, attribute, values):
         field = '%s__in' % (attribute.value_field, )
@@ -72,7 +66,8 @@ class SaveFieldMixin(object):
 
         q = Q(**kwargs)
 
-        return modules.attribute.Value.objects.filter(attribute=attribute, product=product, variates=True).filter(q)
+        return modules.attribute.Value.objects.filter(
+            attribute=attribute, product=product, variates=True).filter(q)
 
     def save(self, product, attribute, values):
         invalidated = self.get_invalidated_values(product, attribute, values)
@@ -96,7 +91,8 @@ class SeperatedInputField(forms.Field):
         self._seperator = seperator
 
     def from_values(self, values):
-        return self._seperator.join([unicode(value.get_value()) for value in values])
+        return self._seperator.join(
+            [unicode(value.get_value()) for value in values])
 
     def to_python(self, value):
         result = []
@@ -134,7 +130,8 @@ class SeperatedFloatField(SeperatedInputField, SaveFieldMixin):
 class ObjectField(forms.ModelMultipleChoiceField, SaveFieldMixin):
 
     def from_values(self, values):
-        return ValueObject.objects.filter(pk__in=[value.get_value().pk for value in values])
+        return ValueObject.objects.filter(
+            pk__in=[value.get_value().pk for value in values])
 
 
 class ProductVariationFormFactory(ProductAttributeFormFactory):
@@ -168,7 +165,8 @@ class ProductVariationFormMixin(object):
             instance = kwargs['instance']
         if instance:
             initial.update({
-                self.__attribute_field_names[key]: value for key, value in self.__get_values(instance).iteritems()
+                self.__attribute_field_names[key]: value for key, value in
+                self.__get_values(instance).iteritems()
             })
         kwargs['initial'] = initial
         super(ProductVariationFormMixin, self).__init__(*args, **kwargs)
@@ -218,7 +216,8 @@ class VariantAttributeFormMixin(object):
             instance = kwargs['instance']
         if instance:
             initial.update({
-                self.__attribute_field_names[attribute.key]: instance.attributes[attribute.key]
+                self.__attribute_field_names[attribute.key]: 
+                instance.attributes[attribute.key]
                 for attribute in self.__attributes
             })
         kwargs['initial'] = initial

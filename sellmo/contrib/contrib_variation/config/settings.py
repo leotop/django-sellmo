@@ -24,23 +24,21 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.conf import settings
 
-#
+from django.conf import settings
 
 from sellmo.contrib.contrib_variation.config import defaults
 
-#
 
 debug = getattr(settings, 'DEBUG', False)
 
-#
 
 VARIATION_CHOICE_FORMAT = getattr(
-    settings, 'SELLMO_VARIATION_CHOICE_FORMAT', defaults.VARIATION_CHOICE_FORMAT)
+    settings, 'SELLMO_VARIATION_CHOICE_FORMAT',
+    defaults.VARIATION_CHOICE_FORMAT)
 VARIATION_DESCRIPTION_FORMAT = getattr(
-    settings, 'SELLMO_VARIATION_DESCRIPTION_FORMAT', defaults.VARIATION_DESCRIPTION_FORMAT)
+    settings, 'SELLMO_VARIATION_DESCRIPTION_FORMAT',
+    defaults.VARIATION_DESCRIPTION_FORMAT)
 VARIATION_VALUE_SEPERATOR = getattr(
-    settings, 'SELLMO_VARIATION_VALUE_SEPERATOR', defaults.VARIATION_VALUE_SEPERATOR)
-
-#
+    settings, 'SELLMO_VARIATION_VALUE_SEPERATOR',
+    defaults.VARIATION_VALUE_SEPERATOR)

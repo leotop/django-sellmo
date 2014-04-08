@@ -24,20 +24,15 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 import os.path
 import codecs
 
-#
-
 from django.conf import settings as django_settings
-
-#
 
 from sellmo.core.reporting.generators import ReportGeneratorBase
 from sellmo.contrib.contrib_reporting.config import settings
 from sellmo.contrib.contrib_reporting.piping import pipe, PipeError
-
-#
 
 
 class PhantomJSReportGenerator(ReportGeneratorBase):
@@ -75,7 +70,8 @@ class PhantomJSReportGenerator(ReportGeneratorBase):
         html = codecs.encode(html, 'utf8')
 
         try:
-            return pipe('{0} {1} {2}'.format(phantomjs, script, arguments), input=html)
+            return pipe(
+                '{0} {1} {2}'.format(phantomjs, script, arguments), input=html)
         except PipeError:
             raise
 

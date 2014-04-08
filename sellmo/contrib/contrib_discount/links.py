@@ -24,13 +24,11 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#
 
 from sellmo import modules
 from sellmo.api.decorators import link
 from sellmo.api.pricing import Price
 
-#
 
 namespace = modules.pricing.namespace
 
@@ -39,8 +37,8 @@ namespace = modules.pricing.namespace
 def get_price(price, product=None, **kwargs):
     if product:
         try:
-            discount = modules.discount.Discount.objects.polymorphic().best_for_product(
-                product)
+            discount = modules.discount.Discount.objects.polymorphic() \
+                              .best_for_product(product)
         except modules.discount.Discount.DoesNotExist:
             pass
         else:

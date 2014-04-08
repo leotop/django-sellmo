@@ -24,8 +24,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo import boot
-boot.model_boot = False
+boot.model_boot = False # Order is ital
+
 
 from sellmo.boot.boot_modules import boot
 from sellmo.boot.boot_sellmo import boot

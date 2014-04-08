@@ -24,11 +24,9 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo import modules
 from sellmo.contrib.admin.reverse import ReverseModelAdmin
-
-
-#
 
 from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType

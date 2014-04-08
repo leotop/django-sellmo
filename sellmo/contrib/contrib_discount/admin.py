@@ -27,8 +27,4 @@
 
 from sellmo import modules
 
-#
-
 from django.contrib import admin
-
-#

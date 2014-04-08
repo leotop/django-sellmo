@@ -24,7 +24,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#
 
 from sellmo.core.loading import loader
 from sellmo.core.chaining import chainer, Chain, ViewChain

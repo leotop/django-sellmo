@@ -24,27 +24,20 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from decimal import Decimal
 
-#
+from decimal import Decimal
 
 from sellmo import modules
 from sellmo.api.decorators import load
 from sellmo.api.pricing import Price
 from sellmo.contrib.contrib_pricing.config import settings
 
-#
-
 from django.db import models
 from django.db.models.signals import post_save, pre_delete
 from django.db.models.query import QuerySet
 from django.utils.translation import ugettext_lazy as _
 
-#
-
 from picklefield.fields import PickledObjectField
-
-#
 
 
 class QtyPriceQuerySet(QuerySet):
@@ -97,9 +90,12 @@ class QtyPriceBase(models.Model):
         abstract = True
 
 
-@load(after='finalize_qty_pricing_QtyPriceBase', before='finalize_qty_pricing_QtyPrice')
+@load(after='finalize_qty_pricing_QtyPriceBase')
+@load(before='finalize_qty_pricing_QtyPrice')
 def load_model():
-    class QtyPrice(modules.qty_pricing.QtyPrice, modules.qty_pricing.QtyPriceBase):
+    class QtyPrice(
+            modules.qty_pricing.QtyPrice,
+            modules.qty_pricing.QtyPriceBase):
 
         amount = modules.pricing.construct_pricing_field(
             verbose_name=_("amount"),
@@ -108,7 +104,9 @@ def load_model():
         def apply(self, price=None):
             return Price(self.amount)
 
-        class Meta(modules.qty_pricing.QtyPrice.Meta, modules.qty_pricing.QtyPriceBase.Meta):
+        class Meta(
+                modules.qty_pricing.QtyPrice.Meta,
+                modules.qty_pricing.QtyPriceBase.Meta):
             abstract = True
     modules.qty_pricing.QtyPrice = QtyPrice
 
@@ -126,9 +124,12 @@ class QtyPrice(models.Model):
         abstract = True
 
 
-@load(after='finalize_qty_pricing_QtyPriceBase', before='finalize_qty_pricing_QtyPriceRatio')
+@load(after='finalize_qty_pricing_QtyPriceBase')
+@load(before='finalize_qty_pricing_QtyPriceRatio')
 def load_model():
-    class QtyPriceRatio(modules.qty_pricing.QtyPriceRatio, modules.qty_pricing.QtyPriceBase):
+    class QtyPriceRatio(
+            modules.qty_pricing.QtyPriceRatio,
+            modules.qty_pricing.QtyPriceBase):
 
         ratio = modules.pricing.construct_decimal_field(
             default=Decimal('1.0'),
@@ -138,7 +139,9 @@ def load_model():
         def apply(self, price=None):
             return price * self.ratio
 
-        class Meta(modules.qty_pricing.QtyPriceRatio.Meta, modules.qty_pricing.QtyPriceBase.Meta):
+        class Meta(
+                modules.qty_pricing.QtyPriceRatio.Meta,
+                modules.qty_pricing.QtyPriceBase.Meta):
             abstract = True
 
     modules.qty_pricing.QtyPriceRatio = QtyPriceRatio
@@ -180,7 +183,9 @@ def finalize_model():
 @load(after='finalize_qty_pricing_QtyPrice')
 @load(after='finalize_product_Product')
 def load_model():
-    class ProductQtyPrice(modules.qty_pricing.ProductQtyPrice, modules.qty_pricing.QtyPrice):
+    class ProductQtyPrice(
+            modules.qty_pricing.ProductQtyPrice,
+            modules.qty_pricing.QtyPrice):
         product = models.ForeignKey(
             modules.product.Product,
             related_name='qty_prices',

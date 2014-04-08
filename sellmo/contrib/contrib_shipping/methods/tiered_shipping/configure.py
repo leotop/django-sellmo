@@ -28,7 +28,8 @@
 
 from sellmo import modules
 from sellmo.api.decorators import load
-from sellmo.contrib.contrib_shipping.methods.tiered_shipping.config import settings
+from sellmo.contrib.contrib_shipping \
+     .methods.tiered_shipping.config import settings
 
 #
 

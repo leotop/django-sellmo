@@ -26,16 +26,10 @@
 
 from django.conf import settings
 
-#
-
 from sellmo.contrib.contrib_attribute.config import defaults
 
-#
 
 debug = getattr(settings, 'DEBUG', False)
 
-#
 
 VALUE_FORMAT = getattr(settings, 'SELLMO_VALUE_FORMAT', defaults.VALUE_FORMAT)
-
-#

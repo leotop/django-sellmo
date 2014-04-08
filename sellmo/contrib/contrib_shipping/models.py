@@ -24,18 +24,17 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo import modules
 from sellmo.api.decorators import load
-from sellmo.core.polymorphism import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
+from sellmo.core.polymorphism import (PolymorphicModel,
+                                      PolymorphicManager,
+                                      PolymorphicQuerySet)
 from sellmo.api.checkout import ShippingMethod as _ShippingMethod
-
-#
 
 from django.db import models
 from django.contrib.sites.models import Site
 from django.utils.translation import ugettext_lazy as _
-
-#
 
 
 @load(action='finalize_shipping_Shipment')
@@ -88,7 +87,9 @@ def finalize_model():
                 return unicode(method)
             return super(Shipment, self).__unicode__()
 
-        class Meta(modules.checkout.Shipment.Meta, modules.shipping.Shipment.Meta):
+        class Meta(
+                modules.checkout.Shipment.Meta,
+                modules.shipping.Shipment.Meta):
             app_label = 'shipping'
             verbose_name = _("shipment")
             verbose_name_plural = _("shipments")
@@ -111,7 +112,8 @@ class Shipment(models.Model):
         abstract = True
 
 
-@load(after='finalize_shipping_ShippingCarrier', before='finalize_shipping_ShippingMethod')
+@load(after='finalize_shipping_ShippingCarrier')
+@load(before='finalize_shipping_ShippingMethod')
 def load_model():
     class ShippingMethod(modules.shipping.ShippingMethod):
 
@@ -175,8 +177,6 @@ class ShippingMethod(PolymorphicModel):
 
     class Meta:
         abstract = True
-
-#
 
 
 @load(action='finalize_shipping_ShippingCarrier')

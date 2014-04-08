@@ -24,18 +24,14 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo import modules
 from sellmo.contrib.contrib_attribute import comparison
 
-#
-
 from django import template
 
-#
 
 register = template.Library()
-
-#
 
 
 @register.filter

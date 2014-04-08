@@ -24,13 +24,15 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo import modules
 from sellmo.api.decorators import load
 from sellmo.api.pricing import Price
-from sellmo.contrib.contrib_shipping.methods.tiered_shipping import TieredShippingMethod as _TieredShippingMethod
-from sellmo.contrib.contrib_shipping.methods.tiered_shipping.config import settings
-
-#
+from sellmo.contrib.contrib_shipping \
+     .methods.tiered_shipping import (TieredShippingMethod as 
+                                      _TieredShippingMethod)
+from sellmo.contrib.contrib_shipping \
+     .methods.tiered_shipping.config import settings
 
 from django.db import models
 from django.db.models import Q
@@ -39,8 +41,6 @@ from django.core.exceptions import ValidationError
 from django.utils import six
 from django.utils.functional import lazy
 from django.utils.translation import ugettext_lazy as _
-
-#
 
 
 @load(after='finalize_shipping_ShippingMethod')
@@ -55,7 +55,8 @@ def load_subtypes():
             if carrier:
                 name = _(u"{0} by {1}").format(name, carrier.name)
                 identifier = '{0}_{1}'.format(identifier, carrier.identifier)
-            return _TieredShippingMethod(identifier, name, method=self, carrier=carrier)
+            return _TieredShippingMethod(
+                identifier, name, method=self, carrier=carrier)
 
         class Meta(modules.shipping.ShippingMethod.Meta):
             app_label = 'shipping'
@@ -115,14 +116,14 @@ def load_model():
 
     if settings.SHIPPING_TIER_ATTRIBUTES > 0:
         for i in range(settings.SHIPPING_TIER_ATTRIBUTES):
-            TieredShippingTier.add_to_class('max_value{0}'.format(i + 1),
-                                            models.FloatField(
-                                                null=True,
-                                                blank=True,
-                                                verbose_name=get_attribute_name(
-                                                    i)
-                                            )
-                                            )
+            TieredShippingTier.add_to_class(
+                'max_value{0}'.format(i + 1),
+                models.FloatField(
+                    null=True,
+                    blank=True,
+                    verbose_name=get_attribute_name(i)
+                )
+            )
 
     modules.shipping.register_subtype(TieredShippingTier)
 

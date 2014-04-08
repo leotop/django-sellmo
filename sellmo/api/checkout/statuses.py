@@ -24,10 +24,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo import modules
 from sellmo.config import settings
 
-#
 
 __all__ = [
     'initial_status',
@@ -36,9 +36,15 @@ __all__ = [
     'status_states',
 ]
 
-#
 
-events = ['on_pending', 'on_completed', 'on_canceled', 'on_closed', 'on_paid']
+events = [
+    'on_pending',
+    'on_completed',
+    'on_canceled',
+    'on_closed',
+    'on_paid'
+]
+
 initial_status = None
 status_choices = []
 status_events = {}
@@ -63,7 +69,8 @@ for status, entry in settings.ORDER_STATUSES.iteritems():
         if event in config:
             if event in status_events:
                 raise Exception(
-                    "Can only have one status responding to '{0}'.".format(event))
+                    "Can only have one status "
+                    "responding to '{0}'.".format(event))
             status_events[event] = status
 
     status_choices.append((status, entry[0]))

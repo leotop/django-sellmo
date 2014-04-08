@@ -26,17 +26,14 @@
 
 from django.conf import settings
 
-#
+from sellmo.contrib.contrib_shipping \
+     .methods.tiered_shipping.config import defaults
 
-from sellmo.contrib.contrib_shipping.methods.tiered_shipping.config import defaults
-
-#
 
 debug = getattr(settings, 'DEBUG', False)
 
-#
 
 SHIPPING_TIER_ATTRIBUTES = getattr(
-    settings, 'SELLMO_SHIPPING_TIER_ATTRIBUTES', defaults.SHIPPING_TIER_ATTRIBUTES)
+    settings, 'SELLMO_SHIPPING_TIER_ATTRIBUTES',
+    defaults.SHIPPING_TIER_ATTRIBUTES)
 
-#

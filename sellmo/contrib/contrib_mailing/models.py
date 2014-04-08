@@ -24,15 +24,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-#
-
 from sellmo import modules
 from sellmo.api.decorators import load
-
-#
 
 
 @load(action='finalize_mailing_MailStatus')

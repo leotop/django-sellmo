@@ -27,12 +27,8 @@
 
 from django import forms
 
-#
-
 from sellmo import modules
 from sellmo.api.decorators import load
-
-#
 
 
 class AcceptTermsForm(forms.Form):

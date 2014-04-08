@@ -24,11 +24,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo import modules, Module
 from sellmo.api.decorators import chainable
 from sellmo.contrib.contrib_mailing.models import MailStatus
-
-#
 
 
 class MailingModule(Module):

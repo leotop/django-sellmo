@@ -24,7 +24,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.contrib.contrib_payment.methods.mollie_ideal.base import MollieIdealPaymentMethod
+from sellmo.contrib.contrib_payment \
+     .methods.mollie_ideal.base import MollieIdealPaymentMethod
 
 # !!
 # Should probally be moved to a seperate package in the future.

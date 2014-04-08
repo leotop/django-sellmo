@@ -24,4 +24,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.contrib.contrib_payment.methods.cash_payment.base import CashPaymentMethod
+
+from sellmo.contrib.contrib_payment \
+     .methods.cash_payment.base import CashPaymentMethod

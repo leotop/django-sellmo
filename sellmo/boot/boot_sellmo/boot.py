@@ -24,15 +24,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 import sys
 import logging
-
-#
 
 from sellmo.core.main import Sellmo
 from sellmo.config import settings
 
-#
 
 if settings.CACHING_ENABLED:
     import sellmo.caching.boot

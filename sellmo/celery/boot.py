@@ -24,18 +24,14 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from celery import Celery
 
-#
-
 from django.conf import settings
-
-#
 
 from sellmo.core.main import Sellmo
 from sellmo.signals.core import post_init
 
-#
 
 app = Celery()
 app.config_from_object(settings)

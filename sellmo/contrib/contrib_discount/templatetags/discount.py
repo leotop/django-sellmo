@@ -26,16 +26,11 @@
 
 from django import template
 
-#
-
 from sellmo import modules
 from sellmo.api.pricing import Price
 
-#
 
 register = template.Library()
-
-#
 
 
 @register.filter

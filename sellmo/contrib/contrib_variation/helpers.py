@@ -24,18 +24,16 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo import modules
-from sellmo.contrib.contrib_attribute.helpers import AttributeHelper as AttributeHelperBase
 
-#
+from sellmo import modules
+from sellmo.contrib.contrib_attribute \
+     .helpers import AttributeHelper as AttributeHelperBase
 
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from django.utils.encoding import smart_text
 from django.utils.text import capfirst
-
-#
 
 
 class AttributeHelper(AttributeHelperBase):
@@ -44,7 +42,8 @@ class AttributeHelper(AttributeHelperBase):
         if self.__dict__['_populated']:
             return
         self.__dict__['_populated'] = True
-        for value in modules.attribute.Value.objects.filter(product=self._product, variates=False):
+        for value in modules.attribute.Value.objects.filter(
+                product=self._product, variates=False):
             attribute = value.attribute
             self._attributes[attribute.key] = attribute
             if not self._values.has_key(attribute.key):

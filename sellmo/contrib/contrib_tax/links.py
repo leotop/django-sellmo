@@ -24,19 +24,18 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#
 
 from sellmo import modules
 from sellmo.api.decorators import link
 from sellmo.api.pricing import Price
 
-#
 
 namespace = modules.pricing.namespace
 
 
 @link()
-def get_price(price, product=None, shipping_method=None, payment_method=None, **kwargs):
+def get_price(price, product=None, shipping_method=None, payment_method=None, 
+              **kwargs):
     taxes = []
     if product:
         try:

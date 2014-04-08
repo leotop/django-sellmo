@@ -24,14 +24,11 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo import modules
 from sellmo.api.reporting import ReportWriter
 
-#
-
 from django.utils.translation import ugettext_lazy as _
-
-#
 
 
 class InvoiceWriter(ReportWriter):
@@ -50,4 +47,5 @@ class InvoiceWriter(ReportWriter):
         return super(InvoiceWriter, self).negotiate_param(key, value, **params)
 
     def get_data(self, **params):
-        return modules.checkout_reporting.render_invoice(order=self.order, internal=self.internal)
+        return modules.checkout_reporting.render_invoice(
+            order=self.order, internal=self.internal)

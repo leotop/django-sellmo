@@ -24,18 +24,20 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from django.conf import settings as django_settings
 from django.utils.translation import ugettext_lazy as _
 
-#
 
 ACCEPT_TERMS_ENABLED = True
 INVOICE_WRITER = 'sellmo.contrib.contrib_checkout.reporting.InvoiceWriter'
 NOTIFICATION_MAIL_TO = django_settings.DEFAULT_FROM_EMAIL
 
+
 CHECKOUT_MAILS = {
     'order_confirmation': {
-        'writer': 'sellmo.contrib.contrib_checkout.mailing.OrderConfirmationWriter',
+        'writer': ('sellmo.contrib.contrib_checkout.mailing'
+                   '.OrderConfirmationWriter'),
         'send_once': True,
         'send_events': [
             {
@@ -49,7 +51,8 @@ CHECKOUT_MAILS = {
         ]
     },
     'order_notification': {
-        'writer': 'sellmo.contrib.contrib_checkout.mailing.OrderNotificationWriter',
+        'writer': ('sellmo.contrib.contrib_checkout.mailing'
+                   '.OrderNotificationWriter'),
         'send_once': True,
         'send_events': [
             {
@@ -58,7 +61,8 @@ CHECKOUT_MAILS = {
         ]
     },
     'shipping_notification': {
-        'writer': 'sellmo.contrib.contrib_checkout.mailing.ShippingNotificationWriter',
+        'writer': ('sellmo.contrib.contrib_checkout.mailing'
+                   '.ShippingNotificationWriter'),
         'send_once': True,
         'send_events': [
             {

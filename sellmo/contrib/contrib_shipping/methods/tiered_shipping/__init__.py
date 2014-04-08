@@ -24,4 +24,5 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.contrib.contrib_shipping.methods.tiered_shipping.base import TieredShippingMethod
+from sellmo.contrib.contrib_shipping \
+     .methods.tiered_shipping.base import TieredShippingMethod

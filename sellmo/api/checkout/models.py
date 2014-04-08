@@ -157,7 +157,8 @@ def load_model():
         modules.checkout.Order = Order
 
 
-@load(after='finalize_customer_Address', before='finalize_checkout_Order')
+@load(after='finalize_customer_Address')
+@load(before='finalize_checkout_Order')
 def load_model():
 
     for type in settings.ADDRESS_TYPES:
@@ -174,7 +175,8 @@ def load_model():
         )
 
 
-@load(after='finalize_checkout_Order', before='finalize_store_Purchase')
+@load(after='finalize_checkout_Order')
+@load(before='finalize_store_Purchase')
 def load_model():
     class Purchase(modules.store.Purchase):
         order = models.ForeignKey(

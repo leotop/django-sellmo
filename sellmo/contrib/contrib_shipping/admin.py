@@ -27,8 +27,6 @@
 from sellmo import modules
 from sellmo.contrib.polymorphism.admin import PolymorphicParentModelAdmin
 
-#
-
 from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy as _
@@ -36,8 +34,6 @@ from django.utils.translation import ugettext_lazy as _
 
 class ShippingMethodAdminBase(admin.ModelAdmin):
     pass
-
-# Admin for shipping method
 
 
 class ShippingMethodParentAdmin(PolymorphicParentModelAdmin):
@@ -48,8 +44,6 @@ class ShippingMethodParentAdmin(PolymorphicParentModelAdmin):
     list_display = ['name']
     list_display_links = ['name']
     search_fields = ['name']
-
-# Admin for shipping carrier
 
 
 class ShippingCarrierAdmin(admin.ModelAdmin):

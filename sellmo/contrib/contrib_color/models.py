@@ -24,13 +24,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from django.db import models
 from django.db.models import Q
 from django.db.models.query import QuerySet
 from django.db.models.signals import pre_save, post_save, pre_delete
 from django.utils.translation import ugettext_lazy as _
-
-#
 
 from sellmo import modules
 from sellmo.api.decorators import load
@@ -38,8 +37,6 @@ from sellmo.contrib.contrib_attribute.models import ValueObject
 from sellmo.contrib.contrib_attribute.query import ValueQ
 from sellmo.magic import ModelMixin
 
-
-#
 
 class Color(ValueObject):
 
@@ -183,8 +180,8 @@ class ColorMappingManager(models.Manager):
 
         def do(product, color):
             if hasattr(modules, 'variation'):
-                exists = modules.attribute.Value.objects.for_product_or_variants_of(
-                    product)
+                exists = modules.attribute.Value.objects \
+                                .for_product_or_variants_of(product)
             else:
                 exists = modules.attribute.Value.objects.for_product(product)
 
@@ -216,7 +213,9 @@ class ColorMapping(models.Model):
     objects = ColorMappingManager()
 
     def __unicode__(self):
-        return u"{0} - {1} : {2}".format(self.product, self.attribute, self.color)
+        return (
+            u"{0} - {1} : {2}"
+            .format(self.product, self.attribute, self.color))
 
     class Meta:
         abstract = True
@@ -224,14 +223,16 @@ class ColorMapping(models.Model):
 #
 
 
-def on_value_pre_save(sender, instance, raw=False, update_fields=None, *args, **kwargs):
+def on_value_pre_save(sender, instance, raw=False, update_fields=None,
+                      **kwargs):
     if not raw and not instance.pk is None:
         value = modules.attribute.Value.objects.get(pk=instance.pk)
         modules.color.ColorMapping.objects.map_or_unmap(
             value, ignore_value=True)
 
 
-def on_value_post_save(sender, instance, created, raw=False, update_fields=None, *args, **kwargs):
+def on_value_post_save(sender, instance, created, raw=False,
+                       update_fields=None, **kwargs):
     if not raw:
         modules.color.ColorMapping.objects.map_or_unmap(instance)
 

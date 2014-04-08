@@ -24,13 +24,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#
 
 from sellmo import modules
 from sellmo.contrib.contrib_attribute.forms import ProductAttributeFormFactory
 from sellmo.contrib.contrib_attribute.models import ValueObject
-
-#
 
 from django import forms
 from django.forms import ValidationError
@@ -42,8 +39,6 @@ from django.utils import six
 from django.contrib.admin.sites import NotRegistered
 from django.contrib.contenttypes.models import ContentType
 
-#
-
 
 class ProductAttributeMixin(object):
 
@@ -53,12 +48,11 @@ class ProductAttributeMixin(object):
         fieldsets = super(
             ProductAttributeMixin, self).get_fieldsets(request, obj)
         fields = [
-            'attribute_{0}'.format(key) for key in modules.attribute.Attribute.objects.values_list('key', flat=True)
+            'attribute_{0}'.format(key) for key in 
+            modules.attribute.Attribute.objects.values_list('key', flat=True)
         ]
         fieldsets += ((_("Attributes"), {'fields': fields}),)
         return fieldsets
-
-#
 
 
 class AttributeAdmin(admin.ModelAdmin):
@@ -68,7 +62,8 @@ class AttributeAdmin(admin.ModelAdmin):
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         if db_field.name == 'object_choices':
             kwargs['queryset'] = ValueObject.objects.polymorphic().all()
-        return super(AttributeAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
+        return super(AttributeAdmin, self).formfield_for_manytomany(
+            db_field, request, **kwargs)
 
 
 class ValueAdmin(admin.ModelAdmin):
@@ -78,6 +73,7 @@ class ValueAdmin(admin.ModelAdmin):
 
     def value(self, obj):
         return obj.get_value()
+
 
 admin.site.register(modules.attribute.Attribute, AttributeAdmin)
 admin.site.register(modules.attribute.Value, ValueAdmin)

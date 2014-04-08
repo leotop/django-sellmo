@@ -24,12 +24,9 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#
 
 from sellmo import modules
 from sellmo.utils.forms import FormFactory
-
-#
 
 from django import forms
 from django.forms import ValidationError
@@ -41,8 +38,6 @@ from django.utils import six
 from django.contrib.admin.sites import NotRegistered
 from django.contrib.admin.widgets import ForeignKeyRawIdWidget
 from django.contrib.contenttypes.models import ContentType
-
-#
 
 
 class ProductAttributeFormMixin(object):
@@ -56,7 +51,8 @@ class ProductAttributeFormMixin(object):
             instance = kwargs['instance']
         if instance:
             initial.update({
-                self.__attribute_field_names[attribute.key]: instance.attributes[attribute.key]
+                self.__attribute_field_names[attribute.key]: 
+                instance.attributes[attribute.key]
                 for attribute in self.__attributes
             })
         kwargs['initial'] = initial
@@ -83,7 +79,8 @@ class ProductAttributeFormFactory(FormFactory):
         modules.attribute.Attribute.TYPE_OBJECT: forms.ModelChoiceField,
     }
 
-    def __init__(self, form=forms.ModelForm, mixin=ProductAttributeFormMixin, prefix=None):
+    def __init__(self, form=forms.ModelForm, mixin=ProductAttributeFormMixin, 
+                 prefix=None):
         self.form = form
         self.mixin = mixin
         self.prefix = prefix

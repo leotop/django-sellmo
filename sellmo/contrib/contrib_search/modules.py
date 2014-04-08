@@ -24,21 +24,16 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import operator
 
-#
+import operator
 
 from django.http import Http404
 from django.db.models import Q
 from django.utils.module_loading import import_by_path
 
-#
-
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable
 from sellmo.contrib.contrib_search.config import settings
-
-#
 
 
 class SearchModule(Module):
@@ -48,7 +43,8 @@ class SearchModule(Module):
         self.SearchForm = import_by_path(settings.SEARCH_FORM)
 
     @chainable()
-    def get_search_form(self, chain, form=None, cls=None, initial=None, data=None, **kwargs):
+    def get_search_form(self, chain, form=None, cls=None, initial=None,
+                        data=None, **kwargs):
         if cls is None:
             cls = self.SearchForm
 
@@ -76,7 +72,8 @@ class SearchModule(Module):
             products = modules.product.list(request=request)
 
         if chain:
-            return chain.execute(request, products=products, context=context, **kwargs)
+            return chain.execute(
+                request, products=products, context=context, **kwargs)
         else:
             # We don't render anything
             raise Http404

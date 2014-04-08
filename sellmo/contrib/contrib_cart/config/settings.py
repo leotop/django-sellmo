@@ -24,17 +24,14 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.conf import settings
 
-#
+from django.conf import settings
 
 from sellmo.contrib.contrib_cart.config import defaults
 
-#
 
 debug = getattr(settings, 'DEBUG', False)
 
-#
 
 SINGLE_PURCHASE_MODE = getattr(
     settings, 'SELLMO_SINGLE_PURCHASE_MODE', defaults.SINGLE_PURCHASE_MODE)

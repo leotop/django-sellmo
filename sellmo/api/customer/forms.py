@@ -26,16 +26,13 @@
 
 from django import forms
 
-#
-
 from sellmo import modules
 from sellmo.config import settings
 from sellmo.api.decorators import load
 
-#
 
-
-@load(action='load_customer_CustomerForm', after='finalize_customer_Customer')
+@load(action='load_customer_CustomerForm')
+@load(after='finalize_customer_Customer')
 def load_form():
 
     _exclude = []
@@ -58,7 +55,8 @@ class CustomerForm(forms.ModelForm):
     pass
 
 
-@load(action='load_customer_ContactableForm', after='finalize_customer_Contactable')
+@load(action='load_customer_ContactableForm')
+@load(after='finalize_customer_Contactable')
 def load_form():
     class ContactableForm(modules.customer.ContactableForm):
 
@@ -72,7 +70,8 @@ class ContactableForm(forms.ModelForm):
     pass
 
 
-@load(action='load_customer_AddressForm', after='finalize_customer_Address')
+@load(action='load_customer_AddressForm')
+@load(after='finalize_customer_Address')
 def load_form():
     class AddressForm(modules.customer.AddressForm):
 

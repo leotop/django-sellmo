@@ -47,7 +47,8 @@ class ReverseInlineFormSet(BaseModelFormSet):
     model = None
     parent_fk_name = None
 
-    def __init__(self, data=None, files=None, instance=None, prefix=None, queryset=None, save_as_new=False):
+    def __init__(self, data=None, files=None, instance=None, prefix=None,
+                 queryset=None, save_as_new=False):
         try:
             obj = getattr(instance, self.parent_fk_name)
         except self.model.DoesNotExist:
@@ -64,7 +65,9 @@ class ReverseInlineFormSet(BaseModelFormSet):
             data, files, prefix=prefix, queryset=queryset)
 
 
-def reverse_inlineformset_factory(parent_model, model, parent_fk_name, form=ModelForm, fields=None, exclude=None, formfield_callback=lambda f: f.formfield()):
+def reverse_inlineformset_factory(parent_model, model, parent_fk_name,
+                                  form=ModelForm, fields=None, exclude=None,
+                                  formfield_callback=lambda f: f.formfield()):
     kwargs = {
         'form': form,
         'formfield_callback': formfield_callback,
@@ -84,7 +87,8 @@ def reverse_inlineformset_factory(parent_model, model, parent_fk_name, form=Mode
 
 class ReverseInlineModelAdmin(InlineModelAdmin):
 
-    def __init__(self, parent_model, parent_fk_name, model, admin_site, inline_type):
+    def __init__(self, parent_model, parent_fk_name, model, admin_site,
+                 inline_type):
         self.template = 'admin/edit_inline/%s.html' % inline_type
         self.parent_fk_name = parent_fk_name
         self.model = model
@@ -113,13 +117,12 @@ class ReverseInlineModelAdmin(InlineModelAdmin):
             "form": self.form,
             "fields": fields,
             "exclude": exclude,
-            "formfield_callback": curry(self.formfield_for_dbfield, request=request),
+            "formfield_callback": curry(
+                self.formfield_for_dbfield, request=request),
         }
         defaults.update(kwargs)
-        return reverse_inlineformset_factory(self.parent_model,
-                                             self.model,
-                                             self.parent_fk_name,
-                                             **defaults)
+        return reverse_inlineformset_factory(
+            self.parent_model, self.model, self.parent_fk_name, **defaults)
 
 
 class ReverseModelAdmin(ModelAdmin):

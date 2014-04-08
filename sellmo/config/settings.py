@@ -26,17 +26,14 @@
 
 from django.conf import settings
 
-#
-
 from sellmo.config import defaults
 
-#
 
 debug = getattr(settings, 'DEBUG', False)
 
-#
 
 CURRENCY = getattr(settings, 'SELLMO_CURRENCY', defaults.CURRENCY)
+
 
 ADD_TO_CART_FORM = getattr(
     settings, 'SELLMO_ADD_TO_CART_FORM', defaults.ADD_TO_CART_FORM)
@@ -52,10 +49,14 @@ CONTACTABLE_FORM = getattr(
     settings, 'SELLMO_CONTACTABLE_FORM', defaults.CONTACTABLE_FORM)
 ADDRESS_FORM = getattr(settings, 'SELLMO_ADDRESS_FORM', defaults.ADDRESS_FORM)
 
+
 PAYMENT_METHOD_CHOICE_FORMAT = getattr(
-    settings, 'SELLMO_PAYMENT_METHOD_CHOICE_FORMAT', defaults.PAYMENT_METHOD_CHOICE_FORMAT)
+    settings, 'SELLMO_PAYMENT_METHOD_CHOICE_FORMAT', 
+    defaults.PAYMENT_METHOD_CHOICE_FORMAT)
 SHIPPING_METHOD_CHOICE_FORMAT = getattr(
-    settings, 'SELLMO_SHIPPING_METHOD_CHOICE_FORMAT', defaults.SHIPPING_METHOD_CHOICE_FORMAT)
+    settings, 'SELLMO_SHIPPING_METHOD_CHOICE_FORMAT',
+    defaults.SHIPPING_METHOD_CHOICE_FORMAT)
+
 
 CUSTOMER_REQUIRED = getattr(
     settings, 'SELLMO_CUSTOMER_REQUIRED', defaults.CUSTOMER_REQUIRED)
@@ -67,38 +68,37 @@ BUSINESSES_ONLY = getattr(
     settings, 'SELLMO_BUSINESSES_ONLY', defaults.BUSINESSES_ONLY)
 AUTH_ENABLED = getattr(settings, 'SELLMO_AUTH_ENABLED', defaults.AUTH_ENABLED)
 
+
 ADDRESS_TYPES = getattr(
     settings, 'SELLMO_ADDRESS_TYPES', defaults.ADDRESS_TYPES)
 ORDER_STATUSES = getattr(
     settings, 'SELLMO_ORDER_STATUSES', defaults.ORDER_STATUSES)
 
+
 CHECKOUT_PROCESS = getattr(settings, 'SELLMO_CHECKOUT_PROCESS', None)
 
-#
 
 REDIRECTION_SESSION_PREFIX = getattr(
-    settings, 'SELLMO_REDIRECTION_SESSION_PREFIX', defaults.REDIRECTION_SESSION_PREFIX)
+    settings, 'SELLMO_REDIRECTION_SESSION_PREFIX',
+    defaults.REDIRECTION_SESSION_PREFIX)
 REDIRECTION_DEBUG = getattr(
-    settings, 'SELLMO_REDIRECTION_DEBUG', defaults.REDIRECTION_DEBUG and debug)
+    settings, 'SELLMO_REDIRECTION_DEBUG',
+    defaults.REDIRECTION_DEBUG and debug)
 
-#
 
 CACHING_ENABLED = getattr(
     settings, 'SELLMO_CACHING_ENABLED', defaults.CACHING_ENABLED)
 CACHING_PREFIX = getattr(
     settings, 'SELLMO_CACHING_PREFIX', defaults.CACHING_PREFIX)
 
-#
 
 CELERY_ENABLED = getattr(
     settings, 'SELLMO_CELERY_ENABLED', defaults.CELERY_ENABLED)
 
-#
 
 MAIL_HANDLER = getattr(settings, 'SELLMO_MAIL_HANDLER', defaults.MAIL_HANDLER)
 MAIL_FROM = getattr(settings, 'SELLMO_MAIL_FROM', defaults.MAIL_FROM)
 
-#
 
 REPORT_GENERATORS = getattr(
     settings, 'SELLMO_REPORT_GENERATORS', defaults.REPORT_GENERATORS)

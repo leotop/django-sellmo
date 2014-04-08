@@ -24,15 +24,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo import modules
 from sellmo.api.pricing import Price
 from sellmo.api.checkout import PaymentMethod
 
-#
-
 from django.utils.translation import ugettext_lazy as _
-
-#
 
 
 class BankTransferPaymentMethod(PaymentMethod):

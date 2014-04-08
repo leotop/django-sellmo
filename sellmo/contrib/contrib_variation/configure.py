@@ -24,12 +24,11 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo import modules
 from sellmo.config import settings
 from sellmo.contrib.contrib_variation.signals import variations_invalidated
 from sellmo.contrib.contrib_variation import tasks
-
-#
 
 
 def on_variations_invalidated(sender, product, **kwargs):

@@ -24,22 +24,22 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from django.db import models
 from django.db.models import Q
 from django.db.models.query import QuerySet
-from django.db.models.signals import pre_save, pre_delete, post_save, m2m_changed
+from django.db.models.signals import (pre_save, pre_delete, post_save, 
+                                      m2m_changed)
 from django.utils.translation import ugettext_lazy as _
-
-#
 
 from sellmo import modules
 from sellmo.api.decorators import load
-from sellmo.core.polymorphism import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
+from sellmo.core.polymorphism import (PolymorphicModel, PolymorphicManager, 
+                                      PolymorphicQuerySet)
 
-#
 
-
-@load(action='load_product_subtypes', after='finalize_product_Product')
+@load(action='load_product_subtypes')
+@load(after='finalize_product_Product')
 def load_product_subtypes():
     pass
 
@@ -123,15 +123,17 @@ class Product(PolymorphicModel):
 class ProductRelatableQuerySet(QuerySet):
 
     def for_product(self, product):
-        return self.filter(self.model.get_for_product_query(product=product)).distinct()
+        return self.filter(self.model.get_for_product_query(product=product)) \
+                   .distinct()
 
     def best_for_product(self, product):
         matches = self.for_product(product)
         if matches:
-            return self.model.get_best_for_product(product=product, matches=matches)
+            return self.model.get_best_for_product(
+                product=product, matches=matches)
         raise self.model.DoesNotExist(
-            "%s matching query does not exist." %
-            self.model._meta.object_name)
+            "{0} matching query does not exist.".format(
+            self.model._meta.object_name))
 
 
 class ProductRelatableManager(models.Manager):

@@ -24,17 +24,14 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.conf import settings
 
-#
+from django.conf import settings
 
 from sellmo.contrib.contrib_mailing.config import defaults
 
-#
 
 debug = getattr(settings, 'DEBUG', False)
 
-#
 
 SEND_MAIL_RETRY_ENABLED = getattr(
     settings, 'SELLMO_SEND_MAIL_RETRY_ENABLED', defaults.SEND_MAIL_RETRY_ENABLED)

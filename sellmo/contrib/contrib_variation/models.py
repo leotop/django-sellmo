@@ -24,19 +24,21 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#
 
 from sellmo import modules
 from sellmo.api.decorators import load
 from sellmo.magic import ModelMixin
 from sellmo.core.polymorphism import PolymorphicModel, PolymorphicManager
-from sellmo.contrib.contrib_variation.variant import VariantFieldDescriptor, VariantMixin, get_differs_field_name
+from sellmo.contrib.contrib_variation.variant import (VariantFieldDescriptor,
+                                                      VariantMixin,
+                                                      get_differs_field_name)
 from sellmo.contrib.contrib_variation.utils import generate_slug
-from sellmo.contrib.contrib_variation.signals import variations_deprecating, variations_invalidated
-from sellmo.contrib.contrib_variation.helpers import AttributeHelper, VariantAttributeHelper, VariationAttributeHelper
+from sellmo.contrib.contrib_variation.signals import (variations_deprecating,
+                                                      variations_invalidated)
+from sellmo.contrib.contrib_variation.helpers import (AttributeHelper,
+                                                      VariantAttributeHelper,
+                                                      VariationAttributeHelper)
 from sellmo.contrib.contrib_attribute.query import ProductQ
-
-#
 
 from django.db import models, transaction, IntegrityError
 from django.db.models import Q, F, Count
@@ -46,19 +48,15 @@ from django.core.exceptions import ValidationError
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy as _
 
-#
-
 import sys
 import logging
 
-#
 
 logger = logging.getLogger('sellmo')
 
-#
 
-
-@load(action='setup_variants', after='load_product_subtypes')
+@load(action='setup_variants')
+@load(after='load_product_subtypes')
 def setup_variants():
     pass
 
@@ -76,7 +74,8 @@ def load_model():
 
             # Try to update variants
             downcasted = self.downcast()
-            if hasattr(downcasted, 'variants') and downcasted.variants.count() > 0:
+            if (hasattr(downcasted, 'variants')
+                    and downcasted.variants.count() > 0):
                 for variant in downcasted.variants.all():
                     variant.save()
 
@@ -95,9 +94,13 @@ def load_manager():
 
         def variants(self, exclude=False, only=False):
             if exclude:
-                return self.filter(content_type__in=ContentType.objects.get_for_models(*modules.product.subtypes).values())
+                return self.filter(
+                    content_type__in=ContentType.objects.get_for_models(
+                        *modules.product.subtypes).values())
             if only:
-                return self.filter(content_type__in=ContentType.objects.get_for_models(*modules.variation.subtypes).values())
+                return self.filter(
+                    content_type__in=ContentType.objects.get_for_models(
+                        *modules.variation.subtypes).values())
             return self
 
     class ProductManager(modules.product.Product.objects.__class__):
@@ -125,7 +128,8 @@ def load_model():
             @property
             def grouped_by(self):
                 try:
-                    return modules.attribute.Attribute.objects.which_variate(self).get(groups=True)
+                    return modules.attribute.Attribute.objects \
+                                  .which_variate(self).get(groups=True)
                 except modules.attribute.Attribute.DoesNotExist:
                     return None
 
@@ -133,7 +137,9 @@ def load_model():
             def grouped_choices(self):
                 group = self.grouped_by
                 if group:
-                    return modules.attribute.Value.objects.which_variate(self).for_attribute(group, distinct=True)
+                    return modules.attribute.Value.objects \
+                                  .which_variate(self) \
+                                  .for_attribute(group, distinct=True)
                 else:
                     return None
 
@@ -143,8 +149,12 @@ def load_model():
 
             def get_variations(self, invalidated=False):
                 if getattr(self, '_is_variant', False):
-                    return modules.variation.Variation.objects.for_product(self.product, invalidated=invalidated).filter(variant=self)
-                return modules.variation.Variation.objects.for_product(self, invalidated=invalidated)
+                    return modules.variation.Variation.objects \
+                                  .for_product(
+                                    self.product, invalidated=invalidated) \
+                                  .filter(variant=self)
+                return modules.variation.Variation.objects \
+                              .for_product(self, invalidated=invalidated)
 
             @property
             def variations(self):
@@ -173,7 +183,10 @@ def load_variants():
         }
 
         model = type(
-            name, (VariantMixin, modules.variation.Variant, subtype,), attr_dict)
+            name,
+            (VariantMixin, modules.variation.Variant, subtype,),
+            attr_dict)
+        
         model.setup()
         modules.variation.subtypes.append(model)
         setattr(modules.variation, name, model)
@@ -218,12 +231,14 @@ def on_value_pre_save(sender, instance, raw=False, *args, **kwargs):
 def on_value_post_save(sender, instance, raw=False, *args, **kwargs):
     if not raw:
         modules.variation.Variation.objects.invalidate(
-            instance.base_product if instance.base_product else instance.product)
+            instance.base_product if 
+            instance.base_product else instance.product)
 
 
 def on_value_pre_delete(sender, instance, *args, **kwargs):
     modules.variation.Variation.objects.invalidate(
-        instance.base_product if instance.base_product else instance.product)
+        instance.base_product if
+        instance.base_product else instance.product)
 
 
 @load(after='finalize_attribute_Value')
@@ -241,13 +256,15 @@ def load_manager():
     class AttributeQuerySet(qs.__class__):
 
         def for_product_or_variants_of(self, product):
-            return self.filter(Q(values__product=product) | Q(values__base_product=product)).distinct()
+            return (self.filter(Q(values__product=product)
+                    | Q(values__base_product=product)).distinct())
 
         def which_variate(self, product):
             return self.filter(
-                Q(variates=True)
-                & (Q(values__base_product=product) | Q(values__product=product) & Q(values__variates=True))
-            ).distinct()
+                Q(variates=True) &
+                (Q(values__base_product=product) | 
+                 Q(values__product=product) &
+                 Q(values__variates=True))).distinct()
 
     class AttributeManager(modules.attribute.Attribute.objects.__class__):
 
@@ -255,7 +272,8 @@ def load_manager():
             return AttributeQuerySet(self.model)
 
         def for_product_or_variants_of(self, *args, **kwargs):
-            return self.get_query_set().for_product_or_variants_of(*args, **kwargs)
+            return self.get_query_set() \
+                       .for_product_or_variants_of(*args, **kwargs)
 
         def which_variate(self, *args, **kwargs):
             return self.get_query_set().which_variate(*args, **kwargs)
@@ -289,7 +307,8 @@ def load_model():
                 old = modules.attribute.Attribute.objects.get(pk=self.pk)
             super(Attribute, self).save(*args, **kwargs)
             if self.variates or old and old.variates:
-                for product in modules.product.Product.objects.filter(ProductQ(attribute=self, product_field='base_product')):
+                for product in modules.product.Product.objects.filter(
+                        ProductQ(attribute=self, product_field='base_product')):
                     modules.variation.Variation.objects.invalidate(product)
 
         class Meta(modules.attribute.Attribute.Meta):
@@ -319,8 +338,9 @@ def load_manager():
                     qargs = {
                         attribute.value_field: value
                     }
-                    id = q.filter(
-                        **qargs).annotate(does_variate=Count('variates')).order_by('-does_variate')[0].id
+                    id = q.filter(**qargs) \
+                          .annotate(does_variate=Count('variates')) \
+                          .order_by('-does_variate')[0].id
                     distinct.append(id)
                 return q.filter(id__in=distinct)
             else:
@@ -328,9 +348,10 @@ def load_manager():
 
         def which_variate(self, product):
             return self.filter(
-                Q(attribute__variates=True)
-                & (Q(base_product=product) | Q(product=product) & Q(variates=True))
-            )
+                Q(attribute__variates=True) &
+                (Q(base_product=product) |
+                 Q(product=product) & 
+                 Q(variates=True)))
 
     class ValueManager(modules.attribute.Value.objects.__class__):
 
@@ -338,7 +359,8 @@ def load_manager():
             return ValueQuerySet(self.model)
 
         def for_product_or_variants_of(self, *args, **kwargs):
-            return self.get_query_set().for_product_or_variants_of(*args, **kwargs)
+            return self.get_query_set() \
+                       .for_product_or_variants_of(*args, **kwargs)
 
         def which_variate(self, *args, **kwargs):
             return self.get_query_set().which_variate(*args, **kwargs)
@@ -462,7 +484,9 @@ class VariationManager(models.Manager):
         # Keep track of explicit attributes
         explicits = {}
         for attribute in attributes:
-            for value in modules.attribute.Value.objects.which_variate(product).for_attribute(attribute, distinct=True):
+            for value in modules.attribute.Value.objects \
+                                .which_variate(product) \
+                                .for_attribute(attribute, distinct=True):
                 if value.variates:
                     explicits[attribute.key] = False
                     break
@@ -477,7 +501,8 @@ class VariationManager(models.Manager):
                 attribute = attributes[0]
                 values = modules.attribute.Value.objects.which_variate(
                     product).for_attribute(attribute, distinct=True)
-                for value in modules.attribute.get_sorted_values(values=values, attribute=attribute):
+                for value in modules.attribute.get_sorted_values(
+                        values=values, attribute=attribute):
                     _map(attributes[1:], combination + [value])
             else:
                 for value in list(combination):
@@ -520,7 +545,8 @@ class VariationManager(models.Manager):
         # Filter out non existent combinations
         for combination in list(map):
             for value in combination:
-                if value is not None and not isinstance(value, modules.attribute.Value):
+                if (value is not None and 
+                        not isinstance(value, modules.attribute.Value)):
                     index = map.index(combination)
                     map.pop(index)
                     break
@@ -568,7 +594,8 @@ class VariationManager(models.Manager):
                 if q:
                     try:
                         variant = product.variants.get(q)
-                    except (modules.product.Product.DoesNotExist, modules.product.Product.MultipleObjectsReturned):
+                    except (modules.product.Product.DoesNotExist, 
+                            modules.product.Product.MultipleObjectsReturned):
                         continue
                     else:
                         break
@@ -594,7 +621,9 @@ class VariationManager(models.Manager):
         if group:
             # We need to find a single variant which is common across all
             # variations in this group
-            for value in modules.attribute.Value.objects.which_variate(product).for_attribute(attribute=group, distinct=True):
+            for value in modules.attribute.Value.objects \
+                                .which_variate(product) \
+                                .for_attribute(attribute=group, distinct=True):
                 # Get variations for this grouped attribute / value combination
                 qargs = {
                     'values__attribute': group,
@@ -617,7 +646,8 @@ class VariationManager(models.Manager):
                     variant = product
                 except modules.product.Product.MultipleObjectsReturned:
                     logger.warning(
-                        "Invalid variant consruction in combination with grouping")
+                        "Invalid variant consruction in combination "
+                        "with grouping")
                     logger.info(product.variants.filter(*qargs))
 
                 variations.update(group_variant=variant)
@@ -670,11 +700,13 @@ class Variation(models.Model):
 
     @staticmethod
     def generate_id(product, values):
-        return generate_slug(product=product, values=values, full=True, unique=False)
+        return generate_slug(
+            product=product, values=values, full=True, unique=False)
 
     @staticmethod
     def generate_description(product, values):
-        return modules.variation.generate_variation_description(product=product, values=values)
+        return modules.variation.generate_variation_description(
+            product=product, values=values)
 
     id = models.CharField(
         max_length=255,
@@ -729,16 +761,16 @@ def load_model():
             try:
                 variations_state = self.variations_state
             except modules.variation.VariationsState.DoesNotExist:
-                variations_state = modules.variation.VariationsState.objects.create(
-                    product=self)
+                variations_state = modules.variation.VariationsState.objects \
+                                          .create(product=self)
             return variations_state.invalidated
 
         def set_variations_invalidated(self, value):
             try:
                 variations_state = self.variations_state
             except modules.variation.VariationsState.DoesNotExist:
-                variations_state = modules.variation.VariationsState.objects.create(
-                    product=self)
+                variations_state = modules.variation.VariationsState.objects \
+                                          .create(product=self)
             variations_state.invalidated = value
             variations_state.save()
 
@@ -801,18 +833,23 @@ def finalize_model():
     class VariationPurchaseQuerySet(qs.__class__):
 
         def mergeable_with(self, purchase):
-            return super(VariationPurchaseQuerySet, self.filter(variation_key=purchase.variation_key)).mergeable_with(purchase)
+            return super(VariationPurchaseQuerySet, self.filter(
+                variation_key=purchase.variation_key)).mergeable_with(purchase)
 
     class VariationPurchaseManager(modules.store.Purchase.objects.__class__):
 
         def get_query_set(self):
             return VariationPurchaseQuerySet(self.model)
 
-    class VariationPurchase(modules.variation.VariationPurchase, modules.store.Purchase):
+    class VariationPurchase(
+            modules.variation.VariationPurchase,
+            modules.store.Purchase):
 
         objects = VariationPurchaseManager()
 
-        class Meta(modules.variation.VariationPurchase.Meta, modules.store.Purchase.Meta):
+        class Meta(
+                modules.variation.VariationPurchase.Meta,
+                modules.store.Purchase.Meta):
             app_label = 'store'
             verbose_name = _("variation purchase")
             verbose_name_plural = _("variation purchases")

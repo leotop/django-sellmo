@@ -24,11 +24,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo import modules, Module
 from sellmo.api.decorators import chainable
 from sellmo.contrib.contrib_checkout.models import OrderMail
-
-#
 
 
 class CheckoutMailingModule(Module):
@@ -38,7 +37,8 @@ class CheckoutMailingModule(Module):
     OrderMail = OrderMail
 
     @chainable()
-    def render_order_confirmation(self, chain, format, order, data=None, **kwargs):
+    def render_order_confirmation(self, chain, format, order, data=None,
+                                  **kwargs):
         if chain:
             out = chain.execute(
                 format=format, order=order, data=data, **kwargs)
@@ -46,7 +46,8 @@ class CheckoutMailingModule(Module):
         return data
 
     @chainable()
-    def render_order_notification(self, chain, format, order, data=None, **kwargs):
+    def render_order_notification(self, chain, format, order, data=None,
+                                  **kwargs):
         if chain:
             out = chain.execute(
                 format=format, order=order, data=data, **kwargs)
@@ -54,7 +55,8 @@ class CheckoutMailingModule(Module):
         return data
 
     @chainable()
-    def render_shipping_notification(self, chain, format, order, data=None, **kwargs):
+    def render_shipping_notification(self, chain, format, order, data=None,
+                                     **kwargs):
         if chain:
             out = chain.execute(
                 format=format, order=order, data=data, **kwargs)
@@ -73,7 +75,8 @@ class CheckoutReportingModule(Module):
         pass
 
     @chainable()
-    def render_invoice(self, chain, order, internal=False, data=None, **kwargs):
+    def render_invoice(self, chain, order, internal=False, data=None,
+                       **kwargs):
         if chain:
             out = chain.execute(
                 order=order, internal=internal, data=data, **kwargs)

@@ -24,22 +24,16 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo.api.http.query import QueryString
 
-#
-
 from django import template
-
-#
 
 from classytags.core import Tag, Options
 from classytags.arguments import Argument
 
-#
 
 register = template.Library()
-
-#
 
 
 class QueryArgumentsValue(list):
@@ -72,7 +66,8 @@ class QueryArgumentsValue(list):
 
 class QueryArguments(Argument):
 
-    def __init__(self, name, default=None, required=True, resolve=True, query=None):
+    def __init__(self, name, default=None, required=True,
+                 resolve=True, query=None):
         super(QueryArguments, self).__init__(name, default, required, resolve)
         self.query = query
 

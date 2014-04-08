@@ -24,10 +24,9 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from django.utils import six
 from django.utils.encoding import smart_str
-
-#
 
 if six.PY3:
     from urllib.parse import urlparse, parse_qsl, urlunparse, urlencode

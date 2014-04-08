@@ -24,12 +24,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo import modules
 from sellmo.caching import Cache, cached
 from sellmo.utils.querying import list_from_pks
-from sellmo.contrib.contrib_variation.signals import variations_deprecating, variations_invalidated
-
-#
+from sellmo.contrib.contrib_variation.signals import (variations_deprecating,
+                                                      variations_invalidated)
 
 
 class ProductVariationsCache(Cache):
@@ -46,7 +46,8 @@ class ProductVariationsCache(Cache):
 
         # Query them all
         all_variations = list_from_pks(
-            modules.variation.Variation.objects.filter(pk__in=all_variations), all_variations)
+            modules.variation.Variation.objects.filter(pk__in=all_variations),
+            all_variations)
 
         # Reconstruct
         if grouped:
@@ -54,10 +55,13 @@ class ProductVariationsCache(Cache):
             if len(cache) > 0:
                 all_values = [variation['value'] for variation in cache]
                 all_values = list_from_pks(
-                    modules.attribute.Value.objects.filter(pk__in=all_values), all_values)
+                    modules.attribute.Value.objects.filter(pk__in=all_values),
+                    all_values)
                 all_variants = [variation['variant'] for variation in cache]
-                all_variants = list_from_pks(modules.product.Product.objects.polymorphic().filter(
-                    pk__in=all_variants), all_variants)
+                all_variants = list_from_pks(
+                    modules.product.Product.objects.polymorphic().filter(
+                        pk__in=all_variants), 
+                    all_variants)
                 attribute = modules.attribute.Attribute.objects.get(
                     pk=cache[0]['attribute'])
 
@@ -115,7 +119,8 @@ class ProductVariationsCache(Cache):
             'variations_hit': variations_hit
         }
 
-    def finalize(self, product, variations, variations_hit, grouped=False, **kwargs):
+    def finalize(self, product, variations, variations_hit, grouped=False,
+                 **kwargs):
         if not variations_hit:
             cache = []
             for variation in variations:
@@ -125,7 +130,8 @@ class ProductVariationsCache(Cache):
                     cache.append({
                         'attribute': variation['attribute'].pk,
                         'value': variation['value'].pk,
-                        'variations': [el.pk for el in variation['variations']],
+                        'variations': [el.pk for el in 
+                            variation['variations']],
                         'variant': variation['variant'].pk,
                     })
 
@@ -140,7 +146,8 @@ class VariationChoiceCache(Cache):
     def on_variations_deprecating(self, sender, product, **kwargs):
         product = product.downcast()
         keys = [
-            self.get_choice_key(variation.pk) for variation in product.get_variations(invalidated=True)
+            self.get_choice_key(variation.pk) for variation in
+            product.get_variations(invalidated=True)
         ]
         self.delete(*keys)
 

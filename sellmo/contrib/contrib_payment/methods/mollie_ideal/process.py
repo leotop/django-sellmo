@@ -24,15 +24,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo import modules
 from sellmo.api.pricing import Price
 from sellmo.api.checkout import PaymentMethod
 
-#
-
 from sellmo.api.checkout.process import CheckoutProcess, CheckoutStep
-
-#
 
 
 class MollieIdealBankSelectStep(CheckoutStep):
@@ -53,13 +50,15 @@ class MollieIdealBankSelectStep(CheckoutStep):
         return False
 
     def get_next_step(self):
-        return MollieIdealRedirectStep(order=self.order, request=self.request, next_step=self.next_step)
+        return MollieIdealRedirectStep(
+            order=self.order, request=self.request, next_step=self.next_step)
 
     def _contextualize_or_complete(self, request, context, data=None):
         success = True
 
         bank, form, processed = modules.mollie_ideal.process_bank_select(
-            request=request, payment=self.payment, prefix='bank_select', data=data)
+            request=request, payment=self.payment, 
+            prefix='bank_select', data=data)
         context['bank_select_form'] = form
         success &= processed
 
@@ -70,7 +69,8 @@ class MollieIdealBankSelectStep(CheckoutStep):
 
     def complete(self, data):
         self.invalid_context = {}
-        return self._contextualize_or_complete(self.request, self.invalid_context, data)
+        return self._contextualize_or_complete(
+            self.request, self.invalid_context, data)
 
     def render(self, request, context):
         if self.invalid_context is None:
@@ -78,7 +78,8 @@ class MollieIdealBankSelectStep(CheckoutStep):
         else:
             context.update(self.invalid_context)
 
-        return modules.mollie_ideal.bank_select(request=request, order=self.order, context=context)
+        return modules.mollie_ideal.bank_select(
+            request=request, order=self.order, context=context)
 
 
 class MollieIdealRedirectStep(CheckoutStep):
@@ -101,7 +102,8 @@ class MollieIdealRedirectStep(CheckoutStep):
         return None
 
     def render(self, request, context):
-        return modules.mollie_ideal.redirect(request=request, order=self.order, contex=context)
+        return modules.mollie_ideal.redirect(
+            request=request, order=self.order, contex=context)
 
 
 class MollieIdealPendingStep(CheckoutStep):
@@ -137,7 +139,8 @@ class MollieIdealPendingStep(CheckoutStep):
 
     def complete(self, data):
         self.invalid_context = {}
-        return self._contextualize_or_complete(self.request, self.invalid_context, data)
+        return self._contextualize_or_complete(
+            self.request, self.invalid_context, data)
 
     def render(self, request, context):
         if self.invalid_context is None:
@@ -145,7 +148,8 @@ class MollieIdealPendingStep(CheckoutStep):
         else:
             context.update(self.invalid_context)
 
-        return modules.mollie_ideal.pending(request=request, order=self.order, context=context)
+        return modules.mollie_ideal.pending(
+            request=request, order=self.order, context=context)
 
 
 class MollieIdealFailureStep(CheckoutStep):
@@ -181,7 +185,8 @@ class MollieIdealFailureStep(CheckoutStep):
 
     def complete(self, data):
         self.invalid_context = {}
-        return self._contextualize_or_complete(self.request, self.invalid_context, data)
+        return self._contextualize_or_complete(
+            self.request, self.invalid_context, data)
 
     def render(self, request, context):
         if self.invalid_context is None:
@@ -189,4 +194,5 @@ class MollieIdealFailureStep(CheckoutStep):
         else:
             context.update(self.invalid_context)
 
-        return modules.mollie_ideal.failure(request=request, order=self.order, context=context)
+        return modules.mollie_ideal.failure(
+            request=request, order=self.order, context=context)

@@ -24,27 +24,24 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import datetime
 
-#
+import datetime
 
 from django.db import models
 from django.db.models import Q
 from django.db.models.query import QuerySet
 from django.utils.translation import ugettext_lazy as _
 
-#
-
 from sellmo import modules
 from sellmo.api.decorators import load
 from sellmo.api.pricing import Price
-from sellmo.core.polymorphism import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
 from sellmo.utils.cloning import Cloneable
+from sellmo.core.polymorphism import (PolymorphicModel, PolymorphicManager,
+                                      PolymorphicQuerySet)
 
-#
 
-
-@load(after='finalize_product_Product', before='finalize_store_Purchase')
+@load(after='finalize_product_Product')
+@load(before='finalize_store_Purchase')
 def load_model():
     class Purchase(modules.store.Purchase):
         product = models.ForeignKey(
@@ -81,7 +78,9 @@ def finalize_model():
 class PurchaseQuerySet(PolymorphicQuerySet):
 
     def mergeable_with(self, purchase):
-        return self.get(~Q(pk=purchase.pk), content_type=purchase.resolve_content_type(), product=purchase.product)
+        return self.get(~Q(pk=purchase.pk),
+                        content_type=purchase.resolve_content_type(),
+                        product=purchase.product)
 
 
 class PurchaseManager(PolymorphicManager):

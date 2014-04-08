@@ -24,13 +24,11 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.conf import settings
 
-#
+from django.conf import settings
 
 from sellmo.contrib.contrib_category.config import defaults
 
-#
 
 MAX_EXPIRE_TIME = getattr(
     settings, 'SELLMO_CATEGORY_MAX_EXPIRE_TIME', defaults.MAX_EXPIRE_TIME)

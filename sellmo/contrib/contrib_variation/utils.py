@@ -24,13 +24,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo import modules
 
-#
-
 from django.utils.text import slugify
-
-#
 
 
 def generate_slug(product, values=None, unique=False, full=False, short=False):
@@ -43,7 +40,9 @@ def generate_slug(product, values=None, unique=False, full=False, short=False):
         sequences.append('-'.join([unicode(value.value) for value in values]))
     if not short:
         sequences.append('_'.join(
-            [u'%s-%s' % (value.attribute.key, unicode(value.value)) for value in values]))
+            [u'{0}-{1}'.format(
+                value.attribute.key,
+                unicode(value.value)) for value in values]))
 
     for attributes in sequences:
         slug = u'%(prefix)s-%(attributes)s' % {

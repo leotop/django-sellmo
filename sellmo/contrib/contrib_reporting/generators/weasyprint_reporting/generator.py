@@ -24,17 +24,15 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from weasyprint import HTML
 
-#
+from weasyprint import HTML
 
 from sellmo.core.reporting.generators import ReportGeneratorBase
 from sellmo.contrib.contrib_reporting.config import settings
 
-#
+import logging
 
 # Dont need no logging
-import logging
 logger = logging.getLogger('weasyprint')
 logger.handlers = []
 

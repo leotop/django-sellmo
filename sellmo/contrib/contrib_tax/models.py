@@ -24,18 +24,21 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#
 
 from sellmo import modules
 from sellmo.api.decorators import load
-from sellmo.api.product.models import ProductRelatableManager, ProductRelatableQuerySet
-from sellmo.core.polymorphism import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
+from sellmo.api.product.models import (ProductRelatableManager,
+                                       ProductRelatableQuerySet)
+from sellmo.core.polymorphism import (PolymorphicModel,
+                                      PolymorphicManager,
+                                      PolymorphicQuerySet)
 from sellmo.magic import ModelMixin
 
-#
-
 from django.db import models
-from django.db.models.signals import pre_save, post_save, pre_delete, m2m_changed
+from django.db.models.signals import (pre_save,
+                                      post_save,
+                                      pre_delete,
+                                      m2m_changed)
 from django.db.models import Q
 from django.contrib.sites.models import Site
 from django.utils.translation import ugettext_lazy as _
@@ -116,7 +119,9 @@ def finalize_model():
             blank=True,
         )
 
-        class Meta(modules.tax.Tax.Meta, modules.product.ProductRelatable.Meta):
+        class Meta(
+                modules.tax.Tax.Meta,
+                modules.product.ProductRelatable.Meta):
             app_label = 'tax'
             verbose_name = _("tax")
             verbose_name_plural = _("taxes")

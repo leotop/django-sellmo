@@ -26,18 +26,12 @@
 
 from decimal import Decimal
 
-#
-
 from sellmo import modules
 from sellmo.api.decorators import load
 from sellmo.api.pricing import Price
 
-#
-
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-
-#
 
 
 @load(action='load_discount_subtypes', after='finalize_discount_Discount')

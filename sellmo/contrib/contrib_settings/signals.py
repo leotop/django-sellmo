@@ -24,15 +24,14 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 import django.dispatch
 
-#
 
 __all__ = [
     'setting_changed',
 ]
 
-#
 
 setting_changed = django.dispatch.Signal(
     providing_args=['setting', 'new', 'old', 'site'])

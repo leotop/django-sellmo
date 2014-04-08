@@ -28,12 +28,8 @@ from django.db import models
 from django.db.models.query import QuerySet
 from django.utils.translation import ugettext_lazy as _
 
-#
-
 from sellmo import modules
 from sellmo.api.decorators import load
-
-#
 
 
 @load(action='finalize_pricing_PriceIndexBase')

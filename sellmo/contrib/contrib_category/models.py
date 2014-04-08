@@ -24,14 +24,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#
 
 from sellmo import modules
 from sellmo.core.params import params
 from sellmo.magic import ModelMixin
 from sellmo.api.decorators import load
 
-#
 from django.db import models
 from django.db.models.signals import m2m_changed, post_save, post_delete
 from django.db.models.query import QuerySet
@@ -40,18 +38,16 @@ from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_lazy as _
 
-#
-
 from mptt.models import MPTTModel, TreeForeignKey, TreeManager
 
-#
 
-
-@load(after='finalize_category_Category', before='finalize_product_ProductRelatable')
+@load(after='finalize_category_Category')
+@load(before='finalize_product_ProductRelatable')
 def load_model():
     class ProductRelatable(modules.product.ProductRelatable):
-        m2m_invalidations = modules.product.ProductRelatable.m2m_invalidations + \
-            ['categories']
+        m2m_invalidations = (
+            modules.product.ProductRelatable.m2m_invalidations +
+            ['categories'])
 
         categories = models.ManyToManyField(
             modules.category.Category,
@@ -65,7 +61,9 @@ def load_model():
             for category in self.categories.all():
                 q |= Q(
                     categories__in=category.get_descendants(include_self=True))
-            return super(ProductRelatable, self).get_related_products_query() | q
+            return (
+                super(ProductRelatable, self).get_related_products_query() 
+                | q)
 
         @classmethod
         def get_for_product_query(cls, product):
@@ -74,11 +72,14 @@ def load_model():
             for category in product.categories.all():
                 q |= Q(
                     categories__in=category.get_ancestors(include_self=True))
-            return super(ProductRelatable, cls).get_for_product_query(product) | q
+            return (
+                super(ProductRelatable, cls).get_for_product_query(product)
+                | q)
 
         @classmethod
         def sort_best_for_product(cls, product, matches):
-            return super(ProductRelatable, cls).sort_best_for_product(product=product, matches=matches)
+            return super(ProductRelatable, cls).sort_best_for_product(
+                product=product, matches=matches)
 
         class Meta(modules.product.ProductRelatable.Meta):
             abstract = True
@@ -121,7 +122,8 @@ def load_manager():
 
         def in_category(self, category, recurse=True):
             if recurse:
-                return self.filter(categories__in=category.get_descendants(include_self=True))
+                return self.filter(
+                    categories__in=category.get_descendants(include_self=True))
             else:
                 return self.filter(categories__in=[category])
 
@@ -182,10 +184,12 @@ def on_categories_changed(sender, instance, action, reverse, pk_set, **kwargs):
 def load_model():
     if not getattr(params, 'loaddata', False):
         m2m_changed.connect(
-            on_categories_changed, sender=modules.product.Product.categories.through)
+            on_categories_changed,
+            sender=modules.product.Product.categories.through)
 
 
-@load(before='finalize_product_Product', after='finalize_category_Category')
+@load(before='finalize_product_Product')
+@load(after='finalize_category_Category')
 def load_model():
     class Product(modules.product.Product):
 
@@ -196,19 +200,19 @@ def load_model():
             return None
 
         def update_primary_category(self):
-            if (
-                (self.primary_category is None
-                 or self.categories.filter(pk=self.primary_category.pk).count() == 0)
-                and not getattr(self, '_primary_category_found', False)
-                and self.categories.count() > 0
-            ):
+            if ((self.primary_category is None
+                    or self.categories.filter(
+                        pk=self.primary_category.pk).count() == 0)
+                    and not getattr(self, '_primary_category_found', False)
+                    and self.categories.count() > 0):
                 # Find best suitable category
                 found = self.find_primary_category()
                 if self.primary_category != found:
                     self.primary_category = found
                     setattr(self, '_primary_category_found', True)
                     self.save()
-            elif not self.primary_category is None and self.categories.count() == 0:
+            elif (not self.primary_category is None and 
+                    self.categories.count() == 0):
                 # Unassign
                 self.primary_category = None
                 setattr(self, '_primary_category_found', True)

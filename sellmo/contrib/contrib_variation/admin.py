@@ -24,14 +24,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#
 
 from sellmo import modules
-from sellmo.contrib.contrib_variation.forms import VariantAttributeFormMixin, ProductVariationFormFactory, ProductVariationFormMixin
+from sellmo.contrib.contrib_variation.forms import (VariantAttributeFormMixin, 
+                                                    ProductVariationFormFactory,
+                                                    ProductVariationFormMixin)                                             
 from sellmo.contrib.contrib_attribute.admin import ProductAttributeMixin
 from sellmo.contrib.contrib_attribute.forms import ProductAttributeFormFactory
-
-#
 
 from django import forms
 from django.forms import ValidationError
@@ -42,8 +41,6 @@ from django.utils.text import capfirst
 from django.utils import six
 from django.contrib.admin.sites import NotRegistered
 from django.contrib.contenttypes.models import ContentType
-
-#
 
 
 class VariantAttributeMixin(ProductAttributeMixin):
@@ -64,12 +61,12 @@ class ProductVariationMixin(object):
         fieldsets = super(
             ProductVariationMixin, self).get_fieldsets(request, obj)
         fields = [
-            'variations_{0}'.format(key) for key in modules.attribute.Attribute.objects.filter(variates=True).values_list('key', flat=True)
+            'variations_{0}'.format(key) for key in 
+            modules.attribute.Attribute.objects.filter(variates=True)
+                                               .values_list('key', flat=True)
         ]
         fieldsets += ((_("Variations"), {'fields': fields}),)
         return fieldsets
-
-#
 
 
 class VariationAdmin(admin.ModelAdmin):

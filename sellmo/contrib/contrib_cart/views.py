@@ -24,19 +24,16 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.shortcuts import redirect
 
-#
+from django.shortcuts import redirect
 
 from sellmo import modules
 from sellmo.api.decorators import link
 from sellmo.contrib.contrib_cart.config import settings
 
-#
 
 namespace = modules.cart.namespace
 
-#
 
 if settings.SINGLE_PURCHASE_MODE:
     @link(capture=True)

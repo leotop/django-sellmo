@@ -24,19 +24,15 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.conf import settings
 
-#
+from django.conf import settings
 
 from sellmo.contrib.contrib_pricing.config import defaults
 
-#
 
 debug = getattr(settings, 'DEBUG', False)
 
-#
 
 INDEXABLE_QTYS = getattr(
     settings, 'SELLMO_INDEXABLE_QTYS', defaults.INDEXABLE_QTYS)
 
-#

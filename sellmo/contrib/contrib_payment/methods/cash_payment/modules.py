@@ -26,13 +26,10 @@
 
 from django.http import Http404
 
-#
-
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable, link
-from sellmo.contrib.contrib_payment.methods.cash_payment.models import CashPayment
-
-#
+from sellmo.contrib.contrib_payment \
+     .methods.cash_payment.models import CashPayment
 
 
 class CashPaymentModule(Module):

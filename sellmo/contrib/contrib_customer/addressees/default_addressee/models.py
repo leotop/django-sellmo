@@ -24,16 +24,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo import modules
 from sellmo.api.decorators import load
 from sellmo.contrib.contrib_customer.config import settings
 
-#
-
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-
-#
 
 
 @load(before='finalize_customer_Addressee')

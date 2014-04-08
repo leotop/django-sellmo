@@ -24,19 +24,14 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#
 
 from sellmo import modules
 from sellmo.contrib.contrib_category.models import Category
-
-#
 
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.admin.sites import NotRegistered
 
-
-#
 
 class CategoryAdminBase(admin.ModelAdmin):
 
@@ -49,9 +44,11 @@ class ProductCategoriesMixin(object):
 
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         if db_field.name == 'categories':
-            kwargs['queryset'] = modules.category.Category.objects.all().prefetch_related(
-                'parent').flat_ordered()
-        return super(ProductCategoriesMixin, self).formfield_for_manytomany(db_field, request, **kwargs)
+            kwargs['queryset'] = modules.category.Category.objects.all() \
+                                        .prefetch_related('parent') \
+                                        .flat_ordered()
+        return super(ProductCategoriesMixin, self).formfield_for_manytomany(
+            db_field, request, **kwargs)
 
 
 class ProductCategoryListFilter(admin.SimpleListFilter):
@@ -59,7 +56,8 @@ class ProductCategoryListFilter(admin.SimpleListFilter):
     parameter_name = 'category'
 
     def lookups(self, request, model_admin):
-        return [(str(category.pk), unicode(category)) for category in modules.category.Category.objects.all().flat_ordered()]
+        return [(str(category.pk), unicode(category)) for category in 
+                modules.category.Category.objects.all().flat_ordered()]
 
     def queryset(self, request, queryset):
         pk = self.value()
@@ -75,7 +73,8 @@ class CategoryParentListFilter(admin.SimpleListFilter):
     parameter_name = 'parent'
 
     def lookups(self, request, model_admin):
-        return [(str(category.pk), unicode(category)) for category in modules.category.Category.objects.all().flat_ordered()]
+        return [(str(category.pk), unicode(category)) for category in
+                modules.category.Category.objects.all().flat_ordered()]
 
     def queryset(self, request, queryset):
         pk = self.value()

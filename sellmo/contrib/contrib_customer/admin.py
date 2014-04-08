@@ -24,15 +24,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from django.contrib import admin
 from sellmo.contrib.admin.reverse import ReverseModelAdmin
 
-#
-
 from sellmo import modules
 from sellmo.config import settings
-
-#
 
 
 class AddressInline(admin.StackedInline):
@@ -49,6 +46,6 @@ class CustomerAdmin(ReverseModelAdmin):
         autocomplete_lookup_fields = {
             'fk': ['user'],
         }
-#
+
 
 admin.site.register(modules.customer.Customer, CustomerAdmin)

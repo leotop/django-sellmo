@@ -24,15 +24,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo import modules
-from sellmo.contrib.contrib_shipping.admin import ShippingMethodParentAdmin, ShippingMethodAdminBase
 
-#
+from sellmo import modules
+from sellmo.contrib.contrib_shipping \
+     .admin import ShippingMethodParentAdmin, ShippingMethodAdminBase
 
 from django.utils.translation import ugettext_lazy as _
 from django.contrib import admin
-
-#
 
 
 class TieredShippingTierInline(admin.TabularInline):
@@ -42,7 +40,6 @@ class TieredShippingTierInline(admin.TabularInline):
 class TieredShippingMethodAdmin(ShippingMethodAdminBase):
     inlines = ShippingMethodAdminBase.inlines + [TieredShippingTierInline]
 
-#
 
 ShippingMethodParentAdmin.child_models += [
     (modules.shipping.TieredShippingMethod, TieredShippingMethodAdmin)]

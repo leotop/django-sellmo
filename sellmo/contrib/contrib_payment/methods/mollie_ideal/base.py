@@ -24,19 +24,14 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo import modules
 from sellmo.api.pricing import Price
 from sellmo.api.checkout import PaymentMethod
 
-#
-
 from sellmo.contrib.contrib_payment.methods.mollie_ideal.process import *
 
-#
-
 from django.utils.translation import ugettext_lazy as _
-
-#
 
 
 class MollieIdealPaymentMethod(PaymentMethod):
@@ -54,12 +49,15 @@ class MollieIdealPaymentMethod(PaymentMethod):
         # Check status
         if payment.is_pending:
             # Did not (yet) receive a response from mollie
-            return MollieIdealPendingStep(order=order, request=request, next_step=next_step)
+            return MollieIdealPendingStep(
+                order=order, request=request, next_step=next_step)
         elif payment.is_completed and not payment.is_success:
             # Transaction has failed
-            return MollieIdealFailureStep(order=order, request=request, next_step=next_step)
+            return MollieIdealFailureStep(
+                order=order, request=request, next_step=next_step)
 
-        return MollieIdealBankSelectStep(order=order, request=request, next_step=next_step)
+        return MollieIdealBankSelectStep(
+            order=order, request=request, next_step=next_step)
 
     def new_payment(self, order):
         return modules.mollie_ideal.MollieIdealPayment()

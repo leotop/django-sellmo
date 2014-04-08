@@ -24,9 +24,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.http import HttpResponse
 
-#
+from django.http import HttpResponse
 
 from sellmo import modules
 from sellmo.config import settings
@@ -35,8 +34,6 @@ from sellmo.core.params import params
 from sellmo.api.pricing import Price
 from sellmo.contrib.contrib_pricing import tasks
 
-
-#
 
 namespace = modules.pricing.namespace
 

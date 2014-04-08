@@ -26,8 +26,4 @@
 
 from django.http import HttpResponse
 
-#
-
 from sellmo.api.decorators import chainable
-
-#

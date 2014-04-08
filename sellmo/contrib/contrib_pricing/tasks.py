@@ -26,11 +26,7 @@
 
 from celery import shared_task
 
-#
-
 from sellmo import modules
-
-#
 
 
 @shared_task

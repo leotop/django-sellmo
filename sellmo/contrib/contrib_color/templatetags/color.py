@@ -26,20 +26,13 @@
 
 from django import template
 
-#
-
 from classytags.core import Tag, Options
 from classytags.arguments import Argument, MultiKeywordArgument
 
-#
-
 from sellmo import modules
 
-#
 
 register = template.Library()
-
-#
 
 
 class ColorsTag(Tag):

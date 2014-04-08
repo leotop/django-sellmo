@@ -24,18 +24,14 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from django import template
 from django.core.urlresolvers import reverse
 
-#
-
 from sellmo import modules
 
-#
 
 register = template.Library()
-
-#
 
 
 @register.inclusion_tag('search/search_form.html', takes_context=True)

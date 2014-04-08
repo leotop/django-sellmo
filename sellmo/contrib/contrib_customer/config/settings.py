@@ -24,17 +24,14 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.conf import settings
 
-#
+from django.conf import settings
 
 from sellmo.contrib.contrib_customer.config import defaults
 
-#
 
 debug = getattr(settings, 'DEBUG', False)
 
-#
 
 PHONE_NUMBER_ENABLED = getattr(
     settings, 'SELLMO_PHONE_NUMBER_ENABLED', defaults.PHONE_NUMBER_ENABLED)
@@ -46,5 +43,3 @@ NAME_PREFIX_REQUIRED = getattr(
     settings, 'SELLMO_NAME_PREFIX_REQUIRED', defaults.NAME_PREFIX_REQUIRED)
 NAME_PREFIX_CHOICES = getattr(
     settings, 'SELLMO_NAME_PREFIX_CHOICES', defaults.NAME_PREFIX_CHOICES)
-
-#

@@ -24,15 +24,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo import modules
 from sellmo.api.pricing import Price
 from sellmo.api.checkout import ShippingMethod
 
-#
-
 from django.utils.translation import ugettext_lazy as _
-
-#
 
 
 class TieredShippingMethod(ShippingMethod):
@@ -68,4 +65,5 @@ class TieredShippingMethod(ShippingMethod):
 
         if self.carrier:
             costs += self.carrier.extra_costs
-        return modules.pricing.get_price(price=Price(costs), shipping_method=self)
+        return modules.pricing.get_price(
+            price=Price(costs), shipping_method=self)

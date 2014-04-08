@@ -24,18 +24,15 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-#
-
 from sellmo import modules
 
-#
 
 group = _("Payments")
 
-#
 
 modules.settings.add_setting('test_mode', models.BooleanField(
     default=True,

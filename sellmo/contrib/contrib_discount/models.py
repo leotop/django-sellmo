@@ -24,24 +24,22 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#
 
 from sellmo import modules
 from sellmo.api.decorators import load
 from sellmo.api.product.models import ProductRelatableManager, ProductRelatableQuerySet
-from sellmo.core.polymorphism import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
+from sellmo.core.polymorphism import (PolymorphicModel,
+                                      PolymorphicManager,
+                                      PolymorphicQuerySet)
 from sellmo.magic import ModelMixin
-
-#
 
 from django.db import models
 from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 
-#
 
-
-@load(action='load_discount_subtypes', after='finalize_discount_Discount')
+@load(action='load_discount_subtypes')
+@load(after='finalize_discount_Discount')
 def load_tax_subtypes():
     pass
 
@@ -66,7 +64,8 @@ def load_model():
 # directly after finalize_product_Product
 
 
-@load(action='finalize_discount_Discount', after='finalize_product_ProductRelatable', directly=True)
+@load(action='finalize_discount_Discount')
+@load(after='finalize_product_ProductRelatable', directly=True)
 def finalize_model():
 
     class DiscountQuerySet(ProductRelatableQuerySet, PolymorphicQuerySet):
@@ -83,14 +82,17 @@ def finalize_model():
 
         @classmethod
         def get_for_product_query(cls, product):
-            return super(Discount, cls).get_for_product_query(product) | Q(products=product)
+            return (
+                super(Discount, cls).get_for_product_query(product)
+                | Q(products=product))
 
         @classmethod
         def get_best_for_product(cls, product, matches):
             better = matches.filter(products=product)
             if better:
                 matches = better
-            return super(Discount, cls).get_best_for_product(product=product, matches=matches)
+            return super(Discount, cls).get_best_for_product(
+                product=product, matches=matches)
 
         class Meta(modules.discount.Discount.Meta):
             app_label = 'discount'

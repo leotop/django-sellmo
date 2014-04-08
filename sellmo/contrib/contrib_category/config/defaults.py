@@ -24,8 +24,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from django.utils.translation import ugettext_lazy as _
 
-#
 
 MAX_EXPIRE_TIME = 3600 * 24  # 1 day

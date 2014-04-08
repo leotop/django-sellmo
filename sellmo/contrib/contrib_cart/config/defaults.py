@@ -24,11 +24,9 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from django.conf import settings as django_settings
 from django.utils.translation import ugettext_lazy as _
 
-#
 
 SINGLE_PURCHASE_MODE = False
-
-#

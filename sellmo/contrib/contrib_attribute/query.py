@@ -24,18 +24,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from functools import wraps
 
-#
+from functools import wraps
 
 from sellmo import modules
 
-#
-
 from django.db import models
 from django.db.models import Q
-
-#
 
 
 class ValueQ(Q):
@@ -62,13 +57,15 @@ class ProductQ(Q):
 
     pks = []
 
-    def __init__(self, attribute=None, value=None, values=None, product_field='product', **kwargs):
+    def __init__(self, attribute=None, value=None, values=None,
+                 product_field='product', **kwargs):
         if not attribute is None:
             if values is None:
                 # Query against all values provided by the manager
                 values = modules.attribute.Value.objects.all()
-            self.pks = values.filter(
-                ValueQ(attribute, value, **kwargs)).values_list(product_field, flat=True).distinct()
+            self.pks = values.filter(ValueQ(attribute, value, **kwargs)) \
+                             .values_list(product_field, flat=True) \
+                             .distinct()
             super(ProductQ, self).__init__(pk__in=self.pks)
         else:
             super(ProductQ, self).__init__()

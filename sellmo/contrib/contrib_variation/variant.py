@@ -24,10 +24,9 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo import modules
 from sellmo.contrib.contrib_variation.utils import is_unique_slug
-
-#
 
 from django.db import models
 from django.db.models.signals import m2m_changed
@@ -36,8 +35,6 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils.encoding import smart_text
 from django.utils.text import capfirst
 
-# Exceptions
-
 
 class ProductUnassignedException(Exception):
     pass
@@ -45,8 +42,6 @@ class ProductUnassignedException(Exception):
 
 class DuplicateSlugException(Exception):
     pass
-
-#
 
 
 def get_differs_field_name(name):
@@ -65,8 +60,11 @@ class VariantMixin(object):
             descriptor = field.model.__dict__.get(field.name, None)
             setattr(cls, field.name, VariantFieldDescriptor(
                 field, descriptor=descriptor))
-            cls.add_to_class(get_differs_field_name(field.name), models.BooleanField(
-                editable=False, auto_created=True, default=False))
+            cls.add_to_class(
+                get_differs_field_name(field.name),
+                models.BooleanField(
+                    editable=False, auto_created=True, default=False))
+        
         for field, reverse in cls.get_m2m_fields():
             modules.variation.mirror_m2m_field(field, reverse)
 
@@ -83,8 +81,11 @@ class VariantMixin(object):
     @classmethod
     def get_m2m_fields(cls):
         fields = [(field, False) for field in cls._meta.many_to_many]
-        fields += [(m2m.field, True)
-                   for m2m, model in cls._meta.get_all_related_m2m_objects_with_model()]
+        fields += [
+            (m2m.field, True)
+            for m2m, model in 
+            cls._meta.get_all_related_m2m_objects_with_model()]
+        
         for field, reverse in fields:
             if not reverse or not field.rel.related_name.endswith('+'):
                 yield field, reverse

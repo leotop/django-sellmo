@@ -24,14 +24,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-#
-
 from sellmo import modules
 
-#
 
 modules.settings.add_setting('cash_payment_name', models.CharField(
     max_length=80,

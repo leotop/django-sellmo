@@ -24,6 +24,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable, link
 from sellmo.contrib.contrib_attribute.models import Attribute, Value
@@ -31,8 +32,6 @@ from sellmo.contrib.contrib_attribute.query import ProductQ
 
 from django.http import Http404
 from django.utils.translation import ugettext_lazy as _
-
-#
 
 
 class AttributeModule(Module):
@@ -56,7 +55,8 @@ class AttributeModule(Module):
         return attributes
 
     @chainable()
-    def filter(self, chain, request, products, attr, value, attribute=None, operator=None, **kwargs):
+    def filter(self, chain, request, products, attr, value, attribute=None,
+               operator=None, **kwargs):
         if not attribute:
             try:
                 attribute = modules.attribute.Attribute.objects.get(key=attr)
@@ -77,7 +77,8 @@ class AttributeModule(Module):
             return products.filter(q)
 
         if chain:
-            out = chain.execute(request=request, products=products, attr=attr,
-                                value=value, attribute=attribute, operator=operator, **kwargs)
+            out = chain.execute(
+                request=request, products=products, attr=attr, value=value, 
+                attribute=attribute, operator=operator, **kwargs)
             products = out.get('products', products)
         return products

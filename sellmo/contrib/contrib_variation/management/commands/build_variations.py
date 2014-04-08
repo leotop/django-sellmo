@@ -24,20 +24,19 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from django.core.management.base import BaseCommand, CommandError
 
-#
-
 from sellmo import modules
-
-#
 
 
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
         options = []
-        for product in modules.product.Product.objects.all().variants(exclude=True):
+        for product in modules.product.Product.objects.all() \
+                              .variants(exclude=True):
             self.stdout.write(
-                "Building variations for product '{0}'.".format(product.slug))
+                "Building variations for product '{0}'."
+                .format(product.slug))
             modules.variation.Variation.objects.build(product)

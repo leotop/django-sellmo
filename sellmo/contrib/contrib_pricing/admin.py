@@ -26,12 +26,8 @@
 
 from sellmo import modules
 
-#
-
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
-
-#
 
 
 class PriceIndexHandleAdmin(admin.ModelAdmin):
@@ -43,6 +39,7 @@ class PriceIndexHandleAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return False
+
 
 admin.site.register(
     modules.price_indexing.PriceIndexHandle, PriceIndexHandleAdmin)

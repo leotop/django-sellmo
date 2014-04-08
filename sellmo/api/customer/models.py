@@ -28,46 +28,40 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils.translation import ugettext_lazy as _
 
-#
-
 from sellmo import modules
 from sellmo.config import settings
 from sellmo.utils.cloning import Cloneable
 from sellmo.api.decorators import load
 
-#
 
-#
-# Customer model
-#
-
-
-@load(before='finalize_customer_Customer', after='finalize_customer_Address')
+@load(before='finalize_customer_Customer')
+@load(after='finalize_customer_Address')
 def load_model():
     for type in settings.ADDRESS_TYPES:
         name = '{0}_address'.format(type)
-        modules.customer.Customer.add_to_class(name,
-                                               models.ForeignKey(
-                                                   modules.customer.Address,
-                                                   related_name='+',
-                                               )
-                                               )
+        modules.customer.Customer.add_to_class(
+            name,
+            models.ForeignKey(
+                modules.customer.Address,
+                related_name='+',
+            )
+        )
 
 
-@load(after='finalize_customer_Addressee', before='finalize_customer_Customer')
+@load(after='finalize_customer_Addressee')
+@load(before='finalize_customer_Customer')
 def load_model():
     class Customer(modules.customer.Customer, modules.customer.Addressee):
-
         class Meta(modules.customer.Customer.Meta):
             abstract = True
 
     modules.customer.Customer = Customer
 
 
-@load(after='finalize_customer_Contactable', before='finalize_customer_Customer')
+@load(after='finalize_customer_Contactable')
+@load(before='finalize_customer_Customer')
 def load_model():
     class Customer(modules.customer.Customer, modules.customer.Contactable):
-
         class Meta(modules.customer.Customer.Meta):
             abstract = True
 
@@ -77,7 +71,6 @@ def load_model():
 @load(action='finalize_customer_Customer')
 def finalize_model():
     class Customer(modules.customer.Customer):
-
         class Meta(modules.customer.Customer.Meta):
             app_label = 'customer'
             verbose_name = _("customer")
@@ -114,12 +107,9 @@ class Customer(models.Model, Cloneable):
         ordering = ['last_name', 'first_name']
         abstract = True
 
-#
-# Address model
-#
 
-
-@load(after='finalize_customer_Addressee', before='finalize_customer_Address')
+@load(after='finalize_customer_Addressee')
+@load(before='finalize_customer_Address')
 def load_model():
     class Address(modules.customer.Address, modules.customer.Addressee):
 
@@ -151,10 +141,6 @@ class Address(models.Model, Cloneable):
         ordering = ['last_name', 'first_name']
         abstract = True
 
-#
-# Contactable model
-#
-
 
 @load(action='finalize_customer_Contactable')
 def finalize_model():
@@ -180,10 +166,6 @@ class Contactable(models.Model, Cloneable):
 
     class Meta:
         abstract = True
-
-#
-# Addressee model
-#
 
 
 @load(action='finalize_customer_Addressee')

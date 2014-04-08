@@ -27,29 +27,21 @@
 import re
 import inspect
 
-#
-
 from sellmo import modules
-
-#
 
 from django.db import models
 from django.db.models.query import QuerySet
 from django.db.models import Q
 from django.utils import six
 
-#
 
 __all__ = [
     'PriceIndex',
     'PrefetchedPriceIndex',
 ]
 
-#
 
 camelize = re.compile(r'(?!^)_([a-zA-Z])')
-
-#
 
 
 class IndexedQuerySet(QuerySet):
@@ -92,7 +84,8 @@ class IndexedQuerySet(QuerySet):
         qargs = {
             '{0}__in'.format(self._relation): self
         }
-        return self._indexes.filter(**qargs).select_related(self._relation).order_by(*self._get_order())
+        return self._indexes.filter(**qargs).select_related(self._relation) \
+                            .order_by(*self._get_order())
 
     def iterator(self):
         out = []
@@ -230,19 +223,26 @@ class PriceIndex(object):
                 fargs[field_name] = None
         return fargs, complete
 
-    def add_kwarg(self, name, field=None, field_name=None, required=True, transform=None, default=None, model=None):
+    def add_kwarg(self, name, field=None, field_name=None, required=True, 
+                  transform=None, default=None, model=None):
         if name in ('relation', 'nullable'):
-            raise Exception("Resereved kwarg name '{0}".format(name))
+            raise Exception(
+                "Resereved kwarg name '{0}"
+                .format(name))
         if name in self.kwargs:
             raise Exception(
-                "Index '{0}' already has a kwarg '{1}'".format(self, name))
+                "Index '{0}' already has a kwarg '{1}'"
+                .format(self, name))
         if not field_name:
             field_name = name
         if self._model is not None:
-            raise Exception("Index '{0}' is already build.".format(self))
+            raise Exception(
+                "Index '{0}' is already build."
+                .format(self))
         if not required and field.null is False:
             raise Exception(
-                "Index '{0}' field '{1}' must be nullable.".format(self, field_name))
+                "Index '{0}' field '{1}' must be nullable."
+                .format(self, field_name))
 
         self.kwargs[name] = {
             'field_name': field_name,
@@ -305,15 +305,21 @@ class PriceIndex(object):
         for key, value in kwargs.iteritems():
             if not self.is_kwarg(key):
                 raise ValueError(
-                    "Index '{0}' update kwarg '{1}' is not valid.".format(self, key))
+                    "Index '{0}' update kwarg '{1}' "
+                    "is not valid."
+                    .format(self, key))
             if not isinstance(value, (list, tuple, QuerySet)):
                 raise TypeError(
-                    "Index '{0}' update kwarg '{1}' must be a list or QuerySet.".format(self, key))
+                    "Index '{0}' update kwarg '{1}' "
+                    "must be a list or QuerySet."
+                    .format(self, key))
             if self.kwargs[key].get('model', None) is not None:
                 model = self.kwargs[key]['model']
                 if isinstance(value, QuerySet) and not value.model is model:
                     raise ValueError(
-                        "Index '{0}' update kwarg '{1}' is not a valid QuerySet.".format(self, key))
+                        "Index '{0}' update kwarg '{1}' "
+                        "is not a valid QuerySet."
+                        .format(self, key))
                 elif not isinstance(value, QuerySet):
                     # Yes this is safe
                     kwargs[key] = model.objects.filter(

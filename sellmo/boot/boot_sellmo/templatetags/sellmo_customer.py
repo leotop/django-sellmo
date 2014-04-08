@@ -24,24 +24,18 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from django import template
 from django.core.urlresolvers import reverse
-
-#
 
 from classytags.core import Tag, Options
 from classytags.arguments import Argument, MultiKeywordArgument, Flag
 
-#
-
 from sellmo import modules
 from sellmo.config import settings
 
-#
 
 register = template.Library()
-
-#
 
 
 class CustomerTag(Tag):
@@ -60,7 +54,8 @@ class CustomerTag(Tag):
             if not settings.AUTH_ENABLED:
                 raise Exception("Customer authentication not enabled.")
             request = context['request']
-            if request.user.is_authenticated() and hasattr(request.user, 'customer'):
+            if (request.user.is_authenticated() and 
+                    hasattr(request.user, 'customer')):
                 customer = request.user.customer
         else:
             customer = modules.customer.get_customer(

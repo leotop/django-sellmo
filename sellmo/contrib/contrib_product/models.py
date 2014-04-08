@@ -24,18 +24,16 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-
-#
 
 from sellmo import modules
 from sellmo.api.decorators import load
 
-#
 
-
-@load(after='load_product_Product', before='finalize_product_Product')
+@load(after='load_product_Product')
+@load(before='finalize_product_Product')
 def load_model():
 
     class Product(modules.product.Product):
@@ -52,7 +50,8 @@ def load_model():
             default=False,
             verbose_name=_("featured"),
             help_text=_(
-                "Marks this product as featured allowing additional showcasing across the site."
+                "Marks this product as featured allowing "
+                "additional showcasing across the site."
             )
         )
 

@@ -24,8 +24,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#
-
 
 class ValueComparator(object):
 
@@ -38,7 +36,9 @@ class ValueComparator(object):
         return a.value == b.value and a.attribute.key == b.attribute.key
 
     def __hash__(self):
-        return hash(u"attr_{0}_value_{1}".format(self.value.attribute.key, self.value.value))
+        return hash(
+            u"attr_{0}_value_{1}"
+            .format(self.value.attribute.key, self.value.value))
 
 
 class ValueSet(set):
@@ -50,8 +50,6 @@ class ValueSet(set):
     def extract(self):
         for comparator in self:
             yield comparator.value
-
-#
 
 
 def _ordered(func):

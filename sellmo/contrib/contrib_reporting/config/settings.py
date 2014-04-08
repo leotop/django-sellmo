@@ -26,17 +26,12 @@
 
 from django.conf import settings
 
-#
-
 from sellmo.contrib.contrib_reporting.config import defaults
 
-#
 
 debug = getattr(settings, 'DEBUG', False)
 
-#
 
 REPORTING_PARAMS = getattr(
     settings, 'SELLMO_REPORTING_PARAMS', defaults.REPORTING_PARAMS)
 
-#

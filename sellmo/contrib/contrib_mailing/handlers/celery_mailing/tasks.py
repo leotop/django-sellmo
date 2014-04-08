@@ -24,15 +24,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from celery import shared_task, Task
 
-#
+from celery import shared_task, Task
 
 from sellmo.contrib.contrib_mailing.config import settings
 from sellmo.core.mailing.handlers import MailHandlerBase
 from sellmo.core.mailing import mailer
-
-#
 
 
 @shared_task

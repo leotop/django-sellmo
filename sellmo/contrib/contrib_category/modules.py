@@ -24,16 +24,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from django.http import Http404
 
-
-#
 
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable
 from sellmo.contrib.contrib_category.models import Category
-
-#
 
 
 class CategoryModule(Module):
@@ -72,7 +69,8 @@ class CategoryModule(Module):
             raise Http404
 
     @view(r'^(?P<full_slug>[-a-zA-Z0-9_/]+)/$')
-    def category(self, chain, request, full_slug, category=None, context=None, **kwargs):
+    def category(self, chain, request, full_slug, category=None, context=None,
+                 **kwargs):
         if context is None:
             context = {}
 
@@ -101,7 +99,9 @@ class CategoryModule(Module):
             category = categories[0]
 
         if chain:
-            return chain.execute(request, category=category, full_slug=full_slug, context=context, **kwargs)
+            return chain.execute(
+                request, category=category, full_slug=full_slug,
+                context=context, **kwargs)
         else:
             # We don't render anything
             raise Http404

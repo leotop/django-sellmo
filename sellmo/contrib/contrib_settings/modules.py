@@ -24,11 +24,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from django.core.cache import cache
 from django.contrib.sites.models import Site
 from django.db.models.signals import pre_save, pre_delete
-
-#
 
 from sellmo import modules, Module
 from sellmo.core.local import get_context
@@ -36,8 +35,6 @@ from sellmo.magic import ModelMixin
 from sellmo.api.decorators import view, chainable
 from sellmo.contrib.contrib_settings.models import SiteSettings
 from sellmo.contrib.contrib_settings.signals import setting_changed
-
-#
 
 
 class SettingsModule(Module):
@@ -87,7 +84,8 @@ class SettingsModule(Module):
             new_val = getattr(new, key, None) if new is not None else None
             if old_val != new_val:
                 setting_changed.send(
-                    sender=self, setting=key, old=old_val, new=new_val, site=site)
+                    sender=self, setting=key, old=old_val,
+                    new=new_val, site=site)
 
     def on_cache_invalidated(self, instance):
         cache.delete('site_settings_{0}'.format(instance.site.pk))
@@ -107,7 +105,9 @@ class SettingsModule(Module):
                     settings = self.SiteSettings.objects.get(site=site)
                 except self.SiteSettings.DoesNotExist:
                     raise Exception(
-                        "Could not retrieve settings, no settings found for site '{0}'".format(site))
+                        "Could not retrieve settings, "
+                        "no settings found for site '{0}'"
+                        .format(site))
                 cache.set(key, settings)
             context['site_settings'] = settings
         return settings

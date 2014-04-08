@@ -24,14 +24,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.http import HttpResponse, Http404
 
-#
+from django.http import HttpResponse, Http404
 
 from sellmo import modules
 from sellmo.api.decorators import link
 
-#
 
 namespace = modules.product.namespace
 

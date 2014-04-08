@@ -24,24 +24,18 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from django import template
 from django.core.urlresolvers import reverse
-
-#
 
 from classytags.core import Tag, Options
 from classytags.arguments import Argument, MultiKeywordArgument
 
-#
-
 from sellmo import modules
 from sellmo.api.http.query import QueryString
 
-#
 
 register = template.Library()
-
-#
 
 
 class CartTag(Tag):

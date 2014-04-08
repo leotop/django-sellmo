@@ -27,12 +27,8 @@
 from sellmo import modules
 from sellmo.api.decorators import load
 
-#
-
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-
-#
 
 
 @load(before='finalize_customer_Address')

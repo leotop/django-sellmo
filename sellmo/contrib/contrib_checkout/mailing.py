@@ -24,17 +24,14 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo import modules
 from sellmo.api.mailing import MailWriter
 from sellmo.core.reporting import reporter
 from sellmo.core.mailing import mailer
 from sellmo.contrib.contrib_checkout.config import settings
 
-#
-
 from django.utils.translation import ugettext_lazy as _
-
-#
 
 
 def send_order_mails(order, event_signature=None):
@@ -48,7 +45,8 @@ def send_order_mails(order, event_signature=None):
         for event in config['send_events']:
             for key, value in event.iteritems():
                 # Make sure signature is a match
-                if not key in event_signature or not event_signature[key] == value:
+                if (not key in event_signature or
+                        not event_signature[key] == value):
                     break
             else:
                 # Did have a match
@@ -85,7 +83,8 @@ class OrderConfirmationWriter(MailWriter):
         return _("Order confirmation")
 
     def get_body(self, format):
-        return modules.checkout_mailing.render_order_confirmation(format=format, order=self.order)
+        return modules.checkout_mailing.render_order_confirmation(
+            format=format, order=self.order)
 
     def get_to(self):
         return self.order.email
@@ -110,7 +109,8 @@ class OrderNotificationWriter(MailWriter):
         return _("Order notification")
 
     def get_body(self, format):
-        return modules.checkout_mailing.render_order_notification(format=format, order=self.order)
+        return modules.checkout_mailing.render_order_notification(
+            format=format, order=self.order)
 
     def get_to(self):
         return settings.NOTIFICATION_MAIL_TO
@@ -136,7 +136,8 @@ class ShippingNotificationWriter(MailWriter):
         return _("Shipping notification")
 
     def get_body(self, format):
-        return modules.checkout_mailing.render_shipping_notification(format=format, order=self.order)
+        return modules.checkout_mailing.render_shipping_notification(
+            format=format, order=self.order)
 
     def get_to(self):
         return self.order.email

@@ -26,7 +26,6 @@
 
 from django.utils.translation import ugettext_lazy as _
 
-#
 
 SEND_MAIL_RETRY_ENABLED = True
 SEND_MAIL_RETRY_DELAY = 15 * 60  # 15 minutes

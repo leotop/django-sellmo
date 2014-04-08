@@ -26,18 +26,14 @@
 
 from django.utils.translation import ugettext_lazy as _
 
-#
-
 from sellmo import modules
 from sellmo.api.decorators import link
 from sellmo.api.pricing import Price
-from sellmo.contrib.contrib_payment.methods.bank_transfer import BankTransferPaymentMethod
+from sellmo.contrib.contrib_payment \
+     .methods.bank_transfer import BankTransferPaymentMethod
 
-#
 
 namespace = modules.checkout.namespace
-
-#
 
 
 @link()

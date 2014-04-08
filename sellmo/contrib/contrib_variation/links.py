@@ -24,28 +24,24 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#
+from django.http import Http404
 
 from sellmo import modules
 from sellmo.api.decorators import link
 from sellmo.contrib.contrib_attribute.query import ProductQ
 
-#
-
 from django import forms
 from django.forms.formsets import formset_factory
 from django.contrib.contenttypes.models import ContentType
-
 
 from sellmo import modules
 from sellmo.api.forms import RedirectableFormSet
 from sellmo.api.pricing import Price
 
-#
-
 
 @link(namespace=modules.attribute.namespace, name='filter', capture=True)
-def capture_filter(request, products, attr, value, attribute=None, operator=None, **kwargs):
+def capture_filter(request, products, attr, value, attribute=None,
+                   operator=None, **kwargs):
     if not attribute:
         try:
             attribute = modules.attribute.Attribute.objects.get(key=attr)
@@ -60,7 +56,8 @@ def capture_filter(request, products, attr, value, attribute=None, operator=None
         yield override_filter
 
 
-def override_filter(module, chain, request, products, attr, value, attribute, operator=None, **kwargs):
+def override_filter(module, chain, request, products, attr, value, attribute,
+                    operator=None, **kwargs):
     try:
         value = attribute.parse(value)
     except ValueError:
@@ -73,8 +70,8 @@ def override_filter(module, chain, request, products, attr, value, attribute, op
             qargs = {
                 operator: value
             }
-            q = ProductQ(attribute, **qargs) | ProductQ(attribute,
-                                                        product_field='base_product' ** qargs)
+            q = (ProductQ(attribute, **qargs) |
+                 ProductQ(attribute, product_field='base_product' ** qargs))
         return products.filter(q)
     return products
 
@@ -144,7 +141,8 @@ def get_purchase_args(form, product, args, **kwargs):
 
 
 @link(namespace=modules.cart.namespace)
-def get_add_to_cart_formset(formset, cls, product, variations=None, initial=None, data=None, **kwargs):
+def get_add_to_cart_formset(formset, cls, product, variations=None,
+                            initial=None, data=None, **kwargs):
 
     if not variations:
         variations = product.variations
@@ -160,9 +158,11 @@ def get_add_to_cart_formset(formset, cls, product, variations=None, initial=None
     }
 
     # Add variation field as either a choice or as a hidden integer
-    if not modules.variation.batch_buy_enabled and variations and len(variations) > 1:
+    if (not modules.variation.batch_buy_enabled 
+            and variations and len(variations) > 1):
         dict['variation'] = forms.ChoiceField(
-            choices=[(el.id, modules.variation.get_variation_choice(variation=el))
+            choices=[(el.id,
+                      modules.variation.get_variation_choice(variation=el))
                      for el in variations]
         )
     else:
@@ -204,7 +204,8 @@ def get_add_to_cart_formset(formset, cls, product, variations=None, initial=None
 
 
 @link(namespace=modules.cart.namespace, name='add_to_cart', capture=True)
-def capture_add_to_cart(request, product_slug, product=None, formset=None, **kwargs):
+def capture_add_to_cart(request, product_slug, product=None, formset=None, 
+                        **kwargs):
 
     if formset is None:
         if request.method == 'POST':
@@ -217,8 +218,8 @@ def capture_add_to_cart(request, product_slug, product=None, formset=None, **kwa
             # Resolve product
             if product is None:
                 try:
-                    product = modules.product.Product.objects.polymorphic().get(
-                        slug=product_slug)
+                    product = modules.product.Product.objects.polymorphic() \
+                                                     .get(slug=product_slug)
                 except modules.product.Product.DoesNotExist:
                     raise Http404
 

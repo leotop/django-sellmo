@@ -24,6 +24,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from django import forms
 from django.http import HttpResponse, Http404
 from django.core.urlresolvers import reverse
@@ -31,20 +32,17 @@ from django.shortcuts import redirect, render_to_response
 from django.contrib.sites.models import Site
 from django.utils.module_loading import import_by_path
 
-#
-
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable
-from sellmo.contrib.contrib_payment.methods.mollie_ideal.models import MollieIdealPayment
-from sellmo.contrib.contrib_payment.methods.mollie_ideal.forms import BankSelectForm
-from sellmo.contrib.contrib_payment.methods.mollie_ideal.config import settings
-
-#
+from sellmo.contrib.contrib_payment \
+     .methods.mollie_ideal.models import MollieIdealPayment
+from sellmo.contrib.contrib_payment \
+     .methods.mollie_ideal.forms import BankSelectForm
+from sellmo.contrib.contrib_payment \
+     .methods.mollie_ideal.config import settings
 
 import requests
 from lxml import etree, objectify
-
-#
 
 
 class MollieIdealModule(Module):
@@ -178,8 +176,10 @@ class MollieIdealModule(Module):
             'amount': int(order.total.amount * 100),
             'bank_id': payment.bank_id,
             'description': unicode(order),
-            'reporturl': request.build_absolute_uri(reverse('mollie_ideal.report')),
-            'returnurl': request.build_absolute_uri(reverse('mollie_ideal.back')),
+            'reporturl': request.build_absolute_uri(
+                reverse('mollie_ideal.report')),
+            'returnurl': request.build_absolute_uri(
+                reverse('mollie_ideal.back')),
         }
 
         if settings.test_mode:
@@ -217,7 +217,8 @@ class MollieIdealModule(Module):
             return redirect(url)
 
     @chainable()
-    def get_bank_select_form(self, chain, prefix=None, data=None, form=None, bank=None, banks=None, **kwargs):
+    def get_bank_select_form(self, chain, prefix=None, data=None, form=None, 
+                             bank=None, banks=None, **kwargs):
         if banks is None:
             banks = self.get_banks()
         if form is None:
@@ -256,7 +257,8 @@ class MollieIdealModule(Module):
         return banks
 
     @chainable()
-    def process_bank_select(self, chain, request, payment, prefix=None, data=None, bank=None, **kwargs):
+    def process_bank_select(self, chain, request, payment, prefix=None, 
+                            data=None, bank=None, **kwargs):
         banks = self.get_banks()
         processed = False
         initial = None
@@ -277,15 +279,13 @@ class MollieIdealModule(Module):
 
         if chain:
             out = chain.execute(
-                request=request,
-                payment=payment,
-                prefix=prefix,
-                data=data,
-                bank=bank,
-                form=form,
-                processed=processed,
+                request=request, payment=payment, prefix=prefix,
+                data=data, bank=bank, form=form, processed=processed,
                 **kwargs
             )
-            bank, form, processed = out.get('bank', bank), out.get(
-                'form', form), out.get('processed', processed)
+            bank, form, processed = (
+                out.get('bank', bank),
+                out.get('form', form),
+                out.get('processed', processed)
+            )
         return bank, form, processed

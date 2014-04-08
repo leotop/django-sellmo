@@ -24,25 +24,23 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 import logging
 from datetime import datetime
 
-#
-
 from sellmo import modules, Module
 from sellmo.api.decorators import chainable
-from sellmo.contrib.contrib_pricing.models import QtyPriceBase, QtyPrice, QtyPriceRatio, ProductQtyPrice, PriceIndexHandle
-
-#
+from sellmo.contrib.contrib_pricing.models import (QtyPriceBase,
+                                                   QtyPrice,
+                                                   QtyPriceRatio,
+                                                   ProductQtyPrice,
+                                                   PriceIndexHandle)
 
 from django.db import transaction
 from django.db.models.query import QuerySet
 
-#
 
 logger = logging.getLogger('sellmo')
-
-#
 
 
 class QtyPricingModule(Module):
@@ -83,14 +81,16 @@ class PriceIndexingModule(Module):
     def _get_handle(self, index):
         if self.PriceIndexHandle.objects.filter(index=index).count() == 0:
             self.PriceIndexHandle.objects.create(index=index)
-        return self.PriceIndexHandle.objects.select_for_update().get(index=index)
+        return self.PriceIndexHandle.objects.select_for_update() \
+                                            .get(index=index)
 
     def _read_updates(self, handle):
         if handle.updates:
             return handle.updates
         else:
             return {
-                'invalidations': modules.pricing.get_index(handle.index).model.objects.none(),
+                'invalidations': modules.pricing.get_index(handle.index) \
+                                                .model.objects.none(),
                 'kwargs': {},
             }
 
@@ -102,10 +102,13 @@ class PriceIndexingModule(Module):
         if isinstance(existing, QuerySet) and isinstance(new, QuerySet):
             # Make sure we are dealing with the same model
             if existing.model != new.model:
-                raise Exception("Cannot merge query sets '{0}'.".format(key))
+                raise Exception(
+                    "Cannot merge query sets '{0}'."
+                    .format(key))
             merged = [pk for pk in existing.values_list('pk', flat=True)]
             merged.extend(
-                [pk for pk in new.values_list('pk', flat=True) if pk not in merged])
+                [pk for pk in new.values_list('pk', flat=True)
+                 if pk not in merged])
             merged = existing.model.objects.filter(pk__in=merged)
         else:
             merged = list(existing)
@@ -122,7 +125,8 @@ class PriceIndexingModule(Module):
             existing = updates['invalidations']
             merged = [pk for pk in existing.values_list('pk', flat=True)]
             merged.extend(
-                [pk for pk in invalidations.values_list('pk', flat=True) if pk not in merged])
+                [pk for pk in invalidations.values_list('pk', flat=True)
+                 if pk not in merged])
             updates['invalidations'] = modules.pricing.get_index(
                 index).model.objects.filter(pk__in=merged)
 
@@ -176,17 +180,20 @@ class PriceIndexingModule(Module):
                 invalidations.invalidate()
 
                 logger.info(
-                    "Creating {1} indexes for index '{0}'".format(identifier, len(combinations)))
+                    "Creating {1} indexes for index '{0}'"
+                    .format(identifier, len(combinations)))
                 for combination in combinations:
                     price = modules.pricing.get_price(**combination)
                     signature = ", ".join(str(value)
                                           for value in combination.values())
                     if index.index(price, **combination):
-                        logger.info("Index {1}={2} created for index '{0}'".format(
-                            identifier, signature, price.amount))
+                        logger.info(
+                        "Index {1}={2} created for index '{0}'"
+                        .format(identifier, signature, price.amount))
                     else:
-                        logger.info("Index {1}={2} omitted for index '{0}'".format(
-                            identifier, signature, price.amount))
+                        logger.info(
+                            "Index {1}={2} omitted for index '{0}'"
+                            .format(identifier, signature, price.amount))
 
             with transaction.atomic():
                 handle = self._get_handle(identifier)

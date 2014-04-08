@@ -24,20 +24,19 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo import modules
 from sellmo.api.decorators import load
 from sellmo.api.pricing import Price
-from sellmo.contrib.contrib_shipping.methods.flat_shipping import FlatShippingMethod as _FlatShippingMethod
-
-#
+from sellmo.contrib.contrib_shipping \
+     .methods.flat_shipping import FlatShippingMethod as _FlatShippingMethod
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-#
 
-
-@load(action='load_shipping_subtypes', after='finalize_shipping_ShippingMethod')
+@load(action='load_shipping_subtypes')
+@load(after='finalize_shipping_ShippingMethod')
 def load_subtypes():
 
     class FlatShippingMethod(modules.shipping.ShippingMethod):
@@ -52,7 +51,8 @@ def load_subtypes():
             if carrier:
                 name = _(u"{0} by {1}").format(name, carrier.name)
                 identifier = '{0}_{1}'.format(identifier, carrier.identifier)
-            return _FlatShippingMethod(identifier, name, method=self, carrier=carrier)
+            return _FlatShippingMethod(
+                identifier, name, method=self, carrier=carrier)
 
         class Meta(modules.shipping.ShippingMethod.Meta):
             app_label = 'shipping'

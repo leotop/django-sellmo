@@ -37,7 +37,8 @@ from sellmo.api.pricing import Price
 from sellmo.utils.tracking import trackable
 
 
-@load(after='finalize_cart_Cart', before='finalize_store_Purchase')
+@load(after='finalize_cart_Cart')
+@load(before='finalize_store_Purchase')
 def load_model():
     class Purchase(modules.store.Purchase):
         cart = models.ForeignKey(

@@ -24,9 +24,9 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 import django.dispatch
 
-#
 
 variations_deprecating = django.dispatch.Signal()
 variations_invalidated = django.dispatch.Signal()

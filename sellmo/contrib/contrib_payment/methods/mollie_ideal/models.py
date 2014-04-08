@@ -24,22 +24,23 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo import modules
 from sellmo.api.decorators import load
-from sellmo.contrib.contrib_payment.methods.mollie_ideal import MollieIdealPaymentMethod
-
-#
+from sellmo.contrib.contrib_payment \
+     .methods.mollie_ideal import MollieIdealPaymentMethod
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-#
 
-
-@load(action='finalize_mollie_ideal_Payment', after='finalize_checkout_Payment')
+@load(action='finalize_mollie_ideal_Payment')
+@load(after='finalize_checkout_Payment')
 def finalize_model():
 
-    class MollieIdealPayment(modules.checkout.Payment, modules.mollie_ideal.MollieIdealPayment):
+    class MollieIdealPayment(
+            modules.checkout.Payment,
+            modules.mollie_ideal.MollieIdealPayment):
 
         def get_method(self):
             return MollieIdealPaymentMethod()

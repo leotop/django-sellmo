@@ -27,13 +27,11 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-#
-
 from sellmo import modules
 
-#
 
 group = _("Mollie iDeal")
+
 
 modules.settings.add_setting('mollie_ideal_name', models.CharField(
     max_length=80,

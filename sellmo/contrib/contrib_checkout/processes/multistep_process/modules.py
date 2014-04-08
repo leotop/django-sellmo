@@ -28,12 +28,8 @@
 from django.http import Http404
 from django.shortcuts import redirect
 
-#
-
 from sellmo import modules, Module
 from sellmo.api.decorators import chainable, view
-
-#
 
 
 class MultiStepCheckoutModule(Module):

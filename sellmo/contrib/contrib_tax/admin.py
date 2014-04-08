@@ -24,22 +24,17 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo import modules
 from sellmo.contrib.polymorphism.admin import PolymorphicParentModelAdmin
-
-#
 
 from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy as _
 
-# Base admin for every payment method subtype
-
 
 class TaxAdminBase(admin.ModelAdmin):
     pass
-
-# Admin for payment method
 
 
 class TaxParentAdmin(PolymorphicParentModelAdmin):

@@ -24,16 +24,14 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo import modules
 from sellmo.api.decorators import load
-from sellmo.contrib.contrib_payment.methods.cash_payment import CashPaymentMethod
-
-#
+from sellmo.contrib.contrib_payment \
+     .methods.cash_payment import CashPaymentMethod
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-
-#
 
 
 @load(before='finalize_shipping_ShippingMethod')
@@ -52,10 +50,13 @@ def load_model():
     modules.shipping.ShippingMethod = ShippingMethod
 
 
-@load(action='finalize_cash_payment_Payment', after='finalize_checkout_Payment')
+@load(action='finalize_cash_payment_Payment')
+@load(after='finalize_checkout_Payment')
 def finalize_model():
 
-    class CashPayment(modules.checkout.Payment, modules.cash_payment.CashPayment):
+    class CashPayment(
+            modules.checkout.Payment,
+            modules.cash_payment.CashPayment):
 
         instant = False
 

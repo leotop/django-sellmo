@@ -24,13 +24,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from django.conf import settings as django_settings
 from django.utils.translation import ugettext_lazy as _
 
 
-#
-
 CURRENCY = ('eur', _(u"euro"), _(u"\u20ac {amount:\u00a0>{align}.2f}"))
+
 
 ADD_TO_CART_FORM = 'sellmo.registry.cart.AddToCartForm'
 EDIT_PURCHASE_FORM = 'sellmo.registry.cart.EditPurchaseForm'
@@ -49,12 +49,14 @@ def method_choice_format(method, costs, **kwargs):
 PAYMENT_METHOD_CHOICE_FORMAT = method_choice_format
 SHIPPING_METHOD_CHOICE_FORMAT = method_choice_format
 
+
 CUSTOMER_REQUIRED = False
 EMAIL_REQUIRED = True
 BUSINESSES_ONLY = False
 BUSINESSES_ALLOWED = True
 ADDRESS_TYPES = ['shipping', 'billing']
 AUTH_ENABLED = True
+
 
 ORDER_STATUSES = {
     'new': (_("New"), {
@@ -100,26 +102,20 @@ ORDER_STATUSES = {
 }
 
 
-#
-
 REDIRECTION_SESSION_PREFIX = '_sellmo_redirection'
 REDIRECTION_DEBUG = False
 
-#
 
 CACHING_PREFIX = '_sellmo'
 CACHING_ENABLED = True
 
-#
 
 CELERY_ENABLED = False
 
-#
 
 MAIL_HANDLER = 'sellmo.core.mailing.handlers.DefaultMailHandler'
 MAIL_FROM = django_settings.DEFAULT_FROM_EMAIL
 
-#
 
 REPORT_GENERATORS = []
 REPORT_FORMAT = 'pdf'

@@ -24,14 +24,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable, link
 from sellmo.contrib.contrib_color.models import Color, MultiColor, ColorMapping
 
 from django.http import Http404
 from django.utils.translation import ugettext_lazy as _
-
-#
 
 
 class ColorModule(Module):
@@ -45,7 +44,8 @@ class ColorModule(Module):
         pass
 
     @chainable()
-    def get_colors(self, chain, product=None, attribute=None, colors=None, **kwargs):
+    def get_colors(self, chain, product=None, attribute=None, colors=None,
+                   **kwargs):
         if colors is None:
             if product:
                 mappings = self.ColorMapping.objects.for_product(product)

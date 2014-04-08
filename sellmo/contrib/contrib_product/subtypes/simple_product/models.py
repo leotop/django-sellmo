@@ -24,18 +24,16 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo import modules
 from sellmo.api.decorators import load
-
-#
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-#
 
-
-@load(action='load_product_subtypes', after='finalize_product_Product')
+@load(action='load_product_subtypes')
+@load(after='finalize_product_Product')
 def load_product_subtypes():
     class SimpleProduct(modules.product.Product):
 

@@ -24,22 +24,23 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo import modules
 from sellmo.api.decorators import load
-from sellmo.contrib.contrib_payment.methods.bank_transfer import BankTransferPaymentMethod
-
-#
+from sellmo.contrib.contrib_payment \
+     .methods.bank_transfer import BankTransferPaymentMethod
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-#
 
-
-@load(action='finalize_bank_transfer_Payment', after='finalize_checkout_Payment')
+@load(action='finalize_bank_transfer_Payment')
+@load(after='finalize_checkout_Payment')
 def finalize_model():
 
-    class BankTransferPayment(modules.checkout.Payment, modules.bank_transfer.BankTransferPayment):
+    class BankTransferPayment(
+            modules.checkout.Payment,
+            modules.bank_transfer.BankTransferPayment):
 
         instant = False
 

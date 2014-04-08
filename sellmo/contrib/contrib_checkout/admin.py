@@ -24,13 +24,11 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo import modules
 from sellmo.config import settings
 from sellmo.core.reporting import reporter
 from sellmo.contrib.admin.reverse import ReverseModelAdmin
-
-
-#
 
 from django.contrib import admin
 from django.conf.urls import patterns, url
@@ -96,7 +94,8 @@ class OrderAdmin(ReverseModelAdmin):
     }
 
     def actions_link(self, obj):
-        return "<a href='%s'>Print Invoice</a>" % reverse('admin:checkout.invoice', args=(obj.pk,))
+        return ("<a href='{0}'>Print Invoice</a>"
+                .format(reverse('admin:checkout.invoice', args=(obj.pk,))))
     actions_link.allow_tags = True
     actions_link.short_description = _("Actions")
 
@@ -112,10 +111,11 @@ class OrderAdmin(ReverseModelAdmin):
 
     def get_urls(self):
         urls = super(OrderAdmin, self).get_urls()
-        custom_urls = patterns('',
-                               url(r'^(.+)/invoice/$', self.admin_site.admin_view(self.invoice),
-                                   name='checkout.invoice'),
-                               )
+        custom_urls = patterns(
+            '',
+            url(r'^(.+)/invoice/$', self.admin_site.admin_view(self.invoice),
+                name='checkout.invoice'),
+        )
         return custom_urls + urls
 
 admin.site.register(modules.checkout.Order, OrderAdmin)

@@ -24,12 +24,9 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#
 
 from sellmo import modules
 from sellmo.api.decorators import link
-
-#
 
 
 @link(namespace=modules.product.namespace)
@@ -51,7 +48,8 @@ def list(request, products, **kwargs):
             elif len(parts) > 2:
                 continue
             products = modules.attribute.filter(
-                request=request, products=products, attr=attr, value=value, operator=operator)
+                request=request, products=products, attr=attr, value=value,
+                operator=operator)
     return {
         'products': products
     }

@@ -24,20 +24,17 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.utils.translation import ugettext_lazy as _
 
-#
+from django.utils.translation import ugettext_lazy as _
 
 from sellmo import modules
 from sellmo.api.decorators import link
 from sellmo.api.pricing import Price
-from sellmo.contrib.contrib_payment.methods.mollie_ideal import MollieIdealPaymentMethod
+from sellmo.contrib.contrib_payment \
+     .methods.mollie_ideal import MollieIdealPaymentMethod
 
-#
 
 namespace = modules.checkout.namespace
-
-#
 
 
 @link()

@@ -24,15 +24,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.core.cache import cache
 
-#
+from django.core.cache import cache
 
 from sellmo.core.chaining import chainer
 from sellmo.signals.core import post_init
 from sellmo.config import settings
-
-#
 
 
 def cached(cache, name, namespace, timeout=True):
@@ -40,8 +37,7 @@ def cached(cache, name, namespace, timeout=True):
 
 
 class Cache(object):
-
-    #
+    
     timeout = True
     prefix = settings.CACHING_PREFIX
 

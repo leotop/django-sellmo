@@ -24,17 +24,18 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo import modules
 from sellmo.api.decorators import link
 
-#
 
 namespace = modules.checkout.namespace
 
 
 @link()
 def get_shipping_methods(order, methods, **kwargs):
-    for method in modules.shipping.ShippingMethod.objects.polymorphic().filter(active=True):
+    for method in modules.shipping.ShippingMethod.objects.polymorphic() \
+                         .filter(active=True):
         for sub_method in method.get_methods():
             methods[sub_method.identifier] = sub_method
     return {
