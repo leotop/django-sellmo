@@ -29,18 +29,20 @@ from django.http import HttpResponse, Http404
 from django.core.urlresolvers import reverse
 from django.shortcuts import redirect, render_to_response
 from django.contrib.sites.models import Site
+from django.utils.module_loading import import_by_path
 
 #
 
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable
 from sellmo.contrib.contrib_payment.methods.mollie_ideal.models import MollieIdealPayment
+from sellmo.contrib.contrib_payment.methods.mollie_ideal.forms import BankSelectForm
+from sellmo.contrib.contrib_payment.methods.mollie_ideal.config import settings
 
 #
 
 import requests
-from lxml import etree
-from lxml import objectify
+from lxml import etree, objectify
 
 #
 
@@ -49,13 +51,16 @@ class MollieIdealModule(Module):
     namespace = 'mollie_ideal'
 
     #
-    BankSelectForm = forms.Form
+    BankSelectForm = BankSelectForm
     MollieIdealPayment = MollieIdealPayment
 
     #
-    mollie_banklist_url = 'https://secure.mollie.nl/xml/ideal?a=banklist'
-    mollie_fetch_url = 'https://www.mollie.nl//xml/ideal?a=fetch'
-    mollie_check_url = 'https://secure.mollie.nl/xml/ideal?a=check'
+    mollie_banklist_url = settings.BANKLIST_URL
+    mollie_fetch_url = settings.FETCH_URL
+    mollie_check_url = settings.CHECK_URL
+
+    def __init__(self, *args, **kwargs):
+        self.BankSelectForm = import_by_path(settings.BANK_SELECT_FORM)
 
     @view()
     def bank_select(self, chain, request, context=None, **kwargs):
