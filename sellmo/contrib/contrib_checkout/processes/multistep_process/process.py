@@ -30,8 +30,10 @@
 
 from sellmo import modules
 from sellmo.api.checkout.process import CheckoutProcess, CheckoutStep
-from sellmo.contrib.contrib_checkout.forms import AcceptTermsForm
-from sellmo.contrib.contrib_checkout.config import settings as checkout_settings
+from sellmo.contrib.contrib_checkout \
+           .forms import AcceptTermsForm
+from sellmo.contrib.contrib_checkout \
+           .config import settings as checkout_settings
 from sellmo.config import settings
 
 

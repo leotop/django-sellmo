@@ -41,7 +41,8 @@ class CategoryModule(Module):
     Category = Category
 
     @chainable()
-    def list(self, chain, parent=None, categories=None, nested=False, **kwargs):
+    def list(self, chain, parent=None, categories=None, nested=False, 
+             **kwargs):
         if categories is None:
             if parent:
                 categories = parent.get_children().flat_ordered()

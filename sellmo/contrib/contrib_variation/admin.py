@@ -28,11 +28,14 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from sellmo import modules
-from sellmo.contrib.contrib_variation.forms import (VariantAttributeFormMixin, 
-                                                    ProductVariationFormFactory,
-                                                    ProductVariationFormMixin)                                             
-from sellmo.contrib.contrib_attribute.admin import ProductAttributeMixin
-from sellmo.contrib.contrib_attribute.forms import ProductAttributeFormFactory
+from sellmo.contrib.contrib_variation \
+           .forms import (VariantAttributeFormMixin, 
+                          ProductVariationFormFactory,
+                          ProductVariationFormMixin)                                             
+from sellmo.contrib.contrib_attribute \
+           .admin import ProductAttributeMixin
+from sellmo.contrib.contrib_attribute \
+           .forms import ProductAttributeFormFactory
 
 from django import forms
 from django.forms import ValidationError

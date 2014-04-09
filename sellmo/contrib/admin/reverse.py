@@ -149,7 +149,8 @@ class ReverseModelAdmin(ModelAdmin):
                 name = field.name
                 parent = field.related.parent_model
                 inline = ReverseInlineModelAdmin(
-                    self.model, name, parent, self.admin_site, self.inline_type)
+                    self.model, name, parent, 
+                    self.admin_site, self.inline_type)
                 if kwargs:
                     inline.__dict__.update(kwargs)
                 inline_instances.append(inline)

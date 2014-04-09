@@ -37,10 +37,13 @@ debug = getattr(settings, 'DEBUG', False)
 
 
 SEND_MAIL_RETRY_ENABLED = getattr(
-    settings, 'SELLMO_SEND_MAIL_RETRY_ENABLED', defaults.SEND_MAIL_RETRY_ENABLED)
+    settings, 'SELLMO_SEND_MAIL_RETRY_ENABLED',
+    defaults.SEND_MAIL_RETRY_ENABLED)
 SEND_MAIL_RETRY_DELAY = getattr(
-    settings, 'SELLMO_SEND_MAIL_RETRY_DELAY', defaults.SEND_MAIL_RETRY_DELAY)
+    settings, 'SELLMO_SEND_MAIL_RETRY_DELAY',
+    defaults.SEND_MAIL_RETRY_DELAY)
 SEND_MAIL_RETRY_LIMIT = getattr(
-    settings, 'SELLMO_SEND_MAIL_RETRY_LIMIT', defaults.SEND_MAIL_RETRY_LIMIT)
+    settings, 'SELLMO_SEND_MAIL_RETRY_LIMIT',
+    defaults.SEND_MAIL_RETRY_LIMIT)
 
 #

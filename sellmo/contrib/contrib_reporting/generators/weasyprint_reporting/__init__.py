@@ -28,5 +28,5 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sellmo.contrib.contrib_reporting \
-     .generators.weasyprint_reporting.generator import WeasyPrintReportGenerator
+from sellmo.contrib.contrib_reporting.generators \
+           .weasyprint_reporting.generator import WeasyPrintReportGenerator

@@ -57,7 +57,7 @@ for module in modules:
         if not prefix:
             prefix = module.namespace
 
-        urlpatterns += patterns('modules',
-                                ('^%s/' %
-                                 prefix, include(patterns(module.namespace, *urls))),
-                                )
+        urlpatterns += patterns(
+            'modules',
+            ('^{0}/'.format(prefix),
+             include(patterns(module.namespace, *urls))),)

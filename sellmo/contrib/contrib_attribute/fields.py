@@ -43,11 +43,11 @@ class AttributeKeyField(models.SlugField):
         super(AttributeKeyField, self).validate(value, instance)
         key_regex = r'[a-z][a-z0-9_]*'
         if not re.match(key_regex, value):
-            raise ValidationError(_(u"Must be all lower case, "
-                                    u"start with a letter, and contain "
-                                    u"only letters, numbers, or underscores."))
+            raise ValidationError(_("Must be all lower case, "
+                                    "start with a letter, and contain "
+                                    "only letters, numbers, or underscores."))
         if value in modules.product.reserved_url_params:
-            raise ValidationError(_(u"Conflicts with url parameter"))
+            raise ValidationError(_("Conflicts with url parameter"))
 
     @staticmethod
     def create_key_from_name(name):
@@ -74,8 +74,9 @@ class AttributeTypeField(models.CharField):
             return
 
         if instance.values.count() > 0:
-            raise ValidationError(_(u"Cannot change attribute type "
-                                    u"of an attribute that is already in use."))
+            raise ValidationError(
+                _("Cannot change attribute type "
+                  "of an attribute that is already in use."))
 
 
 # South support
@@ -86,6 +87,8 @@ except ImportError:
     pass
 else:
     add_introspection_rules(
-        [], ["^sellmo\.contrib\.contrib_attribute\.fields\.AttributeKeyField"])
+        [], 
+        ["^sellmo\.contrib\.contrib_attribute\.fields\.AttributeKeyField"])
     add_introspection_rules(
-        [], ["^sellmo\.contrib\.contrib_attribute\.fields\.AttributeTypeField"])
+        [],
+        ["^sellmo\.contrib\.contrib_attribute\.fields\.AttributeTypeField"])

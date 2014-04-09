@@ -92,8 +92,8 @@ class PriceIndexingModule(Module):
             return handle.updates
         else:
             return {
-                'invalidations': modules.pricing.get_index(handle.index) \
-                                                .model.objects.none(),
+                'invalidations': modules.pricing.get_index(handle.index)
+                    .model.objects.none(),
                 'kwargs': {},
             }
 

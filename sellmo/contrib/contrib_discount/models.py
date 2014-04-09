@@ -80,7 +80,9 @@ def finalize_model():
         def get_query_set(self):
             return DiscountQuerySet(self.model)
 
-    class Discount(modules.discount.Discount, modules.product.ProductRelatable):
+    class Discount(
+            modules.discount.Discount,
+            modules.product.ProductRelatable):
 
         objects = DiscountManager()
 

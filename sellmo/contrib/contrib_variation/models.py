@@ -311,7 +311,8 @@ def load_model():
             super(Attribute, self).save(*args, **kwargs)
             if self.variates or old and old.variates:
                 for product in modules.product.Product.objects.filter(
-                        ProductQ(attribute=self, product_field='base_product')):
+                        ProductQ(attribute=self,
+                                 product_field='base_product')):
                     modules.variation.Variation.objects.invalidate(product)
 
         class Meta(modules.attribute.Attribute.Meta):

@@ -183,7 +183,8 @@ class VariantFieldDescriptor(object):
                 obj, get_differs_field_name(self.field.name), False)
             if not differs:
                 try:
-                    # In case we are initializing, an exception could occur while
+                    # In case we are initializing, 
+                    # an exception could occur while 
                     # getting this field's value
                     old_val = getattr(obj, self.field.name)
                 except Exception:

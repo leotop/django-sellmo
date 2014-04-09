@@ -165,14 +165,16 @@ class Price(object):
         price = self.clone()
         price.amount *= multiplier
         price.mutations = {
-            key: amount * multiplier for key, amount in price.mutations.iteritems()}
+            key: amount * multiplier for
+            key, amount in price.mutations.iteritems()}
         return price
 
     def __div__(self, divider):
         price = self.clone()
         price.amount /= divider
         price.mutations = {
-            key: amount / divider for key, amount in price.mutations.iteritems()}
+            key: amount / divider for
+            key, amount in price.mutations.iteritems()}
         return price
 
     def __neg__(self):

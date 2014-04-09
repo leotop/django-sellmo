@@ -29,7 +29,9 @@
 
 
 from sellmo import modules
-from sellmo.signals.checkout import order_paid, order_state_changed, order_status_changed
+from sellmo.signals.checkout import (order_paid, 
+                                     order_state_changed,
+                                     order_status_changed)
 from sellmo.signals.mailing import mail_init
 from sellmo.core.mailing import mailer
 from sellmo.core.reporting import reporter

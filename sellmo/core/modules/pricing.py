@@ -156,7 +156,8 @@ class PricingModule(sellmo.Module):
             field = '{0}_currency'.format(prop) 
             attr_dict[field] = self.construct_currency_field(**fargs)
 
-            # Construct price type fields (including the standard amount field)
+            # Construct price type fields
+            # (including the standard amount field)
             for key in self.types + ['amount']:
                 field = '{0}_{1}'.format(prop, key)
                 fargs = {}
@@ -190,7 +191,8 @@ class PricingModule(sellmo.Module):
         return self.indexes[identifier]
 
     @chainable()
-    def update_index(self, chain, index, invalidations, delay=False, **kwargs):
+    def update_index(self, chain, index, invalidations, delay=False,
+                     **kwargs):
 
         # Collect index kwargs
         out = {}
@@ -273,7 +275,8 @@ class PricingModule(sellmo.Module):
         return currency
 
     @chainable()
-    def get_price(self, chain, currency=None, price=None, index=None, **kwargs):
+    def get_price(self, chain, currency=None, price=None, index=None,
+                  **kwargs):
         if currency is None:
             currency = self.get_currency()
 

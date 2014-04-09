@@ -137,7 +137,8 @@ class CheckoutModule(sellmo.Module):
 
     @chainable()
     def get_payment_method_form(self, chain, order, prefix=None, data=None,
-                                form=None, methods=None, method=None, **kwargs):
+                                form=None, methods=None, method=None,
+                                **kwargs):
         if methods is None:
             methods = self.get_payment_methods(order=order)
         if form is None:
@@ -515,7 +516,8 @@ class CheckoutModule(sellmo.Module):
         return can_change
 
     @link(namespace='customer')
-    def registration(self, request, customer, processed, redirection, **kwargs):
+    def registration(self, request, customer, processed, redirection,
+                     **kwargs):
         if processed:
             # Retrieve order from session data
             order = request.session.get('completed_order')

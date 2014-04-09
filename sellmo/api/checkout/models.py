@@ -458,7 +458,8 @@ class Order(trackable('sellmo_order')):
                     order=old, status=self.status)):
                 raise Exception(
                     "Cannot transition order "
-                    "status from '{0}' to '{1}'".format(old.status, self.status))
+                    "status from '{0}' to '{1}'"
+                    .format(old.status, self.status))
 
         # Check for new status
         status_changed = (

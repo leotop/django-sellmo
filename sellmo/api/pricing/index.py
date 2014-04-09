@@ -164,8 +164,8 @@ class PriceIndex(object):
             unique_together = tuple(value['field_name']
                                     for value in self.kwargs.values())
 
-        name = '{0}Index'.format(
-            camelize.sub(lambda m: m.group(1).upper(), self.identifier.title()))
+        name = '{0}Index'.format(camelize.sub(
+            lambda m: m.group(1).upper(), self.identifier.title()))
         attr_dict = {
             'Meta': Meta,
             '__module__': modules.pricing.PriceIndexBase.__module__
