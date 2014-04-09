@@ -24,9 +24,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.core.local import new_context, release_context
 
-#
+from sellmo.core.local import new_context, release_context
 
 
 class LocalContextMiddleware(object):

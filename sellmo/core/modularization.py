@@ -28,12 +28,9 @@ import sys
 import imp
 import inspect
 
-#
-
 from sellmo.magic import singleton, SingletonMeta
 from sellmo.signals.core import module_created, module_init
 
-#
 
 _registry_module = 'sellmo.registry'
 
@@ -136,7 +133,9 @@ class _ModuleMeta(SingletonMeta):
         return out
 
     def _handle_attribute(cls, name, value):
-        if isinstance(value, type) and (not value.__module__ or not value.__module__.startswith('django.')):
+        if (isinstance(value, type) and 
+                (not value.__module__ or 
+                 not value.__module__.startswith('django.'))):
             cls.register(name, value)
 
     def __setattr__(cls, name, value):
@@ -160,10 +159,13 @@ class Module(object):
         # Safety checks
         if not isinstance(value, type):
             raise Exception(
-                "Cannot register '{0}', only types can be registered.".format(value))
+                "Cannot register '{0}', "
+                "only types can be registered."
+                .format(value))
         if value.__module__ and value.__module__.startswith('django.'):
             raise Exception(
-                "Cannot register '{0}', this is a django type.".format(value))
+                "Cannot register '{0}', "
+                "this is a django type.".format(value))
         value.__module__ = cls.registry.__name__
         setattr(cls.registry, name, value)
 

@@ -24,7 +24,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-# Core modules (order of import matters)
+
 from sellmo.core.modules.product import ProductModule
 from sellmo.core.modules.pricing import PricingModule
 from sellmo.core.modules.store import StoreModule

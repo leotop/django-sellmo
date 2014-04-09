@@ -28,15 +28,12 @@ import types
 from threading import local
 from collections import deque
 
-#
-
 from django.db import models
 from django.db.models.query import QuerySet
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.admin.util import quote
 from django.utils.functional import allow_lazy
 
-#
 
 _local = local()
 
@@ -135,7 +132,8 @@ class PolymorphicManager(models.Manager):
 
     def get_by_natural_key(self, content_type, key):
         content_type = ContentType.objects.get_by_natural_key(*content_type)
-        return content_type.model_class().objects.get_by_polymorphic_natural_key(*key)
+        return content_type.model_class().objects \
+                           .get_by_polymorphic_natural_key(*key)
 
     def get_query_set(self):
         qs = self._cls(self.model)
@@ -158,7 +156,10 @@ class PolymorphicModel(models.Model):
         if cls._meta.parents.keys():
             content_type = ContentType.objects.get_for_model(
                 cls._meta.parents.keys()[-1])
-        return "%s/%s/%s/" % (content_type.app_label, content_type.model, quote(object_id))
+        return "{0}/{1}/{2}/".format(
+            content_type.app_label,
+            content_type.model,
+            quote(object_id))
 
     def save(self, *args, **kwargs):
         if self.content_type_id is None:
@@ -167,8 +168,10 @@ class PolymorphicModel(models.Model):
         super(PolymorphicModel, self).save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
-        assert self._get_pk_val() is not None, "%s object can't be deleted because its %s attribute is set to None." % (
-            self._meta.object_name, self._meta.pk.attname)
+        assert self._get_pk_val() is not None, (
+            "{0} object can't be deleted because its {1} "
+            "attribute is set to None."
+            .format(self._meta.object_name, self._meta.pk.attname))
         with PolymorphicOverride(False):
             upcasted = self.__class__.objects.get(pk=self.pk)
             super(PolymorphicModel, upcasted).delete(*args, **kwargs)
@@ -183,7 +186,9 @@ class PolymorphicModel(models.Model):
                         downcasted = model.objects.get(pk=self.pk)
                     except model.DoesNotExist:
                         raise Exception(
-                            "Could not downcast to model class '{0}', lookup failed for pk '{1}'".format(model, self.pk))
+                            "Could not downcast to model class '{0}', "
+                            "lookup failed for pk '{1}'"
+                            .format(model, self.pk))
             self._downcasted = downcasted
         return self._downcasted
 
@@ -203,7 +208,8 @@ class PolymorphicModel(models.Model):
         raise NotImplementedError()
 
     def natural_key(self):
-        return (self.content_type.natural_key(), self.downcast().polymorphic_natural_key())
+        return (self.content_type.natural_key(), 
+                self.downcast().polymorphic_natural_key())
 
     class Meta:
         abstract = True

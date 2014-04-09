@@ -24,28 +24,22 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from django.db.models.loading import get_apps
 from django.conf import settings
 from django.utils.importlib import import_module
 from django.utils.module_loading import module_has_submodule
-
-#
 
 from sellmo import modules
 from sellmo.magic import singleton
 from sellmo.core import chaining, loading
 from sellmo.signals.core import pre_init, post_init
 
-#
-
 import sys
 import logging
 
-#
 
 logger = logging.getLogger('sellmo')
-
-#
 
 
 class NotLinkedException(Exception):

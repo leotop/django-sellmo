@@ -24,19 +24,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#
-
 from threading import local
-
-#
 
 from sellmo.core.params import params
 
-#
 
 _local = local()
-
-#
 
 
 def new_context():

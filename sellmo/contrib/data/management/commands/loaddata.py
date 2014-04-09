@@ -24,19 +24,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from django.core.management.commands.loaddata import Command as BaseCommand
-
-
-#
 
 from sellmo.core.polymorphism import PolymorphicOverride
 
-#
-
 import sys
 import logging
-
-#
 
 from sellmo.core.params import params
 params.loaddata = True

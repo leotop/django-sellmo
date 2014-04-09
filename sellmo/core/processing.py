@@ -24,11 +24,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#
 
 from collections import deque
-
-#
 
 
 class ProcessError(Exception):
@@ -42,8 +39,9 @@ class Process(object):
 
     def step_to(self, key):
         """
-        Tries to move one forward from the first step, untill the given step is matched.
-        All intermediate steps need to be completed succesfully.
+        Tries to move one forward from the first step, 
+        untill the given step is matched. All intermediate 
+        steps need to be completed succesfully.
         """
         step = self.get_first_step()
         while step:
@@ -78,15 +76,19 @@ class Process(object):
 
     def feed(self, data, *args, **kwargs):
         """
-        Tries to complete the current step and if so move on to the next step.
+        Tries to complete the current step and if so
+        move on to the next step.
         """
-        if self.current_step.is_completed() and self.current_step.is_definitive():
+        if (self.current_step.is_completed() and
+                self.current_step.is_definitive()):
             raise ProcessError(
                 "Step '{0}' is definitive.".format(self.current_step.key))
         if self.current_step.complete(data, *args, **kwargs):
             if not self.current_step.is_completed():
                 raise ProcessError(
-                    "Step '{0}' was completed but did not change it's state.".format(self.current_step.key))
+                    "Step '{0}' was completed but did not "
+                    "change it's state."
+                    .format(self.current_step.key))
             if self.current_step.has_deviated:
                 # Rewind the process
                 self.step_to_latest()
@@ -103,9 +105,11 @@ class Process(object):
         """
         Renders the current step in this process.
         """
-        if self.current_step.is_completed() and self.current_step.is_definitive():
+        if (self.current_step.is_completed() and
+                self.current_step.is_definitive()):
             raise ProcessError(
-                "Step '{0}' is definitive.".format(self.current_step.key))
+                "Step '{0}' is definitive."
+                .format(self.current_step.key))
         return self.current_step.render(request, *args, **kwargs)
 
     def get_first_step(self):
@@ -150,7 +154,8 @@ class Process(object):
 
     @property
     def completed(self):
-        return self.current_step.is_completed() and self.next_step is None
+        return (self.current_step.is_completed() and 
+                self.next_step is None)
 
     def resolve_url(self, step):
         """
@@ -180,8 +185,9 @@ class ProcessStep(object):
 
     def has_deviated(self):
         """
-        Indicates if this step has deviated from the process's path,
-        this will cause the process to rewind after this step has completed.
+        Indicates if this step has deviated from the 
+        process's path, this will cause the process to 
+        rewind after this step has completed.
         """
         return False
 

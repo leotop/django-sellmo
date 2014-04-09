@@ -26,11 +26,7 @@
 
 import os.path
 
-#
-
 from sellmo.api.reporting import ReportGenerator, Report
-
-#
 
 
 class ReportGeneratorBase(ReportGenerator):

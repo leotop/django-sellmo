@@ -24,9 +24,9 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 import django.dispatch
 
-#
 
 __all__ = [
     'mail_init',
@@ -34,7 +34,6 @@ __all__ = [
     'mail_failed',
 ]
 
-#
 
 mail_init = django.dispatch.Signal()
 mail_send = django.dispatch.Signal()

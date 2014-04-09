@@ -24,30 +24,25 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 import inspect
 import functools
 import logging
 
-#
-
 from sellmo.magic import singleton
 from sellmo.signals.core import module_created, module_init
 
-#
-
 from django.http import HttpResponse
 
-#
 
 logger = logging.getLogger('sellmo')
-
-#
 
 
 def validate_func(func):
     if not callable(func):
         logger.warning(
-            "Link '{0}.{1}' must be callable".format(func.__module__, func.__name__))
+            "Link '{0}.{1}' must be callable"
+            .format(func.__module__, func.__name__))
 
     try:
         argspec = inspect.getargspec(func)
@@ -59,7 +54,8 @@ def validate_func(func):
     if argspec:
         if argspec[2] is None:
             logger.warning(
-                "Link '{0}.{1}' must accept **kwargs".format(func.__module__, func.__name__))
+                "Link '{0}.{1}' must accept **kwargs"
+                .format(func.__module__, func.__name__))
 
 
 @singleton
@@ -89,8 +85,9 @@ class Chainer(object):
             if path not in self._chains:
                 for link in links:
                     func = link['func']
-                    logger.warning("Could not link '{0}.{1}' to '{2}'".format(
-                        func.__module__, func.__name__, path))
+                    logger.warning(
+                        "Could not link '{0}.{1}' to '{2}'"
+                        .format(func.__module__, func.__name__, path))
                 continue
 
             # Hookup links to chain
@@ -109,8 +106,9 @@ class Chainer(object):
             # Resolve namespace from func
             module = inspect.getmodule(func)
             if not module or not hasattr(module, 'namespace'):
-                raise Exception("Link '{0}.{1}' has no target namespace.".format(
-                    func.__module__, func.__name__))
+                raise Exception(
+                    "Link '{0}.{1}' has no target namespace."
+                    .format(func.__module__, func.__name__))
 
             namespace = module.namespace
 
@@ -155,8 +153,6 @@ class Chainer(object):
 
 
 chainer = Chainer()
-
-#
 
 
 class Chain(object):
@@ -211,7 +207,9 @@ class Chain(object):
                     continue
                 else:
                     raise Exception(
-                        "Func '%s' gave an unexpected response '%s'." % (func, response))
+                        "Func '{0}' gave an unexpected "
+                        "response '{1}'."
+                        .format(func, response))
             else:
                 # No break in inner loop, continue
                 continue
@@ -250,13 +248,17 @@ class ViewChain(Chain):
         self.regex = regex if not regex is None else []
 
     def handle(self, module, request, **kwargs):
-        return super(ViewChain, self).handle(module=module, request=request, **kwargs)
+        return super(ViewChain, self).handle(
+            module=module, request=request, **kwargs)
 
     def capture(self, request, **kwargs):
-        return super(ViewChain, self).capture(request=request, **kwargs)
+        return super(ViewChain, self).capture(
+            request=request, **kwargs)
 
     def execute(self, request, **kwargs):
-        return super(ViewChain, self).execute(request=request, **kwargs)
+        return super(ViewChain, self).execute(
+            request=request, **kwargs)
 
     def should_return(self, response):
-        return isinstance(response, HttpResponse) or super(ViewChain, self).should_return(response)
+        return (isinstance(response, HttpResponse) or 
+                super(ViewChain, self).should_return(response))

@@ -24,18 +24,15 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from django.db import models
 from django.db.models.query import QuerySet
-
-#
 
 import sellmo
 from sellmo import modules
 from sellmo.api.decorators import view, chainable
 from sellmo.api.store.models import Purchase
 
-
-#
 
 class StoreModule(sellmo.Module):
 
@@ -46,7 +43,8 @@ class StoreModule(sellmo.Module):
         pass
 
     @chainable()
-    def merge_purchase(self, chain, purchase, existing_purchases, result=None, **kwargs):
+    def merge_purchase(self, chain, purchase, existing_purchases,
+                       result=None, **kwargs):
 
         for existing in existing_purchases:
             if not existing.pk:
@@ -74,14 +72,15 @@ class StoreModule(sellmo.Module):
 
         if chain:
             out = chain.execute(
-                purchase=purchase, existing_purchases=existing_purchases, result=result, **kwargs)
-            if out.has_key('result'):
-                result = out['result']
+                purchase=purchase, existing_purchases=existing_purchases, 
+                result=result, **kwargs)
+            result = out.get('result', result)
 
         return result
 
     @chainable()
-    def make_purchase(self, chain, product=None, qty=None, purchase=None, **kwargs):
+    def make_purchase(self, chain, product=None, qty=None, purchase=None,
+                      **kwargs):
 
         if purchase is None:
             purchase = self.Purchase()
@@ -96,8 +95,8 @@ class StoreModule(sellmo.Module):
 
         if chain:
             out = chain.execute(
-                product=purchase.product, qty=purchase.qty, purchase=purchase, **kwargs)
-            if out.has_key('purchase'):
-                purchase = out['purchase']
+                product=purchase.product, qty=purchase.qty, 
+                purchase=purchase, **kwargs)
+            purchase = out.get('purchase', purchase)
 
         return purchase

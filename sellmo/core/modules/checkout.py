@@ -24,6 +24,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from django import forms, dispatch
 from django.http import Http404
 from django.core.urlresolvers import reverse
@@ -32,8 +33,6 @@ from django.shortcuts import redirect
 from django.utils.module_loading import import_by_path
 from django.utils.decorators import method_decorator
 from django.db import models, transaction
-
-#
 
 import sellmo
 from sellmo import modules
@@ -45,11 +44,6 @@ from sellmo.api.decorators import view, chainable, link
 from sellmo.api.checkout.models import Order, Shipment, Payment, ORDER_NEW
 from sellmo.api.checkout.forms import ShippingMethodForm, PaymentMethodForm
 from sellmo.signals.checkout import order_state_changed
-
-#
-
-# Need this in order for forms to load
-from sellmo.api.checkout.forms import *
 
 
 class CheckoutModule(sellmo.Module):
@@ -78,7 +72,8 @@ class CheckoutModule(sellmo.Module):
         # Hookup signals
         order_state_changed.connect(self.on_order_state_changed)
 
-    def on_order_state_changed(self, sender, order, new_state, old_state=None, **kwargs):
+    def on_order_state_changed(self, sender, order, new_state, old_state=None,
+                               **kwargs):
         if old_state == ORDER_NEW:
             # Try find cart for this order
             purchases = order.purchases.filter(cart__isnull=False)[:1]
@@ -90,15 +85,19 @@ class CheckoutModule(sellmo.Module):
     # FORMS
 
     @chainable()
-    def get_shipping_method_form(self, chain, order, prefix=None, data=None, form=None, methods=None, method=None, **kwargs):
+    def get_shipping_method_form(self, chain, order, prefix=None, data=None,
+                                 form=None, methods=None, method=None, 
+                                 **kwargs):
         if methods is None:
             methods = self.get_shipping_methods(order=order)
         if form is None:
             class ShippingMethodForm(self.ShippingMethodForm):
                 choices = [
-                    (method.identifier, self.get_shipping_method_choice(
-                        method=method, order=order))
-                    for method in methods.values() if method.is_available(order=order)
+                    (method.identifier,
+                     self.get_shipping_method_choice(method=method, 
+                                                     order=order))
+                    for method in methods.values()
+                    if method.is_available(order=order)
                 ]
                 method = forms.ChoiceField(
                     widget=forms.RadioSelect(),
@@ -117,7 +116,8 @@ class CheckoutModule(sellmo.Module):
         return form
 
     @chainable()
-    def get_shipping_method_choice(self, chain, order, method, choice=None, **kwargs):
+    def get_shipping_method_choice(self, chain, order, method, choice=None,
+                                   **kwargs):
         if choice is None:
             costs = method.get_costs(order=order)
             choice = call_or_format(
@@ -133,7 +133,8 @@ class CheckoutModule(sellmo.Module):
         return choice
 
     @chainable()
-    def get_payment_method_form(self, chain, order, prefix=None, data=None, form=None, methods=None, method=None, **kwargs):
+    def get_payment_method_form(self, chain, order, prefix=None, data=None,
+                                form=None, methods=None, method=None, **kwargs):
         if methods is None:
             methods = self.get_payment_methods(order=order)
         if form is None:
@@ -141,7 +142,8 @@ class CheckoutModule(sellmo.Module):
                 choices = [
                     (method.identifier, self.get_payment_method_choice(
                         method=method, order=order))
-                    for method in methods.values() if method.is_available(order=order)
+                    for method in methods.values()
+                    if method.is_available(order=order)
                 ]
                 method = forms.ChoiceField(
                     widget=forms.RadioSelect(),
@@ -160,7 +162,8 @@ class CheckoutModule(sellmo.Module):
         return form
 
     @chainable()
-    def get_payment_method_choice(self, chain, order, method, choice=None, **kwargs):
+    def get_payment_method_choice(self, chain, order, method, choice=None,
+                                  **kwargs):
         if choice is None:
             costs = method.get_costs(order=order)
             choice = call_or_format(
@@ -176,7 +179,8 @@ class CheckoutModule(sellmo.Module):
         return choice
 
     @view([r'^step/(?P<step>[-a-zA-Z0-9_]+)/$', r'^$'])
-    def checkout(self, chain, request, step=None, data=None, order=None, process=None, context=None, **kwargs):
+    def checkout(self, chain, request, step=None, data=None, order=None,
+                 process=None, context=None, **kwargs):
 
         if context is None:
             context = {}
@@ -223,8 +227,9 @@ class CheckoutModule(sellmo.Module):
                             pass
 
                         if not process.completed:
-                            redirection = redirect(
-                                reverse('checkout.checkout', kwargs={'step': process.current_step.key}))
+                            redirection = redirect(reverse(
+                                'checkout.checkout',
+                                kwargs={'step': process.current_step.key}))
             else:
                 try:
                     # Go to the latest step
@@ -232,8 +237,9 @@ class CheckoutModule(sellmo.Module):
                 except ProcessError as error:
                     raise Http404(error)
 
-                redirection = redirect(
-                    reverse('checkout.checkout', kwargs={'step': process.current_step.key}))
+                redirection = redirect(reverse(
+                    'checkout.checkout',
+                    kwargs={'step': process.current_step.key}))
 
         # See if we completed the process
         if process.completed:
@@ -253,7 +259,9 @@ class CheckoutModule(sellmo.Module):
         context['process'] = process
 
         if chain:
-            return chain.execute(request, step=step, order=order, process=process, context=context, **kwargs)
+            return chain.execute(
+                request, step=step, order=order, process=process,
+                context=context, **kwargs)
 
         try:
             return process.render(request, context=context)
@@ -276,13 +284,15 @@ class CheckoutModule(sellmo.Module):
         # Append to context
         context['order'] = order
         if chain:
-            return chain.execute(request, order=order, context=context, **kwargs)
+            return chain.execute(
+                request, order=order, context=context, **kwargs)
         else:
             # We don't render anything
             raise Http404
 
     @view(r'^cancel/$')
-    def cancel(self, chain, request, order=None, data=None, context=None, **kwargs):
+    def cancel(self, chain, request, order=None, data=None, context=None,
+               **kwargs):
 
         if context is None:
             context = {}
@@ -311,7 +321,8 @@ class CheckoutModule(sellmo.Module):
         context['order'] = order
 
         if chain:
-            return chain.execute(request, order=order, data=data, context=context, **kwargs)
+            return chain.execute(
+                request, order=order, data=data, context=context, **kwargs)
         else:
             # We don't render anything
             raise Http404
@@ -340,7 +351,8 @@ class CheckoutModule(sellmo.Module):
         return methods
 
     @chainable()
-    def process_shipping_method(self, chain, request, order, prefix=None, data=None, method=None, **kwargs):
+    def process_shipping_method(self, chain, request, order, prefix=None,
+                                data=None, method=None, **kwargs):
         methods = self.get_shipping_methods(order=order)
         processed = False
         initial = None
@@ -349,7 +361,8 @@ class CheckoutModule(sellmo.Module):
             initial = order.shipment.get_method()
 
         form = self.get_shipping_method_form(
-            order=order, prefix=prefix, data=data, methods=methods, method=initial)
+            order=order, prefix=prefix, data=data, 
+            methods=methods, method=initial)
 
         if data and form.is_valid():
             # Resolve shipping method
@@ -388,7 +401,8 @@ class CheckoutModule(sellmo.Module):
         return methods
 
     @chainable()
-    def process_payment_method(self, chain, request, order, prefix=None, data=None, method=None, **kwargs):
+    def process_payment_method(self, chain, request, order, prefix=None,
+                               data=None, method=None, **kwargs):
         methods = self.get_payment_methods(order=order)
         processed = False
         initial = None
@@ -397,7 +411,8 @@ class CheckoutModule(sellmo.Module):
             initial = order.payment.get_method()
 
         form = self.get_payment_method_form(
-            order=order, prefix=prefix, data=data, methods=methods, method=initial)
+            order=order, prefix=prefix, data=data,
+            methods=methods, method=initial)
 
         if data and form.is_valid():
             # Resolve payment method
@@ -475,7 +490,8 @@ class CheckoutModule(sellmo.Module):
             order.invalidate()
 
     @chainable()
-    def can_change_order_status(self, chain, order, status, can_change=False, **kwargs):
+    def can_change_order_status(self, chain, order, status, can_change=False,
+                                **kwargs):
         # Verify new status
         if status not in settings.ORDER_STATUSES:
             raise Exception("Invalid order status '{0}'".format(status))

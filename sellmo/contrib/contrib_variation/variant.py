@@ -99,10 +99,13 @@ class VariantMixin(object):
         super(self.__class__.__base__, self).validate_unique(exclude)
         if 'slug' not in exclude:
             if not is_unique_slug(self.slug, ignore=self):
-                message = _("%(model_name)s with this %(field_label)s already exists.") % {
-                    'model_name': capfirst(modules.product.Product._meta.verbose_name),
-                    'field_label': 'slug'
-                }
+                model_name = modules.product.Product._meta.verbose_name
+                model_name = capfirst(model_name)
+                message = _(
+                    "{model_name}s with this "
+                    "{field_label}s already exists.").format(
+                        model_name=model_name,
+                        field_label='slug')
                 raise ValidationError({'slug': [message]})
 
     def save(self, *args, **kwargs):

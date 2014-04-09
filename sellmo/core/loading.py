@@ -26,11 +26,7 @@
 
 from collections import deque
 
-#
-
 from sellmo.magic import singleton
-
-#
 
 
 class Loadable(object):
@@ -64,8 +60,9 @@ class Loadable(object):
     directly_after = property(get_directly_after, set_directly_after)
 
     def __repr__(self):
-        return '%s.%s' % (self.func.__module__, self.func.__name__)
-#
+        return (
+            "{0}.{1}"
+            .format(self.func.__module__, self.func.__name__))
 
 
 @singleton
@@ -75,7 +72,8 @@ class Loader(object):
         self._queue = deque()
         self._mapping = {}
 
-    def register(self, func, action=None, after=None, before=None, directly=False):
+    def register(self, func, action=None, after=None, before=None, 
+                 directly=False):
 
         if self._mapping.has_key(str(func)):
             loadable = self._mapping[str(func)]
@@ -186,9 +184,13 @@ class Loader(object):
                 loadable = evaluations.popleft()
                 for delay in loadable.after:
                     if actions.has_key(delay):
-                        if loadable.directly_after and loadable.directly_after != delay:
-                            raise Exception("""Will fail to execute '%s' directly after '%s' due to '%s'""" % (
-                                loadable, loadable.directly_after, delay))
+                        if (loadable.directly_after and
+                                loadable.directly_after != delay):
+                            raise Exception(
+                                "Will fail to execute '{0}' "
+                                "directly after '{1}' due to '{2}'."
+                                .format(
+                                    loadable, loadable.directly_after, delay))
 
                         # Still another delay > DO NOTHING
                         break
@@ -202,6 +204,6 @@ class Loader(object):
 
         # Verify for remaining delays
         if delayed:
-            raise Exception("""Failed to load""")
+            raise Exception("Failed to load.")
 
 loader = Loader()

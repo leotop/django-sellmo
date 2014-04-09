@@ -24,23 +24,19 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from smtplib import SMTPException
 
-#
+from smtplib import SMTPException
 
 from sellmo.api.mailing import MailHandler
 from sellmo.signals.mailing import mail_send, mail_failed
 
-#
-
 from django.core import mail
-
-#
 
 
 class MailHandlerBase(MailHandler):
 
-    def send_mail(self, message_type, message_reference, context, connection=None):
+    def send_mail(self, message_type, message_reference, context,
+                  connection=None):
         # Open the writer and close it afterwards
         with self.writer.open(context) as writer:
 
@@ -59,7 +55,7 @@ class MailHandlerBase(MailHandler):
                     message.body = writer.get_body('text')
                 else:
                     raise Exception(
-                        "Invalid email formats '{0}'".format(writer.formats))
+                        "Invalid email formats '{0}'.".format(writer.formats))
 
             # Further construct the message
             message.subject = writer.get_subject()

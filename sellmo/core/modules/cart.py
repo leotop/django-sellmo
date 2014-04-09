@@ -24,6 +24,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from django import forms
 from django.contrib import messages
 from django.forms.formsets import formset_factory
@@ -33,8 +34,6 @@ from django.http import Http404
 from django.shortcuts import redirect
 from django.utils.module_loading import import_by_path
 
-#
-
 import sellmo
 from sellmo.config import settings
 from sellmo import modules
@@ -42,8 +41,6 @@ from sellmo.api.decorators import view, chainable, link
 from sellmo.api.cart.models import Cart
 from sellmo.api.cart.forms import AddToCartForm, EditPurchaseForm
 from sellmo.api.forms import RedirectableFormSet
-
-#
 
 
 class CartModule(sellmo.Module):
@@ -67,7 +64,8 @@ class CartModule(sellmo.Module):
                 purchase.delete()
 
     @chainable()
-    def get_edit_purchase_form(self, chain, form=None, cls=None, purchase=None, initial=None, data=None, **kwargs):
+    def get_edit_purchase_form(self, chain, form=None, cls=None, purchase=None, 
+                               initial=None, data=None, **kwargs):
         if purchase is None:
             raise Exception()
 
@@ -86,17 +84,19 @@ class CartModule(sellmo.Module):
             else:
                 form = cls(data)
 
-        form.set_redirect_key('edit_purchase_form_%s' % purchase.pk)
+        form.set_redirect_key('edit_purchase_form_{0}'.format(purchase.pk))
         if chain:
             out = chain.execute(
-                form=form, cls=cls, purchase=purchase, initial=initial, data=data, **kwargs)
+                form=form, cls=cls, purchase=purchase,
+                initial=initial, data=data, **kwargs)
             if out.has_key('form'):
                 form = out['form']
 
         return form
 
     @chainable()
-    def get_add_to_cart_formset(self, chain, product, formset=None, cls=None, initial=None, data=None, **kwargs):
+    def get_add_to_cart_formset(self, chain, product, formset=None, cls=None,
+                                initial=None, data=None, **kwargs):
         product = product.downcast()
 
         if cls is None:
@@ -118,7 +118,8 @@ class CartModule(sellmo.Module):
         formset.set_redirect_key('add_to_cart_formset_%s' % product.pk)
         if chain:
             out = chain.execute(
-                formset=formset, cls=cls, product=product, initial=initial, data=data, **kwargs)
+                formset=formset, cls=cls, product=product, 
+                initial=initial, data=data, **kwargs)
             if out.has_key('formset'):
                 formset = out['formset']
 
@@ -195,7 +196,8 @@ class CartModule(sellmo.Module):
             raise Http404
 
     @view(r'^remove/(?P<purchase_id>[0-9]+)$')
-    def remove_from_cart(self, chain, request, purchase_id, purchase=None, context=None, **kwargs):
+    def remove_from_cart(self, chain, request, purchase_id, purchase=None,
+                         context=None, **kwargs):
 
         next = request.GET.get('next', 'cart.cart')
 
@@ -214,12 +216,15 @@ class CartModule(sellmo.Module):
 
         redirection = redirect(next)
         if chain:
-            return chain.execute(request, purchase=purchase, context=context, redirection=redirection, **kwargs)
+            return chain.execute(
+                request, purchase=purchase, context=context,
+                redirection=redirection, **kwargs)
 
         return redirection
 
     @view(r'^update/(?P<purchase_id>[0-9]+)$')
-    def update_cart(self, chain, request, purchase_id, purchase=None, form=None, context=None, **kwargs):
+    def update_cart(self, chain, request, purchase_id, purchase=None,
+                    form=None, context=None, **kwargs):
 
         next = request.GET.get('next', 'cart.cart')
 
@@ -253,14 +258,16 @@ class CartModule(sellmo.Module):
 
         redirection = redirect(next)
         if chain:
-            return chain.execute(request, purchase=purchase, form=form, context=context, redirection=redirection, **kwargs)
+            return chain.execute(
+                request, purchase=purchase, form=form,
+                context=context, redirection=redirection, **kwargs)
 
         return redirection
 
     @view(r'^add/(?P<product_slug>[-a-zA-Z0-9_]+)$')
-    def add_to_cart(self, chain, request, product_slug, product=None, formset=None,
-                    purchases=None, context=None, next='cart.cart',
-                    invalid='cart.cart', **kwargs):
+    def add_to_cart(self, chain, request, product_slug, product=None,
+                    formset=None, purchases=None, context=None,
+                    next='cart.cart', invalid='cart.cart', **kwargs):
 
         next = request.GET.get('next', next)
         invalid = request.GET.get('invalid', invalid)
@@ -284,8 +291,8 @@ class CartModule(sellmo.Module):
                     product=product, data=request.GET)
 
         redirection = redirect(next)
-        # Purchase will in most cases not yet be assigned, it could be assigned however
-        # during the capture fase.
+        # Purchase will in most cases not yet be assigned, 
+        # it could be assigned however during the capture fase.
         if purchases is None:
 
             purchases = []
@@ -348,7 +355,8 @@ class CartModule(sellmo.Module):
                 request=request, purchase=purchase, cart=cart, **kwargs)
 
     @chainable()
-    def update_purchase(self, chain, request, cart=None, purchase=None, **kwargs):
+    def update_purchase(self, chain, request, cart=None, purchase=None,
+                        **kwargs):
         if cart is None:
             cart = self.get_cart(request=request)
 
@@ -366,7 +374,8 @@ class CartModule(sellmo.Module):
                 request=request, purchase=purchase, cart=cart, **kwargs)
 
     @chainable()
-    def remove_purchase(self, chain, request, cart=None, purchase=None, **kwargs):
+    def remove_purchase(self, chain, request, cart=None, purchase=None,
+                        **kwargs):
         if cart is None:
             cart = self.get_cart(request=request)
 

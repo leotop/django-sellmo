@@ -24,9 +24,9 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 import django.dispatch
 
-#
 
 __all__ = [
     'order_pending',
@@ -38,13 +38,13 @@ __all__ = [
     'order_status_changed',
 ]
 
-#
 
 order_pending = django.dispatch.Signal()
 order_paid = django.dispatch.Signal()
 order_completed = django.dispatch.Signal()
 order_closed = django.dispatch.Signal()
 order_canceled = django.dispatch.Signal()
+
 
 order_state_changed = django.dispatch.Signal()
 order_status_changed = django.dispatch.Signal()

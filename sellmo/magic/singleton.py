@@ -24,15 +24,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 # Dummy method, assigned the 2nd time an instance is made.
-
-
 def __init__(self, *args, **kwargs):
     pass
 
+
 # Descriptor for __new__ method
-
-
 class SingletonAccess(object):
 
     def __init__(self, cls, new):

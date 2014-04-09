@@ -26,16 +26,11 @@
 
 import collections
 
-#
-
 from sellmo import modules
 from sellmo.core.chaining import ViewChain
 
-#
+from django.conf.urls import patterns, url, include
 
-from django.conf.urls import *
-
-#
 
 urlpatterns = patterns('sellmo')
 for module in modules:
@@ -50,8 +45,8 @@ for module in modules:
                 if isinstance(regex, basestring):
                     regex = [regex]
                 for regex in regex:
-                    urls.append(
-                        url(regex, attr, name='%s.%s' % (module.namespace, name)))
+                    shortcut = '{0}.{1}'.format(module.namespace, name)
+                    urls.append(url(regex, attr, name=shortcut))
 
     if urls:
         prefix = module.prefix

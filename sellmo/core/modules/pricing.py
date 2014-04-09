@@ -24,16 +24,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 import logging
 from decimal import Decimal
 import types
 
-#
-
 from django.db import models
 from django.utils.translation import ugettext_lazy as _, string_concat
-
-#
 
 import sellmo
 from sellmo import modules
@@ -43,11 +40,8 @@ from sellmo.api.pricing import Currency, Price, PriceType, StampableProperty
 from sellmo.api.pricing.index import PriceIndex, PrefetchedPriceIndex
 from sellmo.api.pricing.models import PriceIndexBase
 
-#
 
 logger = logging.getLogger('sellmo')
-
-#
 
 
 def get_default_currency():
@@ -156,8 +150,8 @@ class PricingModule(sellmo.Module):
             else:
                 fargs['verbose_name'] = _("currency")
 
-            attr_dict['{0}_currency'.format(prop)] = self.construct_currency_field(
-                **fargs)
+            field = '{0}_currency'.format(prop) 
+            attr_dict[field] = self.construct_currency_field(**fargs)
 
             # Construct price type fields (including the standard amount field)
             for key in self.types + ['amount']:
@@ -199,15 +193,17 @@ class PricingModule(sellmo.Module):
         out = {}
         out.update(kwargs)
         if chain:
-            out.update(
-                chain.execute(index=index, invalidations=invalidations, **kwargs))
+            out.update(chain.execute(
+                index=index, invalidations=invalidations, **kwargs))
 
         # Get actual index
         index = self.get_index(index)
 
         # Filter out kwargs
         iargs = {
-            key: value for key, value in out.iteritems() if index.is_kwarg(key)}
+            key: value for key, value in out.iteritems() 
+            if index.is_kwarg(key)
+        }
 
         # Create all possible combinations
         combinations = []
@@ -302,7 +298,8 @@ class PricingModule(sellmo.Module):
         return price
 
     @link(namespace='product', name='list')
-    def list_products(self, products, query=None, currency=None, index=None, index_relation='product', **kwargs):
+    def list_products(self, products, query=None, currency=None, index=None,
+                      index_relation='product', **kwargs):
         if currency is None:
             currency = self.get_currency()
         if index is not None:

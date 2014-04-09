@@ -24,17 +24,14 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.http import Http404
 
-#
+from django.http import Http404
 
 import sellmo
 from sellmo import modules
 from sellmo.api.decorators import view, chainable
 from sellmo.api.product.models import Product, ProductRelatable
 from sellmo.api.http.query import QueryString
-
-#
 
 
 class ProductModule(sellmo.Module):
@@ -87,7 +84,8 @@ class ProductModule(sellmo.Module):
             raise Http404("""Product '%s' not found.""" % product_slug)
 
         if chain:
-            return chain.execute(request, product=product, context=context, **kwargs)
+            return chain.execute(
+                request, product=product, context=context, **kwargs)
         else:
             # We don't render anything
             raise Http404

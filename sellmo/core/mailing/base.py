@@ -24,19 +24,14 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 import uuid
 
-#
-
 from django.utils.module_loading import import_by_path
-
-#
 
 from sellmo.magic import singleton
 from sellmo.config import settings
 from sellmo.signals.mailing import mail_init
-
-#
 
 
 @singleton

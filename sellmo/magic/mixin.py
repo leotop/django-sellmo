@@ -24,10 +24,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.db.models import fields
-
-#
-
 
 class _ModelMixin(type):
 
