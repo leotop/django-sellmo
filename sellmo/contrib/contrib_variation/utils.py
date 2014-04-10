@@ -55,7 +55,7 @@ def generate_slug(product, values=None, unique=False, full=False, short=False):
 
         slug = slugify(slug)
 
-        if not unique or VariantMixin.is_unique_slug(slug, ignore=product):
+        if not unique or is_unique_slug(slug, ignore=product):
             return slug
 
     return slug

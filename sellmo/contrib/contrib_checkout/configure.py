@@ -28,6 +28,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
+import logging
+
 from sellmo import modules
 from sellmo.signals.checkout import (order_paid, 
                                      order_state_changed,
@@ -38,6 +40,9 @@ from sellmo.core.reporting import reporter
 from sellmo.contrib.contrib_checkout.mailing import send_order_mails
 from sellmo.contrib.contrib_checkout.reporting import InvoiceWriter
 from sellmo.contrib.contrib_checkout.config import settings
+
+
+logger = logging.getLogger('sellmo')
 
 
 # Validate & Register mail writers

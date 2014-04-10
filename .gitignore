@@ -12,6 +12,7 @@ skeleton/tax/migrations
 skeleton/attribute/migrations
 skeleton/variation/migrations
 skeleton/color/migrations
+pylint.html
 
 # Python generated files #
 ######################

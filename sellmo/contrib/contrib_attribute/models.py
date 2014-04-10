@@ -328,7 +328,7 @@ class Attribute(models.Model):
                 return int(string)
             except ValueError:
                 pass
-        elif self.type == SELF.TYPE_FLOAT:
+        elif self.type == self.TYPE_FLOAT:
             return float(string)
         raise ValueError(
             "Could not parse '%s' for attribute '%s'." % (string, self))
