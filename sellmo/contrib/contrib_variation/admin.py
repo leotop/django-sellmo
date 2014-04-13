@@ -39,7 +39,7 @@ from sellmo.contrib.contrib_attribute \
 
 from django import forms
 from django.forms import ValidationError
-from django.forms.models import ModelForm, BaseInlineFormSet
+from django.forms.models import ModelForm
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 from django.utils.text import capfirst

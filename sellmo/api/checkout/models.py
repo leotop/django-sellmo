@@ -168,7 +168,7 @@ def load_model():
         name = '{0}_address'.format(type)
         modules.checkout.Order.add_to_class(
             name,
-            models.ForeignKey(
+            models.OneToOneField(
                 modules.customer.Address,
                 null=True,
                 related_name='+',

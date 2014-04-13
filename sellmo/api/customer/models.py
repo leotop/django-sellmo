@@ -28,7 +28,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings as django_settings
 from django.utils.translation import ugettext_lazy as _
 
 from sellmo import modules
@@ -44,12 +44,14 @@ def load_model():
         name = '{0}_address'.format(type)
         modules.customer.Customer.add_to_class(
             name,
-            models.ForeignKey(
+            models.OneToOneField(
                 modules.customer.Address,
+                null=True,
                 related_name='+',
+                verbose_name=_(
+                    "{0} address".format(type)),
             )
         )
-
 
 @load(after='finalize_customer_Addressee')
 @load(before='finalize_customer_Customer')
@@ -86,7 +88,7 @@ class Customer(models.Model, Cloneable):
 
     if settings.AUTH_ENABLED:
         user = models.OneToOneField(
-            User,
+            django_settings.AUTH_USER_MODEL,
             related_name='customer',
             verbose_name=_("user"),
         )
@@ -221,3 +223,5 @@ class Addressee(models.Model, Cloneable):
 
     class Meta:
         abstract = True
+
+    

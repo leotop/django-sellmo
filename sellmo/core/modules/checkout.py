@@ -279,10 +279,8 @@ class CheckoutModule(sellmo.Module):
             context = {}
 
         # Retrieve order from session data
-        order = request.session.get('completed_order')
-        try:
-            order = self.Order.objects.get(id=order)
-        except self.Order.DoesNotExist:
+        order = self.get_completed_order(request=request)
+        if order is None:
             raise Http404("No order has been checked out")
 
         # Append to context
@@ -450,8 +448,21 @@ class CheckoutModule(sellmo.Module):
                 order = self.Order.objects.from_request(request)
         if chain:
             out = chain.execute(request=request, order=order, **kwargs)
-            if out.has_key('order'):
-                order = out['order']
+            order = out.get('order', order)
+        return order
+        
+    @chainable()
+    def get_completed_order(self, chain, request=None, order=None, **kwargs):
+        if order is None:
+            # Retrieve order from session data
+            order = request.session.get('completed_order')
+            try:
+                order = self.Order.objects.get(id=order)
+            except self.Order.DoesNotExist:
+                pass
+        if chain:
+            out = chain.execute(request=request, order=order, **kwargs)
+            order = out.get('order', order)
         return order
 
     @chainable()
@@ -516,31 +527,11 @@ class CheckoutModule(sellmo.Module):
         return can_change
 
     @link(namespace='customer')
-    def registration(self, request, customer, processed, redirection,
-                     **kwargs):
-        if processed:
-            # Retrieve order from session data
-            order = request.session.get('completed_order')
-            try:
-                order = self.Order.objects.get(id=order)
-            except self.Order.DoesNotExist:
-                pass
-            else:
-                order.customer = customer
-                order.save()
-        if redirection:
-            return redirection
-
-    @link(namespace='customer')
     def get_customer(self, request, customer=None, **kwargs):
         if customer is None:
             # Retrieve order from session data
-            order = request.session.get('completed_order')
-            try:
-                order = self.Order.objects.get(id=order)
-            except self.Order.DoesNotExist:
-                pass
-            else:
+            order = self.get_completed_order(request=request)
+            if order is not None:
                 customer = modules.customer.Contactable.clone(
                     order, cls=modules.customer.Customer)
                 if len(settings.ADDRESS_TYPES) > 0:

@@ -63,6 +63,10 @@ class ReverseInlineFormSet(BaseModelFormSet):
             self.extra = 1
         super(ReverseInlineFormSet, self).__init__(
             data, files, prefix=prefix, queryset=queryset)
+        
+        f = instance._meta.get_field(self.parent_fk_name)
+        if not f.blank and self.forms:
+            self.forms[0].empty_permitted = False
 
 
 def reverse_inlineformset_factory(parent_model, model, parent_fk_name,
@@ -131,7 +135,14 @@ class ReverseModelAdmin(ModelAdmin):
         super(ReverseModelAdmin, self).__init__(*args, **kwargs)
         if self.exclude is None:
             self.exclude = []
-
+            
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save()
+        parent = form.instance
+        if isinstance(formset, ReverseInlineFormSet):
+            setattr(parent, formset.parent_fk_name, instances[0])
+            parent.save()
+    
     def get_inline_instances(self, request, obj=None):
         inline_instances = super(
             ReverseModelAdmin, self).get_inline_instances(request, obj)
