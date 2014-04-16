@@ -37,6 +37,3 @@ class Params(object):
     pass
 
 params = Params()
-
-REPORT_GENERATORS = []
-REPORT_FORMAT = 'pdf'
