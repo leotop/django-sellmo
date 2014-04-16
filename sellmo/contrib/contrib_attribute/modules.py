@@ -30,6 +30,7 @@
 
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable, link
+from sellmo.api.configuration import setting
 from sellmo.contrib.contrib_attribute.models import Attribute, Value
 from sellmo.contrib.contrib_attribute.query import ProductQ
 
@@ -42,6 +43,10 @@ class AttributeModule(Module):
     namespace = 'attribute'
     Attribute = Attribute
     Value = Value
+    
+    value_format = setting(
+        'VALUE_FORMAT',
+        default=u"{value.value}")
 
     @chainable()
     def get_sorted_values(self, chain, values, attribute=None, **kwargs):

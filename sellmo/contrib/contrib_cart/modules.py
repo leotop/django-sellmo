@@ -28,14 +28,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-REPORTING_PARAMS = {
-    'pdf': {
-        'size': 'A4',
-        'orientation': 'portrait',
-        'margin': '1cm',
-        'zoom': 1.0,
-    },
-    'png': {
-        'viewport': '800x800'
-    }
-}
+from sellmo import modules
+from sellmo.api.configuration import setting
+
+
+class CartModule(modules.cart):
+
+    single_purchase_mode = setting(
+        'SINGLE_PURCHASE_MODE',
+        default=False)

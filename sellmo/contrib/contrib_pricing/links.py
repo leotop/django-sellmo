@@ -30,11 +30,10 @@
 
 from django.http import HttpResponse
 
-from sellmo import modules
-from sellmo.config import settings
+from sellmo import modules, celery, params
 from sellmo.api.decorators import link
-from sellmo.core.params import params
 from sellmo.api.pricing import Price
+from sellmo.api.configuration import get_setting
 from sellmo.contrib.contrib_pricing import tasks
 
 
@@ -55,7 +54,7 @@ def get_price(price, product=None, currency=None, qty=1, **kwargs):
             'price': price
         }
 
-if settings.CELERY_ENABLED and not getattr(params, 'worker_mode', False):
+if celery.enabled and not getattr(params, 'worker_mode', False):
     @link(capture=True)
     def update_index(index, invalidations, **kwargs):
         yield override_update_index

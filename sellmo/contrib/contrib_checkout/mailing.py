@@ -32,9 +32,47 @@ from sellmo import modules
 from sellmo.api.mailing import MailWriter
 from sellmo.core.reporting import reporter
 from sellmo.core.mailing import mailer
-from sellmo.contrib.contrib_checkout.config import settings
 
 from django.utils.translation import ugettext_lazy as _
+
+
+ORDER_MAILS = {
+    'order_confirmation': {
+        'writer': ('sellmo.contrib.contrib_checkout.mailing'
+                   '.OrderConfirmationWriter'),
+        'send_once': True,
+        'send_events': [
+            {
+                'on_paid': True,
+                'instant_payment': True
+            },
+            {
+                'on_pending': True,
+                'instant_payment': False
+            }
+        ]
+    },
+    'order_notification': {
+        'writer': ('sellmo.contrib.contrib_checkout.mailing'
+                   '.OrderNotificationWriter'),
+        'send_once': True,
+        'send_events': [
+            {
+                'on_pending': True,
+            }
+        ]
+    },
+    'shipping_notification': {
+        'writer': ('sellmo.contrib.contrib_checkout.mailing'
+                   '.ShippingNotificationWriter'),
+        'send_once': True,
+        'send_events': [
+            {
+                'status': 'shipped',
+            }
+        ]
+    }
+}
 
 
 def send_order_mails(order, event_signature=None):
@@ -44,7 +82,7 @@ def send_order_mails(order, event_signature=None):
     if order.payment:
         event_signature['instant_payment'] = order.payment.instant
 
-    for mail, config in settings.CHECKOUT_MAILS.iteritems():
+    for mail, config in modules.checkout.order_mails.iteritems():
         for event in config['send_events']:
             for key, value in event.iteritems():
                 # Make sure signature is a match
@@ -61,7 +99,7 @@ def send_order_mails(order, event_signature=None):
 
         send_once = config.get('send_once', False)
         if send_once:
-            send_mails = modules.checkout_mailing.OrderMail.objects.filter(
+            send_mails = modules.checkout.OrderMail.objects.filter(
                 order=order,
                 status__message_type=mail,
                 status__delivered=True
@@ -86,7 +124,7 @@ class OrderConfirmationWriter(MailWriter):
         return _("Order confirmation")
 
     def get_body(self, format):
-        return modules.checkout_mailing.render_order_confirmation(
+        return modules.checkout.render_order_confirmation(
             format=format, order=self.order)
 
     def get_to(self):
@@ -112,11 +150,11 @@ class OrderNotificationWriter(MailWriter):
         return _("Order notification")
 
     def get_body(self, format):
-        return modules.checkout_mailing.render_order_notification(
+        return modules.checkout.render_order_notification(
             format=format, order=self.order)
 
     def get_to(self):
-        return settings.NOTIFICATION_MAIL_TO
+        return modules.checkout.notification_to_email
 
     def get_attachments(self):
         report = reporter.get_report('invoice', context={
@@ -139,7 +177,7 @@ class ShippingNotificationWriter(MailWriter):
         return _("Shipping notification")
 
     def get_body(self, format):
-        return modules.checkout_mailing.render_shipping_notification(
+        return modules.checkout.render_shipping_notification(
             format=format, order=self.order)
 
     def get_to(self):

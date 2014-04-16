@@ -39,14 +39,13 @@ from sellmo.core.mailing import mailer
 from sellmo.core.reporting import reporter
 from sellmo.contrib.contrib_checkout.mailing import send_order_mails
 from sellmo.contrib.contrib_checkout.reporting import InvoiceWriter
-from sellmo.contrib.contrib_checkout.config import settings
 
 
 logger = logging.getLogger('sellmo')
 
 
 # Validate & Register mail writers
-for message_type, config in settings.CHECKOUT_MAILS.iteritems():
+for message_type, config in modules.checkout.order_mails.iteritems():
     if 'writer' not in config:
         raise Exception("{0} has no writer configured.".format(message_type))
     if 'send_events' not in config or not config['send_events']:
@@ -56,11 +55,11 @@ for message_type, config in settings.CHECKOUT_MAILS.iteritems():
 
 
 # Register report writers
-reporter.register('invoice', settings.INVOICE_WRITER)
+reporter.register('invoice', modules.checkout.invoice_writer)
 
 
 def on_mail_init(sender, message_type, message_reference, context, **kwargs):
-    if message_type in settings.CHECKOUT_MAILS:
+    if message_type in modules.checkout.order_mails:
         try:
             status = modules.mailing.MailStatus.objects.get(
                 message_reference=message_reference)
@@ -69,7 +68,7 @@ def on_mail_init(sender, message_type, message_reference, context, **kwargs):
                 "Mail message {0} could not be linked to order {1}."
                 .format(message_reference, context['order']))
         else:
-            modules.checkout_mailing.OrderMail.objects.create(
+            modules.checkout.OrderMail.objects.create(
                 status=status,
                 order=context['order'],
             )

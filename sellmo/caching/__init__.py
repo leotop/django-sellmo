@@ -28,5 +28,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sellmo.caching.base import *
+from sellmo.api.configuration import setting
+from sellmo.caching.base import Cache, cached
+
+
+enabled = setting(
+    'CACHING_ENABLED',
+    default=True
+)
+
 

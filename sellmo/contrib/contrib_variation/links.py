@@ -32,15 +32,13 @@ from django.http import Http404
 
 from sellmo import modules
 from sellmo.api.decorators import link
+from sellmo.api.forms import RedirectableFormSet
+from sellmo.api.pricing import Price
 from sellmo.contrib.contrib_attribute.query import ProductQ
 
 from django import forms
 from django.forms.formsets import formset_factory
 from django.contrib.contenttypes.models import ContentType
-
-from sellmo import modules
-from sellmo.api.forms import RedirectableFormSet
-from sellmo.api.pricing import Price
 
 
 @link(namespace=modules.attribute.namespace, name='filter', capture=True)

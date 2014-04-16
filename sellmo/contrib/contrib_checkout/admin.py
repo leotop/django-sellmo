@@ -29,7 +29,6 @@
 
 
 from sellmo import modules
-from sellmo.config import settings
 from sellmo.core.reporting import reporter
 from sellmo.contrib.admin.reverse import ReverseModelAdmin
 
@@ -52,7 +51,7 @@ class PurchaseInline(admin.TabularInline):
 
 
 class OrderMailInline(admin.TabularInline):
-    model = modules.checkout_mailing.OrderMail
+    model = modules.checkout.OrderMail
     extra = 0
     max_num = 0
 
@@ -85,7 +84,7 @@ class OrderAdmin(ReverseModelAdmin):
 
     inline_type = 'stacked'
     inline_reverse = ['shipment', 'payment'] + \
-        ['{0}_address'.format(address) for address in settings.ADDRESS_TYPES]
+        ['{0}_address'.format(address) for address in modules.customer.address_types]
 
     list_display = [
         'id', 'status', 'total_amount', 'paid', 'modified', 'actions_link']

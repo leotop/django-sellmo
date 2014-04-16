@@ -28,8 +28,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sellmo import modules
-from sellmo.config import settings
+from sellmo import modules, celery
+from sellmo.api.configuration import get_setting
 from sellmo.contrib.contrib_variation.signals import variations_invalidated
 from sellmo.contrib.contrib_variation import tasks
 
@@ -37,7 +37,7 @@ from sellmo.contrib.contrib_variation import tasks
 def on_variations_invalidated(sender, product, **kwargs):
     tasks.build_variations.apply_async((product,), countdown=60)
 
-if settings.CELERY_ENABLED:
+if celery.enabled:
     variations_invalidated.connect(on_variations_invalidated)
 
 modules.product.reserved_url_params += ['variants']

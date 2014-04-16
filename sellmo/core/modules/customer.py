@@ -27,19 +27,15 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.utils.module_loading import import_by_path
 
 import sellmo
 from sellmo import modules
-from sellmo.config import settings
+from sellmo.api.configuration import setting, class_setting
 from sellmo.api.decorators import view, chainable, link
 from sellmo.api.customer.models import (Addressee,
                                         Address,
                                         Contactable,
                                         Customer)
-from sellmo.api.customer.forms import (CustomerForm,
-                                       ContactableForm,
-                                       AddressForm)
 
 
 class CustomerModule(sellmo.Module):
@@ -53,14 +49,50 @@ class CustomerModule(sellmo.Module):
     Contactable = Contactable
     Customer = Customer
 
-    CustomerForm = CustomerForm
-    ContactableForm = ContactableForm
-    AddressForm = AddressForm
-
-    def __init__(self, *args, **kwargs):
-        self.CustomerForm = import_by_path(settings.CUSTOMER_FORM)
-        self.ContactableForm = import_by_path(settings.CONTACTABLE_FORM)
-        self.AddressForm = import_by_path(settings.ADDRESS_FORM)
+    CustomerForm = class_setting(
+        'CUSTOMER_FORM',
+        default='sellmo.api.customer.forms.CustomerForm')
+        
+    ContactableForm = class_setting(
+        'CONTACTABLE_FORM',
+        default='sellmo.api.customer.forms.ContactableForm')
+        
+    AddressForm = class_setting(
+        'ADDRESS_FORM',
+        default='sellmo.api.customer.forms.AddressForm')
+        
+    address_types = setting(
+        'ADDRESS_TYPES',
+        default=['shipping', 'billing']
+    )
+    
+    auth_enabled = setting(
+        'AUTH_ENABLED',
+        default=True
+    )
+    
+    customer_required = setting(
+        'CUSTOMER_REQUIRED',
+        default=False
+    )
+    
+    email_required = setting(
+        'EMAIL_REQUIRED',
+        default=True
+    )
+    
+    businesses_only = setting(
+        'BUSINESSES_ONLY',
+        default=False
+    )
+    
+    businesses_allowed = setting(
+        'BUSINESSES_ALLOWED',
+        default=True
+    )
+    
+    def __init__(self):
+        pass
 
     # Forms
 
@@ -151,7 +183,7 @@ class CustomerModule(sellmo.Module):
     def process_address(self, chain, request, type, customer=None,
                         prefix=None, data=None, address=None, **kwargs):
         
-        if type not in settings.ADDRESS_TYPES:
+        if type not in modules.customer.address_types:
             raise ValueError("Invalid address type.")
 
         # See if we can resolve an existing address from customer
@@ -180,9 +212,8 @@ class CustomerModule(sellmo.Module):
 
     @chainable()
     def get_customer(self, chain, request, customer=None, **kwargs):
-        user = None
-    
-        if settings.AUTH_ENABLED:
+        if self.auth_enabled:
+            user = None
             if request.user.is_authenticated():
                 user = request.user
             # See if we can relate this user to a customer
@@ -202,7 +233,7 @@ class CustomerModule(sellmo.Module):
         if not order is None and not order.pk:
             if customer and customer.pk:
                 order = self.Contactable.clone(customer, clone=order)
-                for address in settings.ADDRESS_TYPES:
+                for address in modules.customer.address_types:
                     order.set_address(
                         address, customer.get_address(address).clone())
 

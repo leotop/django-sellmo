@@ -30,12 +30,11 @@
 
 import datetime
 
-from sellmo import modules
-from sellmo.config import settings
-from sellmo.core.params import params
+from sellmo import modules, celery, params
+from sellmo.api.configuration import get_setting
 
 
-if settings.CELERY_ENABLED and getattr(params, 'worker_mode', False):
+if celery.enabled and getattr(params, 'worker_mode', False):
     from sellmo.boot.boot_sellmo.boot import celery_app as app
     app.conf.update(
         CELERYBEAT_SCHEDULE={

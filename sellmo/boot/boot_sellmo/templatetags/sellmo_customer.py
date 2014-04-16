@@ -35,7 +35,6 @@ from classytags.core import Tag, Options
 from classytags.arguments import Argument, MultiKeywordArgument, Flag
 
 from sellmo import modules
-from sellmo.config import settings
 
 
 register = template.Library()
@@ -44,26 +43,15 @@ register = template.Library()
 class CustomerTag(Tag):
     name = 'customer'
     options = Options(
-        Flag('authenticated', default=False, true_values=['authenticated']),
         MultiKeywordArgument('kwargs', required=False),
         'as',
         Argument('varname', default='customer', required=False, resolve=False),
         blocks=[('endcustomer', 'nodelist')],
     )
 
-    def render_tag(self, context, authenticated, kwargs, varname, nodelist):
-        customer = None
-        if authenticated:
-            if not settings.AUTH_ENABLED:
-                raise Exception("Customer authentication not enabled.")
-            request = context['request']
-            if (request.user.is_authenticated() and 
-                    hasattr(request.user, 'customer')):
-                customer = request.user.customer
-        else:
-            customer = modules.customer.get_customer(
-                request=context['request'], **kwargs)
-
+    def render_tag(self, context, kwargs, varname, nodelist):
+        customer = modules.customer.get_customer(
+            request=context['request'], **kwargs)
         context.push()
         context[varname] = customer
         output = nodelist.render(context)

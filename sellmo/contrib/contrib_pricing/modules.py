@@ -33,6 +33,7 @@ from datetime import datetime
 
 from sellmo import modules, Module
 from sellmo.api.decorators import chainable
+from sellmo.api.configuration import setting
 from sellmo.contrib.contrib_pricing.models import (QtyPriceBase,
                                                    QtyPrice,
                                                    QtyPriceRatio,
@@ -53,7 +54,11 @@ class QtyPricingModule(Module):
     QtyPrice = QtyPrice
     QtyPriceRatio = QtyPriceRatio
     ProductQtyPrice = ProductQtyPrice
-
+    
+    indexable_qtys = setting(
+        'INDEXABLE_QTYS',
+        default=[1])
+    
     @chainable()
     def get_tiers(self, chain, product, tiers=None, **kwargs):
         if not tiers:

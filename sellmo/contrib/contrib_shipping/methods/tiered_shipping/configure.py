@@ -30,8 +30,6 @@
 
 from sellmo import modules
 from sellmo.api.decorators import load
-from sellmo.contrib.contrib_shipping \
-     .methods.tiered_shipping.config import settings
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -39,8 +37,8 @@ from django.utils.translation import ugettext_lazy as _
 
 @load(after='finalize_attribute_Attribute')
 def add_settings():
-    if settings.SHIPPING_TIER_ATTRIBUTES > 0:
-        for i in range(settings.SHIPPING_TIER_ATTRIBUTES):
+    if modules.shipping.max_tier_attributes > 0:
+        for i in range(modules.shipping.max_tier_attributes):
             modules.settings.add_setting(
                 'shipping_tier_attribute{0}'.format(i + 1),
                 models.ForeignKey(

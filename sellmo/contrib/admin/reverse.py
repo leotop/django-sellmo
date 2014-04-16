@@ -139,7 +139,7 @@ class ReverseModelAdmin(ModelAdmin):
     def save_formset(self, request, form, formset, change):
         instances = formset.save()
         parent = form.instance
-        if isinstance(formset, ReverseInlineFormSet):
+        if isinstance(formset, ReverseInlineFormSet) and instances:
             setattr(parent, formset.parent_fk_name, instances[0])
             parent.save()
     

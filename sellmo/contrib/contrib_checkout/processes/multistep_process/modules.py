@@ -31,23 +31,22 @@
 from django.http import Http404
 from django.shortcuts import redirect
 
-from sellmo import modules, Module
+from sellmo import modules
 from sellmo.api.decorators import chainable, view
 
 
-class MultiStepCheckoutModule(Module):
-    namespace = 'multistep_checkout'
+class CheckoutModule(modules.checkout):
 
     @chainable()
-    def get_step(self, chain, key, order, request, step=None, **kwargs):
+    def get_checkout_step(self, chain, key, order, request, step=None, **kwargs):
         if chain:
             out = chain.execute(
                 key=key, order=order, request=request, step=step)
             step = out.get('step', step)
         return step
-
+    
     @view()
-    def login(self, chain, request, context=None, **kwargs):
+    def checkout_information(self, chain, request, context=None, **kwargs):
         if context is None:
             context = {}
 
@@ -58,7 +57,7 @@ class MultiStepCheckoutModule(Module):
             raise Http404
 
     @view()
-    def information(self, chain, request, context=None, **kwargs):
+    def checkout_payment_method(self, chain, request, context=None, **kwargs):
         if context is None:
             context = {}
 
@@ -69,18 +68,7 @@ class MultiStepCheckoutModule(Module):
             raise Http404
 
     @view()
-    def payment_method(self, chain, request, context=None, **kwargs):
-        if context is None:
-            context = {}
-
-        if chain:
-            return chain.execute(request=request, context=context, **kwargs)
-        else:
-            # We don't render anything
-            raise Http404
-
-    @view()
-    def summary(self, chain, request, context=None, **kwargs):
+    def checkout_summary(self, chain, request, context=None, **kwargs):
         if context is None:
             context = {}
 

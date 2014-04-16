@@ -31,6 +31,7 @@
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable
 from sellmo.api.pricing import Price
+from sellmo.api.configuration import setting
 from sellmo.utils.formatting import call_or_format
 from sellmo.contrib.contrib_variation.models import (Variant,
                                                      Variation,
@@ -44,7 +45,18 @@ from django.utils.translation import ugettext_lazy as _
 from django.db.models import Q
 from django.db.models.signals import post_save, m2m_changed
 
-from sellmo.contrib.contrib_variation.config import settings
+
+def choice_format(values, price_adjustment, **kwargs):
+    if price_adjustment:
+        if price_adjustment.amount > 0:
+            return (
+                u"{values} +{price_adjustment}"
+                .format(values=values, price_adjustment=price_adjustment))
+        else:
+            return (
+                u"{values} -{price_adjustment}"
+                .format(values=values, price_adjustment=-price_adjustment))
+    return u"{values}".format(values=values)
 
 
 class VariationModule(Module):
@@ -58,6 +70,18 @@ class VariationModule(Module):
     product_subtypes = []
     subtypes = []
     m2m_relations = {}
+    
+    variation_choice_format = setting(
+        'VARIATION_CHOICE_FORMAT',
+        default=choice_format)
+    
+    variation_description_format = setting(
+        'VARIATION_DESCRIPTION_FORMAT',
+        default=u"{product} {values}")
+    
+    variation_value_seperator = setting(
+        'VARIATION_VALUE_SEPERATOR',
+        default=u", ")
 
     def __init__(self, *args, **kwargs):
         for field, reverse in self.m2m_relations.values():
@@ -196,13 +220,13 @@ class VariationModule(Module):
             if hasattr(variant, '_is_variant') and variant.price_adjustment:
                 price_adjustment = Price(variant.price_adjustment)
 
-            values = settings.VARIATION_VALUE_SEPERATOR.join(
+            values = self.variation_value_seperator.join(
                 [unicode(value)
                  for value in variation.values.all().order_by('attribute')]
             )
 
             choice = call_or_format(
-                settings.VARIATION_CHOICE_FORMAT,
+                self.variation_choice_format,
                 variation=variation,
                 variant=variant,
                 values=values,
@@ -219,12 +243,12 @@ class VariationModule(Module):
                                        description=None, **kwargs):
         if description is None:
 
-            values = settings.VARIATION_VALUE_SEPERATOR.join(
+            values = self.variation_value_seperator.join(
                 [unicode(value) for value in values]
             )
 
             description = call_or_format(
-                settings.VARIATION_DESCRIPTION_FORMAT,
+                self.variation_description_format,
                 product=product,
                 values=values)
 

@@ -30,26 +30,59 @@
 
 from sellmo import modules
 from sellmo.api.decorators import load
-from sellmo.contrib.contrib_customer.config import settings
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+
+
+@load(before='finalize_customer_Addressee')
+def load_model():
+
+    class Addressee(modules.customer.Addressee):
+
+        if modules.customer.name_prefix_enabled:
+            prefix = models.CharField(
+                max_length=20,
+                verbose_name=_("prefix"),
+                blank=not modules.customer.name_prefix_required,
+                choices=modules.customer.name_prefix_choices,
+                default=modules.customer.name_prefix_choices[0][0]
+            )
+
+        if modules.customer.name_suffix_enabled:
+            suffix = models.CharField(
+                max_length=10,
+                blank=True,
+                verbose_name=_("suffx"),
+            )
+
+        def clone(self, cls=None, clone=None):
+            clone = super(Addressee, self).clone(cls=cls, clone=clone)
+            clone.suffix = self.suffix
+            if modules.customer.name_prefix_enabled:
+                clone.prefix = self.prefix
+            return clone
+
+        class Meta(modules.customer.Addressee.Meta):
+            abstract = True
+
+    modules.customer.Addressee = Addressee
 
 
 @load(before='finalize_customer_Contactable')
 def load_model():
     class Contactable(modules.customer.Contactable):
 
-        if settings.PHONE_NUMBER_ENABLED:
+        if modules.customer.phone_number_enabled:
             phone_number = models.CharField(
                 max_length=20,
-                blank=not settings.PHONE_NUMBER_REQUIRED,
+                blank=not modules.customer.phone_number_required,
                 verbose_name=_("phone number"),
             )
 
         def clone(self, cls=None, clone=None):
             clone = super(Contactable, self).clone(cls=cls, clone=clone)
-            if settings.PHONE_NUMBER_ENABLED:
+            if modules.customer.phone_number_enabled:
                 clone.phone_number = self.phone_number
             return clone
 

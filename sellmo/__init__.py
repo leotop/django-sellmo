@@ -27,4 +27,16 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo.core.modularization import modules, Module
+from sellmo.magic import singleton
+
+
+@singleton
+class Params(object):
+    pass
+
+params = Params()
+
+REPORT_GENERATORS = []
+REPORT_FORMAT = 'pdf'

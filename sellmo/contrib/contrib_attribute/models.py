@@ -36,8 +36,6 @@ from sellmo import modules
 from sellmo.api.decorators import load
 from sellmo.core.polymorphism import PolymorphicModel, PolymorphicManager
 from sellmo.utils.formatting import call_or_format
-
-from sellmo.contrib.contrib_attribute.config import settings
 from sellmo.contrib.contrib_attribute.fields import (AttributeKeyField, 
                                                      AttributeTypeField)
 from sellmo.contrib.contrib_attribute.helpers import AttributeHelper
@@ -221,7 +219,7 @@ class Value(models.Model):
     natural_key.dependencies = ['attribute.attribute', 'product.product']
 
     def __unicode__(self):
-        return call_or_format(settings.VALUE_FORMAT, value=self)
+        return call_or_format(modules.attribute.value_format, value=self)
 
     class Meta:
         abstract = True

@@ -29,7 +29,7 @@
 
 
 from sellmo import modules
-from sellmo.core.params import params
+from sellmo import params
 from sellmo.magic import ModelMixin
 from sellmo.api.decorators import load
 

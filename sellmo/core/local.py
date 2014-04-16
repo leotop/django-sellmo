@@ -30,7 +30,7 @@
 
 from threading import local
 
-from sellmo.core.params import params
+from sellmo import params
 
 
 _local = local()

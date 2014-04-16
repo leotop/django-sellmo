@@ -32,13 +32,12 @@ from django.shortcuts import redirect
 
 from sellmo import modules
 from sellmo.api.decorators import link
-from sellmo.contrib.contrib_cart.config import settings
 
 
 namespace = modules.cart.namespace
 
 
-if settings.SINGLE_PURCHASE_MODE:
+if modules.cart.single_purchase_mode:
     @link(capture=True)
     def add_purchase(cart, **kwargs):
         for purchase in list(cart):

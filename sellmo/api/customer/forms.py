@@ -30,60 +30,27 @@
 from django import forms
 
 from sellmo import modules
-from sellmo.config import settings
 from sellmo.api.decorators import load
 
 
-@load(action='load_customer_CustomerForm')
-@load(after='finalize_customer_Customer')
-def load_form():
+_exclude = []
+if modules.customer.auth_enabled:
+    _exclude.append('user')
 
-    _exclude = []
-    if settings.AUTH_ENABLED:
-        _exclude.append('user')
-
-    for address in settings.ADDRESS_TYPES:
-        _exclude.append('{0}_address'.format(address))
-
-    class CustomerForm(modules.customer.CustomerForm):
-
-        class Meta:
-            model = modules.customer.Customer
-            exclude = _exclude
-
-    modules.customer.CustomerForm = CustomerForm
-
-
+for address in modules.customer.address_types:
+    _exclude.append('{0}_address'.format(address))
+    
 class CustomerForm(forms.ModelForm):
-    pass
-
-
-@load(action='load_customer_ContactableForm')
-@load(after='finalize_customer_Contactable')
-def load_form():
-    class ContactableForm(modules.customer.ContactableForm):
-
-        class Meta:
-            model = modules.customer.Contactable
-
-    modules.customer.ContactableForm = ContactableForm
+    class Meta:
+        model = modules.customer.Customer
+        exclude = _exclude
 
 
 class ContactableForm(forms.ModelForm):
-    pass
-
-
-@load(action='load_customer_AddressForm')
-@load(after='finalize_customer_Address')
-def load_form():
-    class AddressForm(modules.customer.AddressForm):
-
-        class Meta:
-            model = modules.customer.Address
-            exclude = ('customer', 'type')
-
-    modules.customer.AddressForm = AddressForm
+    class Meta:
+        model = modules.customer.Contactable
 
 
 class AddressForm(forms.ModelForm):
-    pass
+    class Meta:
+        model = modules.customer.Address

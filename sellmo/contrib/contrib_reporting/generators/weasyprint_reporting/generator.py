@@ -31,9 +31,9 @@
 from weasyprint import HTML
 
 from sellmo.core.reporting.generators import ReportGeneratorBase
-from sellmo.contrib.contrib_reporting.config import settings
 
 import logging
+
 
 # Dont need no logging
 logger = logging.getLogger('weasyprint')
@@ -48,12 +48,6 @@ class WeasyPrintReportGenerator(ReportGeneratorBase):
     def get_params(self, writer, format):
         params = super(WeasyPrintReportGenerator, self).get_params(
             writer, format)
-        suggest_params = settings.REPORTING_PARAMS.get(format, {})
-
-        for param, suggest in suggest_params.iteritems():
-            value = writer.negotiate_param(param, suggest, **params)
-            params[param] = value if not value is False else suggest
-
         return params
 
     def get_data(self, writer, format):

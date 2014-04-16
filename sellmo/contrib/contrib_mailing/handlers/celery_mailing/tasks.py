@@ -28,11 +28,25 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from celery import shared_task, Task
-
-from sellmo.contrib.contrib_mailing.config import settings
+from sellmo.api.configuration import setting
 from sellmo.core.mailing.handlers import MailHandlerBase
 from sellmo.core.mailing import mailer
+
+
+from celery import shared_task, Task
+
+
+send_mail_retry_enabled = setting(
+    'SEND_MAIL_RETRY_ENABLED',
+    default=True)
+                            
+send_mail_retry_delay = setting(
+    'SEND_MAIL_RETRY_DELAY',
+    default=5 * 60)
+                                    
+send_mail_retry_limit = setting(
+    'SEND_MAIL_RETRY_LIMIT',
+    default=3)                                
 
 
 @shared_task
@@ -42,10 +56,10 @@ def send_mail(message_type, message_reference, context):
     try:
         handler.send_mail(message_type, message_reference, context)
     except Exception as exc:
-        if settings.SEND_MAIL_RETRY_ENABLED:
+        if send_mail_retry_enabled:
             raise send_mail.retry(
-                countdown=settings.SEND_MAIL_RETRY_DELAY,
-                max_retries=settings.SEND_MAIL_RETRY_LIMIT,
+                countdown=send_mail_retry_delay,
+                max_retries=send_mail_retry_limit,
                 exc=exc
             )
         raise

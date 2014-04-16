@@ -33,7 +33,6 @@ from decimal import Decimal
 from sellmo import modules
 from sellmo.api.decorators import load
 from sellmo.api.pricing import Price
-from sellmo.contrib.contrib_pricing.config import settings
 
 from django.db import models
 from django.db.models.signals import post_save, pre_delete
@@ -216,7 +215,7 @@ def setup_indexes():
         'qty',
         models.PositiveIntegerField(null=True),
         required=False,
-        default=settings.INDEXABLE_QTYS
+        default=modules.qty_pricing.indexable_qtys
     )
 
 

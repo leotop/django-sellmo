@@ -29,13 +29,13 @@
 
 
 from django import template
-from django.conf import settings as django_settings
+from django.conf import settings
 from django.core.cache import cache
 from django.core.cache.utils import make_template_fragment_key
 from django.utils.safestring import mark_safe
 
 from sellmo import modules
-from sellmo.contrib.contrib_category.config import settings
+from sellmo.api.configuration import setting
 
 from mptt.templatetags.mptt_tags import cache_tree_children
 
@@ -44,6 +44,11 @@ from classytags.arguments import Argument, MultiKeywordArgument, Flag
 
 
 register = template.Library()
+
+
+max_expire_time = setting(
+    'MAX_EXPIRE_TIME', 
+    default=3600 * 24)
 
 
 class CategoriesTag(Tag):
@@ -126,7 +131,7 @@ class CategoriesTag(Tag):
         cache_key = False
         output = None
 
-        if not django_settings.DEBUG and expire_time is not False:
+        if not settings.DEBUG and expire_time is not False:
             cache_key = make_template_fragment_key(
                 'categories',
                 [nested, current, str(pre_node + node + post_node)])
@@ -144,12 +149,12 @@ class CategoriesTag(Tag):
                     expire_time = int(expire_time)
                 # Make sure we don't expire any longer than the
                 # categories_cache_keys entry
-                if not settings.MAX_EXPIRE_TIME is None:
+                if not max_expire_time is None:
                     if (expire_time is None or 
-                            expire_time > settings.MAX_EXPIRE_TIME):
+                            expire_time > max_expire_time):
                         raise Exception(
                             "Expire time may not exceed {0}"
-                            .format(settings.MAX_EXPIRE_TIME))
+                            .format(max_expire_time))
 
                 cache.set(cache_key, output, expire_time)
                 cache_keys = cache.get('categories_cache_keys', [])
@@ -157,7 +162,7 @@ class CategoriesTag(Tag):
                     cache_keys.append(cache_key)
                 cache.set(
                     'categories_cache_keys',
-                    cache_keys, settings.MAX_EXPIRE_TIME)
+                    cache_keys, max_expire_time)
 
         return output
 

@@ -32,19 +32,24 @@ import operator
 
 from django.http import Http404
 from django.db.models import Q
-from django.utils.module_loading import import_by_path
 
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable
-from sellmo.contrib.contrib_search.config import settings
+from sellmo.api.configuration import setting, class_setting
 
 
 class SearchModule(Module):
     namespace = 'search'
 
-    def __init__(self, *args, **kwargs):
-        self.SearchForm = import_by_path(settings.SEARCH_FORM)
+    SearchForm = class_setting(
+        'SEARCH_FORM',
+        default='sellmo.contrib.contrib_search.forms.SearchForm')
+        
+    search_fields = setting(
+        'SEARCH_FIELDS',
+        default=[])
 
+    
     @chainable()
     def get_search_form(self, chain, form=None, cls=None, initial=None,
                         data=None, **kwargs):
@@ -93,7 +98,7 @@ class SearchModule(Module):
             else:
                 return "%s__icontains" % field
 
-        fields = settings.SEARCH_FIELDS
+        fields = self.search_fields
         if fields and term:
             orm_lookups = [construct_search(str(field)) for field in fields]
             for bit in term.split():

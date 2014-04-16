@@ -33,13 +33,11 @@ from django.contrib.auth.admin import UserAdmin as UserAdminBase
 from django.utils.translation import ugettext_lazy as _
 
 from sellmo import modules
-from sellmo.contrib.contrib_account.forms import (UserChangeForm,
-                                                  UserCreationForm)
 
 
 class UserAdmin(UserAdminBase):
-    form = UserChangeForm
-    add_form = UserCreationForm
+    form = modules.account.UserChangeForm
+    add_form = modules.account.UserCreationForm
 
     fieldsets = (
         (None, {'fields': ('email', 'password')}),

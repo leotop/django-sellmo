@@ -31,18 +31,25 @@
 from django.utils.module_loading import import_by_path
 
 from sellmo.magic import singleton
-from sellmo.config import settings
+from sellmo.api.configuration import setting
 
 
 @singleton
 class Reporter(object):
 
+    default_format = setting(
+        'DEFAULT_REPORT_FORMAT',
+        default='pdf'
+    )
+    
+    generators = setting(
+        'REPORT_GENERATORS',
+        default=[]
+    )
+    
     input_format_mapping = None
     output_format_mapping = None
     writers = {}
-
-    def __init__(self):
-        pass
 
     def map_generators(self):
 
@@ -53,7 +60,7 @@ class Reporter(object):
         self.output_format_mapping = {}
 
         # Map generators
-        for generator in settings.REPORT_GENERATORS:
+        for generator in self.generators:
             generator = import_by_path(generator)
             if not generator.input_formats or not generator.output_formats:
                 raise Exception("Generator needs input and output formats")
@@ -77,7 +84,7 @@ class Reporter(object):
         if context is None:
             context = {}
         if format is None:
-            format = settings.REPORT_FORMAT
+            format = self.default_format
 
         # Find all acceptable formats
         input_formats = set([format])

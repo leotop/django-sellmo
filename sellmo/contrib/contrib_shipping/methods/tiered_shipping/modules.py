@@ -28,8 +28,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from django.utils.translation import ugettext_lazy as _
+from sellmo import modules
+from sellmo.api.configuration import setting
 
 
-SEARCH_FIELDS = []
-SEARCH_FORM = 'sellmo.contrib.contrib_search.forms.SearchForm'
+class ShippingModule(modules.shipping):
+    namespace = 'shipping'
+    max_tier_attributes = setting(
+        'MAX_TIER_ATTRIBUTES',
+        default=3)

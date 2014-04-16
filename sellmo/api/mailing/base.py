@@ -28,7 +28,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sellmo.config import settings
+from django.conf import settings
 
 
 class MailHandler(object):
@@ -80,7 +80,7 @@ class MailWriter(object):
         return []
 
     def get_from(self):
-        return settings.MAIL_FROM
+        return settings.DEFAULT_FROM_EMAIL
 
     def get_attachments(self):
         return []

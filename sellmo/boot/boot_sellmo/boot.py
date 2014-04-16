@@ -31,14 +31,15 @@
 import sys
 import logging
 
+from sellmo import caching, celery
 from sellmo.core.main import Sellmo
-from sellmo.config import settings
+from sellmo.api.configuration import get_setting
 
 
-if settings.CACHING_ENABLED:
+if caching.enabled:
     import sellmo.caching.boot
 
-if settings.CELERY_ENABLED:
+if celery.enabled:
     from sellmo.celery.boot import app as celery_app
 else:
     celery_app = None

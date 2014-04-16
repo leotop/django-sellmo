@@ -31,11 +31,33 @@
 import os.path
 import codecs
 
-from django.conf import settings as django_settings
-
+from sellmo.api.configuration import setting
 from sellmo.core.reporting.generators import ReportGeneratorBase
-from sellmo.contrib.contrib_reporting.config import settings
 from sellmo.contrib.contrib_reporting.piping import pipe, PipeError
+
+
+PARAMS = {
+    'pdf': {
+        'size': 'A4',
+        'orientation': 'portrait',
+        'margin': '1cm',
+        'zoom': 1.0,
+    },
+    'png': {
+        'viewport': '800x800'
+    }
+}
+
+phantomjs_params = setting(
+    'PARAMS',
+    default=PARAMS,
+    prefix='PHANTOMJS')
+
+phantomjs_executable = setting(
+    'PARAMS',
+    default='phantomjs',
+    prefix='PHANTOMJS'
+)
 
 
 class PhantomJSReportGenerator(ReportGeneratorBase):
@@ -46,8 +68,7 @@ class PhantomJSReportGenerator(ReportGeneratorBase):
     def get_params(self, writer, format):
         params = super(PhantomJSReportGenerator, self).get_params(
             writer, format)
-        suggest_params = settings.REPORTING_PARAMS.get(format, {})
-
+        suggest_params = phantomjs_params.get(format, {})
         for param, suggest in suggest_params.iteritems():
             value = writer.negotiate_param(param, suggest, **params)
             params[param] = value if not value is False else suggest
@@ -59,8 +80,6 @@ class PhantomJSReportGenerator(ReportGeneratorBase):
         params = self.get_params(writer, format)
 
         # Create command
-        phantomjs = getattr(
-            django_settings, 'PHANTOMJS_EXECUTABLE', 'phantomjs')
         script = os.path.join(os.path.dirname(__file__), 'scripts/render.js')
         arguments = ['format={0}'.format(format)]
 
@@ -74,7 +93,7 @@ class PhantomJSReportGenerator(ReportGeneratorBase):
 
         try:
             return pipe(
-                '{0} {1} {2}'.format(phantomjs, script, arguments), input=html)
+                '{0} {1} {2}'.format(phantomjs_executable, script, arguments), input=html)
         except PipeError:
             raise
 

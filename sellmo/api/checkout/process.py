@@ -29,11 +29,7 @@
 
 from django.core.urlresolvers import reverse
 
-#
-
 from sellmo.core.processing import Process, ProcessStep
-
-#
 
 
 class CheckoutProcess(Process):

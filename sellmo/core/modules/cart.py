@@ -38,9 +38,9 @@ from django.shortcuts import redirect
 from django.utils.module_loading import import_by_path
 
 import sellmo
-from sellmo.config import settings
 from sellmo import modules
 from sellmo.api.decorators import view, chainable, link
+from sellmo.api.configuration import setting, class_setting
 from sellmo.api.cart.models import Cart
 from sellmo.api.cart.forms import AddToCartForm, EditPurchaseForm
 from sellmo.api.forms import RedirectableFormSet
@@ -53,12 +53,16 @@ class CartModule(sellmo.Module):
     enabled = True
 
     Cart = Cart
-    AddToCartForm = AddToCartForm
-    EditPurchaseForm = EditPurchaseForm
+    
+    AddToCartForm = class_setting(
+        'ADD_TO_CART_FORM',
+        default='sellmo.api.cart.forms.AddToCartForm')
+    
+    EditPurchaseForm = class_setting(
+        'EDIT_PURCHASE_FORM',
+        default='sellmo.api.cart.forms.EditPurchaseForm')
 
-    def __init__(self, *args, **kwargs):
-        self.AddToCartForm = import_by_path(settings.ADD_TO_CART_FORM)
-        self.EditPurchaseForm = import_by_path(settings.EDIT_PURCHASE_FORM)
+    def __init__(self):
         pre_delete.connect(self.on_delete_cart, sender=self.Cart)
 
     def on_delete_cart(self, sender, instance, **kwargs):

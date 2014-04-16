@@ -32,68 +32,15 @@ from sellmo import modules
 from sellmo.api.checkout.process import CheckoutProcess, CheckoutStep
 from sellmo.contrib.contrib_checkout \
            .forms import AcceptTermsForm
-from sellmo.contrib.contrib_checkout \
-           .config import settings as checkout_settings
-from sellmo.config import settings
 
 
 class MultiStepCheckoutProcess(CheckoutProcess):
 
     def get_first_step(self):
-        if not settings.AUTH_ENABLED or self.order.email:
-            key = 'information'
-            step = InformationStep(order=self.order, request=self.request)
-        else:
-            key = 'login'
-            step = LoginStep(order=self.order, request=self.request)
-        return modules.multistep_checkout.get_step(
-            key=key, order=self.order, request=self.request, step=step)
-
-
-class LoginStep(CheckoutStep):
-
-    invalid_context = None
-    key = 'login'
-
-    def is_definitive(self):
-        return self.order.is_pending
-
-    def is_completed(self):
-        return self.request.user.is_authenticated()
-
-    def can_skip(self):
-        return True
-
-    def get_next_step(self):
         step = InformationStep(order=self.order, request=self.request)
-        return modules.multistep_checkout.get_step(
-            key='information', order=self.order,
+        return modules.checkout.get_checkout_step(
+            key='information', order=self.order, 
             request=self.request, step=step)
-
-    def contextualize_or_complete(self, request, context, data=None,
-                                  success=True):
-        user, form, processed = modules.customer.process_login(
-            request=request, prefix='login', data=data)
-        context['login_form'] = form
-        success &= processed
-
-        if success:
-            modules.customer.login_user(request=request, user=user)
-
-        return success
-
-    def complete(self, data):
-        self.invalid_context = {}
-        return self.contextualize_or_complete(
-            self.request, self.invalid_context, data)
-
-    def render(self, request, context):
-        if self.invalid_context is None:
-            self.contextualize_or_complete(request, context)
-        else:
-            context.update(self.invalid_context)
-        return modules.multistep_checkout.login(
-            request=request, context=context)
 
 
 class InformationStep(CheckoutStep):
@@ -102,7 +49,7 @@ class InformationStep(CheckoutStep):
     key = 'information'
 
     def is_completed(self):
-        for type in settings.ADDRESS_TYPES:
+        for type in modules.customer.address_types:
             if self.order.get_address(type) is None:
                 return False
         if self.order.needs_shipping and self.order.shipment is None:
@@ -114,7 +61,7 @@ class InformationStep(CheckoutStep):
 
     def get_next_step(self):
         step = PaymentMethodStep(order=self.order, request=self.request)
-        next_step = modules.multistep_checkout.get_step(
+        next_step = modules.checkout.get_checkout_step(
             key='payment_method', order=self.order,
             request=self.request, step=step)
         if self.order.needs_shipping:
@@ -141,7 +88,7 @@ class InformationStep(CheckoutStep):
             context['shipping_method_form'] = form
             success &= processed
 
-        for type in settings.ADDRESS_TYPES:
+        for type in modules.customer.address_types:
             address, form, processed = modules.customer.process_address(
                 request=request, type=type,
                 prefix='{0}_address'.format(type),
@@ -151,7 +98,7 @@ class InformationStep(CheckoutStep):
             addresses[type] = address
 
         if data is not None and success:
-            for type in settings.ADDRESS_TYPES:
+            for type in modules.customer.address_types:
                 address = addresses[type]
                 address.save()
                 self.order.set_address(type, address)
@@ -170,7 +117,7 @@ class InformationStep(CheckoutStep):
         else:
             context.update(self.invalid_context)
 
-        return modules.multistep_checkout.information(
+        return modules.checkout.checkout_information(
             request=request, context=context)
 
 
@@ -189,7 +136,7 @@ class PaymentMethodStep(CheckoutStep):
 
     def get_next_step(self):
         step = SummaryStep(order=self.order, request=self.request)
-        return modules.multistep_checkout.get_step(
+        return modules.checkout.get_checkout_step(
             key='summary', order=self.order,
             request=self.request, step=step)
 
@@ -216,7 +163,7 @@ class PaymentMethodStep(CheckoutStep):
             self.contextualize_or_complete(request, context)
         else:
             context.update(self.invalid_context)
-        return modules.multistep_checkout.payment_method(
+        return modules.checkout.checkout_payment_method(
             request=request, context=context)
 
 
@@ -237,7 +184,7 @@ class SummaryStep(CheckoutStep):
 
     def contextualize_or_complete(self, request, context, data=None,
                                   success=True):
-        if checkout_settings.ACCEPT_TERMS_ENABLED:
+        if modules.checkout.accept_terms_enabled:
             form = AcceptTermsForm(data, prefix='accept_terms')
             context['accept_terms_form'] = form
             if data:
@@ -260,5 +207,5 @@ class SummaryStep(CheckoutStep):
         else:
             context.update(self.invalid_context)
 
-        return modules.multistep_checkout.summary(
+        return modules.checkout.checkout_summary(
             request=request, context=context)

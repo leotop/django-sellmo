@@ -28,7 +28,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sellmo.core.params import params
+from sellmo import params
 params.worker_mode = True # Order is vital
 
 

@@ -28,37 +28,17 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from django.conf import settings as django_settings
 from django.utils.translation import ugettext_lazy as _
+from django.utils.functional import allow_lazy
 
 
-CURRENCY = ('eur', _(u"euro"), _(u"\u20ac {amount:\u00a0>{align}.2f}"))
-
-
-ADD_TO_CART_FORM = 'sellmo.registry.cart.AddToCartForm'
-EDIT_PURCHASE_FORM = 'sellmo.registry.cart.EditPurchaseForm'
-SHIPPING_METHOD_FORM = 'sellmo.registry.checkout.ShippingMethodForm'
-PAYMENT_METHOD_FORM = 'sellmo.registry.checkout.PaymentMethodForm'
-CUSTOMER_FORM = 'sellmo.registry.customer.CustomerForm'
-CONTACTABLE_FORM = 'sellmo.registry.customer.ContactableForm'
-ADDRESS_FORM = 'sellmo.registry.customer.AddressForm'
-
-
-def method_choice_format(method, costs, **kwargs):
-    if costs:
-        return u"{method} +{costs}".format(method=method, costs=costs)
-    return u"{method}".format(method=method)
-
-PAYMENT_METHOD_CHOICE_FORMAT = method_choice_format
-SHIPPING_METHOD_CHOICE_FORMAT = method_choice_format
-
-
-CUSTOMER_REQUIRED = False
-EMAIL_REQUIRED = True
-BUSINESSES_ONLY = False
-BUSINESSES_ALLOWED = True
-ADDRESS_TYPES = ['shipping', 'billing']
-AUTH_ENABLED = True
+ORDER_EVENTS = [
+    'on_pending',
+    'on_completed',
+    'on_canceled',
+    'on_closed',
+    'on_paid'
+]
 
 
 ORDER_STATUSES = {
@@ -105,20 +85,45 @@ ORDER_STATUSES = {
 }
 
 
-REDIRECTION_SESSION_PREFIX = '_sellmo_redirection'
-REDIRECTION_DEBUG = False
-
-
-CACHING_PREFIX = '_sellmo'
-CACHING_ENABLED = True
-
-
-CELERY_ENABLED = False
-
-
-MAIL_HANDLER = 'sellmo.core.mailing.handlers.DefaultMailHandler'
-MAIL_FROM = django_settings.DEFAULT_FROM_EMAIL
-
-
-REPORT_GENERATORS = []
-REPORT_FORMAT = 'pdf'
+class OrderStatusesHelper(object):
+    def __init__(self, status_dict):
+        initial = None
+        choices = []
+        event_to_status = {}
+        status_to_state = {}
+        
+        for status, entry in status_dict.iteritems():
+            config = entry[1] if len(entry) == 2 else {}
+            if 'initial' in config and config['initial']:
+                if initial is not None:
+                    raise ValueError("Only one order status can be "
+                                     "defined as initial.")
+                initial = status
+            if 'state' in config:
+                status_to_state[status] = config['state']
+            if 'flow' in config:
+                # Check flow
+                for allowed in config['flow']:
+                    if allowed not in status_dict:
+                        raise ValueError(
+                            "Order status '{0}' does not "
+                            "exist.".format(allowed))
+            for event in ORDER_EVENTS:
+                if event in config:
+                    if event in event_to_status:
+                        raise ValueError(
+                            "Can only have one status "
+                            "responding to '{0}'.".format(event))
+                    event_to_status[event] = status
+        
+            choices.append((status, entry[0]))
+            
+        if not initial:
+            raise ValueError("No initial order status configured.")
+            
+        self.initial = initial
+        self.choices = choices
+        self.event_to_status = event_to_status
+        self.status_to_state = status_to_state
+            
+        

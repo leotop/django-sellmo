@@ -34,8 +34,6 @@ from sellmo.api.pricing import Price
 from sellmo.contrib.contrib_shipping \
      .methods.tiered_shipping import (TieredShippingMethod as 
                                       _TieredShippingMethod)
-from sellmo.contrib.contrib_shipping \
-     .methods.tiered_shipping.config import settings
 
 from django.db import models
 from django.db.models import Q
@@ -117,8 +115,8 @@ def load_model():
 
     get_attribute_name = lazy(get_attribute_name, six.text_type)
 
-    if settings.SHIPPING_TIER_ATTRIBUTES > 0:
-        for i in range(settings.SHIPPING_TIER_ATTRIBUTES):
+    if modules.shipping.max_tier_attributes > 0:
+        for i in range(modules.shipping.max_tier_attributes):
             TieredShippingTier.add_to_class(
                 'max_value{0}'.format(i + 1),
                 models.FloatField(
@@ -138,10 +136,10 @@ class TieredShippingTierQuerySet(QuerySet):
         # Match against subtotal
         q = Q(min_amount__lte=order.subtotal.amount)
 
-        if settings.SHIPPING_TIER_ATTRIBUTES > 0:
+        if modules.shipping.max_tier_attributes > 0:
             # Match against attribute totals
             _settings = modules.settings.get_settings()
-            for i in range(settings.SHIPPING_TIER_ATTRIBUTES):
+            for i in range(modules.shipping.max_tier_attributes):
                 attribute = getattr(
                     _settings, 'shipping_tier_attribute{0}'.format(i + 1))
                 # See if attribute is configured
@@ -186,7 +184,7 @@ class TieredShippingTierManager(models.Manager):
 
 @load(before='finalize_settings_SiteSettings')
 def load_model():
-    if settings.SHIPPING_TIER_ATTRIBUTES > 0:
+    if modules.shipping.max_tier_attributes > 0:
         class SiteSettings(modules.settings.SiteSettings):
 
             def clean(self):
@@ -196,7 +194,7 @@ def load_model():
                 ]
 
                 errors = {}
-                for i in range(settings.SHIPPING_TIER_ATTRIBUTES):
+                for i in range(modules.shipping.max_tier_attributes):
                     attr = 'shipping_tier_attribute{0}'.format(i + 1)
                     attribute = getattr(self, attr, None)
                     if attribute and attribute.type not in valid_types:

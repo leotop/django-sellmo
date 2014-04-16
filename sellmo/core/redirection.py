@@ -28,25 +28,34 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sellmo.config import settings
+from sellmo.api.configuration import setting
+
+
+debug = setting(
+    'REDIRECTION_DEBUG',
+    default=False)
+    
+prefix = setting(
+    'REDIRECTION_SESSION_PREFIX',
+    default='_sellmo_redirection')
 
 
 class RedirectionAccess(object):
-
+    
     def __init__(self, session):
         self._session = session
         self._last = {}
 
         # Get and clear session
-        keys = self._session.get(settings.REDIRECTION_SESSION_PREFIX, [])
+        keys = self._session.get(prefix, [])
         for key in keys:
             if key in self._session:
-                if not settings.REDIRECTION_DEBUG:
+                if not debug:
                     self._last[key] = self._session.pop(key)
                 else:
                     self._last[key] = self._session[key]
-        if not settings.REDIRECTION_DEBUG:
-            self._session[settings.REDIRECTION_SESSION_PREFIX] = []
+        if not debug:
+            self._session[prefix] = []
 
     def __getitem__(self, key):
         return self._last[key]
@@ -57,7 +66,7 @@ class RedirectionAccess(object):
         return default
 
     def __setitem__(self, key, value):
-        keys = self._session.get(settings.REDIRECTION_SESSION_PREFIX, [])
+        keys = self._session.get(prefix, [])
         keys.append(key)
         self._session[key] = value
-        self._session[settings.REDIRECTION_SESSION_PREFIX] = keys
+        self._session[prefix] = keys

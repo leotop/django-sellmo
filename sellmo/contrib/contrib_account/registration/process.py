@@ -28,14 +28,31 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from django.conf import settings
+from django.core.urlresolvers import reverse
 
-from sellmo.contrib.contrib_pricing.config import defaults
-
-
-debug = getattr(settings, 'DEBUG', False)
+from sellmo.core.processing import Process, ProcessStep
+from sellmo.api.checkout.process import CheckoutStep
 
 
-INDEXABLE_QTYS = getattr(
-    settings, 'SELLMO_INDEXABLE_QTYS', defaults.INDEXABLE_QTYS)
+class RegistrationProcess(Process):
+
+    def __init__(self, customer, request):
+        super(RegistrationProcess, self).__init__()
+        self.customer = customer
+        self.request = request
+
+    def resolve_url(self, step):
+        return reverse('account.registration', args=[step.key])
+
+
+class RegistrationStep(ProcessStep):
+
+    def __init__(self, customer, request):
+        super(RegistrationStep, self).__init__()
+        self.customer = customer
+        self.request = request
+
+
+class DefaultRegistrationProcess(RegistrationProcess):
+    pass
 

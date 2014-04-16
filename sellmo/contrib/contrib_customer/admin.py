@@ -32,7 +32,6 @@ from django.contrib import admin
 from sellmo.contrib.admin.reverse import ReverseModelAdmin
 
 from sellmo import modules
-from sellmo.config import settings
 
 
 class AddressInline(admin.StackedInline):
@@ -42,9 +41,9 @@ class AddressInline(admin.StackedInline):
 class CustomerAdmin(ReverseModelAdmin):
     inline_type = 'stacked'
     inline_reverse = ['{0}_address'.format(address)
-                      for address in settings.ADDRESS_TYPES]
+                      for address in modules.customer.address_types]
 
-    if settings.AUTH_ENABLED:
+    if modules.customer.auth_enabled:
         raw_id_fields = ['user']
         autocomplete_lookup_fields = {
             'fk': ['user'],

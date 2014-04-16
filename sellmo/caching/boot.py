@@ -29,7 +29,6 @@
 
 
 from sellmo.core.main import Sellmo
-from sellmo.config import settings
 
 
 Sellmo.links += ['caches']

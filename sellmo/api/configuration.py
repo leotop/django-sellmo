@@ -29,14 +29,57 @@
 
 
 from django.conf import settings
-
-from sellmo.contrib.contrib_search.config import defaults
-
-
-debug = getattr(settings, 'DEBUG', False)
+from django.utils.module_loading import import_by_path
 
 
-SEARCH_FIELDS = getattr(
-    settings, 'SELLMO_SEARCH_FIELDS', defaults.SEARCH_FIELDS)
-SEARCH_FORM = getattr(settings, 'SELLMO_SEARCH_FORM', defaults.SEARCH_FORM)
+_prefix = 'SELLMO'
 
+def _get_setting_key(key, prefix=None):
+    if prefix:
+        key = '{0}_{1}'.format(prefix, key)
+    return key
+    
+def get_setting(key, default=None, prefix=_prefix):
+    return getattr(settings, _get_setting_key(key, prefix), default)
+
+def setting(key, default=None, required=True, transform=None, prefix=_prefix):
+    return LazySetting(
+        key, default=default, required=required, transform=transform)
+    
+
+def class_setting(key, default=None, required=True, prefix=_prefix):
+    return LazySetting(
+        key, default=default, required=required,
+        transform = lambda path : import_by_path(path))
+        
+
+class LazySetting(object):
+
+    _is_resolved = False
+    _value = None
+
+    def __init__(self, key, default=None, required=True, transform=None,
+                 prefix=_prefix):
+        self.key = _get_setting_key(key, prefix)
+        self.default = default
+        self.required = required
+        self.transform = transform
+
+    def _resolve(self):
+        value = self.default
+        try:
+            value = getattr(settings, self.key)
+        except AttributeError:
+            if self.default is None and self.required:
+                raise
+
+        if self.transform and value is not None:
+            value = self.transform(value)
+
+        self._value = value
+        self._is_resolved = True
+
+    def __get__(self, obj, objtype):
+        if not self._is_resolved:
+            self._resolve()
+        return self._value

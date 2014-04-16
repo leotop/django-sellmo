@@ -28,9 +28,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sellmo.config import settings
-
-
 class Report(object):
 
     def __init__(self, filename, data, mimetype):

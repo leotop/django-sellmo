@@ -37,6 +37,3 @@ class MailingModule(Module):
 
     namespace = 'mailing'
     MailStatus = MailStatus
-
-    def __init__(self):
-        pass

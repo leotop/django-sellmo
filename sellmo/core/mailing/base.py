@@ -33,27 +33,18 @@ import uuid
 from django.utils.module_loading import import_by_path
 
 from sellmo.magic import singleton
-from sellmo.config import settings
+from sellmo.api.configuration import class_setting
 from sellmo.signals.mailing import mail_init
 
 
 @singleton
 class Mailer(object):
 
-    handler = None
+    handler = class_setting(
+        'MAIL_HANDLER',
+        default='sellmo.core.mailing.handlers.DefaultMailHandler')
+    
     writers = {}
-
-    def __init__(self):
-        pass
-
-    def get_handler(self):
-        if self.handler:
-            return self.handler
-        if settings.MAIL_HANDLER:
-            self.handler = import_by_path(settings.MAIL_HANDLER)
-        if not self.handler:
-            raise Exception("Mailer has no MailHandler configured")
-        return self.handler
 
     def send_mail(self, message_type, context=None):
 
@@ -78,7 +69,7 @@ class Mailer(object):
         writer = self.writers[message_type]
 
         # Create a new handler with the given writer
-        handler = self.get_handler()(writer)
+        handler = self.handler(writer)
 
         # Handle the email
         handler.handle_mail(message_type, message_reference, context)

@@ -36,6 +36,7 @@ from django.utils.module_loading import module_has_submodule
 from sellmo import modules
 from sellmo.magic import singleton
 from sellmo.core import chaining, loading
+
 from sellmo.signals.core import pre_init, post_init
 
 import sys
@@ -71,7 +72,7 @@ class Sellmo(object):
 
         # 4. Begin the loading process as declared in all of the sellmo apps.
         loading.loader.load()
-
+        
         # 5. Make sure every sellmo module registered to the mountpoint is
         # instanciated.
         modules.init_modules()

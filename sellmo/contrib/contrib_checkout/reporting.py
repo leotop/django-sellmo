@@ -50,5 +50,5 @@ class InvoiceWriter(ReportWriter):
         return super(InvoiceWriter, self).negotiate_param(key, value, **params)
 
     def get_data(self, **params):
-        return modules.checkout_reporting.render_invoice(
+        return modules.checkout.render_invoice(
             order=self.order, internal=self.internal)

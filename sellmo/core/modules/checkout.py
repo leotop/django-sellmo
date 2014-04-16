@@ -33,21 +33,26 @@ from django.http import Http404
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ImproperlyConfigured
 from django.shortcuts import redirect
-from django.utils.module_loading import import_by_path
 from django.utils.decorators import method_decorator
 from django.db import models, transaction
 
 import sellmo
 from sellmo import modules
-from sellmo.config import settings
 from sellmo.core.processing import ProcessError
 from sellmo.utils.tracking import UntrackableError
 from sellmo.utils.formatting import call_or_format
 from sellmo.api.decorators import view, chainable, link
+from sellmo.api.configuration import setting, class_setting
 from sellmo.api.checkout.models import Order, Shipment, Payment, ORDER_NEW
+from sellmo.api.checkout.status import ORDER_STATUSES, OrderStatusesHelper
 from sellmo.api.checkout.forms import ShippingMethodForm, PaymentMethodForm
 from sellmo.signals.checkout import order_state_changed
+    
 
+def method_choice_format(method, costs, **kwargs):
+    if costs:
+        return u"{method} +{costs}".format(method=method, costs=costs)
+    return u"{method}".format(method=method)
 
 class CheckoutModule(sellmo.Module):
 
@@ -58,20 +63,31 @@ class CheckoutModule(sellmo.Module):
     Order = Order
     Shipment = Shipment
     Payment = Payment
-    ShippingMethodForm = ShippingMethodForm
-    PaymentMethodForm = PaymentMethodForm
+    
+    ShippingMethodForm = class_setting(
+        'SHIPPING_METHOD_FORM',
+        default='sellmo.api.checkout.forms.ShippingMethodForm')
+        
+    shipping_method_choice_format = setting(
+        'SHIPPING_METHOD_CHOICE_FORMAT',
+        default=method_choice_format)
+        
+    PaymentMethodForm = class_setting(
+        'PAYMENT_METHOD_FORM',
+        default='sellmo.api.checkout.forms.PaymentMethodForm')
+        
+    payment_method_choice_format = setting(
+        'PAYMENT_METHOD_CHOICE_FORMAT',
+        default=method_choice_format)
 
-    CheckoutProcess = None
-
+    CheckoutProcess = class_setting('CHECKOUT_PROCESS')
+    
+    order_statuses = setting(
+        'ORDER_STATUSES',
+        default=ORDER_STATUSES,
+        transform=lambda value : OrderStatusesHelper(value))
+    
     def __init__(self, *args, **kwargs):
-        # Configure
-        self.ShippingMethodForm = import_by_path(settings.SHIPPING_METHOD_FORM)
-        self.PaymentMethodForm = import_by_path(settings.PAYMENT_METHOD_FORM)
-        if not self.CheckoutProcess:
-            if not settings.CHECKOUT_PROCESS:
-                raise ImproperlyConfigured("No checkout process configured")
-            self.CheckoutProcess = import_by_path(settings.CHECKOUT_PROCESS)
-
         # Hookup signals
         order_state_changed.connect(self.on_order_state_changed)
 
@@ -124,7 +140,7 @@ class CheckoutModule(sellmo.Module):
         if choice is None:
             costs = method.get_costs(order=order)
             choice = call_or_format(
-                settings.SHIPPING_METHOD_CHOICE_FORMAT,
+                self.shipping_method_choice_format,
                 method=method,
                 costs=costs
             )
@@ -171,7 +187,7 @@ class CheckoutModule(sellmo.Module):
         if choice is None:
             costs = method.get_costs(order=order)
             choice = call_or_format(
-                settings.PAYMENT_METHOD_CHOICE_FORMAT,
+                self.payment_method_choice_format,
                 method=method,
                 costs=costs
             )
@@ -207,7 +223,7 @@ class CheckoutModule(sellmo.Module):
             raise Http404("Nothing to order")
 
         if process is None:
-            process = self.get_process(request=request, order=order)
+            process = self.get_checkout_process(request=request, order=order)
 
         redirection = None
 
@@ -330,7 +346,7 @@ class CheckoutModule(sellmo.Module):
             raise Http404
 
     @chainable()
-    def get_process(self, chain, request, order, process=None, **kwargs):
+    def get_checkout_process(self, chain, request, order, process=None, **kwargs):
         if process is None:
             process = self.CheckoutProcess(order=order, request=request)
         if chain:
@@ -503,29 +519,7 @@ class CheckoutModule(sellmo.Module):
                 order.remove(purchase, calculate=False)
             order.calculate(subtotal=cart.total)
             order.invalidate()
-
-    @chainable()
-    def can_change_order_status(self, chain, order, status, can_change=False,
-                                **kwargs):
-        # Verify new status
-        if status not in settings.ORDER_STATUSES:
-            raise Exception("Invalid order status '{0}'".format(status))
-
-        # Lookup current status
-        entry = settings.ORDER_STATUSES[order.status]
-        config = entry[1] if len(entry) == 2 else {}
-        if 'flow' in config:
-            # Check against flow
-            if status in config['flow']:
-                can_change = True
-
-        if chain:
-            out = chain.execute(
-                order=order, status=status, can_change=can_change, **kwargs)
-            if 'can_change' in out:
-                can_change = out['can_change']
-        return can_change
-
+    
     @link(namespace='customer')
     def get_customer(self, request, customer=None, **kwargs):
         if customer is None:
@@ -534,12 +528,12 @@ class CheckoutModule(sellmo.Module):
             if order is not None:
                 customer = modules.customer.Contactable.clone(
                     order, cls=modules.customer.Customer)
-                if len(settings.ADDRESS_TYPES) > 0:
-                    address = settings.ADDRESS_TYPES[0]
+                if len(modules.customer.address_types) > 0:
+                    address = modules.customer.address_types[0]
                     address = order.get_address(address)
                     customer = modules.customer.Addressee.clone(
                         address, clone=customer)
-                for address in settings.ADDRESS_TYPES:
+                for address in modules.customer.address_types:
                     customer.set_address(
                         address, order.get_address(address).clone())
         return {

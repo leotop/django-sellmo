@@ -35,13 +35,11 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
 from sellmo import modules
-from sellmo.config import settings
-from sellmo.signals.checkout import *
 from sellmo.api.pricing import Price
 from sellmo.api.decorators import load
-from sellmo.api.checkout import statuses
 from sellmo.core.polymorphism import PolymorphicModel, PolymorphicManager
 from sellmo.utils.tracking import trackable
+from sellmo.signals.checkout import *
 
 
 ORDER_NEW = 'new'
@@ -126,21 +124,23 @@ def load_model():
 @load(after='finalize_customer_Contactable')
 @load(before='finalize_checkout_Order')
 def load_model():
-
+    
+    statuses = modules.checkout.order_statuses
+    
     class Order(modules.checkout.Order):
 
         customer = models.ForeignKey(
             modules.customer.Customer,
-            null=not settings.CUSTOMER_REQUIRED,
-            blank=not settings.CUSTOMER_REQUIRED,
+            null=not modules.customer.customer_required,
+            blank=not modules.customer.customer_required,
             related_name='orders',
             verbose_name=_("customer"),
         )
 
         status = models.CharField(
             max_length=40,
-            default=statuses.initial_status,
-            choices=statuses.status_choices,
+            default=statuses.initial,
+            choices=statuses.choices,
             blank=False,
             verbose_name=_("status"),
         )
@@ -150,7 +150,7 @@ def load_model():
 
     modules.checkout.Order = Order
 
-    if not settings.CUSTOMER_REQUIRED:
+    if not modules.customer.customer_required:
         class Order(modules.checkout.Order, modules.customer.Contactable):
             class Meta(
                     modules.checkout.Order.Meta,
@@ -164,7 +164,7 @@ def load_model():
 @load(before='finalize_checkout_Order')
 def load_model():
 
-    for type in settings.ADDRESS_TYPES:
+    for type in modules.customer.address_types:
         name = '{0}_address'.format(type)
         modules.checkout.Order.add_to_class(
             name,
@@ -239,9 +239,17 @@ def finalize_model():
 class Order(trackable('sellmo_order')):
 
     _proxy = None
+    
+    @staticmethod
+    def generate_order_number(order):
+        return unicode(order.pk)
 
-    #
-
+    number = models.CharField(
+        max_length=80,
+        blank=True,
+        verbose_name=_("order number"),
+    )
+    
     created = models.DateTimeField(
         auto_now_add=True,
         editable=False,
@@ -369,6 +377,7 @@ class Order(trackable('sellmo_order')):
         if self.calculated is None:
             raise Exception("This order hasn't been calculated.")
         self.state = ORDER_PENDING
+        self.number = modules.checkout.Order.generate_order_number(self)
         self.save()
 
     def cancel(self):
@@ -381,9 +390,10 @@ class Order(trackable('sellmo_order')):
         else:
             self.state = ORDER_NEW
 
+        self.number = ''
         self.total = Price()
         self.calculated = None
-
+        
         if self.shipment:
             self.shipment.delete()
         if self.payment:
@@ -432,6 +442,25 @@ class Order(trackable('sellmo_order')):
     @property
     def is_paid(self):
         return self.state != ORDER_NEW and self.total.amount == self.paid
+        
+    #
+    
+    def can_change_status(self, status):
+        can_change = False
+        statuses = modules.checkout.order_statuses
+        
+        # Verify new status
+        if status not in statuses:
+            raise Exception("Invalid order status '{0}'".format(status))
+        
+        # Lookup current status
+        entry = statuses[self.status]
+        config = entry[1] if len(entry) == 2 else {}
+        if 'flow' in config:
+            # Check against flow
+            if status in config['flow']:
+                can_change = True
+        return can_change
 
     # Cleaning & saving
 
@@ -440,8 +469,7 @@ class Order(trackable('sellmo_order')):
         if self.pk:
             old = modules.checkout.Order.objects.get(pk=self.pk)
         if old is not None and self.status != old.status:
-            if (not modules.checkout.can_change_order_status(
-                    order=old, status=self.status)):
+            if not old.can_change_status(self.status):
                 raise ValidationError(
                     "Cannot transition order status "
                     "from '{0}' to '{1}'".format(old.status, self.status))
@@ -454,8 +482,7 @@ class Order(trackable('sellmo_order')):
         # See if status is explicitly changed
         if old is not None and self.status != old.status:
             # Make sure this change is a valid flow
-            if (not modules.checkout.can_change_order_status(
-                    order=old, status=self.status)):
+            if not old.can_change_status(self.status):
                 raise Exception(
                     "Cannot transition order "
                     "status from '{0}' to '{1}'"
@@ -463,7 +490,8 @@ class Order(trackable('sellmo_order')):
 
         # Check for new status
         status_changed = (
-            old is None and self.status != statuses.initial_status
+            old is None
+            and self.status != statuses['initial']
             or old is not None and self.status != old.status
         )
 
@@ -476,20 +504,23 @@ class Order(trackable('sellmo_order')):
         # Check for now paid
         now_paid = (old is None or not old.is_paid) and self.is_paid
 
+        statuses = modules.checkout.order_statuses
+        
         # Get new status from new state
         if (not status_changed and state_changed and
-                'on_{0}'.format(self.state) in statuses.status_events):
-            self.status = statuses.status_events['on_{0}'.format(self.state)]
+                'on_{0}'.format(self.state) in
+                statuses.event_to_status):
+            self.status = statuses.event_to_status['on_{0}'.format(self.state)]
 
         # Get new status from on_paid
         if (not status_changed and now_paid and 
-                'on_paid' in statuses.status_events):
-            self.status = statuses.status_events['on_paid']
+                'on_paid' in statuses.event_to_status):
+            self.status = statuses.event_to_status['on_paid']
 
         # Get new state from new status
         if (not state_changed and status_changed and
-                self.status in statuses.status_states):
-            self.state = statuses.status_states[self.status]
+                self.status in statuses.status_to_state):
+            self.state = statuses.status_to_state[self.status]
 
         # Check for new status (again)
         status_changed = old is None or self.status != old.status
@@ -546,7 +577,10 @@ class Order(trackable('sellmo_order')):
         return len(self) > 0
 
     def __unicode__(self):
-        return _("order #{0}").format(unicode(self.pk))
+        if self.number:
+            return _("order #{0}").format(unicode(self.number))
+        else:
+            return _("unplaced order")
 
     class Meta:
         ordering = ['-pk']

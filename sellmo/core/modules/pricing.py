@@ -29,16 +29,16 @@
 
 
 import logging
-from decimal import Decimal
 import types
+from decimal import Decimal
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _, string_concat
 
 import sellmo
 from sellmo import modules
-from sellmo.config import settings
 from sellmo.api.decorators import view, chainable, link
+from sellmo.api.configuration import setting, class_setting
 from sellmo.api.pricing import Currency, Price, PriceType, StampableProperty
 from sellmo.api.pricing.index import PriceIndex, PrefetchedPriceIndex
 from sellmo.api.pricing.models import PriceIndexBase
@@ -57,22 +57,37 @@ class PricingModule(sellmo.Module):
     Routes pricing logic to higher level modules.
     """
     namespace = 'pricing'
-    currency = None
-    currencies = {}
+    
     types = []
     indexes = {}
-
+    
     PriceIndexBase = PriceIndexBase
+    
+    currency = setting(
+        'CURRENCY',
+        default=('eur', _(u"euro"), _(u"\u20ac {amount:\u00a0>{align}.2f}")),
+        transform=lambda value : Currency(*value)
+    )
+    
+    currencies = setting(
+        'CURRENCIES',
+        required=False,
+        default={}
+    )
 
     #: Configures the max digits for a pricing (decimal) field
-    decimal_max_digits = 9
+    decimal_max_digits = setting(
+        'DECIMAL_MAX_DIGITS',
+        default=9
+    )
     #: Configures the amount of decimal places for a pricing (decimal) field
-    decimal_places = 2
+    decimal_places = setting(
+        'DECIMAL_PLACES',
+        default=2
+    )
 
     def __init__(self, *args, **kwargs):
         # Configure
-        if self.currency is None:
-            self.currency = Currency(*settings.CURRENCY)
         if not self.currencies:
             self.currencies = {
                 self.currency.code: self.currency

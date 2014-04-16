@@ -32,7 +32,7 @@ from django.core.cache import cache
 
 from sellmo.core.chaining import chainer
 from sellmo.signals.core import post_init
-from sellmo.config import settings
+from sellmo.api.configuration import setting
 
 
 def cached(cache, name, namespace, timeout=True):
@@ -42,7 +42,9 @@ def cached(cache, name, namespace, timeout=True):
 class Cache(object):
     
     timeout = True
-    prefix = settings.CACHING_PREFIX
+    prefix = setting(
+        'CACHING_PREFIX',
+        default='_sellmo')
 
     def __init__(self, name, namespace, timeout=True):
         post_init.connect(self._on_post_init)

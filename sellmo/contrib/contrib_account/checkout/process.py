@@ -28,7 +28,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-BANK_SELECT_FORM = 'sellmo.registry.mollie_ideal.BankSelectForm'
-BANKLIST_URL = 'https://secure.mollie.nl/xml/ideal?a=banklist'
-FETCH_URL = 'https://www.mollie.nl//xml/ideal?a=fetch'
-CHECK_URL = 'https://secure.mollie.nl/xml/ideal?a=check'
+from sellmo.api.checkout.process import CheckoutStep
+
+
+class CheckoutLoginStep(CheckoutStep):
+    pass
+

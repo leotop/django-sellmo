@@ -35,7 +35,7 @@ from sellmo.core.polymorphism import PolymorphicOverride
 import sys
 import logging
 
-from sellmo.core.params import params
+from sellmo import params
 params.dumpdata = True
 
 
