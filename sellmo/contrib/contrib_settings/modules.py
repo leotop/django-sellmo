@@ -69,18 +69,19 @@ class SettingsModule(Module):
         pre_delete.connect(
             self.on_settings_pre_delete, sender=self.SiteSettings)
 
-    def on_settings_pre_save(self, sender, instance, created=False, **kwargs):
+    def on_settings_pre_save(self, sender, instance, **kwargs):
         self.on_cache_invalidated(instance)
-        old = None
-        if not created:
+        try:
             old = self.SiteSettings.objects.get(pk=instance.pk)
-        self.on_settings_changed(old, instance)
+        except self.SiteSettings.DoesNotExist:
+            old = None
+        self._settings_changed(old, instance)
 
     def on_settings_pre_delete(self, sender, instance, **kwargs):
         self.on_cache_invalidated(instance)
-        self.on_settings_changed(instance, None)
+        self._settings_changed(instance, None)
 
-    def on_settings_changed(self, old, new):
+    def _settings_changed(self, old, new):
         site = old.site if old is not None else new.site
         for key, field, group in self._settings:
             old_val = getattr(old, key, None) if old is not None else None

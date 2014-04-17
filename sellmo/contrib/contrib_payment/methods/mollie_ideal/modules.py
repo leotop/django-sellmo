@@ -37,7 +37,7 @@ from django.contrib.sites.models import Site
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable
 from sellmo.api.exceptions import ViewNotImplemented
-from sellmo.api.configuration import setting, class_setting
+from sellmo.api.configuration import define_setting, define_import
 from sellmo.contrib.contrib_payment \
      .methods.mollie_ideal.models import MollieIdealPayment
 from sellmo.contrib.contrib_payment \
@@ -52,21 +52,21 @@ class MollieIdealModule(Module):
         
     MollieIdealPayment = MollieIdealPayment
     
-    BankSelectForm = class_setting(
+    BankSelectForm = define_import(
         'BANK_SELECT_FORM',
         prefix='MOLLIE',
         default=('sellmo.contrib.contrib_payment.methods.mollie_ideal'
                  '.forms.BankSelectForm'))
     
-    mollie_banklist_url = setting(
+    mollie_banklist_url = define_setting(
         'BANKLIST_URL',
         default='https://secure.mollie.nl/xml/ideal?a=banklist')
     
-    mollie_fetch_url = setting(
+    mollie_fetch_url = define_setting(
         'FETCH_URL',
         default='https://www.mollie.nl//xml/ideal?a=fetch')
     
-    mollie_check_url = setting(
+    mollie_check_url = define_setting(
         'CHECK_URL',
         default='https://secure.mollie.nl/xml/ideal?a=check')
     

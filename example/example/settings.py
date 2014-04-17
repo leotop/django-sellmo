@@ -192,14 +192,14 @@ SITE_ID = 1
 STATIC_URL = '/static/'
 
 STATICFILES_DIRS = (
-    os.path.join(BASE_DIR, 'assets'),
+    os.path.join(BASE_DIR, 'example/assets'),
 )
 
 
 # Template files (HTML)
 
 TEMPLATE_DIRS = (
-    os.path.join(BASE_DIR, 'templates'),
+    os.path.join(BASE_DIR, 'example/templates'),
 )
 
 

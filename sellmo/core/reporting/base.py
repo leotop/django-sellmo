@@ -31,18 +31,18 @@
 from django.utils.module_loading import import_by_path
 
 from sellmo.magic import singleton
-from sellmo.api.configuration import setting
+from sellmo.api.configuration import define_setting
 
 
 @singleton
 class Reporter(object):
 
-    default_format = setting(
+    default_format = define_setting(
         'DEFAULT_REPORT_FORMAT',
         default='pdf'
     )
     
-    generators = setting(
+    generators = define_setting(
         'REPORT_GENERATORS',
         default=[]
     )

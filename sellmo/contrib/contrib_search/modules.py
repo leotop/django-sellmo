@@ -35,17 +35,17 @@ from django.db.models import Q
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable
 from sellmo.api.exceptions import ViewNotImplemented
-from sellmo.api.configuration import setting, class_setting
+from sellmo.api.configuration import define_setting, define_import
 
 
 class SearchModule(Module):
     namespace = 'search'
 
-    SearchForm = class_setting(
+    SearchForm = define_import(
         'SEARCH_FORM',
         default='sellmo.contrib.contrib_search.forms.SearchForm')
         
-    search_fields = setting(
+    search_fields = define_setting(
         'SEARCH_FIELDS',
         default=[])
 

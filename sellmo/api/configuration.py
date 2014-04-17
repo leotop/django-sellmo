@@ -38,43 +38,53 @@ def _get_setting_key(key, prefix=None):
     if prefix:
         key = '{0}_{1}'.format(prefix, key)
     return key
-
-def setting(key, default=None, required=True, transform=None, prefix=_prefix):
-    return Setting(
-        key, default=default, required=required, transform=transform)
     
-def class_setting(key, default=None, required=True, prefix=_prefix):
-    return Setting(
-        _get_setting_key(key, prefix), default=default, required=required,
-        transform = lambda path : import_by_path(path))
+def get_setting(key, prefix=_prefix, **kwargs):
+    key = _get_setting_key(key, prefix)
+    try:
+        value = getattr(settings, key)
+    except AttributeError:
+        if 'default' in kwargs:
+            value = kwargs['default']
+        else:
+            raise
+    return value
 
-
-class Setting(object):
-
-    _is_resolved = False
-    _value = None
-
-    def __init__(self, key, default=None, required=True, transform=None):
+def define_setting(key, required=True, transform=None, prefix=_prefix, **kwargs):
+    return _LazySetting(
+        _get_setting_key(key, prefix), required=required,
+        transform=transform, **kwargs)
+    
+def define_import(key, required=True, prefix=_prefix, **kwargs):
+    transform = lambda path : import_by_path(path)
+    return define_setting(
+        key, required=required, transform=transform, **kwargs)
+                   
+class _LazySetting(object):
+    
+    def __init__(self, key, required=True, transform=None, **kwargs):
         self.key = key
-        self.default = default
         self.required = required
         self.transform = transform
+        if 'default' in kwargs:
+            self.default = kwargs['default']
 
     def _resolve(self):
-        value = self.default
         try:
             value = getattr(settings, self.key)
         except AttributeError:
-            if self.default is None and self.required:
+            value = None
+            if hasattr(self, 'default'):
+                value = self.default
+            elif self.required:
                 raise
-
-        if self.transform and value is not None:
+        
+        if self.transform:
             value = self.transform(value)
-
-        self._value = value
-        self._is_resolved = True
+        
+        return value
 
     def __get__(self, obj, objtype):
-        if not self._is_resolved:
-            self._resolve()
+        if not hasattr(self, '_value'):
+            self._value = self._resolve()
         return self._value

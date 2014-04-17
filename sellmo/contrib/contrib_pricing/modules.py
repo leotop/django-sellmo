@@ -33,7 +33,7 @@ from datetime import datetime
 
 from sellmo import modules, Module
 from sellmo.api.decorators import chainable
-from sellmo.api.configuration import setting
+from sellmo.api.configuration import define_setting
 from sellmo.contrib.contrib_pricing.models import (QtyPriceBase,
                                                    QtyPrice,
                                                    QtyPriceRatio,
@@ -55,7 +55,7 @@ class QtyPricingModule(Module):
     QtyPriceRatio = QtyPriceRatio
     ProductQtyPrice = ProductQtyPrice
     
-    indexable_qtys = setting(
+    indexable_qtys = define_setting(
         'INDEXABLE_QTYS',
         default=[1])
     

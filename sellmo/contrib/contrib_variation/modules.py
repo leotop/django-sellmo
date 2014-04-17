@@ -31,7 +31,7 @@
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable
 from sellmo.api.pricing import Price
-from sellmo.api.configuration import setting
+from sellmo.api.configuration import define_setting
 from sellmo.utils.formatting import call_or_format
 from sellmo.contrib.contrib_variation.models import (Variant,
                                                      Variation,
@@ -71,15 +71,15 @@ class VariationModule(Module):
     subtypes = []
     m2m_relations = {}
     
-    variation_choice_format = setting(
+    variation_choice_format = define_setting(
         'VARIATION_CHOICE_FORMAT',
         default=choice_format)
     
-    variation_description_format = setting(
+    variation_description_format = define_setting(
         'VARIATION_DESCRIPTION_FORMAT',
         default=u"{product} {values}")
     
-    variation_value_seperator = setting(
+    variation_value_seperator = define_setting(
         'VARIATION_VALUE_SEPERATOR',
         default=u", ")
 

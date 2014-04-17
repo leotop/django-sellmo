@@ -35,7 +35,7 @@ from django.core.cache.utils import make_template_fragment_key
 from django.utils.safestring import mark_safe
 
 from sellmo import modules
-from sellmo.api.configuration import setting
+from sellmo.api.configuration import get_setting
 
 from mptt.templatetags.mptt_tags import cache_tree_children
 
@@ -46,9 +46,7 @@ from classytags.arguments import Argument, MultiKeywordArgument, Flag
 register = template.Library()
 
 
-max_expire_time = setting(
-    'MAX_EXPIRE_TIME', 
-    default=3600 * 24)
+max_expire_time = get_setting('MAX_EXPIRE_TIME', default=3600 * 24)
 
 
 class CategoriesTag(Tag):

@@ -28,13 +28,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sellmo.api.configuration import setting
+from sellmo.api.configuration import get_setting
 from sellmo.caching.base import Cache, cached
 
 
-enabled = setting(
-    'CACHING_ENABLED',
-    default=True
-)
+enabled = get_setting('CACHING_ENABLED', default=True)
 
 

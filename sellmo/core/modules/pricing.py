@@ -38,7 +38,7 @@ from django.utils.translation import ugettext_lazy as _, string_concat
 import sellmo
 from sellmo import modules
 from sellmo.api.decorators import view, chainable, link
-from sellmo.api.configuration import setting, class_setting
+from sellmo.api.configuration import define_setting, define_import
 from sellmo.api.pricing import Currency, Price, PriceType, StampableProperty
 from sellmo.api.pricing.index import PriceIndex, PrefetchedPriceIndex
 from sellmo.api.pricing.models import PriceIndexBase
@@ -63,25 +63,25 @@ class PricingModule(sellmo.Module):
     
     PriceIndexBase = PriceIndexBase
     
-    currency = setting(
+    currency = define_setting(
         'CURRENCY',
         default=('eur', _(u"euro"), _(u"\u20ac {amount:\u00a0>{align}.2f}")),
         transform=lambda value : Currency(*value)
     )
     
-    currencies = setting(
+    currencies = define_setting(
         'CURRENCIES',
         required=False,
         default={}
     )
 
     #: Configures the max digits for a pricing (decimal) field
-    decimal_max_digits = setting(
+    decimal_max_digits = define_setting(
         'DECIMAL_MAX_DIGITS',
         default=9
     )
     #: Configures the amount of decimal places for a pricing (decimal) field
-    decimal_places = setting(
+    decimal_places = define_setting(
         'DECIMAL_PLACES',
         default=2
     )

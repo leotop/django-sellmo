@@ -33,7 +33,7 @@ from django.conf import settings
 
 from sellmo import modules
 from sellmo.api.decorators import chainable
-from sellmo.api.configuration import setting, class_setting
+from sellmo.api.configuration import define_setting, define_import
 from sellmo.contrib.contrib_checkout.models import OrderMail
 from sellmo.contrib.contrib_checkout.mailing import ORDER_MAILS
 
@@ -42,19 +42,19 @@ class CheckoutModule(modules.checkout):
     
     OrderMail = OrderMail
     
-    accept_terms_enabled = setting(
+    accept_terms_enabled = define_setting(
         'ACCEPT_TERMS_ENABLED',
         default=True)
         
-    invoice_writer = class_setting(
+    invoice_writer = define_import(
         'INVOICE_WRITER',
         default='sellmo.contrib.contrib_checkout.reporting.InvoiceWriter')
     
-    notification_to_email = setting(
+    notification_to_email = define_setting(
         'NOTIFICATION_TO_EMAIL',
         default=settings.DEFAULT_FROM_EMAIL)
         
-    order_mails = setting(
+    order_mails = define_setting(
         'ORDER_MAILS',
         default=ORDER_MAILS)
         

@@ -29,11 +29,11 @@
 
 
 from sellmo import modules
-from sellmo.api.configuration import setting
+from sellmo.api.configuration import define_setting
 
 
 class CartModule(modules.cart):
 
-    single_purchase_mode = setting(
+    single_purchase_mode = define_setting(
         'SINGLE_PURCHASE_MODE',
         default=False)

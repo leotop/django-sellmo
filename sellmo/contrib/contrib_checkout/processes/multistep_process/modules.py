@@ -31,14 +31,14 @@
 from django.shortcuts import redirect
 
 from sellmo import modules
-from sellmo.api.configuration import class_setting
+from sellmo.api.configuration import define_import
 from sellmo.api.exceptions import ViewNotImplemented
 from sellmo.api.decorators import chainable, view
 
 
 class CheckoutModule(modules.checkout):
     
-    CheckoutProcess = class_setting(
+    CheckoutProcess = define_import(
         'CHECKOUT_PROCESS',
         default=('sellmo.contrib.contrib_checkout.processes'
                  '.multistep_process.MultiStepCheckoutProcess'))

@@ -30,7 +30,7 @@
 
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable, link
-from sellmo.api.configuration import setting
+from sellmo.api.configuration import define_setting
 from sellmo.contrib.contrib_attribute.models import Attribute, Value
 from sellmo.contrib.contrib_attribute.query import ProductQ
 
@@ -44,7 +44,7 @@ class AttributeModule(Module):
     Attribute = Attribute
     Value = Value
     
-    value_format = setting(
+    value_format = define_setting(
         'VALUE_FORMAT',
         default=u"{value.value}")
 

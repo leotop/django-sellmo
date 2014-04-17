@@ -41,7 +41,7 @@ import sellmo
 from sellmo import modules
 from sellmo.api.decorators import view, chainable, link
 from sellmo.api.exceptions import ViewNotImplemented
-from sellmo.api.configuration import setting, class_setting
+from sellmo.api.configuration import define_setting, define_import
 from sellmo.api.cart.models import Cart
 from sellmo.api.cart.forms import AddToCartForm, EditPurchaseForm
 from sellmo.api.forms import RedirectableFormSet
@@ -54,11 +54,11 @@ class CartModule(sellmo.Module):
 
     Cart = Cart
     
-    AddToCartForm = class_setting(
+    AddToCartForm = define_import(
         'ADD_TO_CART_FORM',
         default='sellmo.api.cart.forms.AddToCartForm')
     
-    EditPurchaseForm = class_setting(
+    EditPurchaseForm = define_import(
         'EDIT_PURCHASE_FORM',
         default='sellmo.api.cart.forms.EditPurchaseForm')
 

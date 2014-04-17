@@ -28,14 +28,14 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sellmo.api.configuration import setting
+from sellmo.api.configuration import get_setting
 
 
-debug = setting(
+debug = get_setting(
     'REDIRECTION_DEBUG',
     default=False)
     
-prefix = setting(
+prefix = get_setting(
     'REDIRECTION_SESSION_PREFIX',
     default='_sellmo_redirection')
 

@@ -32,7 +32,7 @@ import sellmo
 from sellmo import modules
 from sellmo.api.decorators import view, chainable, link
 from sellmo.api.exceptions import ViewNotImplemented
-from sellmo.api.configuration import class_setting
+from sellmo.api.configuration import define_import
 from sellmo.contrib.contrib_account.models import User
 from sellmo.contrib.contrib_account.forms import (UserChangeForm,
                                                   UserCreationForm)
@@ -50,19 +50,19 @@ class AccountModule(sellmo.Module):
     
     User = User
     
-    UserChangeForm = class_setting(
+    UserChangeForm = define_import(
         'USER_CHANGE_FORM',
         default='sellmo.contrib.contrib_account.forms.UserChangeForm')
     
-    UserCreationForm = class_setting(
+    UserCreationForm = define_import(
         'USER_CREATION_FORM',
         default='sellmo.contrib.contrib_account.forms.UserCreationForm')
         
-    AuthenticationForm = class_setting(
+    AuthenticationForm = define_import(
         'AUTHENTICATION_FORM',
         default='django.contrib.auth.forms.AuthenticationForm')
     
-    PasswordResetForm = class_setting(
+    PasswordResetForm = define_import(
         'PASSWORD_RESET_FORM',
         default='django.contrib.auth.forms.PasswordResetForm')
     

@@ -31,12 +31,12 @@
 from sellmo import modules
 from sellmo.api.decorators import view, chainable, link
 from sellmo.api.exceptions import ViewNotImplemented
-from sellmo.api.configuration import class_setting
+from sellmo.api.configuration import define_import
 
 
 class AccountModule(modules.account):
     
-    RegistrationProcess = class_setting(
+    RegistrationProcess = define_import(
         'REGISTRATION_PROCESS',
         default=('sellmo.contrib.contrib_account.registration'
                  '.defaults.RegistrationProcess'))

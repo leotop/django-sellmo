@@ -30,7 +30,7 @@
 
 import sellmo
 from sellmo import modules
-from sellmo.api.configuration import setting, class_setting
+from sellmo.api.configuration import define_setting, define_import
 from sellmo.api.decorators import view, chainable, link
 from sellmo.api.customer.models import (Addressee,
                                         Address,
@@ -48,44 +48,44 @@ class CustomerModule(sellmo.Module):
     Contactable = Contactable
     Customer = Customer
 
-    CustomerForm = class_setting(
+    CustomerForm = define_import(
         'CUSTOMER_FORM',
         default='sellmo.api.customer.forms.CustomerForm')
         
-    ContactableForm = class_setting(
+    ContactableForm = define_import(
         'CONTACTABLE_FORM',
         default='sellmo.api.customer.forms.ContactableForm')
         
-    AddressForm = class_setting(
+    AddressForm = define_import(
         'ADDRESS_FORM',
         default='sellmo.api.customer.forms.AddressForm')
         
-    address_types = setting(
+    address_types = define_setting(
         'ADDRESS_TYPES',
         default=['shipping', 'billing']
     )
     
-    auth_enabled = setting(
+    auth_enabled = define_setting(
         'AUTH_ENABLED',
         default=True
     )
     
-    customer_required = setting(
+    customer_required = define_setting(
         'CUSTOMER_REQUIRED',
         default=False
     )
     
-    email_required = setting(
+    email_required = define_setting(
         'EMAIL_REQUIRED',
         default=True
     )
     
-    businesses_only = setting(
+    businesses_only = define_setting(
         'BUSINESSES_ONLY',
         default=False
     )
     
-    businesses_allowed = setting(
+    businesses_allowed = define_setting(
         'BUSINESSES_ALLOWED',
         default=True
     )

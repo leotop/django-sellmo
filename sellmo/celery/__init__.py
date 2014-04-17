@@ -28,10 +28,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sellmo.api.configuration import setting
+from sellmo.api.configuration import get_setting
 
 
-enabled = setting(
-    'CELERY_ENABLED',
-    default=False
-)
+enabled = get_setting('CELERY_ENABLED', default=False)

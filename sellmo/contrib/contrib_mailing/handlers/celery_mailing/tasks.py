@@ -28,7 +28,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sellmo.api.configuration import setting
+from sellmo.api.configuration import get_setting
 from sellmo.core.mailing.handlers import MailHandlerBase
 from sellmo.core.mailing import mailer
 
@@ -36,15 +36,15 @@ from sellmo.core.mailing import mailer
 from celery import shared_task, Task
 
 
-send_mail_retry_enabled = setting(
+send_mail_retry_enabled = get_setting(
     'SEND_MAIL_RETRY_ENABLED',
     default=True)
                             
-send_mail_retry_delay = setting(
+send_mail_retry_delay = get_setting(
     'SEND_MAIL_RETRY_DELAY',
     default=5 * 60)
                                     
-send_mail_retry_limit = setting(
+send_mail_retry_limit = get_setting(
     'SEND_MAIL_RETRY_LIMIT',
     default=3)                                
 

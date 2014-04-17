@@ -43,7 +43,7 @@ from sellmo.utils.tracking import UntrackableError
 from sellmo.utils.formatting import call_or_format
 from sellmo.api.decorators import view, chainable, link
 from sellmo.api.exceptions import ViewNotImplemented
-from sellmo.api.configuration import setting, class_setting
+from sellmo.api.configuration import define_setting, define_import
 from sellmo.api.checkout.models import Order, Shipment, Payment, ORDER_NEW
 from sellmo.api.checkout.status import ORDER_STATUSES, OrderStatusesHelper
 from sellmo.api.checkout.forms import ShippingMethodForm, PaymentMethodForm
@@ -64,25 +64,25 @@ class CheckoutModule(sellmo.Module):
     Shipment = Shipment
     Payment = Payment
     
-    ShippingMethodForm = class_setting(
+    ShippingMethodForm = define_import(
         'SHIPPING_METHOD_FORM',
         default='sellmo.api.checkout.forms.ShippingMethodForm')
         
-    shipping_method_choice_format = setting(
+    shipping_method_choice_format = define_setting(
         'SHIPPING_METHOD_CHOICE_FORMAT',
         default=method_choice_format)
         
-    PaymentMethodForm = class_setting(
+    PaymentMethodForm = define_import(
         'PAYMENT_METHOD_FORM',
         default='sellmo.api.checkout.forms.PaymentMethodForm')
         
-    payment_method_choice_format = setting(
+    payment_method_choice_format = define_setting(
         'PAYMENT_METHOD_CHOICE_FORMAT',
         default=method_choice_format)
 
-    CheckoutProcess = class_setting('CHECKOUT_PROCESS')
+    CheckoutProcess = define_import('CHECKOUT_PROCESS')
     
-    order_statuses = setting(
+    order_statuses = define_setting(
         'ORDER_STATUSES',
         default=ORDER_STATUSES,
         transform=lambda value : OrderStatusesHelper(value))

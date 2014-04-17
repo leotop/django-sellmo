@@ -29,37 +29,37 @@
 
 
 from sellmo import modules
-from sellmo.api.configuration import setting
+from sellmo.api.configuration import define_setting
 
 from django.utils.translation import ugettext_lazy as _
 
 
 class CustomerModule(modules.customer):
     
-    phone_number_enabled = setting(
+    phone_number_enabled = define_setting(
         'PHONE_NUMBER_ENABLED',
         default=True)
         
-    phone_number_required = setting(
+    phone_number_required = define_setting(
         'PHONE_NUMBER_REQUIRED',
         default=False)
     
-    name_prefix_enabled = setting(
+    name_prefix_enabled = define_setting(
         'NAME_PREFIX_ENABLED',
         default=False)
     
-    name_prefix_required = setting(
+    name_prefix_required = define_setting(
         'NAME_PREFIX_REQUIRED',
         default=True)
     
-    name_prefix_choices = setting(
+    name_prefix_choices = define_setting(
         'NAME_PREFIX_CHOICES',
         default=[
             ('sir', _("sir")),
             ('madame', _("madam")),
         ])
         
-    name_suffix_enabled = setting(
+    name_suffix_enabled = define_setting(
         'NAME_SUFFIX_ENABLED',
         default=True)
     

@@ -31,7 +31,7 @@
 import os.path
 import codecs
 
-from sellmo.api.configuration import setting
+from sellmo.api.configuration import get_setting
 from sellmo.core.reporting.generators import ReportGeneratorBase
 from sellmo.contrib.contrib_reporting.piping import pipe, PipeError
 
@@ -48,16 +48,15 @@ PARAMS = {
     }
 }
 
-phantomjs_params = setting(
+phantomjs_params = get_setting(
     'PARAMS',
     default=PARAMS,
     prefix='PHANTOMJS')
 
-phantomjs_executable = setting(
+phantomjs_executable = get_setting(
     'PARAMS',
     default='phantomjs',
-    prefix='PHANTOMJS'
-)
+    prefix='PHANTOMJS')
 
 
 class PhantomJSReportGenerator(ReportGeneratorBase):

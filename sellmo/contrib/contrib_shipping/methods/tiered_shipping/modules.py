@@ -29,11 +29,11 @@
 
 
 from sellmo import modules
-from sellmo.api.configuration import setting
+from sellmo.api.configuration import define_setting
 
 
 class ShippingModule(modules.shipping):
     namespace = 'shipping'
-    max_tier_attributes = setting(
+    max_tier_attributes = define_setting(
         'MAX_TIER_ATTRIBUTES',
         default=3)
