@@ -156,7 +156,6 @@ class Module(object):
 
     enabled = True
     namespace = None
-    prefix = None
 
     @classmethod
     def register(cls, name, value):

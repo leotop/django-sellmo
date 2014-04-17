@@ -51,8 +51,3 @@ class RegistrationStep(ProcessStep):
         super(RegistrationStep, self).__init__()
         self.customer = customer
         self.request = request
-
-
-class DefaultRegistrationProcess(RegistrationProcess):
-    pass
-

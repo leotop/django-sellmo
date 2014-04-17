@@ -117,7 +117,7 @@ class InformationStep(CheckoutStep):
         else:
             context.update(self.invalid_context)
 
-        return modules.checkout.checkout_information(
+        return modules.checkout.information_step(
             request=request, context=context)
 
 
@@ -163,7 +163,7 @@ class PaymentMethodStep(CheckoutStep):
             self.contextualize_or_complete(request, context)
         else:
             context.update(self.invalid_context)
-        return modules.checkout.checkout_payment_method(
+        return modules.checkout.payment_method_step(
             request=request, context=context)
 
 
@@ -207,5 +207,5 @@ class SummaryStep(CheckoutStep):
         else:
             context.update(self.invalid_context)
 
-        return modules.checkout.checkout_summary(
+        return modules.checkout.summary_step(
             request=request, context=context)

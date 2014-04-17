@@ -476,6 +476,8 @@ class Order(trackable('sellmo_order')):
     
     def save(self, *args, **kwargs):
         old = None
+        statuses = modules.checkout.order_statuses
+        
         if self.pk:
             old = modules.checkout.Order.objects.get(pk=self.pk)
 
@@ -491,7 +493,7 @@ class Order(trackable('sellmo_order')):
         # Check for new status
         status_changed = (
             old is None
-            and self.status != statuses['initial']
+            and self.status != statuses.initial
             or old is not None and self.status != old.status
         )
 
@@ -503,8 +505,6 @@ class Order(trackable('sellmo_order')):
 
         # Check for now paid
         now_paid = (old is None or not old.is_paid) and self.is_paid
-
-        statuses = modules.checkout.order_statuses
         
         # Get new status from new state
         if (not status_changed and state_changed and

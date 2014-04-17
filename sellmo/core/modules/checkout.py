@@ -42,6 +42,7 @@ from sellmo.core.processing import ProcessError
 from sellmo.utils.tracking import UntrackableError
 from sellmo.utils.formatting import call_or_format
 from sellmo.api.decorators import view, chainable, link
+from sellmo.api.exceptions import ViewNotImplemented
 from sellmo.api.configuration import setting, class_setting
 from sellmo.api.checkout.models import Order, Shipment, Payment, ORDER_NEW
 from sellmo.api.checkout.status import ORDER_STATUSES, OrderStatusesHelper
@@ -57,7 +58,6 @@ def method_choice_format(method, costs, **kwargs):
 class CheckoutModule(sellmo.Module):
 
     namespace = 'checkout'
-    prefix = 'checkout'
     enabled = True
 
     Order = Order
@@ -342,8 +342,7 @@ class CheckoutModule(sellmo.Module):
             return chain.execute(
                 request, order=order, data=data, context=context, **kwargs)
         else:
-            # We don't render anything
-            raise Http404
+            raise ViewNotImplemented
 
     @chainable()
     def get_checkout_process(self, chain, request, order, process=None, **kwargs):

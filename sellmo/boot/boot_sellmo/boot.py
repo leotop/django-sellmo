@@ -33,7 +33,6 @@ import logging
 
 from sellmo import caching, celery
 from sellmo.core.main import Sellmo
-from sellmo.api.configuration import get_setting
 
 
 if caching.enabled:

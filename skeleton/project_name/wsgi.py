@@ -1,5 +1,5 @@
 """
-WSGI config for skeleton project.
+WSGI config for {{ project_name }} project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
@@ -12,3 +12,6 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "{{ project_name }}.settings")
 
 from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
+
+# !! This will boot sellmo
+from sellmo.boot import wsgi

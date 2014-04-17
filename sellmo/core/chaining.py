@@ -73,8 +73,7 @@ class Chainer(object):
     def hookup(self):
         # Fix bound links
         for module in self._modules:
-            for name in dir(module):
-                attr = getattr(module, name)
+            for name, attr in inspect.getmembers(module):
                 if hasattr(attr, '_linked'):
                     path = attr._link_path
                     links = self._links[path]
@@ -146,7 +145,7 @@ class Chainer(object):
 
     def on_module_init(self, sender, module, **kwargs):
         self._modules.append(module)
-        for name, attr in inspect.getmembers(type(module)):
+        for name, attr in inspect.getmembers(module):
             # Handle chain
             if hasattr(attr, '_chain'):
                 chain = attr._chain

@@ -28,15 +28,21 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from django.http import Http404
 from django.shortcuts import redirect
 
 from sellmo import modules
+from sellmo.api.configuration import class_setting
+from sellmo.api.exceptions import ViewNotImplemented
 from sellmo.api.decorators import chainable, view
 
 
 class CheckoutModule(modules.checkout):
-
+    
+    CheckoutProcess = class_setting(
+        'CHECKOUT_PROCESS',
+        default=('sellmo.contrib.contrib_checkout.processes'
+                 '.multistep_process.MultiStepCheckoutProcess'))
+    
     @chainable()
     def get_checkout_step(self, chain, key, order, request, step=None, **kwargs):
         if chain:
@@ -46,34 +52,31 @@ class CheckoutModule(modules.checkout):
         return step
     
     @view()
-    def checkout_information(self, chain, request, context=None, **kwargs):
+    def information_step(self, chain, request, context=None, **kwargs):
         if context is None:
             context = {}
 
         if chain:
             return chain.execute(request=request, context=context, **kwargs)
         else:
-            # We don't render anything
-            raise Http404
+            raise ViewNotImplemented
 
     @view()
-    def checkout_payment_method(self, chain, request, context=None, **kwargs):
+    def payment_method_step(self, chain, request, context=None, **kwargs):
         if context is None:
             context = {}
 
         if chain:
             return chain.execute(request=request, context=context, **kwargs)
         else:
-            # We don't render anything
-            raise Http404
+            raise ViewNotImplemented
 
     @view()
-    def checkout_summary(self, chain, request, context=None, **kwargs):
+    def summary_step(self, chain, request, context=None, **kwargs):
         if context is None:
             context = {}
 
         if chain:
             return chain.execute(request=request, context=context, **kwargs)
         else:
-            # We don't render anything
-            raise Http404
+            raise ViewNotImplemented

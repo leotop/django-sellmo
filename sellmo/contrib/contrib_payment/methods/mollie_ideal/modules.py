@@ -31,11 +31,12 @@
 from django import forms
 from django.http import HttpResponse, Http404
 from django.core.urlresolvers import reverse
-from django.shortcuts import redirect, render_to_response
+from django.shortcuts import redirect
 from django.contrib.sites.models import Site
 
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable
+from sellmo.api.exceptions import ViewNotImplemented
 from sellmo.api.configuration import setting, class_setting
 from sellmo.contrib.contrib_payment \
      .methods.mollie_ideal.models import MollieIdealPayment
@@ -76,8 +77,7 @@ class MollieIdealModule(Module):
         if chain:
             return chain.execute(request=request, context=context, **kwargs)
         else:
-            # We don't render anything
-            raise Http404
+            raise ViewNotImplemented
 
     @view()
     def pending(self, chain, request, context=None, **kwargs):
@@ -86,8 +86,7 @@ class MollieIdealModule(Module):
         if chain:
             return chain.execute(request=request, context=context, **kwargs)
         else:
-            # We don't render anything
-            raise Http404
+            raise ViewNotImplemented
 
     @view()
     def failure(self, chain, request, context=None, **kwargs):
@@ -96,8 +95,7 @@ class MollieIdealModule(Module):
         if chain:
             return chain.execute(request=request, context=context, **kwargs)
         else:
-            # We don't render anything
-            raise Http404
+            raise ViewNotImplemented
 
     @view(r'^report$')
     def report(self, chain, request, **kwargs):

@@ -28,36 +28,32 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-import collections
+import inspect
+
 
 from sellmo import modules
 from sellmo.core.chaining import ViewChain
 
-from django.conf.urls import patterns, url, include
+from django.conf.urls import url, include
 
 
-urlpatterns = patterns('sellmo')
+urlpatterns = []
 for module in modules:
-
     urls = []
-    for name in dir(module):
-        attr = getattr(module, name)
-        if hasattr(attr, '_chain'):
-            chain = attr._chain
-            if isinstance(chain, ViewChain):
-                regex = chain.regex
-                if isinstance(regex, basestring):
-                    regex = [regex]
-                for regex in regex:
-                    shortcut = '{0}.{1}'.format(module.namespace, name)
-                    urls.append(url(regex, attr, name=shortcut))
-
-    if urls:
-        prefix = module.prefix
-        if not prefix:
-            prefix = module.namespace
-
-        urlpatterns += patterns(
-            'modules',
-            ('^{0}/'.format(prefix),
-             include(patterns(module.namespace, *urls))),)
+    for name, attr in inspect.getmembers(module):
+        if not hasattr(attr, '_chain'):
+            continue
+        chain = attr._chain
+        if isinstance(chain, ViewChain):
+            regex = chain.regex
+            if isinstance(regex, basestring):
+                regex = [regex]
+            for regex in regex:
+                shortcut = '{0}.{1}'.format(module.namespace, name)
+                urls.append(url(regex, attr, name=shortcut))
+    
+    if not urls:
+        continue
+    
+    prefix = getattr(module, 'prefix', module.namespace + '/')
+    urlpatterns.append(url(r'^{0}'.format(prefix), include(urls)))

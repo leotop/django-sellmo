@@ -29,7 +29,6 @@
 
 
 from sellmo import modules, celery
-from sellmo.api.configuration import get_setting
 from sellmo.contrib.contrib_variation.signals import variations_invalidated
 from sellmo.contrib.contrib_variation import tasks
 

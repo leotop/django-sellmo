@@ -33,6 +33,7 @@ from django.http import Http404
 import sellmo
 from sellmo import modules
 from sellmo.api.decorators import view, chainable
+from sellmo.api.exceptions import ViewNotImplemented
 from sellmo.api.product.models import Product, ProductRelatable
 from sellmo.api.http.query import QueryString
 
@@ -40,7 +41,6 @@ from sellmo.api.http.query import QueryString
 class ProductModule(sellmo.Module):
 
     namespace = 'product'
-    prefix = 'products'
     Product = Product
     ProductRelatable = ProductRelatable
     subtypes = []
@@ -90,5 +90,4 @@ class ProductModule(sellmo.Module):
             return chain.execute(
                 request, product=product, context=context, **kwargs)
         else:
-            # We don't render anything
-            raise Http404
+            raise ViewNotImplemented

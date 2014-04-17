@@ -85,14 +85,16 @@ ORDER_STATUSES = {
 }
 
 
-class OrderStatusesHelper(object):
-    def __init__(self, status_dict):
+class OrderStatusesHelper(dict):
+    
+    def __init__(self, *args, **kwargs):
+        super(OrderStatusesHelper, self).__init__(*args, **kwargs)
         initial = None
         choices = []
         event_to_status = {}
         status_to_state = {}
         
-        for status, entry in status_dict.iteritems():
+        for status, entry in self.iteritems():
             config = entry[1] if len(entry) == 2 else {}
             if 'initial' in config and config['initial']:
                 if initial is not None:
@@ -104,7 +106,7 @@ class OrderStatusesHelper(object):
             if 'flow' in config:
                 # Check flow
                 for allowed in config['flow']:
-                    if allowed not in status_dict:
+                    if allowed not in self:
                         raise ValueError(
                             "Order status '{0}' does not "
                             "exist.".format(allowed))

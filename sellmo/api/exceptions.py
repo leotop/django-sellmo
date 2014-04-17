@@ -28,6 +28,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from django.http import HttpResponse
+from django.http import Http404
 
-from sellmo.api.decorators import chainable
+
+class ViewNotImplemented(Http404):
+    def __init__(self, message="View not implemented"):
+        super(ViewNotImplemented, self).__init__(message)

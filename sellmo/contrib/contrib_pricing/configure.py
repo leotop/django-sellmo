@@ -31,7 +31,6 @@
 import datetime
 
 from sellmo import modules, celery, params
-from sellmo.api.configuration import get_setting
 
 
 if celery.enabled and getattr(params, 'worker_mode', False):

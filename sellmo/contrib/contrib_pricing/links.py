@@ -28,12 +28,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from django.http import HttpResponse
-
 from sellmo import modules, celery, params
 from sellmo.api.decorators import link
 from sellmo.api.pricing import Price
-from sellmo.api.configuration import get_setting
 from sellmo.contrib.contrib_pricing import tasks
 
 

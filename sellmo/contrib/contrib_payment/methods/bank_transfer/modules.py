@@ -32,6 +32,7 @@ from django.http import Http404
 
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable, link
+from sellmo.api.exceptions import ViewNotImplemented
 from sellmo.contrib.contrib_payment \
      .methods.bank_transfer.models import BankTransferPayment
 
@@ -47,8 +48,7 @@ class BankTransferModule(Module):
         if chain:
             return chain.execute(request=request, context=context, **kwargs)
         else:
-            # We don't render anything
-            raise Http404
+            raise ViewNotImplemented
 
     @link(namespace='checkout')
     def complete(self, request, order=None, context=None, **kwargs):

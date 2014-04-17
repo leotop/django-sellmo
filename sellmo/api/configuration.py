@@ -38,29 +38,24 @@ def _get_setting_key(key, prefix=None):
     if prefix:
         key = '{0}_{1}'.format(prefix, key)
     return key
-    
-def get_setting(key, default=None, prefix=_prefix):
-    return getattr(settings, _get_setting_key(key, prefix), default)
 
 def setting(key, default=None, required=True, transform=None, prefix=_prefix):
-    return LazySetting(
+    return Setting(
         key, default=default, required=required, transform=transform)
     
-
 def class_setting(key, default=None, required=True, prefix=_prefix):
-    return LazySetting(
-        key, default=default, required=required,
+    return Setting(
+        _get_setting_key(key, prefix), default=default, required=required,
         transform = lambda path : import_by_path(path))
-        
 
-class LazySetting(object):
+
+class Setting(object):
 
     _is_resolved = False
     _value = None
 
-    def __init__(self, key, default=None, required=True, transform=None,
-                 prefix=_prefix):
-        self.key = _get_setting_key(key, prefix)
+    def __init__(self, key, default=None, required=True, transform=None):
+        self.key = key
         self.default = default
         self.required = required
         self.transform = transform

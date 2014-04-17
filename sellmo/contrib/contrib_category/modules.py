@@ -33,6 +33,7 @@ from django.http import Http404
 
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable
+from sellmo.api.exceptions import ViewNotImplemented
 from sellmo.contrib.contrib_category.models import Category
 
 
@@ -69,8 +70,7 @@ class CategoryModule(Module):
         if chain:
             return chain.execute(request, context=context, **kwargs)
         else:
-            # We don't render anything
-            raise Http404
+            raise ViewNotImplemented
 
     @view(r'^(?P<full_slug>[-a-zA-Z0-9_/]+)/$')
     def category(self, chain, request, full_slug, category=None, context=None,
@@ -107,5 +107,4 @@ class CategoryModule(Module):
                 request, category=category, full_slug=full_slug,
                 context=context, **kwargs)
         else:
-            # We don't render anything
-            raise Http404
+            raise ViewNotImplemented

@@ -41,7 +41,6 @@ from sellmo.api.customer.models import (Addressee,
 class CustomerModule(sellmo.Module):
 
     namespace = 'customer'
-    prefix = 'customer'
     enabled = True
 
     Addressee = Addressee
@@ -220,7 +219,7 @@ class CustomerModule(sellmo.Module):
             if customer is None and not user is None:
                 try:
                     customer = user.customer
-                except self.customer.DoesNotExist:
+                except self.Customer.DoesNotExist:
                     pass
         if chain:
             out = chain.execute(request=request, customer=customer, **kwargs)

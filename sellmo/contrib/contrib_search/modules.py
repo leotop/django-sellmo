@@ -30,11 +30,11 @@
 
 import operator
 
-from django.http import Http404
 from django.db.models import Q
 
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable
+from sellmo.api.exceptions import ViewNotImplemented
 from sellmo.api.configuration import setting, class_setting
 
 
@@ -83,8 +83,7 @@ class SearchModule(Module):
             return chain.execute(
                 request, products=products, context=context, **kwargs)
         else:
-            # We don't render anything
-            raise Http404
+            raise ViewNotImplemented
 
     @chainable()
     def search(self, chain, products, term, **kwargs):

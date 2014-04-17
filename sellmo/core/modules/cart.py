@@ -40,6 +40,7 @@ from django.utils.module_loading import import_by_path
 import sellmo
 from sellmo import modules
 from sellmo.api.decorators import view, chainable, link
+from sellmo.api.exceptions import ViewNotImplemented
 from sellmo.api.configuration import setting, class_setting
 from sellmo.api.cart.models import Cart
 from sellmo.api.cart.forms import AddToCartForm, EditPurchaseForm
@@ -49,7 +50,6 @@ from sellmo.api.forms import RedirectableFormSet
 class CartModule(sellmo.Module):
 
     namespace = 'cart'
-    prefix = 'cart'
     enabled = True
 
     Cart = Cart
@@ -199,38 +199,10 @@ class CartModule(sellmo.Module):
         if chain:
             return chain.execute(request, cart=cart, context=context, **kwargs)
         else:
-            # We don't render anything
-            raise Http404
+            raise ViewNotImplemented
 
-    @view(r'^remove/(?P<purchase_id>[0-9]+)$')
-    def remove_from_cart(self, chain, request, purchase_id, purchase=None,
-                         context=None, **kwargs):
-
-        next = request.GET.get('next', 'cart.cart')
-
-        if purchase is None:
-            try:
-                purchase = modules.store.Purchase.objects.polymorphic().get(
-                    pk=purchase_id)
-            except modules.store.Purchase.DoesNotExist:
-                raise Http404
-
-        # Get the cart
-        cart = self.get_cart(request=request)
-
-        # Now remove from cart
-        self.remove_purchase(request=request, cart=cart, purchase=purchase)
-
-        redirection = redirect(next)
-        if chain:
-            return chain.execute(
-                request, purchase=purchase, context=context,
-                redirection=redirection, **kwargs)
-
-        return redirection
-
-    @view(r'^update/(?P<purchase_id>[0-9]+)$')
-    def update_cart(self, chain, request, purchase_id, purchase=None,
+    @view(r'^edit/(?P<purchase_id>[0-9]+)$')
+    def edit_purchase(self, chain, request, purchase_id, purchase=None,
                     form=None, context=None, **kwargs):
 
         next = request.GET.get('next', 'cart.cart')
@@ -253,7 +225,7 @@ class CartModule(sellmo.Module):
         # Get the cart
         cart = self.get_cart(request=request)
 
-        # We require a valid formset
+        # We require a valid form
         if form.is_valid():
             purchase_args = self.get_edit_purchase_args(
                 purchase=purchase, form=form)
@@ -330,16 +302,9 @@ class CartModule(sellmo.Module):
 
         if chain:
             return chain.execute(
-                request,
-                product=product,
-                purchases=purchases,
-                formset=formset,
-                context=context,
-                redirection=redirection,
-                next=next,
-                invalid=invalid,
-                **kwargs
-            )
+                request, product=product, purchases=purchases,
+                formset=formset, context=context, redirection=redirection,
+                next=next, invalid=invalid, **kwargs)
 
         return redirection
 

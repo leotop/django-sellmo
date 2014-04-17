@@ -1,17 +1,13 @@
-# Django South generated files #
+# Migrations #
 ######################
-skeleton/cart/migrations
-skeleton/category/migrations
-skeleton/checkout/migrations
-skeleton/customer/migrations
-skeleton/pricing/migrations
-skeleton/product/migrations
-skeleton/shipping/migrations
-skeleton/store/migrations
-skeleton/tax/migrations
-skeleton/attribute/migrations
-skeleton/variation/migrations
-skeleton/color/migrations
+example/migrations
+
+# Sqlite databases #
+######################
+example/db.sqlite3
+
+# PyLint generated files #
+######################
 pylint.html
 
 # Python generated files #

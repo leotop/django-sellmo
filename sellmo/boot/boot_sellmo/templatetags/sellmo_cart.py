@@ -82,6 +82,8 @@ def add_to_cart_formset(context, product, next=None, invalid=None, **kwargs):
         'formset': formset,
         'product': product,
         'query': query,
+        'next' : next,
+        'invalid' : invalid,
     }
 
     inner.update(kwargs)
@@ -108,6 +110,8 @@ def edit_purchase_form(context, purchase, next=None, invalid=None, **kwargs):
         'form': form,
         'purchase': purchase,
         'query': query,
+        'next' : next,
+        'invalid' : invalid,
     }
 
     inner.update(kwargs)

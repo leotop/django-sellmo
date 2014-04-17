@@ -31,18 +31,21 @@
 import sellmo
 from sellmo import modules
 from sellmo.api.decorators import view, chainable, link
+from sellmo.api.exceptions import ViewNotImplemented
 from sellmo.api.configuration import class_setting
 from sellmo.contrib.contrib_account.models import User
 from sellmo.contrib.contrib_account.forms import (UserChangeForm,
                                                   UserCreationForm)
 
 from django.http import Http404
+from django.conf import settings
 from django.shortcuts import redirect
 from django.contrib.auth import (login as auth_login,
                                  logout as auth_logout)
 
 
 class AccountModule(sellmo.Module):
+   
     namespace = 'account'
     
     User = User
@@ -63,13 +66,9 @@ class AccountModule(sellmo.Module):
         'PASSWORD_RESET_FORM',
         default='django.contrib.auth.forms.PasswordResetForm')
     
-    RegistrationProcess = class_setting(
-        'REGISTRATION_PROCESS',
-        default='sellmo.contrib.contrib_account')
-    
     @view(r'^login$')
     def login(self, chain, request, context=None, **kwargs):
-        next = request.GET.get('next', 'account.profile')
+        next = request.GET.get('next', settings.LOGIN_REDIRECT_URL)
         if context is None:
             context = {}
         
@@ -91,7 +90,7 @@ class AccountModule(sellmo.Module):
         elif processed:
             return redirection
         else:
-            raise Http404
+            raise ViewNotImplemented
             
     @chainable()
     def login_user(self, chain, request, user, **kwargs):
@@ -123,18 +122,10 @@ class AccountModule(sellmo.Module):
 
     @view(r'^logout$')
     def logout(self, chain, request, context=None, **kwargs):
-        raise Http404
+        raise ViewNotImplemented
         
     @chainable()
     def logout_user(self, chain, request, user, **kwargs):
         auth_logout(request)
         if chain:
             chain.execute(request=request, user=user, **kwargs)
-        
-    @view(r'^profile$')
-    def profile(self, chain, request, context=None, **kwargs):
-        raise Http404
-        
-    @view(r'^registration$')
-    def registration(self, chain, request, context=None, **kwargs):
-        raise Http404
