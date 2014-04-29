@@ -38,6 +38,6 @@ namespace = modules.product.namespace
 
 
 @link()
-def details(request, product, context, **kwargs):
+def product(request, product, context, **kwargs):
     if not product.active:
         raise Http404

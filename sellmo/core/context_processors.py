@@ -28,10 +28,17 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
+import inspect
+
+
 from sellmo import modules
+from sellmo.core.chaining import ContextProcessorChain
 
 
-def settings(request):
-    return {
-        'settings': modules.settings.get_settings
-    }
+for module in modules:
+    for name, attr in inspect.getmembers(module):
+        if not hasattr(attr, '_chain'):
+            continue
+        chain = attr._chain
+        if isinstance(chain, ContextProcessorChain):
+            vars()[name] = attr

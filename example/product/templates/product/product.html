@@ -1,0 +1,8 @@
+{% extends "store.html" %}
+{% load sellmo_cart %}
+
+{% block content %}
+  <h1>{{ product.name }}</h1>
+  <hr/>
+  {% add_to_cart_formset product %}
+{% endblock %}

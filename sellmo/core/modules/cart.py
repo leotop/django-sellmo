@@ -39,7 +39,7 @@ from django.utils.module_loading import import_by_path
 
 import sellmo
 from sellmo import modules
-from sellmo.api.decorators import view, chainable, link
+from sellmo.api.decorators import view, chainable, link, context_processor
 from sellmo.api.exceptions import ViewNotImplemented
 from sellmo.api.configuration import define_setting, define_import
 from sellmo.api.cart.models import Cart
@@ -69,6 +69,12 @@ class CartModule(sellmo.Module):
         for purchase in instance.purchases.all():
             if purchase.is_stale(ignore_cart=True):
                 purchase.delete()
+
+    @context_processor()
+    def cart_context(self, chain, request, context, **kwargs):
+        if 'cart' not in context:
+            context['cart'] = self.get_cart(request=request)
+        return chain.execute(request=request, context=context, **kwargs)
 
     @chainable()
     def get_edit_purchase_form(self, chain, form=None, cls=None, purchase=None, 
@@ -203,9 +209,11 @@ class CartModule(sellmo.Module):
 
     @view(r'^edit/(?P<purchase_id>[0-9]+)$')
     def edit_purchase(self, chain, request, purchase_id, purchase=None,
-                    form=None, context=None, **kwargs):
+                      form=None, context=None, next='cart.cart', 
+                      invalid='cart.cart', **kwargs):
 
-        next = request.GET.get('next', 'cart.cart')
+        next = request.GET.get('next', next)
+        invalid = request.GET.get('invalid', invalid)
 
         if purchase is None:
             try:
@@ -231,11 +239,11 @@ class CartModule(sellmo.Module):
                 purchase=purchase, form=form)
             purchase = modules.store.make_purchase(**purchase_args)
             self.update_purchase(request=request, purchase=purchase, cart=cart)
+            redirection = redirect(next)
         else:
+            redirection = redirect(invalid)
             form.redirect(request)
-            next = request.GET.get('invalid', 'cart.cart')
-
-        redirection = redirect(next)
+        
         if chain:
             return chain.execute(
                 request, purchase=purchase, form=form,

@@ -1,0 +1,12 @@
+{% load widget_tweaks %}
+<form role='form' method="post" action="{% url 'cart.add_to_cart' product.slug %}{% if query %}?{{ query }}{% endif %}">{% csrf_token %}
+  {% for form in formset %}
+    {% for field in form %}
+      <div class="form-group{% if field.errors %} has-error{% endif %}">
+        {% render_field field class+=field.name class+="form-control" %}
+      </div>
+    {% endfor %}
+  {% endfor %}
+  {{ formset.management_form }}
+  <input type="submit" value="Add to cart" class="btn btn-success"/>
+</form>

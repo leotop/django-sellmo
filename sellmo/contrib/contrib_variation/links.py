@@ -147,7 +147,7 @@ def get_add_to_cart_formset(formset, cls, product, variations=None,
                             initial=None, data=None, **kwargs):
 
     if not variations:
-        variations = product.variations
+        variations = getattr(product, 'variations', None)
 
     # Before proceeding to custom form creation, check if we're dealing with a
     # variation product

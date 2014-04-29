@@ -77,7 +77,7 @@ class ProductModule(sellmo.Module):
         return products
 
     @view(r'^(?P<product_slug>[-a-zA-Z0-9_]+)$')
-    def details(self, chain, request, product_slug, context=None, **kwargs):
+    def product(self, chain, request, product_slug, context=None, **kwargs):
         if context is None:
             context = {}
         try:
@@ -85,7 +85,7 @@ class ProductModule(sellmo.Module):
                 request=request).polymorphic().get(slug=product_slug)
         except self.Product.DoesNotExist:
             raise Http404("""Product '%s' not found.""" % product_slug)
-
+        
         if chain:
             return chain.execute(
                 request, product=product, context=context, **kwargs)

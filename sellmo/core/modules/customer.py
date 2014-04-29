@@ -31,7 +31,7 @@
 import sellmo
 from sellmo import modules
 from sellmo.api.configuration import define_setting, define_import
-from sellmo.api.decorators import view, chainable, link
+from sellmo.api.decorators import view, chainable, link, context_processor
 from sellmo.api.customer.models import (Addressee,
                                         Address,
                                         Contactable,
@@ -90,8 +90,12 @@ class CustomerModule(sellmo.Module):
         default=True
     )
     
-    def __init__(self):
-        pass
+        
+    @context_processor()
+    def customer_context(self, chain, request, context, **kwargs):
+        if 'customer' not in context:
+            context['customer'] = self.get_customer(request=request)
+        return chain.execute(request=request, context=context, **kwargs)
 
     # Forms
 

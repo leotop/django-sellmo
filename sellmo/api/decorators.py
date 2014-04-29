@@ -29,7 +29,8 @@
 
 
 from sellmo.core.loading import loader
-from sellmo.core.chaining import chainer, Chain, ViewChain
+from sellmo.core.chaining import (chainer, Chain, ViewChain, 
+                                  ContextProcessorChain)
 
 
 def load(action=None, after=None, before=None, directly=False):
@@ -49,6 +50,13 @@ def link(name=None, namespace=None, capture=False):
 def view(regex=None):
     def decorator(func):
         chain = ViewChain(func, regex)
+        return chainer.chain(chain)
+    return decorator
+    
+
+def context_processor():
+    def decorator(func):
+        chain = ContextProcessorChain(func)
         return chainer.chain(chain)
     return decorator
 

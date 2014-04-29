@@ -38,6 +38,9 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.sites',
     
+    # This comes in handy for rendering forms
+    'widget_tweaks',
+    
     # Use South for model migrations
     'south',
     
@@ -133,7 +136,9 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     # Needed by sellmo
     'django.core.context_processors.request',
     # Add Sellmo context processors
-    'sellmo.contrib.contrib_settings.context_processors.settings',
+    'sellmo.core.context_processors.cart_context',
+    'sellmo.core.context_processors.customer_context',
+    'sellmo.core.context_processors.settings_context',
 )
 
 MIDDLEWARE_CLASSES = (

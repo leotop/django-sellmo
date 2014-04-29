@@ -50,7 +50,8 @@ def get_setting(key, prefix=_prefix, **kwargs):
             raise
     return value
 
-def define_setting(key, required=True, transform=None, prefix=_prefix, **kwargs):
+def define_setting(key, required=True, transform=None, prefix=_prefix, 
+                   **kwargs):
     return _LazySetting(
         _get_setting_key(key, prefix), required=required,
         transform=transform, **kwargs)

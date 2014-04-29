@@ -1,0 +1,27 @@
+{% extends "store.html" %}
+{% load sellmo_cart %}
+{% block content %}
+<h1>Cart</h1>
+<hr/>
+{% if cart %}
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th>Item</th>
+      <th>Qty</th>
+      <th>Amount</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for purchase in cart %}
+    <tr>
+      <td><a href="{{ purchase.product.get_absolute_url }}">{{ purchase.product }}</a></td>
+      <td>{% edit_purchase_form purchase %}</td>
+      <td>{{ purchase.total }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+{% endif %}
+{% endblock %}

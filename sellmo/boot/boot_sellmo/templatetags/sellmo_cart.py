@@ -41,27 +41,6 @@ from sellmo.api.http.query import QueryString
 register = template.Library()
 
 
-class CartTag(Tag):
-    name = 'cart'
-    options = Options(
-        MultiKeywordArgument('kwargs', required=False),
-        'as',
-        Argument('varname', default='cart', required=False, resolve=False),
-        blocks=[('endcart', 'nodelist')],
-        true_values=['yes', 'true'],
-    )
-
-    def render_tag(self, context, kwargs, varname, nodelist):
-        cart = modules.cart.get_cart(request=context['request'], **kwargs)
-        context.push()
-        context[varname] = cart
-        output = nodelist.render(context)
-        context.pop()
-        return output
-
-register.tag(CartTag)
-
-
 @register.inclusion_tag('cart/add_to_cart_formset.html', takes_context=True)
 def add_to_cart_formset(context, product, next=None, invalid=None, **kwargs):
     formset = modules.cart.get_add_to_cart_formset(product=product, **kwargs)

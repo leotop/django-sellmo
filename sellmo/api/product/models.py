@@ -116,7 +116,7 @@ class Product(PolymorphicModel):
 
     @models.permalink
     def get_absolute_url(self):
-        return 'product.details', (self.slug,)
+        return 'product.product', (self.slug,)
 
     class Meta:
         ordering = ['slug']

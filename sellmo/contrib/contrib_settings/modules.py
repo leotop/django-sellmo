@@ -35,7 +35,7 @@ from django.db.models.signals import pre_save, pre_delete
 from sellmo import modules, Module
 from sellmo.core.local import get_context
 from sellmo.magic import ModelMixin
-from sellmo.api.decorators import view, chainable
+from sellmo.api.decorators import view, chainable, context_processor
 from sellmo.contrib.contrib_settings.models import SiteSettings
 from sellmo.contrib.contrib_settings.signals import setting_changed
 
@@ -68,6 +68,12 @@ class SettingsModule(Module):
         pre_save.connect(self.on_settings_pre_save, sender=self.SiteSettings)
         pre_delete.connect(
             self.on_settings_pre_delete, sender=self.SiteSettings)
+            
+    @context_processor()
+    def settings_context(self, chain, request, context, **kwargs):
+        if 'settings' not in context:
+            context['settings'] = self.get_settings()
+        return chain.execute(request=request, context=context, **kwargs)
 
     def on_settings_pre_save(self, sender, instance, **kwargs):
         self.on_cache_invalidated(instance)

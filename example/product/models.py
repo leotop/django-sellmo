@@ -16,7 +16,8 @@ def load_model():
 
         sku = models.CharField(
             max_length=80,
-            verbose_name=_("sku")
+            verbose_name=_("sku"),
+            blank=True,
         )
 
         class Meta(modules.product.Product.Meta):

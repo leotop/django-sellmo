@@ -243,6 +243,23 @@ class Chain(object):
         return repr(self._func)
 
 
+class ContextProcessorChain(Chain):
+    
+    def handle(self, module, request, **kwargs):
+        context = {}
+        return super(ContextProcessorChain, self).handle(
+            module=module, request=request, context=context, **kwargs)
+    
+    def capture(self, request, context, **kwargs):
+        return super(ContextProcessorChain, self).capture(
+            request=request, context=context, **kwargs)
+    
+    def execute(self, request, context, **kwargs):
+        out = super(ContextProcessorChain, self).execute(
+            request=request, context=context, **kwargs)
+        return out.get('context', context)
+
+
 class ViewChain(Chain):
 
     def __init__(self, func, regex=None, **kwargs):
