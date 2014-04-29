@@ -210,10 +210,7 @@ def capture_add_to_cart(request, product_slug, product=None, formset=None,
                         **kwargs):
 
     if formset is None:
-        if request.method == 'POST':
-            data = request.POST
-        else:
-            data = request.GET
+        data = request.POST
         variations_key = data.get('form-0-variations_key', None)
         if variations_key:
 

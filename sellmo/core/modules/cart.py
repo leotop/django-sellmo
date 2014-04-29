@@ -34,7 +34,9 @@ from django.forms.formsets import formset_factory
 from django.db import models
 from django.db.models.signals import pre_delete
 from django.http import Http404
+from django.views.decorators.http import require_POST
 from django.shortcuts import redirect
+from django.utils.decorators import method_decorator
 from django.utils.module_loading import import_by_path
 
 import sellmo
@@ -206,14 +208,18 @@ class CartModule(sellmo.Module):
             return chain.execute(request, cart=cart, context=context, **kwargs)
         else:
             raise ViewNotImplemented
-
+    
+    @method_decorator(require_POST)
     @view(r'^edit/(?P<purchase_id>[0-9]+)$')
     def edit_purchase(self, chain, request, purchase_id, purchase=None,
                       form=None, context=None, next='cart.cart', 
                       invalid='cart.cart', **kwargs):
 
-        next = request.GET.get('next', next)
-        invalid = request.GET.get('invalid', invalid)
+        # Next and invalid params are allowed to be present into query
+        next = request.POST.get(
+            'next', request.GET.get('next', next))
+        invalid = request.POST.get(
+            'invalid', request.GET.get('invalid', invalid))
 
         if purchase is None:
             try:
@@ -223,26 +229,27 @@ class CartModule(sellmo.Module):
                 raise Http404
 
         if form is None:
-            if request.method == 'POST':
-                form = self.get_edit_purchase_form(
-                    purchase=purchase, data=request.POST)
-            else:
-                form = self.get_edit_purchase_form(
-                    purchase=purchase, data=request.GET)
+            form = self.get_edit_purchase_form(
+                purchase=purchase, data=request.POST)
 
         # Get the cart
         cart = self.get_cart(request=request)
-
-        # We require a valid form
-        if form.is_valid():
-            purchase_args = self.get_edit_purchase_args(
-                purchase=purchase, form=form)
-            purchase = modules.store.make_purchase(**purchase_args)
-            self.update_purchase(request=request, purchase=purchase, cart=cart)
-            redirection = redirect(next)
+        
+        redirection = redirect(next)
+        
+        if 'remove' in request.POST:
+            self.remove_purchase(request=request, purchase=purchase, cart=cart)
         else:
-            redirection = redirect(invalid)
-            form.redirect(request)
+            # We require a valid form
+            if form.is_valid():
+                purchase_args = self.get_edit_purchase_args(
+                    purchase=purchase, form=form)
+                purchase = modules.store.make_purchase(**purchase_args)
+                self.update_purchase(
+                    request=request, purchase=purchase, cart=cart)
+            else:
+                redirection = redirect(invalid)
+                form.redirect(request)
         
         if chain:
             return chain.execute(
@@ -251,13 +258,17 @@ class CartModule(sellmo.Module):
 
         return redirection
 
+    @method_decorator(require_POST)
     @view(r'^add/(?P<product_slug>[-a-zA-Z0-9_]+)$')
     def add_to_cart(self, chain, request, product_slug, product=None,
                     formset=None, purchases=None, context=None,
                     next='cart.cart', invalid='cart.cart', **kwargs):
 
-        next = request.GET.get('next', next)
-        invalid = request.GET.get('invalid', invalid)
+        # Next and invalid params are allowed to be present into query
+        next = request.POST.get(
+            'next', request.GET.get('next', next))
+        invalid = request.POST.get(
+            'invalid', request.GET.get('invalid', invalid))
 
         if product is None:
             try:
@@ -270,12 +281,9 @@ class CartModule(sellmo.Module):
             context = {}
 
         if formset is None:
-            if request.method == 'POST':
-                formset = self.get_add_to_cart_formset(
-                    product=product, data=request.POST)
-            else:
-                formset = self.get_add_to_cart_formset(
-                    product=product, data=request.GET)
+            formset = self.get_add_to_cart_formset(
+                product=product, data=request.POST)
+                
 
         redirection = redirect(next)
         # Purchase will in most cases not yet be assigned, 
