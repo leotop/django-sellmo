@@ -1,27 +1,35 @@
 {% extends "store.html" %}
 {% load sellmo_cart %}
+
+{% block breadcrumb %}
+<li class="active">Cart</li>
+{% endblock %}
+
 {% block content %}
-<h1>Cart</h1>
-<hr/>
 {% if cart %}
-<table class="table table-bordered">
-  <thead>
-    <tr>
-      <th>Item</th>
-      <th>Qty</th>
-      <th>Amount</th>
-    </tr>
-  </thead>
-  <tbody>
+<ul class="list-group">
   {% for purchase in cart %}
-    <tr>
-      <td><a href="{{ purchase.product.get_absolute_url }}">{{ purchase.product }}</a></td>
-      <td>{% edit_purchase_form purchase %}</td>
-      <td>{{ purchase.total }}</td>
-    </tr>
+    <li class="list-group-item">
+      <div class="row">
+        <div class="col-xs-3 col-sm-6">
+          <div class="h4"><a href="{{ purchase.product.get_absolute_url }}">{{ purchase.product.name }}</a></div>
+        </div>
+        <div class="col-xs-3 col-sm-2">
+          <div class="h4">{{ purchase.total }}</div>
+        </div>
+        <div class="col-xs-6 col-sm-4">
+          {% edit_purchase_form purchase %}
+        </div>
+      </div>
+    </li>
   {% endfor %}
-  </tbody>
-</table>
+</ul>
+<div class="clearfix">
+  <div class="pull-right">
+    <a href="{% url 'checkout.checkout' %}" class="btn btn-success" role="button">Checkout</a>
+  </div>
+</div>
 {% else %}
+<div class="alert alert-info">Cart is empty</div>
 {% endif %}
 {% endblock %}

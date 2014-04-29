@@ -1,0 +1,36 @@
+from sellmo import modules
+from sellmo.api.decorators import link
+
+
+from django.shortcuts import render
+
+
+namespace = modules.checkout.namespace
+
+
+@link()
+def login_step(request, context, **kwargs):
+    return render(request, 'checkout/login.html', context)
+
+@link()
+def information_step(request, context, **kwargs):
+    context.update({
+        'same_as_shipping': request.POST.get('same_as_shipping', 'no')
+    })
+    return render(request, 'checkout/information.html', context)
+
+@link()
+def payment_method_step(request, context, **kwargs):
+    return render(request, 'checkout/payment_method.html', context)
+
+@link()
+def summary_step(request, context, **kwargs):
+    return render(request, 'checkout/summary.html', context)
+
+@link()
+def complete(request, order, context, **kwargs):
+    return render(request, 'checkout/complete.html', context)
+
+@link()
+def cancel(request, order, context, **kwargs):
+    return render(request, 'checkout/cancel.html', context)

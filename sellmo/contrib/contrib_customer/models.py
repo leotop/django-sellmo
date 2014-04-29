@@ -53,7 +53,7 @@ def load_model():
             suffix = models.CharField(
                 max_length=10,
                 blank=True,
-                verbose_name=_("suffx"),
+                verbose_name=_("suffix"),
             )
 
         def clone(self, cls=None, clone=None):
