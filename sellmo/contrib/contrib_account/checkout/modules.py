@@ -29,50 +29,18 @@
 
 
 from sellmo import modules
-from sellmo.api.checkout.process import CheckoutStep
+from sellmo.api.decorators import view, chainable, link
+from sellmo.api.exceptions import ViewNotImplemented
 
 
-class CheckoutLoginStep(CheckoutStep):
+class CheckoutModule(modules.checkout):
+
+    @view()
+    def login_step(self, chain, request, context=None, **kwargs):
+        if context is None:
+            context = {}
     
-    key = 'login'
-    invalid_context = None
-    
-    def __init__(self, order, request, next_step):
-        super(CheckoutLoginStep, self).__init__(order, request)
-        self.next_step = next_step
-    
-    def get_next_step(self):
-        return self.next_step
-    
-    def is_definitive(self):
-        return self.order.is_pending
-    
-    def is_completed(self):
-        customer = modules.customer.get_customer(request=self.request)
-        return customer is not None and customer.is_authenticated()
-    
-    def can_skip(self):
-        return True
-        
-    def _contextualize_or_complete(self, request, context, data=None):
-        success = True
-    
-        user, form, processed = modules.account.process_login(
-            request=request, prefix='login', data=data)
-        context['login_form'] = form
-        success &= processed
-    
-        return success
-    
-    def complete(self, data):
-        self.invalid_context = {}
-        return self._contextualize_or_complete(
-            self.request, self.invalid_context, data)
-    
-    def render(self, request, context):
-        if self.invalid_context is None:
-            self._contextualize_or_complete(request, context)
+        if chain:
+            return chain.execute(request=request, context=context, **kwargs)
         else:
-            context.update(self.invalid_context)
-    
-        return modules.checkout.login_step(request=request, context=context)
+            raise ViewNotImplemented

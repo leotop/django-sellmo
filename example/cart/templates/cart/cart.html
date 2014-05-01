@@ -3,26 +3,47 @@
 {% block title %}Cart{% endblock %}
 {% block content %}
 {% if cart %}
-<ul class="list-group">
-  {% for purchase in cart %}
+<div class="panel panel-default">
+  <div class="panel-heading clearfix">
+    <div class="pull-left">
+      Cart
+    </div>
+  </div>
+  <ul class="list-group">
+    {% for purchase in cart %}
+      <li class="list-group-item">
+        <div class="row">
+          <div class="col-xs-3 col-sm-6">
+            <div class="h4"><a href="{{ purchase.product.get_absolute_url }}">{{ purchase.product.name }}</a></div>
+          </div>
+          <div class="col-xs-3 col-sm-2">
+            <div class="h4">{{ purchase.total }}</div>
+          </div>
+          <div class="col-xs-6 col-sm-4">
+            {% edit_purchase_form purchase %}
+          </div>
+        </div>
+      </li>
+    {% endfor %}
     <li class="list-group-item">
       <div class="row">
         <div class="col-xs-3 col-sm-6">
-          <div class="h4"><a href="{{ purchase.product.get_absolute_url }}">{{ purchase.product.name }}</a></div>
+          <div class="h4"></div>
         </div>
         <div class="col-xs-3 col-sm-2">
-          <div class="h4">{{ purchase.total }}</div>
+          <div class="h4">Total {{ cart.total }}</div>
         </div>
         <div class="col-xs-6 col-sm-4">
-          {% edit_purchase_form purchase %}
+          
         </div>
       </div>
     </li>
-  {% endfor %}
-</ul>
-<div class="clearfix">
-  <div class="pull-right">
-    <a href="{% url 'checkout.checkout' %}" class="btn btn-success" role="button">Checkout</a>
+  </ul>
+  <div class="panel-footer clearfix">
+    <div class="pull-right">
+      <a href="{% url 'checkout.checkout' %}" class="btn btn-default" role="button">Continue shopping</a>
+      <a href="{% url 'checkout.checkout' %}" class="btn btn-success" role="button">Checkout</a>
+    </div>
   </div>
 </div>
 {% else %}
