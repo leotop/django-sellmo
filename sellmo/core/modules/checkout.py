@@ -351,8 +351,7 @@ class CheckoutModule(sellmo.Module):
         if chain:
             out = chain.execute(
                 process=process, order=order, request=request, **kwargs)
-            if out.has_key('process'):
-                process = out['process']
+            process = out.get('process', process)
         return process
 
     # SHIPPING LOGIC
@@ -363,8 +362,7 @@ class CheckoutModule(sellmo.Module):
             methods = {}
         if chain:
             out = chain.execute(order=order, methods=methods, **kwargs)
-            if out.has_key('methods'):
-                methods = out['methods']
+            methods = out.get('methods', methods)
         return methods
 
     @chainable()
@@ -413,8 +411,7 @@ class CheckoutModule(sellmo.Module):
             methods = {}
         if chain:
             out = chain.execute(order=order, methods=methods, **kwargs)
-            if out.has_key('methods'):
-                methods = out['methods']
+            methods = out.get('methods', methods)
         return methods
 
     @chainable()

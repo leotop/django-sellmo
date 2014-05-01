@@ -1,0 +1,5 @@
+{% load widget_tweaks %}
+<div class="form-group{% if field.errors %} has-error{% endif %}">
+  <label {% if inline %}class="sr-only"{% endif %} for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}*{% endif %}</label>
+  {% render_field field class+="form-control" %}
+</div>

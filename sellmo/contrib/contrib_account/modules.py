@@ -67,8 +67,13 @@ class AccountModule(sellmo.Module):
         default='django.contrib.auth.forms.PasswordResetForm')
     
     @view(r'^login$')
-    def login(self, chain, request, context=None, **kwargs):
-        next = request.GET.get('next', settings.LOGIN_REDIRECT_URL)
+    def login(self, chain, request, context=None, next=None, **kwargs):
+        if next is None:
+            next = settings.LOGIN_REDIRECT_URL
+        
+        next = request.POST.get(
+            'next', request.GET.get('next', next))
+        
         if context is None:
             context = {}
         
@@ -101,18 +106,20 @@ class AccountModule(sellmo.Module):
     @chainable()
     def process_login(self, chain, request, prefix=None, data=None, 
                       user=None, **kwargs):
+        
         processed = False
-        form = self.get_login_form(
-            request=request, prefix=prefix, data=data)
+        form = self.AuthenticationForm(request, data=data, prefix=prefix)
+       
         if data and form.is_valid():
             processed = True
             if user is None:
                 user = form.get_user()
+        
         if chain:
             out = chain.execute(
                 request=request, prefix=prefix, data=data, user=user,
-                form=form, processed=processed, **kwargs
-            )
+                form=form, processed=processed, **kwargs)
+            
             user, form, processed = (
                 out.get('user', user),
                 out.get('form', form),

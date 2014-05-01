@@ -97,44 +97,6 @@ class CustomerModule(sellmo.Module):
             context['customer'] = self.get_customer(request=request)
         return chain.execute(request=request, context=context, **kwargs)
 
-    # Forms
-
-    @chainable()
-    def get_customer_form(self, chain, prefix=None, data=None, customer=None,
-                          form=None, **kwargs):
-        if form is None:
-            form = self.CustomerForm(data, prefix=prefix, instance=customer)
-        if chain:
-            out = chain.execute(
-                prefix=prefix, data=data,
-                customer=customer, form=form, **kwargs)
-            form = out.get('form', form)
-        return form
-
-    @chainable()
-    def get_contactable_form(self, chain, prefix=None, data=None,
-                             contactable=None, form=None, **kwargs):
-        if form is None:
-            form = self.ContactableForm(
-                data, prefix=prefix, instance=contactable)
-        if chain:
-            out = chain.execute(
-                prefix=prefix, data=data,
-                contactable=contactable, form=form, **kwargs)
-            form = out.get('form', form)
-        return form
-
-    @chainable()
-    def get_address_form(self, chain, prefix=None, data=None, address=None, 
-                         form=None, **kwargs):
-        if form is None:
-            form = self.AddressForm(data, prefix=prefix, instance=address)
-        if chain:
-            out = chain.execute(
-                prefix=prefix, data=data, address=address, form=form, **kwargs)
-            form = out.get('form', form)
-        return form
-
     @chainable()
     def process_customer(self, chain, request, prefix=None, data=None,
                          customer=None, **kwargs):
@@ -142,8 +104,7 @@ class CustomerModule(sellmo.Module):
         customer = self.get_customer(request=request)
 
         processed = False
-        form = self.get_customer_form(
-            prefix=prefix, data=data, customer=customer)
+        form = self.CustomerForm(data, prefix=prefix, instance=customer)
         
         if data and form.is_valid():
             customer = form.save(commit=False)
@@ -163,8 +124,7 @@ class CustomerModule(sellmo.Module):
     def process_contactable(self, chain, request, prefix=None, data=None,
                             contactable=None, **kwargs):
         processed = False
-        form = self.get_contactable_form(
-            prefix=prefix, data=data, contactable=contactable)
+        form = self.ContactableForm(data, prefix=prefix, instance=contactable)
         
         if data and form.is_valid():
             contactable = form.save(commit=False)
@@ -194,8 +154,7 @@ class CustomerModule(sellmo.Module):
             address = customer.get_address(type)
 
         processed = False
-        form = self.get_address_form(
-            type=type, prefix=prefix, data=data, address=address)
+        form = self.AddressForm(data, prefix=prefix, instance=address)
         if data and form.is_valid():
             address = form.save(commit=False)
             address.type = type

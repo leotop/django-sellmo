@@ -1,10 +1,6 @@
 {% extends "store.html" %}
 {% load sellmo_cart %}
-
-{% block breadcrumb %}
-<li class="active">Cart</li>
-{% endblock %}
-
+{% block title %}Cart{% endblock %}
 {% block content %}
 {% if cart %}
 <ul class="list-group">

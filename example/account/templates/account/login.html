@@ -1,0 +1,19 @@
+{% extends "store.html" %}
+{% load widget_tweaks %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-sm-8">
+    <form method="post" action="" role="form">{% csrf_token %}
+      {% include "_form_field.html" with field=form.username %}
+      {% include "_form_field.html" with field=form.password %}
+      <input type="submit" value="Login" class="btn btn-success"/>
+    </form>
+  </div>
+  <div class="col-sm-4">
+    <a href="{% url 'account.registration' %}" class="btn btn-default">Register</a>
+  </div>
+</div>
+{% endblock %}

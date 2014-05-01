@@ -29,8 +29,19 @@
 
 
 from sellmo.contrib.contrib_account.registration \
-           .process import RegistrationProcess as RegistrationProcessBase
+           .process import (RegistrationProcess,
+                            RegistrationStep)
 
 
-class RegistrationProcess(RegistrationProcessBase):
-    pass
+class SimpleRegistrationProcess(RegistrationProcess):
+    def get_first_step(self):
+        return InformationStep(customer=self.customer, request=self.request)
+        
+class InformationStep(RegistrationStep):
+    key = 'information'
+    
+    def is_completed(self):
+        return False
+        
+    def render(self, request, context):
+        return 'hahahaha'
