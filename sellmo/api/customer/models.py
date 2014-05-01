@@ -29,6 +29,7 @@
 
 from django.db import models
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import ugettext_lazy as _
 
 from sellmo import modules
@@ -95,7 +96,10 @@ class Customer(models.Model, Cloneable):
         
     def is_authenticated(self):
         if modules.customer.auth_enabled:
-            return self.user is not None
+            try:
+                return self.user is not None
+            except ObjectDoesNotExist:
+                return False
         else:
             raise NotImplementedError()
 

@@ -94,6 +94,7 @@ INSTALLED_APPS = (
     'sellmo.contrib.contrib_account',
     'sellmo.contrib.contrib_account.profile',
     'sellmo.contrib.contrib_account.registration',
+    'sellmo.contrib.contrib_account.registration.simple_registration',
     'account',
     
     'sellmo.contrib.contrib_shipping',
@@ -107,7 +108,7 @@ INSTALLED_APPS = (
     'payment',
     
     'sellmo.contrib.contrib_checkout',
-    'sellmo.contrib.contrib_checkout.processes.multistep_process',
+    'sellmo.contrib.contrib_checkout.multistep_checkout',
     'checkout',
     
     'sellmo.contrib.contrib_store',

@@ -31,7 +31,6 @@
 from django.core.urlresolvers import reverse
 
 from sellmo.core.processing import Process, ProcessStep
-from sellmo.api.checkout.process import CheckoutStep
 
 
 class RegistrationProcess(Process):

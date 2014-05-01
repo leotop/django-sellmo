@@ -27,5 +27,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sellmo.contrib.contrib_checkout \
-     .processes.multistep_process.process import MultiStepCheckoutProcess
+
+from sellmo.contrib.contrib_account.registration \
+           .simple_registration.process import SimpleRegistrationProcess

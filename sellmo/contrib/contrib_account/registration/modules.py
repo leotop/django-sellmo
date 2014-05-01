@@ -41,11 +41,8 @@ from sellmo.api.configuration import define_import
 
 class AccountModule(modules.account):
     
-    RegistrationProcess = define_import(
-        'REGISTRATION_PROCESS',
-        default=('sellmo.contrib.contrib_account.registration'
-                 '.defaults.SimpleRegistrationProcess'))
-                 
+    RegistrationProcess = define_import('REGISTRATION_PROCESS')
+    
     @chainable()
     def get_registration_process(self, chain, request, customer, process=None,
                                  **kwargs):
@@ -72,15 +69,18 @@ class AccountModule(modules.account):
         # Retrieve customer from request
         if customer is None:
             customer = modules.customer.get_customer(request=request)
+        
+        # Create new customer
+        if customer is None:
+            customer = modules.customer.Customer()
             
         # Now make sure customer isnt already authenticated
-        if customer and customer.is_authenticated():
+        if customer.is_authenticated():
             raise Http404("Already authenticated")
             
         if process is None:
             process = self.get_registration_process(
                 request=request, customer=customer)
-            
         
         redirection = None
         

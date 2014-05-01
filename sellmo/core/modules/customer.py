@@ -100,8 +100,9 @@ class CustomerModule(sellmo.Module):
     @chainable()
     def process_customer(self, chain, request, prefix=None, data=None,
                          customer=None, **kwargs):
-        # Try and get customer from request
-        customer = self.get_customer(request=request)
+        
+        if customer is None:
+            customer = self.get_customer(request=request)
 
         processed = False
         form = self.CustomerForm(data, prefix=prefix, instance=customer)

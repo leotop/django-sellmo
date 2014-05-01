@@ -38,6 +38,7 @@ from sellmo.contrib.contrib_account.forms import (UserChangeForm,
                                                   UserCreationForm)
 
 from django.http import Http404
+from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 from django.shortcuts import redirect
 from django.contrib.auth import (login as auth_login,
@@ -114,6 +115,12 @@ class AccountModule(sellmo.Module):
             processed = True
             if user is None:
                 user = form.get_user()
+                
+            # make sure this user is a customer
+            try:
+                processed = user.customer is not None
+            except ObjectDoesNotExist:
+                processed = False
         
         if chain:
             out = chain.execute(

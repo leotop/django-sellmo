@@ -1,0 +1,43 @@
+{% extends "store.html" %}
+{% load widget_tweaks %}
+
+{% block title %}Registration{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-sm-8">
+    {% if user_form.errors or customer_form.errors or shipping_address_form.errors or billing_address_form.errors %}
+    <div class="alert alert-danger">Correct the errors below</div>
+    {% endif %}
+    <form method="post" action="" role="form">{% csrf_token %}
+      <div class="panel panel-default {% if user_form.errors or customer_form.errors %}panel-danger{% endif %}">
+        <div class="panel-heading">Account information</div>
+        <div class="panel-body">
+          {% include "_form_field.html" with field=user_form.email %}
+          {% include "_form_field.html" with field=user_form.password1 %}
+          {% include "_form_field.html" with field=user_form.password2 %}
+          {% include "_form_field.html" with field=customer_form.first_name %}
+          {% include "_form_field.html" with field=customer_form.last_name %}
+          {% include "_form_field.html" with field=customer_form.phone_number %}
+        </div>
+      </div>
+      <div class="panel panel-default {% if shipping_address_form.errors %}panel-danger{% endif %}">
+        <div class="panel-heading">Shipping Address</div>
+        <div class="panel-body">
+          {% include "customer/_address_form.html" with form=shipping_address_form %}
+        </div>
+      </div>
+      <div class="panel panel-default {% if billing_address_form.errors %}panel-danger{% endif %}">
+        <div class="panel-heading">Billing Address</div>
+        <div class="panel-body">
+          {% include "customer/_address_form.html" with form=billing_address_form %}
+        </div>
+      </div>
+      <input type="submit" value="Continue" class="btn btn-success"/>
+    </form>
+  </div>
+  <div class="col-sm-4">
+    
+  </div>
+</div>
+{% endblock %}

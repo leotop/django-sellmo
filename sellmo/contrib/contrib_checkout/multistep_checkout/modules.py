@@ -40,8 +40,8 @@ class CheckoutModule(modules.checkout):
     
     CheckoutProcess = define_import(
         'CHECKOUT_PROCESS',
-        default=('sellmo.contrib.contrib_checkout.processes'
-                 '.multistep_process.MultiStepCheckoutProcess'))
+        default=('sellmo.contrib.contrib_checkout'
+                 '.multistep_checkout.MultiStepCheckoutProcess'))
     
     @chainable()
     def get_checkout_step(self, chain, key, order, request, step=None, **kwargs):
