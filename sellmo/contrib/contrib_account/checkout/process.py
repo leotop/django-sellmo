@@ -48,8 +48,10 @@ class CheckoutLoginStep(CheckoutStep):
         return self.order.is_pending
     
     def is_completed(self):
-        customer = modules.customer.get_customer(request=self.request)
-        return customer is not None and customer.is_authenticated()
+        if self.order.pk is None:
+            customer = modules.customer.get_customer(request=self.request)
+            return customer is not None and customer.is_authenticated()
+        return True
     
     def can_skip(self):
         return True

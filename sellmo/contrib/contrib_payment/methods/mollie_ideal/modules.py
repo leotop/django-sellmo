@@ -97,7 +97,7 @@ class MollieIdealModule(Module):
         else:
             raise ViewNotImplemented
 
-    @view(r'^report$')
+    @view(r'^report/$')
     def report(self, chain, request, **kwargs):
         transaction_id = request.GET.get('transaction_id', None)
 
@@ -159,7 +159,7 @@ class MollieIdealModule(Module):
 
         return HttpResponse('')
 
-    @view(r'^back$')
+    @view(r'^back/$')
     def back(self, chain, request, **kwargs):
         transaction_id = request.GET.get('transaction_id', None)
 

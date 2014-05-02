@@ -67,7 +67,7 @@ class AccountModule(sellmo.Module):
         'PASSWORD_RESET_FORM',
         default='django.contrib.auth.forms.PasswordResetForm')
     
-    @view(r'^login$')
+    @view(r'^login/$')
     def login(self, chain, request, context=None, next=None, **kwargs):
         if next is None:
             next = settings.LOGIN_REDIRECT_URL
@@ -134,9 +134,35 @@ class AccountModule(sellmo.Module):
             )
         return user, form, processed
 
-    @view(r'^logout$')
-    def logout(self, chain, request, context=None, **kwargs):
-        raise ViewNotImplemented
+    @view(r'^logout/$')
+    def logout(self, chain, request, context=None, next=None, **kwargs):
+        if next is None:
+            next = 'account.login'
+        
+        next = request.POST.get(
+            'next', request.GET.get('next', next))
+        
+        customer = modules.customer.get_customer(request=request)
+        if not customer or not customer.is_authenticated():
+            raise Http404
+            
+        user = customer.user
+        redirection = None
+        processed = False
+        
+        if request.method == 'POST':
+            self.logout_user(request=request, user=user)
+            processed = True
+            redirection = redirect(next)
+        
+        if chain:
+            return chain.execute(
+                request, user=user, context=context,
+                redirection=redirection, **kwargs)
+        elif processed:
+            return redirection
+        else:
+            raise ViewNotImplemented
         
     @chainable()
     def logout_user(self, chain, request, user, **kwargs):

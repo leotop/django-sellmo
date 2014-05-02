@@ -185,6 +185,7 @@ USE_TZ = True
 # Settings for django.contrib.auth 
 
 AUTH_USER_MODEL = 'account.User'
+LOGIN_REDIRECT_URL = 'account.profile'
 
 
 # Settings for django.contrib.sites

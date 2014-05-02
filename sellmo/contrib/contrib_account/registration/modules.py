@@ -55,7 +55,7 @@ class AccountModule(modules.account):
             process = out.get('process', process)
         return process
 
-    @view([r'^registration/step/(?P<step>[-a-zA-Z0-9_]+)/$', r'^registration$'])
+    @view([r'^registration/step/(?P<step>[-a-zA-Z0-9_]+)/$', r'^registration/$'])
     def registration(self, chain, request, step=None, data=None, customer=None,
                      process=None, context=None, **kwargs):
         
@@ -126,8 +126,8 @@ class AccountModule(modules.account):
         
         if chain:
             return chain.execute(
-                request, step=step, customer=customer, process=process,
-                context=context, **kwargs)
+                request=request, step=step, customer=customer,
+                process=process, context=context, **kwargs)
         
         try:
             return process.render(request, context=context)

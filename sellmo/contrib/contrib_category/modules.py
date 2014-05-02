@@ -68,7 +68,7 @@ class CategoryModule(Module):
             context = {}
 
         if chain:
-            return chain.execute(request, context=context, **kwargs)
+            return chain.execute(request=request, context=context, **kwargs)
         else:
             raise ViewNotImplemented
 

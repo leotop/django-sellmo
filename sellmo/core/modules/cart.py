@@ -205,12 +205,12 @@ class CartModule(sellmo.Module):
         context['cart'] = cart
 
         if chain:
-            return chain.execute(request, cart=cart, context=context, **kwargs)
+            return chain.execute(request=request, cart=cart, context=context, **kwargs)
         else:
             raise ViewNotImplemented
     
     @method_decorator(require_POST)
-    @view(r'^edit/(?P<purchase_id>[0-9]+)$')
+    @view(r'^edit/(?P<purchase_id>[0-9]+)/$')
     def edit_purchase(self, chain, request, purchase_id, purchase=None,
                       form=None, context=None, next='cart.cart', 
                       invalid='cart.cart', **kwargs):
@@ -259,7 +259,7 @@ class CartModule(sellmo.Module):
         return redirection
 
     @method_decorator(require_POST)
-    @view(r'^add/(?P<product_slug>[-a-zA-Z0-9_]+)$')
+    @view(r'^add/(?P<product_slug>[-a-zA-Z0-9_]+)/$')
     def add_to_cart(self, chain, request, product_slug, product=None,
                     formset=None, purchases=None, context=None,
                     next='cart.cart', invalid='cart.cart', **kwargs):

@@ -76,7 +76,7 @@ class ProductModule(sellmo.Module):
                 products = out['products']
         return products
 
-    @view(r'^(?P<product_slug>[-a-zA-Z0-9_]+)$')
+    @view(r'^(?P<product_slug>[-a-zA-Z0-9_]+)/$')
     def product(self, chain, request, product_slug, context=None, **kwargs):
         if context is None:
             context = {}

@@ -27,6 +27,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from django.http import Http404
+
 
 from sellmo import modules
 from sellmo.api.decorators import view, chainable, link
@@ -36,6 +38,16 @@ from sellmo.api.configuration import define_import
 
 class AccountModule(modules.account):
     
-    @view(r'^profile$')
-    def profile(self, chain, request, context=None, **kwargs):
+    @view(r'^profile/$')
+    def profile(self, chain, request, customer=None, context=None, **kwargs):
+        if customer is None:
+            customer = modules.customer.get_customer(request=request)
+            
+        if customer is None:
+            raise Http404("Not a customer")
+        
+        if chain:
+            return chain.execute(
+                request=request, customer=customer, context=None, **kwargs)
+        
         raise ViewNotImplemented

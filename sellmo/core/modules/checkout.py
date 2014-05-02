@@ -280,8 +280,8 @@ class CheckoutModule(sellmo.Module):
 
         if chain:
             return chain.execute(
-                request, step=step, order=order, process=process,
-                context=context, **kwargs)
+                request=request, step=step, order=order,
+                process=process, context=context, **kwargs)
 
         try:
             return process.render(request, context=context)
