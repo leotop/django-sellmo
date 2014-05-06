@@ -578,9 +578,9 @@ class Order(trackable('sellmo_order')):
 
     def __unicode__(self):
         if self.number:
-            return _("order #{0}").format(unicode(self.number))
+            return unicode(_(u"order #{0}").format(unicode(self.number)))
         else:
-            return _("unplaced order")
+            return unicode(_(u"unplaced order"))
 
     class Meta:
         ordering = ['-pk']

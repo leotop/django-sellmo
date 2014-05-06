@@ -87,13 +87,16 @@ class OrderAdmin(ReverseModelAdmin):
         ['{0}_address'.format(address) for address in modules.customer.address_types]
 
     list_display = [
-        'id', 'status', 'total_amount', 'paid', 'modified', 'actions_link']
-    list_display_links = ['id']
+        'order', 'number', 'status', 'total_amount', 'paid', 'modified', 'actions_link']
+    list_display_links = ['order']
 
     raw_id_fields = ['customer']
     autocomplete_lookup_fields = {
         'fk': ['customer'],
     }
+    
+    def order(self, obj):
+        return unicode(obj)
 
     def actions_link(self, obj):
         return ("<a href='{0}'>Print Invoice</a>"

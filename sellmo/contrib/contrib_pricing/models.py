@@ -85,7 +85,7 @@ class QtyPriceBase(models.Model):
         raise NotImplementedError()
 
     def __unicode__(self):
-        return _("{0} qty or more").format(self.qty)
+        return unicode(_("{0} qty or more").format(self.qty))
 
     class Meta:
         ordering = ['qty']
