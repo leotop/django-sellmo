@@ -217,8 +217,10 @@ class VariationModule(Module):
             variant = variation.variant.downcast()
             price_adjustment = None
             
-            if hasattr(variant, '_is_variant') and variant.price_adjustment:
-                price_adjustment = Price(variant.price_adjustment)
+            if hasattr(variant, '_is_variant'):
+                price_adjustment = (
+                    modules.pricing.get_price(product=variant)
+                    - modules.pricing.get_price(product=variant.product))
 
             values = self.variation_value_seperator.join(
                 [unicode(value)

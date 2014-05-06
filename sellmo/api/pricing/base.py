@@ -57,8 +57,11 @@ class Currency(object):
     def __eq__(self, other):
         return self.code == other.code
 
-    def __str__(self):
+    def __repr__(self):
         return self.code
+        
+    def __hash__(self):
+        return hash(self.code)
 
     def format(self, amount, align=-1):
         return call_or_format(self._format, amount=amount, align=align)
@@ -168,6 +171,9 @@ class Price(object):
             key: amount * multiplier for
             key, amount in price.mutations.iteritems()}
         return price
+        
+    def __rmul__(self, multiplier):
+        return self.__mul__(multiplier)
 
     def __div__(self, divider):
         price = self.clone()
@@ -176,6 +182,9 @@ class Price(object):
             key: amount / divider for
             key, amount in price.mutations.iteritems()}
         return price
+        
+    def __rdiv__(self, divider):
+        return self.__div__(divider)
 
     def __neg__(self):
         price = self.clone()
@@ -183,6 +192,17 @@ class Price(object):
         price.mutations = {
             key: -amount for key, amount in price.mutations.iteritems()}
         return price
+        
+    def __eq__(self, other):
+        return (self.currency == other.currency and
+                self.amount == other.amount and
+                self.type == other.type and
+                self.mutations == other.mutations)
+                
+    def __hash__(self):
+        return hash((
+            self.currency, self.amount, self.type, 
+            frozenset(self.mutations.items())))
 
     def __contains__(self, key):
         if not isinstance(key, (basestring, PriceType)):
