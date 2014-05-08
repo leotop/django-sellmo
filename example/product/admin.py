@@ -19,6 +19,10 @@ from django.contrib.admin.sites import NotRegistered
 from django.contrib.contenttypes.models import ContentType
 
 
+class ProductQtyPriceInline(admin.TabularInline):
+    model = modules.qty_pricing.ProductQtyPrice
+
+
 class ProductFormFactory(FormFactory):
     def factory(self):
         class ProductForm(
@@ -33,7 +37,7 @@ class ProductAdmin(ProductCategoriesMixin, ProductAttributeMixin, ProductVariati
 
     form = ProductFormFactory()
 
-    #inlines = [ProductQtyPriceInline]
+    inlines = [ProductQtyPriceInline]
     fieldsets = (
         (_("Product information"), {
             'fields': ('name', 'sku',)

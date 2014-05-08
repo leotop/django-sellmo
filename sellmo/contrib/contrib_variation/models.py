@@ -31,6 +31,7 @@
 from sellmo import modules
 from sellmo.api.decorators import load
 from sellmo.magic import ModelMixin
+from sellmo.utils.formatting import call_or_format
 from sellmo.core.polymorphism import PolymorphicModel, PolymorphicManager
 from sellmo.contrib.contrib_variation.variant import (VariantFieldDescriptor,
                                                       VariantMixin,
@@ -217,7 +218,11 @@ def finalize_model():
 class Variant(models.Model):
 
     def __unicode__(self):
-        return u", ".join([unicode(value) for value in self.values.all()])
+        prefix = super(Variant, self).__unicode__()
+        if prefix != unicode(self.product):
+            return prefix
+        return modules.variation.generate_variation_description(
+            prefix=prefix, values=self.values.all())
 
     class Meta:
         abstract = True
@@ -498,32 +503,32 @@ class VariationManager(models.Manager):
                 explicits[attribute.key] = True
 
         # Create all possible variations
-        map = []
-
-        def _map(attributes, combination):
+        combinations = []
+        
+        def _combine(attributes, combination):
             if attributes:
                 attribute = attributes[0]
                 values = modules.attribute.Value.objects.which_variate(
                     product).for_attribute(attribute, distinct=True)
                 for value in modules.attribute.get_sorted_values(
                         values=values, attribute=attribute):
-                    _map(attributes[1:], combination + [value])
+                    _combine(attributes[1:], combination + [value])
             else:
                 for value in list(combination):
                     index = combination.index(value)
                     if not value.variates:
                         combination[index] = value.get_value()
-                map.append(combination)
-
-        _map(attributes, [])
-
+                combinations.append(combination)
+        
+        _combine(attributes, [])
+        
         # Mix in variants
         for variant in product.variants.all():
             # Find values related to this variant
             values = modules.attribute.Value.objects.for_product(
                 variant).filter(attribute__in=attributes)
-
-            for combination in map:
+        
+            for combination in combinations:
                 for value in values:
                     index = attributes.index(value.attribute)
                     current = combination[index]
@@ -536,51 +541,52 @@ class VariationManager(models.Manager):
                     for value in values:
                         index = attributes.index(value.attribute)
                         combination[index] = value
-
+        
         # Fix non existent explicit combinations
         for attribute in attributes:
             if explicits[attribute.key]:
                 index = attributes.index(attribute)
-                for combination in map:
+                for combination in combinations:
                     value = combination[index]
                     if not isinstance(value, modules.attribute.Value):
                         combination[index] = None
-
+        
         # Filter out non existent combinations
-        for combination in list(map):
+        for combination in list(combinations):
             for value in combination:
                 if (value is not None and 
                         not isinstance(value, modules.attribute.Value)):
-                    index = map.index(combination)
-                    map.pop(index)
+                    index = combinations.index(combination)
+                    combinations.pop(index)
                     break
-
+        
         # Filter out duplicate combinations
         existing = []
-        for combination in list(map):
-            values = [value for value in combination if not value is None]
-            id = modules.variation.Variation.generate_id(product, values)
-            if id in existing:
-                index = map.index(combination)
-                map.pop(index)
-            existing.append(id)
-
+        for combination in list(combinations):
+            signature = (
+                value.get_value() for value in combination if 
+                not value is None)
+            if signature in existing:
+                index = combinations.index(combination)
+                combinations.pop(index)
+            existing.append(signature)
+        
         # Create variations
         sort_order = 0
-        while map:
-            values = map.pop(0)
-            values = [value for value in values if not value is None]
-
+        while combinations:
+            combination = combinations.pop(0)
+            values = [value for value in combination if not value is None]
+        
             # Skip empties
             if not values:
                 continue
 
             # Find variant
             variant = product
-            # Will match a variant who matches all this variation's values
+            # Will match a variant who matches all this combination's values
             exact = Q()
-            # Will match a variant who matches all this variations's values
-            # EXCEPT the color
+            # Will match a variant who matches all this combination's values
+            # except the group
             best = Q()
             for value in values:
                 if getattr(value.product.downcast(), '_is_variant', False):
@@ -603,16 +609,18 @@ class VariationManager(models.Manager):
                         continue
                     else:
                         break
-
-            # Query values (this will order them according to attribute order)
-            values = list(modules.attribute.Value.objects.filter(
-                pk__in=[value.pk for value in values]).order_by('attribute'))
-
-            #
+        
+            # Collect non explicit values
+            non_explicit_values = [
+                value for value in values if value.variates
+            ]
+        
             variation = modules.variation.Variation.objects.create(
-                id=modules.variation.Variation.generate_id(product, values),
-                description=modules.variation.Variation.generate_description(
-                    product, values),
+                id=generate_slug(
+                    product=variant, values=values, full=True, 
+                    unique=False),
+                description=modules.variation.generate_variation_description(
+                    prefix=unicode(variant), values=non_explicit_values),
                 product=product,
                 variant=variant,
                 sort_order=sort_order
@@ -682,7 +690,7 @@ class VariationManager(models.Manager):
         if not invalidated and product.variations_invalidated:
             # Variations invalidated, rebuild
             build()
-
+        
         # Get variations
         variations = self.get_query_set().for_product(product)
 
@@ -701,17 +709,7 @@ class Variation(models.Model):
     def __init__(self, *args, **kwargs):
         super(Variation, self).__init__(*args, **kwargs)
         self.attributes = VariationAttributeHelper(self)
-
-    @staticmethod
-    def generate_id(product, values):
-        return generate_slug(
-            product=product, values=values, full=True, unique=False)
-
-    @staticmethod
-    def generate_description(product, values):
-        return modules.variation.generate_variation_description(
-            product=product, values=values)
-
+    
     id = models.CharField(
         max_length=255,
         primary_key=True,
@@ -807,21 +805,12 @@ class VariationPurchase(models.Model):
         max_length=255
     )
 
-    # Auto generated description, usefull when variation is unavailable
-    variation_description = models.CharField(
-        max_length=255
-    )
-
-    def describe(self):
-        return self.variation_description
-
     def merge_with(self, purchase):
         super(VariationPurchase, self).merge_with(purchase)
 
     def clone(self, cls=None, clone=None):
         clone = super(VariationPurchase, self).clone(cls=cls, clone=clone)
         clone.variation_key = self.variation_key
-        clone.variation_description = self.variation_description
         return clone
 
     class Meta:

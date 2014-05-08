@@ -77,7 +77,7 @@ class VariationModule(Module):
     
     variation_description_format = define_setting(
         'VARIATION_DESCRIPTION_FORMAT',
-        default=u"{product} {values}")
+        default=u"{prefix} ({values})")
     
     variation_value_seperator = define_setting(
         'VARIATION_VALUE_SEPERATOR',
@@ -241,22 +241,23 @@ class VariationModule(Module):
         return choice
 
     @chainable()
-    def generate_variation_description(self, chain, product, values,
+    def generate_variation_description(self, chain, prefix, values,
                                        description=None, **kwargs):
         if description is None:
-
-            values = self.variation_value_seperator.join(
-                [unicode(value) for value in values]
-            )
-
-            description = call_or_format(
-                self.variation_description_format,
-                product=product,
-                values=values)
+            if values:
+                values = self.variation_value_seperator.join(
+                    [unicode(value) for value in values]
+                )
+            
+                description = call_or_format(
+                    self.variation_description_format,
+                    prefix=prefix, values=values)
+            else:
+                description = prefix
 
         if chain:
             out = chain.execute(
-                product=product, values=values,
+                prefix=prefix, values=values,
                 description=description, **kwargs)
             if out.has_key('description'):
                 description = out['description']

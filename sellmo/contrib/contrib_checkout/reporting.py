@@ -44,7 +44,7 @@ class InvoiceWriter(ReportWriter):
         self.internal = internal
 
     def get_name(self):
-        return "invoice_{0}".format(self.order.pk)
+        return "invoice_{0}".format(self.order.number)
 
     def negotiate_param(self, key, value, **params):
         return super(InvoiceWriter, self).negotiate_param(key, value, **params)

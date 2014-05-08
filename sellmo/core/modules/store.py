@@ -42,9 +42,6 @@ class StoreModule(sellmo.Module):
     namespace = 'store'
     Purchase = Purchase
 
-    def __init__(self, *args, **kwargs):
-        pass
-
     @chainable()
     def merge_purchase(self, chain, purchase, existing_purchases,
                        result=None, **kwargs):
@@ -90,6 +87,7 @@ class StoreModule(sellmo.Module):
 
         if not product is None:
             purchase.product = product
+            purchase.description = unicode(product)
 
         if not qty is None:
             purchase.qty = qty

@@ -19,6 +19,9 @@ def load_model():
             verbose_name=_("sku"),
             blank=True,
         )
+        
+        def __unicode__(self):
+            return self.name
 
         class Meta(modules.product.Product.Meta):
             abstract = True

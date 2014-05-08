@@ -66,11 +66,21 @@ class CartModule(sellmo.Module):
 
     def __init__(self):
         pre_delete.connect(self.on_delete_cart, sender=self.Cart)
+        pre_delete.connect(self.on_delete_product, sender=modules.product.Product)
 
     def on_delete_cart(self, sender, instance, **kwargs):
         for purchase in instance.purchases.all():
             if purchase.is_stale(ignore_cart=True):
                 purchase.delete()
+    
+    def on_delete_product(self, sender, instance, **kwargs):
+        for purchase in modules.store.Purchase.objects.filter(
+                product=instance):
+            if purchase.is_stale(ignore_cart=True):
+                cart = purchase.cart
+                purchase.delete()
+                if cart:
+                    cart.calculate()
 
     @context_processor()
     def cart_context(self, chain, request, context, **kwargs):

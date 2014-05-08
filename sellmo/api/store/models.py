@@ -50,6 +50,9 @@ def load_model():
         product = models.ForeignKey(
             modules.product.Product,
             verbose_name=_("product"),
+            on_delete=models.SET_NULL,
+            null=True,
+            blank=True,
         )
 
         class Meta(modules.store.Purchase.Meta):
@@ -107,6 +110,11 @@ class Purchase(PolymorphicModel, Cloneable):
         null=True,
         verbose_name=_("calculated at"),
     )
+    
+    description = models.CharField(
+        max_length=255,
+        verbose_name=_("description"),
+    )
 
     qty = models.PositiveIntegerField(
         default=1,
@@ -135,16 +143,10 @@ class Purchase(PolymorphicModel, Cloneable):
     def qty_price(self):
         return self.total / self.qty
 
-    @property
-    def description(self):
-        return self.describe()
-
-    def describe(self):
-        return unicode(self.product)
-
     def clone(self, cls=None, clone=None):
         clone = super(Purchase, self).clone(cls=cls, clone=clone)
         clone.product = self.product
+        clone.description = self.description
         clone.qty = self.qty
         clone.total = self.total
         clone.calculated = self.calculated
@@ -154,7 +156,7 @@ class Purchase(PolymorphicModel, Cloneable):
         return True
 
     def __unicode__(self):
-        return u"%s x %s" % (self.qty, self.description)
+        return self.description
 
     class Meta:
         abstract = True

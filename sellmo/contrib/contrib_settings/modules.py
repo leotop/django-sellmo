@@ -72,7 +72,10 @@ class SettingsModule(Module):
     @context_processor()
     def settings_context(self, chain, request, context, **kwargs):
         if 'settings' not in context:
-            context['settings'] = self.get_settings()
+            try:
+                context['settings'] = self.get_settings()
+            except self.SiteSettings.DoesNotExist:
+                pass
         return chain.execute(request=request, context=context, **kwargs)
 
     def on_settings_pre_save(self, sender, instance, **kwargs):
@@ -106,7 +109,7 @@ class SettingsModule(Module):
         if settings is None:
             site = Site.objects.get_current()
             if not site:
-                raise Exception(
+                raise self.SiteSettings.DoesNotExist(
                     "Could not retrieve settings, no current site.")
             key = 'site_settings_{0}'.format(site.pk)
             settings = cache.get(key)
@@ -114,7 +117,7 @@ class SettingsModule(Module):
                 try:
                     settings = self.SiteSettings.objects.get(site=site)
                 except self.SiteSettings.DoesNotExist:
-                    raise Exception(
+                    raise self.SiteSettings.DoesNotExist(
                         "Could not retrieve settings, "
                         "no settings found for site '{0}'"
                         .format(site))

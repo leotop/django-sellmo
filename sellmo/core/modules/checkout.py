@@ -467,9 +467,9 @@ class CheckoutModule(sellmo.Module):
     def get_completed_order(self, chain, request=None, order=None, **kwargs):
         if order is None:
             # Retrieve order from session data
-            order = request.session.get('completed_order')
             try:
-                order = self.Order.objects.get(id=order)
+                order = self.Order.objects.get(
+                    id=request.session.get('completed_order'))
             except self.Order.DoesNotExist:
                 pass
         if chain:

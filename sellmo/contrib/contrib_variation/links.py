@@ -120,7 +120,7 @@ def make_purchase(purchase, variation=None, **kwargs):
     if variation:
         purchase = purchase.clone(cls=modules.variation.VariationPurchase)
         purchase.variation_key = variation.pk
-        purchase.variation_description = variation.description
+        purchase.description = variation.description
 
     return {
         'purchase': purchase

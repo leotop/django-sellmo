@@ -39,7 +39,3 @@ class LocalContextMiddleware(object):
     def process_response(self, request, response):
         release_context()
         return response
-
-    def process_exception(self, request, exception):
-        release_context()
-        return None
