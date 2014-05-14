@@ -254,7 +254,8 @@ class CartModule(sellmo.Module):
             if form.is_valid():
                 purchase_args = self.get_edit_purchase_args(
                     purchase=purchase, form=form)
-                purchase = modules.store.make_purchase(**purchase_args)
+                purchase = modules.store.make_purchase(
+                    request=request, **purchase_args)
                 self.update_purchase(
                     request=request, purchase=purchase, cart=cart)
             else:
@@ -308,7 +309,8 @@ class CartModule(sellmo.Module):
                 for form in formset:
                     purchase_args = self.get_purchase_args(
                         product=product, form=form)
-                    purchase = modules.store.make_purchase(**purchase_args)
+                    purchase = modules.store.make_purchase(
+                        request=request, **purchase_args)
                     purchases.append(purchase)
             else:
                 formset.redirect(request)
@@ -341,7 +343,8 @@ class CartModule(sellmo.Module):
 
         # See if we can merge this purchase
         merged = modules.store.merge_purchase(
-            purchase=purchase, existing_purchases=list(cart))
+            request=request, purchase=purchase,
+            existing_purchases=list(cart))
         if merged:
             purchase = merged
 
@@ -360,7 +363,8 @@ class CartModule(sellmo.Module):
 
         # See if we can merge this purchase
         merged = modules.store.merge_purchase(
-            purchase=purchase, existing_purchases=list(cart))
+            request=request, purchase=purchase,
+            existing_purchases=list(cart))
         if merged:
             purchase = merged
 

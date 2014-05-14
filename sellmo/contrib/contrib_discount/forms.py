@@ -29,14 +29,38 @@
 
 
 from sellmo import modules
-from sellmo.contrib.contrib_tax.admin import (TaxParentAdmin,
-                                              TaxAdminBase)
 
+from django import forms
+from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
+from django.contrib.admin.widgets import FilteredSelectMultiple
 
 
-class PercentTaxAdmin(TaxAdminBase):
-    pass
+class ProductDiscountsForm(forms.ModelForm):
+    discounts = forms.ModelMultipleChoiceField(
+        queryset=modules.discount.Discount.objects.all(),
+        required=False,
+        label=_("discounts")
+    )
 
+    def __init__(self, *args, **kwargs):
+        super(ProductDiscountsForm, self).__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            self.fields['discounts'].initial = self.instance.discounts.all()
 
-TaxParentAdmin.child_models += [(modules.tax.PercentTax, PercentTaxAdmin)]
+    def save(self, commit=True):
+        product = super(ProductDiscountsForm, self).save(commit=False)
+
+        _save_m2m = getattr(self, 'save_m2m', None)
+
+        def save_m2m():
+            if _save_m2m:
+                _save_m2m()
+            product.discounts = self.cleaned_data['discounts']
+
+        if commit:
+            product.save()
+            save_m2m()
+        else:
+            self.save_m2m = save_m2m
+        return product

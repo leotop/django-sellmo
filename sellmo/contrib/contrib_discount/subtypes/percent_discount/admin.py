@@ -29,14 +29,14 @@
 
 
 from sellmo import modules
-from sellmo.contrib.contrib_tax.admin import (TaxParentAdmin,
-                                              TaxAdminBase)
+from sellmo.contrib.contrib_discount.admin import (DiscountParentAdmin,
+                                                   DiscountAdminBase)
 
 from django.utils.translation import ugettext_lazy as _
 
 
-class PercentTaxAdmin(TaxAdminBase):
+class PercentDiscountAdmin(DiscountAdminBase):
     pass
 
 
-TaxParentAdmin.child_models += [(modules.tax.PercentTax, PercentTaxAdmin)]
+DiscountParentAdmin.child_models += [(modules.discount.PercentDiscount, PercentDiscountAdmin)]

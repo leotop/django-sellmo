@@ -27,9 +27,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from django.core.management.base import BaseCommand, CommandError
 
 from sellmo import modules
+from sellmo import params
+params.worker_mode = True
 
 
 class Command(BaseCommand):

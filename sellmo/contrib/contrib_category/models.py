@@ -54,7 +54,7 @@ def load_model():
 
         categories = models.ManyToManyField(
             modules.category.Category,
-            related_name='+',
+            related_name='%(app_label)s_%(class)s_related',
             blank=True,
         )
 

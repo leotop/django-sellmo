@@ -29,14 +29,21 @@
 
 
 from sellmo import modules, Module
+from sellmo.api.configuration import define_setting
 from sellmo.api.decorators import view, chainable
-from sellmo.contrib.contrib_discount.models import Discount
+from sellmo.contrib.contrib_discount.models import (Discount,
+                                                    DiscountGroup)
 
 
 class DiscountModule(Module):
     namespace = 'discount'
     Discount = Discount
+    DiscountGroup = DiscountGroup
     subtypes = []
+    
+    user_discount_enabled = define_setting(
+        'USER_DISCOUNT_ENABLED',
+        default=False)
 
     @classmethod
     def register_subtype(self, subtype):

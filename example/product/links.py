@@ -4,7 +4,6 @@ from sellmo.api.decorators import link
 
 @link(namespace=modules.product.namespace, capture=True)
 def list(index=None, qty=None, **kwargs):
-    return
     if index is None:
         index = 'product_price'
     if qty is None:

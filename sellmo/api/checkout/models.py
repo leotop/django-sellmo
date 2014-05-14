@@ -346,25 +346,27 @@ class Order(trackable('sellmo_order')):
 
     def calculate(self, subtotal=None, total=None, save=True):
         self.ensure_state(ORDER_NEW)
-        if subtotal is None:
-            subtotal = Price()
-            for purchase in self:
-                subtotal += purchase.total
-            subotal = modules.pricing.get_price(
-                price=subtotal, order=self, subtotal=True)
-
-        self.subtotal = subtotal
 
         if total is None:
-            total = Price()
-            total += self.subtotal
+            if subtotal is None:
+                subtotal = Price()
+                for purchase in self:
+                    subtotal += purchase.total
+            
+            total = subtotal
+            
             if self.shipment:
                 total += self.shipment.costs
             if self.payment:
                 total += self.payment.costs
+                
             total = modules.pricing.get_price(
-                price=total, order=self, total=True)
+                price=total, order=self)
 
+        if subtotal is None:
+            subtotal = total
+        
+        self.subtotal = subtotal
         self.total = total
 
         # Update calculcated timestamp and save
@@ -391,6 +393,7 @@ class Order(trackable('sellmo_order')):
             self.state = ORDER_NEW
 
         self.number = ''
+        self.subtotal = Price()
         self.total = Price()
         self.calculated = None
         

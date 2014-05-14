@@ -28,8 +28,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from django.contrib.sites.models import Site
-
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable
 from sellmo.contrib.contrib_tax.models import Tax

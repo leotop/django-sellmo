@@ -39,7 +39,7 @@ namespace = modules.pricing.namespace
 
 @link()
 def get_price(price, product=None, currency=None, qty=1, **kwargs):
-    if product and not price:
+    if product and not qty is None and not price:
         try:
             qty_price = modules.qty_pricing.ProductQtyPrice.objects.filter(
                 product=product).for_qty(qty)
@@ -47,9 +47,10 @@ def get_price(price, product=None, currency=None, qty=1, **kwargs):
             pass
         else:
             price = qty_price.apply(price)
-        return {
-            'price': price
-        }
+    return {
+        'qty': qty,
+        'price': price
+    }
 
 if celery.enabled and not getattr(params, 'worker_mode', False):
     @link(capture=True)

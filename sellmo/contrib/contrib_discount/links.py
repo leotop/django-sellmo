@@ -28,6 +28,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
+from django.db.models import Q
+
 from sellmo import modules
 from sellmo.api.decorators import link
 from sellmo.api.pricing import Price
@@ -36,15 +38,48 @@ from sellmo.api.pricing import Price
 namespace = modules.pricing.namespace
 
 
+@link(namespace=modules.product.namespace, capture=True)
+def list(request, discount_group=None, **kwargs):
+    if discount_group is None:
+        customer = modules.customer.get_customer(request=request)
+        if customer and customer.is_authenticated():
+            discount_group = customer.discount_group
+    return {
+        'discount_group' : discount_group,
+    }
+    
+
+@link(namespace=modules.store.namespace)
+def make_purchase(request, purchase, **kwargs):
+    if modules.discount.user_discount_enabled:
+        customer = modules.customer.get_customer(request=request)
+        if customer and customer.is_authenticated():
+            purchase.discount_group = customer.discount_group
+            purchase.calculate(save=False)
+    return {
+        'purchase': purchase
+    }
+
+
 @link()
-def get_price(price, product=None, **kwargs):
+def get_price(price, product=None, discount_group=None, **kwargs):
+    discounts = []
     if product:
         try:
-            discount = modules.discount.Discount.objects.polymorphic() \
-                              .best_for_product(product)
+            discount = modules.discount.Discount.objects.polymorphic()
+            if modules.discount.user_discount_enabled:
+                q = Q(groups=None)
+                if discount_group:
+                    q |= Q(groups=discount_group)
+                discount = discount.filter(q)
+            discount = discount.best_for_product(product)
+            discounts.append(discount)
         except modules.discount.Discount.DoesNotExist:
             pass
-        else:
-            return {
-                'price': discount.apply(price)
-            }
+
+    for discount in discounts:
+        price = discount.apply(price)
+
+    return {
+        'price': price
+    }

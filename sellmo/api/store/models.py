@@ -67,6 +67,7 @@ def finalize_model():
     modules.store.Purchase = modules.pricing.make_stampable(
         model=modules.store.Purchase,
         properties=[
+            ('subtotal', _("subtotal")),
             ('total', _("total"))
         ]
     )
@@ -120,13 +121,27 @@ class Purchase(PolymorphicModel, Cloneable):
         default=1,
         verbose_name=_("qty"),
     )
+    
+    def get_subtotal_kwargs(self):
+        return {}
+        
+    def get_total_kwargs(self):
+        return {}
 
-    def calculate(self, total=None, save=True):
+    def calculate(self, subtotal=None, total=None, save=True):
         if total is None:
+            if subtotal is None:
+                subtotal = self.qty * modules.pricing.get_price(
+                    product=self.product, qty=self.qty,
+                    **self.get_subtotal_kwargs())
             total = modules.pricing.get_price(
-                product=self.product, qty=self.qty) * self.qty
-            total = modules.pricing.get_price(price=total, purchase=self)
-
+                price=subtotal, purchase=self,
+                **self.get_total_kwargs())
+            
+        if subtotal is None:
+            subtotal = total
+        
+        self.subtotal = subtotal
         self.total = total
 
         # Update calculcated timestamp and save
@@ -136,6 +151,7 @@ class Purchase(PolymorphicModel, Cloneable):
 
     def merge_with(self, purchase):
         self.qty += purchase.qty
+        self.subtotal = Price()
         self.total = Price()
         self.calculated = None
 
@@ -148,6 +164,7 @@ class Purchase(PolymorphicModel, Cloneable):
         clone.product = self.product
         clone.description = self.description
         clone.qty = self.qty
+        clone.subtotal = self.subtotal
         clone.total = self.total
         clone.calculated = self.calculated
         return clone

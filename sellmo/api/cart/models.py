@@ -68,7 +68,8 @@ def finalize_model():
     modules.cart.Cart = modules.pricing.make_stampable(
         model=modules.cart.Cart,
         properties=[
-            ('total', _("total"))
+            ('subtotal', _("subtotal")),
+            ('total', _("total")),
         ]
     )
 
@@ -140,17 +141,23 @@ class Cart(trackable('sellmo_cart')):
             if calculate:
                 self.calculate()
 
-    def calculate(self, total=None, save=True):
+    def calculate(self, subtotal=None, total=None, save=True):
         if total is None:
-            total = Price()
-            for purchase in self:
-                if not purchase.calculated:
-                    # Sanity check
-                    raise Exception(
-                        "Cannot calculate cart, purchase was not calculated.")
-                total += purchase.total
-            total = modules.pricing.get_price(price=total, cart=self)
+            if subtotal is None:
+                subtotal = Price()
+                for purchase in self:
+                    if not purchase.calculated:
+                        # Sanity check
+                        raise Exception(
+                            "Cannot calculate cart, "
+                            "purchase was not calculated.")
+                    subtotal += purchase.total
+            total = modules.pricing.get_price(price=subtotal, cart=self)
 
+        if subtotal is None:
+            subtotal = total
+            
+        self.subtotal = subtotal
         self.total = total
 
         # Update calculcated timestamp and save

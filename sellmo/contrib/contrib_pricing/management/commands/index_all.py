@@ -28,15 +28,16 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
+from django.core.management.base import BaseCommand, CommandError
+
 from sellmo import modules
-from sellmo.contrib.contrib_tax.admin import (TaxParentAdmin,
-                                              TaxAdminBase)
-
-from django.utils.translation import ugettext_lazy as _
+from sellmo import params
+params.worker_mode = True
 
 
-class PercentTaxAdmin(TaxAdminBase):
-    pass
+class Command(BaseCommand):
 
-
-TaxParentAdmin.child_models += [(modules.tax.PercentTax, PercentTaxAdmin)]
+    def handle(self, *args, **options):
+        options = []
+        modules.pricing.get_index('product_price').update(
+            product=modules.product.Product.objects.all())

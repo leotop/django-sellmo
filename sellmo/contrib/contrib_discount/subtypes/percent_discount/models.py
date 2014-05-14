@@ -38,8 +38,10 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 
-@load(action='load_discount_subtypes', after='finalize_discount_Discount')
+@load(action='load_discount_subtypes')
+@load(after='finalize_discount_Discount')
 def load_subtypes():
+
     class PercentDiscount(modules.discount.Discount):
 
         rate = modules.pricing.construct_decimal_field(
@@ -48,9 +50,11 @@ def load_subtypes():
         )
 
         def apply(self, price):
-            discount = Price(price.amount * self.rate, currency=price.currency,
-                             type='discount', context={'discount': self})
-            return price + discount
+            amount = price.amount * self.rate
+            discount = Price(
+                amount, currency=price.currency, type='discount', 
+                context={'discount': self})
+            return price - discount
 
         class Meta(modules.discount.Discount.Meta):
             app_label = 'discount'

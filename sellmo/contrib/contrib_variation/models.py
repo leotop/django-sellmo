@@ -563,9 +563,9 @@ class VariationManager(models.Manager):
         # Filter out duplicate combinations
         existing = []
         for combination in list(combinations):
-            signature = (
+            signature = [
                 value.get_value() for value in combination if 
-                not value is None)
+                not value is None]
             if signature in existing:
                 index = combinations.index(combination)
                 combinations.pop(index)
@@ -580,7 +580,7 @@ class VariationManager(models.Manager):
             # Skip empties
             if not values:
                 continue
-
+            
             # Find variant
             variant = product
             # Will match a variant who matches all this combination's values
@@ -690,7 +690,7 @@ class VariationManager(models.Manager):
         if not invalidated and product.variations_invalidated:
             # Variations invalidated, rebuild
             build()
-        
+        build()
         # Get variations
         variations = self.get_query_set().for_product(product)
 

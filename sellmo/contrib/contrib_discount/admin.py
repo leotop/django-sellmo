@@ -29,5 +29,34 @@
 
 
 from sellmo import modules
+from sellmo.contrib.polymorphism.admin import PolymorphicParentModelAdmin
 
 from django.contrib import admin
+from django.contrib.contenttypes.models import ContentType
+from django.utils.translation import ugettext_lazy as _
+
+
+class DiscountAdminBase(admin.ModelAdmin):
+    pass
+
+
+class DiscountParentAdmin(PolymorphicParentModelAdmin):
+    base_model = modules.discount.Discount
+    child_models = []
+
+    polymorphic_list = True
+    list_display = ['name']
+    list_display_links = ['name']
+    search_fields = ['name']
+
+    def queryset(self, queryset):
+        return modules.discount.Discount.objects.all()
+
+
+class DiscountGroupAdmin(admin.ModelAdmin):
+    pass
+
+
+if modules.discount.user_discount_enabled:
+    admin.site.register(modules.discount.DiscountGroup, DiscountGroupAdmin)
+admin.site.register(modules.discount.Discount, DiscountParentAdmin)

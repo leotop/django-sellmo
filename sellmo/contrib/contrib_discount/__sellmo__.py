@@ -28,7 +28,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
+from django.utils.translation import ugettext_lazy as _
+
 from sellmo import modules
+from sellmo.api.pricing import PriceType
 
 
-modules.pricing.types += ['discount']
+modules.pricing.types += [PriceType('discount', _("discount"))]

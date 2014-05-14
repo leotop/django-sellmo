@@ -40,7 +40,7 @@ register = template.Library()
 @register.filter
 def discount(value):
     if 'discount' in value:
-        return value['discount']
+        return -value['discount']
     return Price(0, currency=value.currency, type='discount')
 
 

@@ -43,7 +43,7 @@ class StoreModule(sellmo.Module):
     Purchase = Purchase
 
     @chainable()
-    def merge_purchase(self, chain, purchase, existing_purchases,
+    def merge_purchase(self, chain, request, purchase, existing_purchases,
                        result=None, **kwargs):
 
         for existing in existing_purchases:
@@ -68,19 +68,20 @@ class StoreModule(sellmo.Module):
         result.merge_with(purchase)
 
         # Remake the purchase
-        self.make_purchase(purchase=result)
+        self.make_purchase(request=request, purchase=result)
 
         if chain:
             out = chain.execute(
-                purchase=purchase, existing_purchases=existing_purchases, 
+                request=request, purchase=purchase,
+                existing_purchases=existing_purchases, 
                 result=result, **kwargs)
             result = out.get('result', result)
 
         return result
 
     @chainable()
-    def make_purchase(self, chain, product=None, qty=None, purchase=None,
-                      **kwargs):
+    def make_purchase(self, chain, request, product=None, qty=None,
+                      purchase=None, **kwargs):
 
         if purchase is None:
             purchase = self.Purchase()
@@ -96,8 +97,8 @@ class StoreModule(sellmo.Module):
 
         if chain:
             out = chain.execute(
-                product=purchase.product, qty=purchase.qty, 
-                purchase=purchase, **kwargs)
+                request=request, product=purchase.product,
+                qty=purchase.qty, purchase=purchase, **kwargs)
             purchase = out.get('purchase', purchase)
 
         return purchase
