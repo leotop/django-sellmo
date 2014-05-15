@@ -48,7 +48,7 @@ ORDER_STATUSES = {
         'state': 'new',
     }),
     'awaiting_payment': (_("Awaiting payment"), {
-        'flow': ['canceled', 'payment_received'],
+        'flow': ['canceled', 'payment_received', 'processing', 'completed'],
         'on_pending': True,
         'state': 'pending',
     }),
