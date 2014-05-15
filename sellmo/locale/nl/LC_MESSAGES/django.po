@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-01-31 03:06-0800\n"
+"POT-Creation-Date: 2014-05-15 07:03-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,141 +18,185 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: api/cart/models.py:70 api/checkout/models.py:65 api/store/models.py:64
+#: api/cart/models.py:71 api/checkout/models.py:57 api/store/models.py:70
+msgid "subtotal"
+msgstr "subtotaal"
+
+#: api/cart/models.py:72 api/checkout/models.py:58 api/store/models.py:71
 msgid "total"
 msgstr "totaal"
 
-#: api/cart/models.py:77
+#: api/cart/models.py:80
 msgid "cart"
 msgstr "winkelwagen"
 
-#: api/cart/models.py:78
+#: api/cart/models.py:81
 msgid "carts"
 msgstr "winkelwagens"
 
-#: api/cart/models.py:86 api/checkout/models.py:225
-#: contrib/contrib_mailing/models.py:65
+#: api/cart/models.py:91 api/checkout/models.py:256
+#: contrib/contrib_mailing/models.py:68
 msgid "created at"
 msgstr "gemaakt op"
 
-#: api/cart/models.py:92 api/checkout/models.py:231
+#: api/cart/models.py:97 api/checkout/models.py:262
 msgid "modified at"
 msgstr "gewijzigd op"
 
-#: api/cart/models.py:103 api/checkout/models.py:246 api/store/models.py:96
+#: api/cart/models.py:106 api/checkout/models.py:277 api/store/models.py:112
 msgid "calculated at"
 msgstr "berekent op"
 
-#: api/checkout/base.py:69
+#: api/checkout/base.py:72
 msgid "Invalid shipping method for this order"
 msgstr "Ongeldige verzendmethode voor deze bestelling"
 
-#: api/checkout/base.py:85
+#: api/checkout/base.py:89
 msgid "Invalid payment method for this order"
 msgstr "Ongeldige betaalmethode voor deze bestelling"
 
 #: api/checkout/models.py:64
-msgid "subtotal"
-msgstr "subtotaal"
-
-#: api/checkout/models.py:71
 msgid "paid"
 msgstr "betaald"
 
-#: api/checkout/models.py:83 api/checkout/models.py:92
+#: api/checkout/models.py:78 api/checkout/models.py:88
 msgid "costs"
 msgstr "kosten"
 
-#: api/checkout/models.py:106 api/checkout/models.py:211
+#: api/checkout/models.py:105 api/checkout/models.py:233
 msgid "payment"
 msgstr "betaling"
 
-#: api/checkout/models.py:115 api/checkout/models.py:201
-#: contrib/contrib_shipping/models.py:90
+#: api/checkout/models.py:114 api/checkout/models.py:221
+#: contrib/contrib_shipping/models.py:97
 msgid "shipment"
 msgstr "verzending"
 
-#: api/checkout/models.py:133 api/customer/models.py:83
+#: api/checkout/models.py:137 api/customer/models.py:89
 msgid "customer"
 msgstr "klant"
 
-#: api/checkout/models.py:141
+#: api/checkout/models.py:145
 msgid "status"
 msgstr "toestand"
 
-#: api/checkout/models.py:163
+#: api/checkout/models.py:176 api/customer/models.py:52
 msgid "{0} address"
 msgstr "{0} adres"
 
-#: api/checkout/models.py:175 api/checkout/models.py:191
+#: api/checkout/models.py:190 api/checkout/models.py:209
 msgid "order"
 msgstr "bestelling"
 
-#: api/checkout/models.py:192
+#: api/checkout/models.py:210
 msgid "orders"
 msgstr "bestellingen"
 
-#: api/checkout/models.py:202 contrib/contrib_shipping/models.py:91
+#: api/checkout/models.py:222 contrib/contrib_shipping/models.py:98
 msgid "shipments"
 msgstr "verzendingen"
 
-#: api/checkout/models.py:212
+#: api/checkout/models.py:234
 msgid "payments"
 msgstr "betalingen"
 
-#: api/checkout/models.py:512
+#: api/checkout/models.py:250
+msgid "order number"
+msgstr "ordernummer"
+
+#: api/checkout/models.py:584
 msgid "order #{0}"
 msgstr "bestelling #{0}"
 
-#: api/customer/models.py:78
+#: api/checkout/models.py:586
+msgid "unplaced order"
+msgstr "ongeplaatste bestelling"
+
+#: api/checkout/status.py:45
+msgid "New"
+msgstr "Nieuw"
+
+#: api/checkout/status.py:50
+msgid "Awaiting payment"
+msgstr "Betalingen afwachten"
+
+#: api/checkout/status.py:55
+msgid "Payment received"
+msgstr "Betaling ontvangen"
+
+#: api/checkout/status.py:60
+msgid "Processing"
+msgstr "In verwerking"
+
+#: api/checkout/status.py:64
+msgid "On hold"
+msgstr "Wachtstand"
+
+#: api/checkout/status.py:68
+msgid "Completed"
+msgstr "Voltooid"
+
+#: api/checkout/status.py:73
+msgid "Shipped"
+msgstr "Verzonden"
+
+#: api/checkout/status.py:77
+msgid "Canceled"
+msgstr "Geannuleerd"
+
+#: api/checkout/status.py:81
+msgid "Closed"
+msgstr "Afgesloten"
+
+#: api/customer/models.py:84 contrib/contrib_account/models.py:49
 msgid "user"
 msgstr "gebruiker"
 
-#: api/customer/models.py:84
+#: api/customer/models.py:90
 msgid "customers"
 msgstr "klanten"
 
-#: api/customer/models.py:126
+#: api/customer/models.py:143
 msgid "address"
 msgstr "adres"
 
-#: api/customer/models.py:127
+#: api/customer/models.py:144
 msgid "addresses"
 msgstr "adressen"
 
-#: api/customer/models.py:151
+#: api/customer/models.py:166 contrib/contrib_account/models.py:87
 msgid "email address"
 msgstr "e-mailadres"
 
-#: api/customer/models.py:179
+#: api/customer/models.py:193
 msgid "company name"
 msgstr "bedrijfsnaam"
 
-#: api/customer/models.py:199
+#: api/customer/models.py:215 contrib/contrib_account/models.py:85
 msgid "first name"
 msgstr "voornaam"
 
-#: api/customer/models.py:204
+#: api/customer/models.py:220 contrib/contrib_account/models.py:86
 msgid "last name"
 msgstr "achternaam"
 
-#: api/product/models.py:50 api/store/models.py:51
-#: contrib/contrib_pricing/models.py:150
-#: contrib/contrib_product/subtypes/simple_product/models.py:42
-#: contrib/contrib_variation/models.py:389
+#: api/product/models.py:60 api/store/models.py:52
+#: contrib/contrib_pricing/models.py:194
+#: contrib/contrib_product/subtypes/simple_product/models.py:45
+#: contrib/contrib_variation/models.py:425
 msgid "product"
 msgstr "product"
 
-#: api/product/models.py:51
-#: contrib/contrib_product/subtypes/simple_product/models.py:43
+#: api/product/models.py:61
+#: contrib/contrib_product/subtypes/simple_product/models.py:46
 msgid "products"
 msgstr "producten"
 
-#: api/product/models.py:83 contrib/contrib_category/models.py:216
+#: api/product/models.py:101 contrib/contrib_category/models.py:307
 msgid "slug"
 msgstr "slug"
 
-#: api/product/models.py:85
+#: api/product/models.py:103
 msgid ""
 "Slug will be used in the address of the product page. It should be URL-"
 "friendly (letters, numbers, hyphens and underscores only) and descriptive "
@@ -162,55 +206,92 @@ msgstr ""
 "vriendelijk (alleen letters, nummers, afbreektekens en liggende streepjes) "
 "en omschrijvend voor SEO toepassingen."
 
-#: api/product/models.py:137
+#: api/product/models.py:160
 msgid "all products"
 msgstr "alle producten"
 
-#: api/store/models.py:71
+#: api/store/models.py:79
 msgid "purchase"
 msgstr "aankoop"
 
-#: api/store/models.py:101
+#: api/store/models.py:117 contrib/contrib_shipping/models.py:108
+#: contrib/contrib_variation/models.py:725
+msgid "description"
+msgstr "omschrijving"
+
+#: api/store/models.py:122
 msgid "qty"
 msgstr "aantal"
 
-#: config/defaults.py:43
-msgid "New"
-msgstr "Nieuw"
+#: contrib/contrib_account/admin.py:44
+msgid "Personal info"
+msgstr "Persoonlijke informatie"
 
-#: config/defaults.py:48
-msgid "Awaiting payment"
-msgstr "Betalingen afwachten"
+#: contrib/contrib_account/admin.py:45
+msgid "Permissions"
+msgstr "Rechten"
 
-#: config/defaults.py:53
-msgid "Payment received"
-msgstr "Betaling ontvangen"
+#: contrib/contrib_account/admin.py:47
+msgid "Important dates"
+msgstr "Belangrijke datums"
 
-#: config/defaults.py:58
-msgid "Processing"
-msgstr "In verwerking"
+#: contrib/contrib_account/forms.py:51 contrib/contrib_account/forms.py:88
+msgid "Password"
+msgstr "Wachtwoord"
 
-#: config/defaults.py:62
-msgid "On hold"
-msgstr "Wachtstand"
+#: contrib/contrib_account/forms.py:52
+msgid ""
+"Raw passwords are not stored, so there is no way to see this user's "
+"password, but you can change the password using <a href=\"password/\">this "
+"form</a>."
+msgstr ""
+"Wachtwoorden worden niet als tekst opgeslagen, dus je kunt een gebruikers "
+"wachtwoord niet zien. Je kunt hem aanpassen via <a href=\"password/\">dit "
+"formulier</a>."
 
-#: config/defaults.py:66
-msgid "Completed"
-msgstr "Voltooid"
+#: contrib/contrib_account/forms.py:86
+msgid "The two password fields didn't match."
+msgstr "De twee ingevulde wachtwoorden zijn niet gelijk."
 
-#: config/defaults.py:71
-msgid "Shipped"
-msgstr "Verzonden"
+#: contrib/contrib_account/forms.py:90
+msgid "Password confirmation"
+msgstr "Bevestiging wachtwoord"
 
-#: config/defaults.py:75
-msgid "Canceled"
-msgstr "Geannuleerd"
+#: contrib/contrib_account/forms.py:92
+msgid "Enter the same password as above, for verification."
+msgstr "Vul hetzelfde wachtwoord als hierboven in, ter bevestiging."
 
-#: config/defaults.py:79
-msgid "Closed"
-msgstr "Afgesloten"
+#: contrib/contrib_account/models.py:50
+msgid "users"
+msgstr "gebruikers"
 
-#: contrib/contrib_attribute/admin.py:56 contrib/contrib_variation/admin.py:59
+#: contrib/contrib_account/models.py:88
+msgid "staff status"
+msgstr "stafstatus"
+
+#: contrib/contrib_account/models.py:89
+msgid "Designates whether the user can log into this admin site."
+msgstr ""
+
+#: contrib/contrib_account/models.py:91 contrib/contrib_category/models.py:319
+#: contrib/contrib_product/models.py:46 contrib/contrib_shipping/models.py:153
+#: contrib/contrib_shipping/models.py:205
+msgid "active"
+msgstr "actief"
+
+#: contrib/contrib_account/models.py:92
+msgid ""
+"Designates whether this user should be treated as active. Unselect this "
+"instead of deleting accounts."
+msgstr ""
+"Bepaalt of deze gebruiker als actief dient te worden behandeld. U kunt dit "
+"uitvinken in plaats van een gebruiker te verwijderen."
+
+#: contrib/contrib_account/models.py:94
+msgid "date joined"
+msgstr "datum toegetreden"
+
+#: contrib/contrib_attribute/admin.py:57
 msgid "Attributes"
 msgstr "Attributen"
 
@@ -226,97 +307,98 @@ msgstr ""
 msgid "Conflicts with url parameter"
 msgstr "Conflicteert met url parameter"
 
-#: contrib/contrib_attribute/fields.py:75
-#: contrib/contrib_attribute/models.py:276
+#: contrib/contrib_attribute/fields.py:78
+#: contrib/contrib_attribute/models.py:316
 msgid "Cannot change attribute type of an attribute that is already in use."
 msgstr ""
 "Kan attribuut type niet veranderen van een attribuut dat in gebruik is."
 
-#: contrib/contrib_attribute/models.py:47
+#: contrib/contrib_attribute/models.py:48
 msgid "value object"
 msgstr "waarde object"
 
-#: contrib/contrib_attribute/models.py:48
+#: contrib/contrib_attribute/models.py:49
 msgid "value objects"
 msgstr "waarde objecten"
 
-#: contrib/contrib_attribute/models.py:78
-#: contrib/contrib_attribute/models.py:208
+#: contrib/contrib_attribute/models.py:81
+#: contrib/contrib_attribute/models.py:240
 msgid "attribute"
 msgstr "attribuut"
 
-#: contrib/contrib_attribute/models.py:102
+#: contrib/contrib_attribute/models.py:108 contrib/contrib_color/models.py:54
 msgid "value"
 msgstr "waarde"
 
-#: contrib/contrib_attribute/models.py:103
-#: contrib/contrib_variation/models.py:416
+#: contrib/contrib_attribute/models.py:109
+#: contrib/contrib_variation/models.py:453
 msgid "values"
 msgstr "waardes"
 
-#: contrib/contrib_attribute/models.py:209
+#: contrib/contrib_attribute/models.py:241
 msgid "attributes"
 msgstr "attributen"
 
-#: contrib/contrib_attribute/models.py:234
+#: contrib/contrib_attribute/models.py:274
 msgid "string"
 msgstr "tekst"
 
-#: contrib/contrib_attribute/models.py:235
+#: contrib/contrib_attribute/models.py:275
 msgid "integer"
 msgstr "geheel getal"
 
-#: contrib/contrib_attribute/models.py:236
+#: contrib/contrib_attribute/models.py:276
 msgid "float"
 msgstr "natuurlijk getal"
 
-#: contrib/contrib_attribute/models.py:237
+#: contrib/contrib_attribute/models.py:277
 msgid "object"
 msgstr "object"
 
-#: contrib/contrib_attribute/models.py:267
-#: contrib/contrib_category/models.py:197
-#: contrib/contrib_variation/models.py:662
+#: contrib/contrib_attribute/models.py:307
+#: contrib/contrib_category/models.py:288
+#: contrib/contrib_variation/models.py:720
 msgid "sort order"
 msgstr "sorteervolgorde"
 
-#: contrib/contrib_category/admin.py:58 contrib/contrib_category/models.py:78
-#: contrib/contrib_category/models.py:150
+#: contrib/contrib_category/admin.py:58 contrib/contrib_category/models.py:109
 msgid "category"
 msgstr "categorie"
 
-#: contrib/contrib_category/admin.py:73 contrib/contrib_category/models.py:204
+#: contrib/contrib_category/admin.py:75 contrib/contrib_category/models.py:295
 msgid "parent category"
 msgstr "bovenliggende categorie"
 
-#: contrib/contrib_category/admin.py:102
+#: contrib/contrib_category/admin.py:105
 msgid "Display"
 msgstr "Weergave"
 
-#: contrib/contrib_category/admin.py:109
+#: contrib/contrib_category/admin.py:112
 msgid "full name"
 msgstr "volledige naam"
 
-#: contrib/contrib_category/admin.py:113
+#: contrib/contrib_category/admin.py:116
 msgid "full slug"
 msgstr "volledige slug"
 
-#: contrib/contrib_category/models.py:79
+#: contrib/contrib_category/models.py:110
+#: contrib/contrib_category/models.py:229
 msgid "categories"
 msgstr "categorieën"
 
-#: contrib/contrib_category/models.py:159
+#: contrib/contrib_category/models.py:238
 msgid "primary category"
 msgstr "hoofdcategorie"
 
-#: contrib/contrib_category/models.py:210
-#: contrib/contrib_discount/models.py:100
-#: contrib/contrib_shipping/models.py:153
-#: contrib/contrib_shipping/models.py:205 contrib/contrib_tax/models.py:101
+#: contrib/contrib_category/models.py:301 contrib/contrib_color/models.py:49
+#: contrib/contrib_color/models.py:98 contrib/contrib_discount/models.py:167
+#: contrib/contrib_discount/models.py:221
+#: contrib/contrib_shipping/models.py:165
+#: contrib/contrib_shipping/models.py:217 contrib/contrib_tax/models.py:141
 msgid "name"
 msgstr "naam"
 
-#: contrib/contrib_category/models.py:218
+#: contrib/contrib_category/models.py:309
 msgid ""
 "Slug will be used in the address of the category page. It should be URL-"
 "friendly (letters, numbers, hyphens and underscores only) and descriptive "
@@ -326,116 +408,132 @@ msgstr ""
 "vriendelijk (alleen letters, nummers, afbreektekens en liggende streepjes) "
 "en omschrijvend voor SEO toepassingen."
 
-#: contrib/contrib_category/models.py:228 contrib/contrib_product/models.py:44
-#: contrib/contrib_shipping/models.py:141
-#: contrib/contrib_shipping/models.py:193
-msgid "active"
-msgstr "actief"
-
-#: contrib/contrib_checkout/admin.py:96
+#: contrib/contrib_checkout/admin.py:105
 msgid "Actions"
 msgstr "Acties"
 
-#: contrib/contrib_checkout/mailing.py:84
+#: contrib/contrib_checkout/mailing.py:124
 msgid "Order confirmation"
 msgstr "Order bevestiging"
 
-#: contrib/contrib_checkout/models.py:64
+#: contrib/contrib_checkout/mailing.py:150
+msgid "Order notification"
+msgstr "Order notificatie"
+
+#: contrib/contrib_checkout/mailing.py:177
+msgid "Shipping notification"
+msgstr "Verzend notificatie"
+
+#: contrib/contrib_checkout/models.py:67
 msgid "order mail"
 msgstr "bestelling email"
 
-#: contrib/contrib_checkout/models.py:65
+#: contrib/contrib_checkout/models.py:68
 msgid "order mails"
 msgstr "bestelling emails"
 
-#: contrib/contrib_customer/models.py:46
-msgid "phone number"
-msgstr "telefoonnummer"
+#: contrib/contrib_color/models.py:117
+msgid "colors"
+msgstr "kleuren"
 
-#: contrib/contrib_customer/addressees/default_addressee/models.py:46
+#: contrib/contrib_customer/models.py:46
 msgid "prefix"
 msgstr "aanhef"
 
-#: contrib/contrib_customer/addressees/default_addressee/models.py:55
-msgid "suffx"
+#: contrib/contrib_customer/models.py:56
+msgid "suffix"
 msgstr "tussenvoegsel"
 
-#: contrib/contrib_customer/addresses/default_address/models.py:43
-msgid "street address 1"
-msgstr "straat 1"
+#: contrib/contrib_customer/models.py:80
+msgid "phone number"
+msgstr "telefoonnummer"
 
-#: contrib/contrib_customer/addresses/default_address/models.py:50
-msgid "street address 2"
-msgstr "straat 2"
-
-#: contrib/contrib_customer/addresses/default_address/models.py:55
-#: contrib/contrib_customer/addresses/nl_address/models.py:53
-msgid "postal code"
-msgstr "postcode"
-
-#: contrib/contrib_customer/addresses/default_address/models.py:60
-#: contrib/contrib_customer/addresses/nl_address/models.py:58
-msgid "city"
-msgstr "plaats"
-
-#: contrib/contrib_customer/addresses/nl_address/models.py:43
-msgid "street name"
-msgstr "straatnaam"
-
-#: contrib/contrib_customer/addresses/nl_address/models.py:48
-msgid "house number"
-msgstr "huisnummer"
-
-#: contrib/contrib_customer/config/defaults.py:36
+#: contrib/contrib_customer/modules.py:58
 msgid "sir"
 msgstr "De heer"
 
-#: contrib/contrib_customer/config/defaults.py:37
+#: contrib/contrib_customer/modules.py:59
 msgid "madam"
 msgstr "Mevrouw"
 
-#: contrib/contrib_discount/models.py:59 contrib/contrib_discount/models.py:91
+#: contrib/contrib_customer/addresses/default_address/models.py:44
+msgid "street address 1"
+msgstr "straat 1"
+
+#: contrib/contrib_customer/addresses/default_address/models.py:51
+msgid "street address 2"
+msgstr "straat 2"
+
+#: contrib/contrib_customer/addresses/default_address/models.py:56
+#: contrib/contrib_customer/addresses/nl_address/models.py:54
+msgid "postal code"
+msgstr "postcode"
+
+#: contrib/contrib_customer/addresses/default_address/models.py:61
+#: contrib/contrib_customer/addresses/nl_address/models.py:59
+msgid "city"
+msgstr "plaats"
+
+#: contrib/contrib_customer/addresses/nl_address/models.py:44
+msgid "street name"
+msgstr "straatnaam"
+
+#: contrib/contrib_customer/addresses/nl_address/models.py:49
+msgid "house number"
+msgstr "huisnummer"
+
+#: contrib/contrib_discount/__sellmo__.py:37
+#: contrib/contrib_discount/models.py:155
 msgid "discount"
 msgstr "korting"
 
-#: contrib/contrib_discount/models.py:92
+#: contrib/contrib_discount/forms.py:43 contrib/contrib_discount/models.py:156
 msgid "discounts"
 msgstr "kortingen"
 
-#: contrib/contrib_discount/subtypes/percent_discount/models.py:48
-#: contrib/contrib_tax/subtypes/percent_tax/models.py:50
+#: contrib/contrib_discount/models.py:193
+#: contrib/contrib_discount/models.py:208
+msgid "discount group"
+msgstr "korting groep"
+
+#: contrib/contrib_discount/models.py:194
+msgid "discount groups"
+msgstr "korting groepen"
+
+#: contrib/contrib_discount/subtypes/percent_discount/models.py:49
+#: contrib/contrib_tax/subtypes/percent_tax/models.py:49
 msgid "rate"
 msgstr "tarief"
 
-#: contrib/contrib_discount/subtypes/percent_discount/models.py:57
+#: contrib/contrib_discount/subtypes/percent_discount/models.py:61
 msgid "percent discount"
 msgstr "procent korting"
 
-#: contrib/contrib_discount/subtypes/percent_discount/models.py:58
+#: contrib/contrib_discount/subtypes/percent_discount/models.py:62
 msgid "percent discounts"
 msgstr "procent kortingen"
 
-#: contrib/contrib_mailing/models.py:42
+#: contrib/contrib_mailing/models.py:44
 msgid "mail status"
 msgstr "mail toestand"
 
-#: contrib/contrib_mailing/models.py:43
+#: contrib/contrib_mailing/models.py:45
 msgid "mail statuses"
 msgstr "mail toestanden"
 
-#: contrib/contrib_mailing/models.py:71
+#: contrib/contrib_mailing/models.py:74
 msgid "send at"
 msgstr "verzonden op"
 
-#: contrib/contrib_mailing/models.py:76
+#: contrib/contrib_mailing/models.py:79
 msgid "send to"
 msgstr "verzonden naar"
 
-#: contrib/contrib_mailing/models.py:86
+#: contrib/contrib_mailing/models.py:89
 msgid "failure message"
 msgstr "foutmelding"
 
-#: contrib/contrib_payment/configure.py:36
+#: contrib/contrib_payment/configure.py:37
 msgid "Payments"
 msgstr "Betalingen"
 
@@ -447,135 +545,145 @@ msgstr "test modus"
 msgid "accept payments"
 msgstr "accepteer betalingen"
 
-#: contrib/contrib_payment/methods/bank_transfer/base.py:40
+#: contrib/contrib_payment/methods/bank_transfer/base.py:41
 msgid "bank transfer"
 msgstr "Bankoverboeking"
 
-#: contrib/contrib_payment/methods/bank_transfer/configure.py:38
+#: contrib/contrib_payment/methods/bank_transfer/configure.py:39
 msgid "Bank transfer"
 msgstr "Bankoverboeking"
 
-#: contrib/contrib_payment/methods/bank_transfer/configure.py:39
+#: contrib/contrib_payment/methods/bank_transfer/configure.py:40
 msgid "bank transfer name"
 msgstr "bankoverboeking naam"
 
-#: contrib/contrib_payment/methods/bank_transfer/configure.py:40
+#: contrib/contrib_payment/methods/bank_transfer/configure.py:41
 msgid "Bank Transfer"
 msgstr "Bankoverboeking"
 
-#: contrib/contrib_payment/methods/bank_transfer/models.py:53
+#: contrib/contrib_payment/methods/bank_transfer/models.py:58
 msgid "bank transfer payment"
 msgstr "bankoverboeking betaling"
 
-#: contrib/contrib_payment/methods/bank_transfer/models.py:54
+#: contrib/contrib_payment/methods/bank_transfer/models.py:59
 msgid "bank transfers payments"
 msgstr "bankoverboeking betalingen"
 
-#: contrib/contrib_payment/methods/cash_payment/base.py:40
-#: contrib/contrib_payment/methods/cash_payment/models.py:68
+#: contrib/contrib_payment/methods/cash_payment/base.py:41
+#: contrib/contrib_payment/methods/cash_payment/models.py:74
 msgid "cash payment"
 msgstr "contante betaling"
 
-#: contrib/contrib_payment/methods/cash_payment/configure.py:38
+#: contrib/contrib_payment/methods/cash_payment/configure.py:39
 msgid "Cash payment"
 msgstr "Contant betalen"
 
-#: contrib/contrib_payment/methods/cash_payment/configure.py:39
+#: contrib/contrib_payment/methods/cash_payment/configure.py:40
 msgid "cash payment name"
 msgstr "contant betalen naam"
 
-#: contrib/contrib_payment/methods/cash_payment/configure.py:40
+#: contrib/contrib_payment/methods/cash_payment/configure.py:41
 msgid "Cash Payment"
 msgstr "Contant betalen"
 
-#: contrib/contrib_payment/methods/cash_payment/models.py:45
-#, fuzzy
+#: contrib/contrib_payment/methods/cash_payment/models.py:47
 msgid "allow cash payment"
-msgstr "mollie ideal betaling"
+msgstr "sta contante betaling toe"
 
-#: contrib/contrib_payment/methods/cash_payment/models.py:69
+#: contrib/contrib_payment/methods/cash_payment/models.py:75
 msgid "cash payments"
 msgstr "contante betalingen"
 
-#: contrib/contrib_payment/methods/ideal/mollie_ideal/base.py:44
-#: contrib/contrib_payment/methods/ideal/mollie_ideal/configure.py:40
+#: contrib/contrib_payment/methods/mollie_ideal/base.py:43
+#: contrib/contrib_payment/methods/mollie_ideal/configure.py:42
 msgid "iDeal"
 msgstr "iDeal"
 
-#: contrib/contrib_payment/methods/ideal/mollie_ideal/configure.py:36
+#: contrib/contrib_payment/methods/mollie_ideal/configure.py:37
 msgid "Mollie iDeal"
 msgstr "Mollie iDeal"
 
-#: contrib/contrib_payment/methods/ideal/mollie_ideal/configure.py:41
+#: contrib/contrib_payment/methods/mollie_ideal/configure.py:43
 msgid "mollie ideal name"
 msgstr "mollie ideal naam"
 
-#: contrib/contrib_payment/methods/ideal/mollie_ideal/configure.py:46
+#: contrib/contrib_payment/methods/mollie_ideal/configure.py:48
 msgid "mollie partner-id"
 msgstr "mollie partner-id"
 
-#: contrib/contrib_payment/methods/ideal/mollie_ideal/configure.py:52
+#: contrib/contrib_payment/methods/mollie_ideal/configure.py:54
 msgid "mollie profile key"
 msgstr "mollie profiel sleutel"
 
-#: contrib/contrib_payment/methods/ideal/mollie_ideal/models.py:51
+#: contrib/contrib_payment/methods/mollie_ideal/models.py:56
 msgid "mollie ideal payment"
 msgstr "mollie ideal betaling"
 
-#: contrib/contrib_payment/methods/ideal/mollie_ideal/models.py:52
+#: contrib/contrib_payment/methods/mollie_ideal/models.py:57
 msgid "mollie ideal payments"
 msgstr "mollie ideal betalingen"
 
-#: contrib/contrib_payment/methods/ideal/mollie_ideal/models.py:65
+#: contrib/contrib_payment/methods/mollie_ideal/models.py:70
 msgid "success"
 msgstr "succesvol"
 
-#: contrib/contrib_payment/methods/ideal/mollie_ideal/models.py:66
+#: contrib/contrib_payment/methods/mollie_ideal/models.py:71
 msgid "failed"
 msgstr "mislukt"
 
-#: contrib/contrib_payment/methods/ideal/mollie_ideal/models.py:67
+#: contrib/contrib_payment/methods/mollie_ideal/models.py:72
 msgid "expired"
 msgstr "verlopen"
 
-#: contrib/contrib_payment/methods/ideal/mollie_ideal/models.py:68
+#: contrib/contrib_payment/methods/mollie_ideal/models.py:73
 msgid "canceled"
 msgstr "geannuleerd"
 
-#: contrib/contrib_pricing/models.py:69
+#: contrib/contrib_pricing/models.py:80
 msgid "quantity"
 msgstr "aantal"
 
-#: contrib/contrib_pricing/models.py:77
-#, python-format
-msgid "%s qty or more"
+#: contrib/contrib_pricing/models.py:88
+msgid "{0} qty or more"
 msgstr "%s stuks of meer"
 
-#: contrib/contrib_pricing/models.py:87
+#: contrib/contrib_pricing/models.py:103
 msgid "amount"
 msgstr "hoeveelheid"
 
-#: contrib/contrib_pricing/models.py:112
+#: contrib/contrib_pricing/models.py:138
 msgid "ratio"
 msgstr "ratio"
 
-#: contrib/contrib_pricing/models.py:137
+#: contrib/contrib_pricing/models.py:176
 msgid "qty price"
 msgstr "stukprijs"
 
-#: contrib/contrib_pricing/models.py:138
+#: contrib/contrib_pricing/models.py:177
 msgid "qty prices"
 msgstr "stukprijzen"
 
-#: contrib/contrib_product/models.py:46
+#: contrib/contrib_pricing/models.py:228
+msgid "index"
+msgstr "index"
+
+#: contrib/contrib_pricing/models.py:254
+msgid "price index"
+msgstr "prijs index"
+
+#: contrib/contrib_pricing/models.py:255
+msgid "price indexes"
+msgstr "prijs indexen"
+
+#: contrib/contrib_product/models.py:48
 msgid "Inactive products will be hidden from the site."
 msgstr "Inactieve producten worden niet getoond op de site."
 
-#: contrib/contrib_product/models.py:52
+#: contrib/contrib_product/models.py:54
 msgid "featured"
 msgstr "uitgelicht"
 
-#: contrib/contrib_product/models.py:54
+#: contrib/contrib_product/models.py:56
 msgid ""
 "Marks this product as featured allowing additional showcasing across the "
 "site."
@@ -583,129 +691,123 @@ msgstr ""
 "Markeert dit product als uitgelicht en kan zorgen voor extra weergave over "
 "de site."
 
-#: contrib/contrib_settings/models.py:43 contrib/contrib_settings/models.py:44
+#: contrib/contrib_settings/models.py:45 contrib/contrib_settings/models.py:46
 msgid "site settings"
 msgstr "site instellingen"
 
-#: contrib/contrib_shipping/models.py:52 contrib/contrib_shipping/models.py:60
+#: contrib/contrib_shipping/models.py:55 contrib/contrib_shipping/models.py:63
 msgid "carrier"
 msgstr "vervoerders"
 
-#: contrib/contrib_shipping/models.py:67
-#: contrib/contrib_shipping/methods/flat_shipping/models.py:52
-#: contrib/contrib_shipping/methods/tiered_shipping/models.py:55
+#: contrib/contrib_shipping/models.py:70
+#: contrib/contrib_shipping/methods/flat_shipping/models.py:55
+#: contrib/contrib_shipping/methods/tiered_shipping/models.py:57
 msgid "{0} by {1}"
 msgstr "{0} door {1}"
 
-#: contrib/contrib_shipping/models.py:100
-#: contrib/contrib_variation/models.py:667
-msgid "description"
-msgstr "omschrijving"
-
-#: contrib/contrib_shipping/models.py:116
+#: contrib/contrib_shipping/models.py:126
 msgid "carriers"
 msgstr "vervoerders"
 
-#: contrib/contrib_shipping/models.py:129
+#: contrib/contrib_shipping/models.py:141
 msgid "shipping method"
 msgstr "verzendmethode"
 
-#: contrib/contrib_shipping/models.py:130
+#: contrib/contrib_shipping/models.py:142
 msgid "shipping methods"
 msgstr "verzendmethoden"
 
-#: contrib/contrib_shipping/models.py:148
-#: contrib/contrib_shipping/models.py:200
+#: contrib/contrib_shipping/models.py:160
+#: contrib/contrib_shipping/models.py:212
 msgid "identifier"
 msgstr "kenmerk"
 
-#: contrib/contrib_shipping/models.py:179
+#: contrib/contrib_shipping/models.py:190
 msgid "extra costs"
 msgstr "extra kosten"
 
-#: contrib/contrib_shipping/models.py:184
+#: contrib/contrib_shipping/models.py:195
 msgid "shipping carrier"
 msgstr "vervoerder"
 
-#: contrib/contrib_shipping/models.py:185
+#: contrib/contrib_shipping/models.py:196
 msgid "shipping carriers"
 msgstr "vervoerders"
 
-#: contrib/contrib_shipping/methods/flat_shipping/models.py:45
-#: contrib/contrib_shipping/methods/tiered_shipping/models.py:93
+#: contrib/contrib_shipping/methods/flat_shipping/models.py:48
+#: contrib/contrib_shipping/methods/tiered_shipping/models.py:98
 msgid "shipping rate"
 msgstr "verzendkosten"
 
-#: contrib/contrib_shipping/methods/flat_shipping/models.py:58
+#: contrib/contrib_shipping/methods/flat_shipping/models.py:62
 msgid "flat shipping method"
 msgstr "basis verzendmethode"
 
-#: contrib/contrib_shipping/methods/flat_shipping/models.py:59
+#: contrib/contrib_shipping/methods/flat_shipping/models.py:63
 msgid "flat shipping methods"
 msgstr "basis verzendmethoden"
 
-#: contrib/contrib_shipping/methods/tiered_shipping/base.py:66
+#: contrib/contrib_shipping/methods/tiered_shipping/base.py:67
 msgid "Cannot get shipping costs for this order"
 msgstr "Kan verzendkosten niet verkrijgen voor deze bestelling"
 
-#: contrib/contrib_shipping/methods/tiered_shipping/configure.py:52
+#: contrib/contrib_shipping/methods/tiered_shipping/configure.py:49
 msgid "Tiered Shipping"
 msgstr "Gestaafde Verzending"
 
-#: contrib/contrib_shipping/methods/tiered_shipping/models.py:61
+#: contrib/contrib_shipping/methods/tiered_shipping/models.py:64
 msgid "tiered shipping method"
 msgstr "gestaafde verzendmethode"
 
-#: contrib/contrib_shipping/methods/tiered_shipping/models.py:62
+#: contrib/contrib_shipping/methods/tiered_shipping/models.py:65
 msgid "tiered shipping methods"
 msgstr "gestaafde verzendmethoden"
 
-#: contrib/contrib_shipping/methods/tiered_shipping/models.py:81
+#: contrib/contrib_shipping/methods/tiered_shipping/models.py:85
 msgid "tiered shipping tier"
 msgstr "vervoerder"
 
-#: contrib/contrib_shipping/methods/tiered_shipping/models.py:82
+#: contrib/contrib_shipping/methods/tiered_shipping/models.py:86
 msgid "tiered shipping tiers"
 msgstr "verzendstaffel"
 
-#: contrib/contrib_shipping/methods/tiered_shipping/models.py:97
+#: contrib/contrib_shipping/methods/tiered_shipping/models.py:102
 msgid "minimum amount"
 msgstr "minimum bedrag"
 
-#: contrib/contrib_shipping/methods/tiered_shipping/models.py:107
+#: contrib/contrib_shipping/methods/tiered_shipping/models.py:113
 msgid "value {0}"
 msgstr "waarde {0}"
 
-#: contrib/contrib_shipping/methods/tiered_shipping/models.py:108
+#: contrib/contrib_shipping/methods/tiered_shipping/models.py:114
 msgid "max {0}"
 msgstr "max {0}"
 
-#: contrib/contrib_shipping/methods/tiered_shipping/models.py:190
+#: contrib/contrib_shipping/methods/tiered_shipping/models.py:202
 msgid "Invalid attribute type, must be numeric."
 msgstr "Ongeldig attribuut type, moet numeriek zijn."
 
-#: contrib/contrib_store/configure.py:37
+#: contrib/contrib_store/configure.py:38
 msgid "Store Information"
 msgstr "Winkel Informatie"
 
-#: contrib/contrib_store/configure.py:41
+#: contrib/contrib_store/configure.py:43
 msgid "store name"
 msgstr "winkelnaam"
 
-#: contrib/contrib_store/configure.py:45
+#: contrib/contrib_store/configure.py:47
 msgid "contact email address"
 msgstr "contact e-mailadres"
 
-#: contrib/contrib_store/configure.py:51
+#: contrib/contrib_store/configure.py:53
 msgid "contact phone number"
 msgstr "contact telefoonnumer"
 
-#: contrib/contrib_store/configure.py:56
+#: contrib/contrib_store/configure.py:58
 msgid "contact address"
 msgstr "contactadres"
 
-#: contrib/contrib_tax/__sellmo__.py:36 contrib/contrib_tax/models.py:60
-#: contrib/contrib_tax/models.py:92
+#: contrib/contrib_tax/__sellmo__.py:37 contrib/contrib_tax/models.py:129
 msgid "tax"
 msgstr "belasting"
 
@@ -713,108 +815,103 @@ msgstr "belasting"
 msgid "Taxes"
 msgstr "Belastingen"
 
-#: contrib/contrib_tax/configure.py:49
+#: contrib/contrib_tax/configure.py:50
 msgid "payment costs tax"
 msgstr "betaalkosten belasting"
 
-#: contrib/contrib_tax/configure.py:57
+#: contrib/contrib_tax/configure.py:58
 msgid "shipping costs tax"
 msgstr "verzendkosten belasting"
 
-#: contrib/contrib_tax/configure.py:63
+#: contrib/contrib_tax/configure.py:64
 msgid "tax inclusive"
 msgstr "belasting inclusief"
 
-#: contrib/contrib_tax/models.py:93
+#: contrib/contrib_tax/forms.py:43 contrib/contrib_tax/models.py:130
 msgid "taxes"
 msgstr "belastingen"
 
-#: contrib/contrib_tax/subtypes/percent_tax/models.py:63
+#: contrib/contrib_tax/subtypes/percent_tax/models.py:64
 msgid "percent tax"
 msgstr "procentuele belasting"
 
-#: contrib/contrib_tax/subtypes/percent_tax/models.py:64
+#: contrib/contrib_tax/subtypes/percent_tax/models.py:65
 msgid "percent taxes"
 msgstr "procentuele belastingen"
 
-#: contrib/contrib_variation/forms.py:206
+#: contrib/contrib_variation/admin.py:73
+msgid "Variations"
+msgstr "variaties"
+
+#: contrib/contrib_variation/forms.py:259
 msgid "A variant requires at least one variated attribute"
 msgstr "Een variant vereist minimaal 1 attribuut"
 
-#: contrib/contrib_variation/models.py:144
-#: contrib/contrib_variation/models.py:398
-#: contrib/contrib_variation/variant.py:138
+#: contrib/contrib_variation/models.py:175
+#: contrib/contrib_variation/models.py:434
+#: contrib/contrib_variation/variant.py:156
 msgid "variant"
 msgstr "variant"
 
-#: contrib/contrib_variation/models.py:145
-#: contrib/contrib_variation/variant.py:139
+#: contrib/contrib_variation/models.py:176
+#: contrib/contrib_variation/variant.py:157
 msgid "variants"
 msgstr "varianten"
 
-#: contrib/contrib_variation/models.py:176
+#: contrib/contrib_variation/models.py:209
 msgid "price adjustment"
 msgstr "prijs aanpassing"
 
-#: contrib/contrib_variation/models.py:249
+#: contrib/contrib_variation/models.py:304
 msgid "variates"
 msgstr "varieert"
 
-#: contrib/contrib_variation/models.py:254
+#: contrib/contrib_variation/models.py:309
 msgid "groups"
 msgstr "groepeert"
 
-#: contrib/contrib_variation/models.py:362
-msgid "variation recipe"
-msgstr "variatie-recept"
-
-#: contrib/contrib_variation/models.py:363
-msgid "variation recipes"
-msgstr "variatie-recepten"
-
-#: contrib/contrib_variation/models.py:408
+#: contrib/contrib_variation/models.py:445
 msgid "group variant"
 msgstr "groep variant"
 
-#: contrib/contrib_variation/models.py:422
+#: contrib/contrib_variation/models.py:459
 msgid "variation"
 msgstr "variatie"
 
-#: contrib/contrib_variation/models.py:423
+#: contrib/contrib_variation/models.py:460
 msgid "variations"
 msgstr "variaties"
 
-#: contrib/contrib_variation/models.py:692
+#: contrib/contrib_variation/models.py:751
 msgid "variations state"
 msgstr "variaties toestand"
 
-#: contrib/contrib_variation/models.py:693
+#: contrib/contrib_variation/models.py:752
 msgid "variations states"
 msgstr "variaties toestanden"
 
-#: contrib/contrib_variation/models.py:778
+#: contrib/contrib_variation/models.py:847
 msgid "variation purchase"
 msgstr "variatie aankoop"
 
-#: contrib/contrib_variation/models.py:779
+#: contrib/contrib_variation/models.py:848
 msgid "variation purchases"
 msgstr "variatie aankopen"
 
-#: contrib/contrib_variation/variant.py:76
-#, python-format
-msgid "%(model_name)s with this %(field_label)s already exists."
+#: contrib/contrib_variation/variant.py:108
+msgid "{model_name}s with this {field_label}s already exists."
 msgstr ""
 
-#: contrib/polymorphism/admin.py:36
+#: contrib/polymorphism/admin.py:43
 msgid "Type"
 msgstr "Type"
 
-#: contrib/polymorphism/admin.py:288
+#: contrib/polymorphism/admin.py:323
 #, python-format
 msgid "Add %s"
 msgstr "%s toevoegen"
 
-#: contrib/polymorphism/admin.py:357
+#: contrib/polymorphism/admin.py:396
 msgid "Contents"
 msgstr "Inhoud"
 
@@ -834,9 +931,17 @@ msgstr "Verzenden"
 #: contrib/polymorphism/templates/admin/polymorphism/add_type_form.html:30
 msgid "Please correct the error below."
 msgid_plural "Please correct the errors below."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Herstel de fout hieronder."
+msgstr[1] "Herstel de fouten hieronder."
 
-#: core/modules/pricing.py:127 core/modules/pricing.py:129
+#: core/modules/pricing.py:68
+msgid "euro"
+msgstr "euro"
+
+#: core/modules/pricing.py:68
+msgid "€ {amount: >{align}.2f}"
+msgstr "€ {amount: >{align}.2f}"
+
+#: core/modules/pricing.py:167 core/modules/pricing.py:169
 msgid "currency"
 msgstr "valuta"
