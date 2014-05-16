@@ -32,7 +32,6 @@ from sellmo.api.configuration import get_setting
 from sellmo.core.mailing.handlers import MailHandlerBase
 from sellmo.core.mailing import mailer
 
-
 from celery import shared_task, Task
 
 

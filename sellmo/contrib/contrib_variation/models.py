@@ -28,11 +28,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sellmo import modules
+from sellmo import modules, celery, params
 from sellmo.api.decorators import load
 from sellmo.magic import ModelMixin
 from sellmo.utils.formatting import call_or_format
 from sellmo.core.polymorphism import PolymorphicModel, PolymorphicManager
+from sellmo.contrib.contrib_variation import tasks
 from sellmo.contrib.contrib_variation.variant import (VariantFieldDescriptor,
                                                       VariantMixin,
                                                       get_differs_field_name)
@@ -315,10 +316,11 @@ def load_model():
                 old = modules.attribute.Attribute.objects.get(pk=self.pk)
             super(Attribute, self).save(*args, **kwargs)
             if self.variates or old and old.variates:
-                for product in modules.product.Product.objects.filter(
+                products = modules.product.Product.objects.filter(
                         ProductQ(attribute=self,
-                                 product_field='base_product')):
-                    modules.variation.Variation.objects.invalidate(product)
+                                 product_field='base_product'))
+                modules.variation.Variation.objects.invalidate(
+                    products=products)
 
         class Meta(modules.attribute.Attribute.Meta):
             abstract = True
@@ -667,11 +669,17 @@ class VariationManager(models.Manager):
         # Finally update product
         product.variations_invalidated = False
 
-    def invalidate(self, product):
-        if not product.variations_invalidated:
-            variations_invalidating.send(self, product=product)
-            product.variations_invalidated = True
-            variations_invalidated.send(self, product=product)
+    def invalidate(self, products):
+        if isinstance(products, modules.product.Product):
+            products = [products]
+        if celery.enabled and not getattr(params, 'worker_mode', False):
+            tasks.invalidate_variations.apply_async((products,))
+        else:
+            for product in products:
+                if not product.variations_invalidated:
+                    variations_invalidating.send(self, product=product)
+                    product.variations_invalidated = True
+                    variations_invalidated.send(self, product=product)
 
     def get_query_set(self):
         return VariationQuerySet(self.model)
@@ -690,7 +698,7 @@ class VariationManager(models.Manager):
         if not invalidated and product.variations_invalidated:
             # Variations invalidated, rebuild
             build()
-        build()
+        
         # Get variations
         variations = self.get_query_set().for_product(product)
 

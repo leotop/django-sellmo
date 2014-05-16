@@ -28,11 +28,23 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
+import logging
+
 from celery import shared_task
 
 from sellmo import modules
 
 
+logger = logging.getLogger('sellmo')
+
+
 @shared_task
 def build_variations(product):
+    logger.info("Building variations for product '{0}'".format(
+        product))
     modules.variation.Variation.objects.build(product)
+
+@shared_task
+def invalidate_variations(products):
+    logger.info("Invalidating variations")
+    modules.variation.Variation.objects.invalidate(products)
