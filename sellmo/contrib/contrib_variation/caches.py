@@ -31,7 +31,7 @@
 from sellmo import modules
 from sellmo.caching import Cache, cached
 from sellmo.utils.querying import list_from_pks
-from sellmo.contrib.contrib_variation.signals import (variations_deprecating,
+from sellmo.contrib.contrib_variation.signals import (variations_invalidating,
                                                       variations_invalidated)
 
 
@@ -146,7 +146,7 @@ class ProductVariationsCache(Cache):
 
 class VariationChoiceCache(Cache):
 
-    def on_variations_deprecating(self, sender, product, **kwargs):
+    def on_variations_invalidating(self, sender, product, **kwargs):
         product = product.downcast()
         keys = [
             self.get_choice_key(variation.pk) for variation in
@@ -169,7 +169,7 @@ class VariationChoiceCache(Cache):
             self.set(self.get_choice_key(variation.pk), choice)
 
     def hookup(self):
-        variations_deprecating.connect(self.on_variations_deprecating)
+        variations_invalidating.connect(self.on_variations_invalidating)
 
 
 get_variations = cached(

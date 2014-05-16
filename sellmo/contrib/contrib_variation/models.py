@@ -37,7 +37,7 @@ from sellmo.contrib.contrib_variation.variant import (VariantFieldDescriptor,
                                                       VariantMixin,
                                                       get_differs_field_name)
 from sellmo.contrib.contrib_variation.utils import generate_slug
-from sellmo.contrib.contrib_variation.signals import (variations_deprecating,
+from sellmo.contrib.contrib_variation.signals import (variations_invalidating,
                                                       variations_invalidated)
 from sellmo.contrib.contrib_variation.helpers import (AttributeHelper,
                                                       VariantAttributeHelper,
@@ -669,7 +669,7 @@ class VariationManager(models.Manager):
 
     def invalidate(self, product):
         if not product.variations_invalidated:
-            variations_deprecating.send(self, product=product)
+            variations_invalidating.send(self, product=product)
             product.variations_invalidated = True
             variations_invalidated.send(self, product=product)
 

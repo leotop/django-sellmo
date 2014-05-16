@@ -31,5 +31,5 @@
 import django.dispatch
 
 
-variations_deprecating = django.dispatch.Signal()
+variations_invalidating = django.dispatch.Signal()
 variations_invalidated = django.dispatch.Signal()
