@@ -53,7 +53,7 @@ ORDER_STATUSES = {
         'state': 'pending',
     }),
     'payment_received': (_("Payment received"), {
-        'flow': ['processing'],
+        'flow': ['processing', 'completed'],
         'on_paid': True,
         'state': 'pending',
     }),
