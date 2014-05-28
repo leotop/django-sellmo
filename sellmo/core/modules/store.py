@@ -33,14 +33,20 @@ from django.db.models.query import QuerySet
 
 import sellmo
 from sellmo import modules
+from sellmo.api.configuration import define_setting
 from sellmo.api.decorators import view, chainable
 from sellmo.api.store.models import Purchase
+from sellmo.api.store.exceptions import PurchaseInvalid
 
 
 class StoreModule(sellmo.Module):
 
     namespace = 'store'
     Purchase = Purchase
+    
+    qty_limit = define_setting(
+        'QTY_LIMIT',
+        default=9999)
 
     @chainable()
     def merge_purchase(self, chain, request, purchase, existing_purchases,
@@ -92,6 +98,9 @@ class StoreModule(sellmo.Module):
 
         if not qty is None:
             purchase.qty = qty
+            
+        if purchase.qty > self.qty_limit:
+            raise PurchaseInvalid("Qty over limit")
 
         purchase.calculate(save=False)
 

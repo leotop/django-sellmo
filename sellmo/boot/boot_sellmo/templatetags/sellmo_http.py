@@ -58,11 +58,12 @@ class QueryArgumentsValue(list):
             key = value[0]
             operator = value[1]
             value = value[2].resolve(context)
+            param = key if value is None else (key, value)
             if operator == '=':
                 query.set_param(key, value)
             elif operator == '+=':
                 query.add_param(key, value)
-            elif operator == '-=' and key in query:
+            elif operator == '-=' and param in query:
                 query.remove_param(key, value)
         return query
 

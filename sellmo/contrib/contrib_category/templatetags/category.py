@@ -63,8 +63,8 @@ class CategoriesTag(Tag):
         ],
     )
 
-    def _render_category_node(self, category, ancestors, current, context,
-                              nodelist):
+    def _render_category_node(self, category, ancestors, nested, current, 
+                              context, nodelist):
         context.push()
 
         current_match = False
@@ -75,30 +75,35 @@ class CategoriesTag(Tag):
                 current_match = True
 
         bits = []
-        for child in category.get_children():
-            _ancestors = ancestors + [category]
-            _current = current if current_match else None
-            bits.append(self._render_category_node(
-                child,
-                _ancestors,
-                _current,
-                context,
-                nodelist
-            ))
+        if nested:
+            for child in category.get_children():
+                _ancestors = ancestors + [category]
+                _current = current if current_match else None
+                bits.append(self._render_category_node(
+                    child,
+                    _ancestors,
+                    nested,
+                    _current,
+                    context,
+                    nodelist
+                ))
 
         context['node'] = category
         context['children'] = mark_safe(''.join(bits))
         context['current'] = current_match
         context['ancestors'] = ancestors
-        context['absolute_url'] = category.get_absolute_url(
-            slug=category.get_full_slug(ancestors=ancestors))
+        if nested:
+            context['absolute_url'] = category.get_absolute_url(
+                slug=category.get_full_slug(ancestors=ancestors))
+        else:
+            context['absolute_url'] = category.get_absolute_url()
         context['path'] = ancestors + [category]
         output = nodelist.render(context)
 
         context.pop()
         return output
 
-    def _render_categories(self, context, categories, current,
+    def _render_categories(self, context, nested, categories, current,
                            pre_node, node, post_node):
         context.push()
 
@@ -106,7 +111,7 @@ class CategoriesTag(Tag):
         if node:
             nodes = [
                 self._render_category_node(
-                    category, [], current, context, node)
+                    category, [], nested, current, context, node)
                 for category in categories
             ]
 
@@ -123,12 +128,13 @@ class CategoriesTag(Tag):
     def render_tag(self, context, nested, kwargs, expire_time,  
                    pre_node, node, post_node):
         current = None
+        categories = None
         if 'current' in kwargs:
             current = kwargs.pop('current')
 
         cache_key = False
         output = None
-
+        
         if not settings.DEBUG and expire_time is not False:
             cache_key = make_template_fragment_key(
                 'categories',
@@ -141,7 +147,8 @@ class CategoriesTag(Tag):
             if nested:
                 categories = cache_tree_children(categories)
             output = self._render_categories(
-                context, categories, current, pre_node, node, post_node)
+                context, nested, categories, current,
+                pre_node, node, post_node)
             if cache_key:
                 if expire_time is not None:
                     expire_time = int(expire_time)

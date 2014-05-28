@@ -31,14 +31,13 @@
 from django import forms
 
 from sellmo import modules
-from sellmo.api.forms import RedirectableForm
 
 
-class AddToCartForm(RedirectableForm):
+class AddToCartForm(forms.Form):
     product = forms.IntegerField(widget=forms.HiddenInput)
     qty = forms.IntegerField(min_value=1, initial=1)
 
 
-class EditPurchaseForm(RedirectableForm):
+class EditPurchaseForm(forms.Form):
     purchase = forms.IntegerField(widget=forms.HiddenInput)
     qty = forms.IntegerField(min_value=0)

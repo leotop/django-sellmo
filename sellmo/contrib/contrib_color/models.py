@@ -62,7 +62,6 @@ class Color(ValueObject):
 
     class Meta:
         abstract = True
-        app_label = 'attribute'
         ordering = ['name']
 
 
@@ -72,7 +71,8 @@ def finalize_model():
 
         class Meta(modules.color.Color.Meta):
             app_label = 'attribute'
-            ordering = ['name']
+            verbose_name = _("color")
+            verbose_name_plural = _("colors")
 
     modules.color.Color = Color
 
@@ -106,6 +106,7 @@ class MultiColor(ValueObject):
 
     class Meta:
         abstract = True
+        ordering = ['name']
 
 
 @load(before='finalize_color_MultiColor')
@@ -129,7 +130,8 @@ def finalize_model():
 
         class Meta(modules.color.MultiColor.Meta):
             app_label = 'attribute'
-            ordering = ['name']
+            verbose_name = _("multicolor")
+            verbose_name_plural = _("multicolors")
 
     modules.color.MultiColor = MultiColor
 

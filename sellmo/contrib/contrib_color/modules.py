@@ -43,9 +43,6 @@ class ColorModule(Module):
     MultiColor = MultiColor
     ColorMapping = ColorMapping
 
-    def __init__(self):
-        pass
-
     @chainable()
     def get_colors(self, chain, product=None, attribute=None, colors=None,
                    **kwargs):

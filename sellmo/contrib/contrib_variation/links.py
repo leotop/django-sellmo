@@ -32,7 +32,6 @@ from django.http import Http404
 
 from sellmo import modules
 from sellmo.api.decorators import link
-from sellmo.api.forms import RedirectableFormSet
 from sellmo.api.pricing import Price
 from sellmo.contrib.contrib_attribute.query import ProductQ
 
@@ -174,7 +173,7 @@ def get_add_to_cart_formset(formset, cls, product, variations=None,
 
     # Create the formset based upon the custom form
     AddToCartFormSet = formset_factory(
-        AddToCartForm, formset=RedirectableFormSet, extra=0)
+        AddToCartForm, extra=0)
     variations_key = '|'.join([variation.pk for variation in variations])
 
     # Fill in initial data

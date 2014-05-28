@@ -30,9 +30,18 @@
 
 from sellmo import modules
 from sellmo.caching import Cache, cached
-from sellmo.utils.querying import list_from_pks
 from sellmo.contrib.contrib_variation.signals import (variations_invalidating,
                                                       variations_invalidated)
+
+
+def list_from_pks(queryset, pks):
+    mapping = {}
+    out = []
+    for el in queryset:
+        mapping[el.pk] = el
+    for el in pks:
+        out.append(mapping[el])
+    return out
 
 
 class ProductVariationsCache(Cache):

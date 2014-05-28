@@ -44,18 +44,12 @@ register = template.Library()
 @register.inclusion_tag('cart/add_to_cart_formset.html', takes_context=True)
 def add_to_cart_formset(context, product, next=None, invalid=None, **kwargs):
     formset = modules.cart.get_add_to_cart_formset(product=product, **kwargs)
-    data = formset.get_redirect_data(context['request'])
-    if data:
-        formset = modules.cart.get_add_to_cart_formset(
-            product=product, data=data, **kwargs)
-
-    if invalid is None:
-        invalid = context['request'].path
-
+    
     query = QueryString()
     if next is not None:
         query['next'] = next
-    query['invalid'] = invalid
+    if invalid is not None:
+        query['invalid'] = invalid
 
     inner = {
         'formset': formset,
@@ -72,18 +66,12 @@ def add_to_cart_formset(context, product, next=None, invalid=None, **kwargs):
 @register.inclusion_tag('cart/edit_purchase_form.html', takes_context=True)
 def edit_purchase_form(context, purchase, next=None, invalid=None, **kwargs):
     form = modules.cart.get_edit_purchase_form(purchase=purchase, **kwargs)
-    data = form.get_redirect_data(context['request'])
-    if data:
-        form = modules.cart.get_edit_purchase_form(
-            purchase=purchase, data=data, **kwargs)
-
-    if invalid is None:
-        invalid = context['request'].path
-
+    
     query = QueryString()
     if next is not None:
         query['next'] = next
-    query['invalid'] = invalid
+    if invalid is not None:
+        query['invalid'] = invalid
 
     inner = {
         'form': form,

@@ -150,7 +150,6 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # Add Sellmo middleware
-    'sellmo.core.middleware.RedirectionMiddleware',
     'sellmo.core.middleware.LocalContextMiddleware',
 )
 

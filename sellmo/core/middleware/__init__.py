@@ -28,5 +28,4 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sellmo.core.middleware.redirection import RedirectionMiddleware
 from sellmo.core.middleware.local import LocalContextMiddleware

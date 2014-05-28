@@ -29,7 +29,6 @@
 
 
 from django import forms
-from django.contrib import messages
 from django.forms.formsets import formset_factory
 from django.db import models
 from django.db.models.signals import pre_delete
@@ -46,7 +45,8 @@ from sellmo.api.exceptions import ViewNotImplemented
 from sellmo.api.configuration import define_setting, define_import
 from sellmo.api.cart.models import Cart
 from sellmo.api.cart.forms import AddToCartForm, EditPurchaseForm
-from sellmo.api.forms import RedirectableFormSet
+from sellmo.api.store.exceptions import PurchaseInvalid
+from sellmo.api.messaging import FlashMessages
 
 
 class CartModule(sellmo.Module):
@@ -108,8 +108,7 @@ class CartModule(sellmo.Module):
                 form = cls(initial=initial)
             else:
                 form = cls(data)
-
-        form.set_redirect_key('edit_purchase_form_{0}'.format(purchase.pk))
+        
         if chain:
             out = chain.execute(
                 form=form, cls=cls, purchase=purchase,
@@ -134,13 +133,12 @@ class CartModule(sellmo.Module):
                 }]
 
             AddToCartFormSet = formset_factory(
-                cls, extra=0, formset=RedirectableFormSet)
+                cls, extra=0)
             if not data:
                 formset = AddToCartFormSet(initial=initial)
             else:
                 formset = AddToCartFormSet(data)
-
-        formset.set_redirect_key('add_to_cart_formset_%s' % product.pk)
+        
         if chain:
             out = chain.execute(
                 formset=formset, cls=cls, product=product, 
@@ -223,7 +221,10 @@ class CartModule(sellmo.Module):
     @view(r'^edit/(?P<purchase_id>[0-9]+)/$')
     def edit_purchase(self, chain, request, purchase_id, purchase=None,
                       form=None, context=None, next='cart.cart', 
-                      invalid='cart.cart', **kwargs):
+                      invalid='cart.cart', messages=None, **kwargs):
+
+        if messages is None:
+            messages = FlashMessages()
 
         # Next and invalid params are allowed to be present into query
         next = request.POST.get(
@@ -254,26 +255,34 @@ class CartModule(sellmo.Module):
             if form.is_valid():
                 purchase_args = self.get_edit_purchase_args(
                     purchase=purchase, form=form)
-                purchase = modules.store.make_purchase(
-                    request=request, **purchase_args)
-                self.update_purchase(
-                    request=request, purchase=purchase, cart=cart)
+                try:
+                    purchase = modules.store.make_purchase(
+                        request=request, **purchase_args)
+                    self.update_purchase(
+                        request=request, purchase=purchase, cart=cart)
+                except PurchaseInvalid as error:
+                    messages.error(request, error)
+                    redirection = redirect(invalid)
             else:
                 redirection = redirect(invalid)
-                form.redirect(request)
         
         if chain:
             return chain.execute(
-                request, purchase=purchase, form=form,
-                context=context, redirection=redirection, **kwargs)
-
+                request, purchase=purchase, form=form, context=context, 
+                redirection=redirection, messages=messages, **kwargs)
+        
+        messages.transmit()
         return redirection
 
     @method_decorator(require_POST)
     @view(r'^add/(?P<product_slug>[-a-zA-Z0-9_]+)/$')
     def add_to_cart(self, chain, request, product_slug, product=None,
                     formset=None, purchases=None, context=None,
-                    next='cart.cart', invalid='cart.cart', **kwargs):
+                    next='cart.cart', invalid='cart.cart', 
+                    messages=None, **kwargs):
+                    
+        if messages is None:
+            messages = FlashMessages()
 
         # Next and invalid params are allowed to be present into query
         next = request.POST.get(
@@ -294,9 +303,9 @@ class CartModule(sellmo.Module):
         if formset is None:
             formset = self.get_add_to_cart_formset(
                 product=product, data=request.POST)
-                
-
+        
         redirection = redirect(next)
+        
         # Purchase will in most cases not yet be assigned, 
         # it could be assigned however during the capture fase.
         if purchases is None:
@@ -309,11 +318,19 @@ class CartModule(sellmo.Module):
                 for form in formset:
                     purchase_args = self.get_purchase_args(
                         product=product, form=form)
-                    purchase = modules.store.make_purchase(
-                        request=request, **purchase_args)
+                    try:
+                        purchase = modules.store.make_purchase(
+                            request=request, **purchase_args)
+                    except PurchaseInvalid as error:
+                        messages.error(request, error)
+                        redirection = redirect(invalid)
+                        # We will redirect to invalid, but keep on adding
+                        # valid purchases (in case multiple purchases are made)
+                        continue
+                    
                     purchases.append(purchase)
+                    
             else:
-                formset.redirect(request)
                 redirection = redirect(invalid)
 
         # Get the cart
@@ -322,8 +339,12 @@ class CartModule(sellmo.Module):
         if purchases:
             # Add purchases to cart
             for purchase in purchases:
-                self.add_purchase(
-                    request=request, purchase=purchase, cart=cart)
+                try:
+                    self.add_purchase(
+                        request=request, purchase=purchase, cart=cart)
+                except PurchaseInvalid as error:
+                    messages.error(request, error)
+                    redirection = redirect(invalid)
 
             # Keep track of our cart
             cart.track(request)
@@ -332,8 +353,9 @@ class CartModule(sellmo.Module):
             return chain.execute(
                 request, product=product, purchases=purchases,
                 formset=formset, context=context, redirection=redirection,
-                next=next, invalid=invalid, **kwargs)
+                next=next, invalid=invalid, messages=messages, **kwargs)
 
+        messages.transmit()
         return redirection
 
     @chainable()
@@ -345,6 +367,7 @@ class CartModule(sellmo.Module):
         merged = modules.store.merge_purchase(
             request=request, purchase=purchase,
             existing_purchases=list(cart))
+        
         if merged:
             purchase = merged
 
@@ -365,6 +388,7 @@ class CartModule(sellmo.Module):
         merged = modules.store.merge_purchase(
             request=request, purchase=purchase,
             existing_purchases=list(cart))
+        
         if merged:
             purchase = merged
 

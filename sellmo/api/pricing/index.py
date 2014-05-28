@@ -118,24 +118,6 @@ class IndexedQuerySet(QuerySet):
         return clone
 
 
-def make_indexed(queryset, indexes, relation):
-    # Decide correct mro
-    if issubclass(queryset.__class__, QuerySet):
-        # We got a Subclass of QuerySet
-        # Subclass -> IndexedQuerySet -> QuerySet
-        bases = (queryset.__class__, IndexedQuerySet)
-    else:
-        # We got a QuerySet
-        bases = (IndexedQuerySet,)
-
-    # Construct new QuerySet class and clone to this class
-    indexed = queryset._clone(klass=type('IndexedQuerySet', bases, {}))
-    indexed._indexes = indexes
-    indexed._relation = relation
-    indexed.index = PrefetchedPriceIndex(relation)
-    return indexed
-
-
 class PrefetchedPriceIndex(object):
 
     def __init__(self, relation):
@@ -286,9 +268,26 @@ class PriceIndex(object):
     def query(self, queryset, relation, **kwargs):
         q, complete = self._get_query(relation=relation, **kwargs)
         if complete:
-            queryset = make_indexed(
+            queryset = self._get_indexed(
                 queryset, self.model.objects.filter(q), relation)
         return queryset
+        
+    def _get_indexed(self, queryset, indexes, relation):
+        # Decide correct mro
+        if issubclass(queryset.__class__, QuerySet):
+            # We got a Subclass of QuerySet
+            # Subclass -> IndexedQuerySet -> QuerySet
+            bases = (queryset.__class__, IndexedQuerySet)
+        else:
+            # We got a QuerySet
+            bases = (IndexedQuerySet,)
+    
+        # Construct new QuerySet class and clone to this class
+        indexed = queryset._clone(klass=type('IndexedQuerySet', bases, {}))
+        indexed._indexes = indexes
+        indexed._relation = relation
+        indexed.index = PrefetchedPriceIndex(relation)
+        return indexed
 
     def update(self, **kwargs):
         # First query invalidations
