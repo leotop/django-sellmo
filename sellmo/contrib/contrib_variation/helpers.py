@@ -40,29 +40,30 @@ from django.utils.text import capfirst
 
 
 class AttributeHelper(AttributeHelperBase):
-
-    def populate(self):
-        if self.__dict__['_populated']:
-            return
-        self.__dict__['_populated'] = True
-        for value in modules.attribute.Value.objects.filter(
-                product=self._product, variates=False):
-            attribute = value.attribute
-            self._attributes[attribute.key] = attribute
-            if not self._values.has_key(attribute.key):
-                self._values[attribute.key] = value
+    
+    def populate(self, values=None, attributes=None):
+        if values is None:
+            values = self._product.values.filter(variates=False)
+        super(AttributeHelper, self).populate(values, attributes)
 
     def get_value(self, key):
+        # Make sure attribute exists
         attribute = self.get_attribute(key)
-        if not self._values.has_key(attribute.key):
+        if attribute.key not in self._values and not self._populated:
             try:
+                # Special query at this point variates=False
                 value = modules.attribute.Value.objects.get(
                     attribute=attribute, product=self._product, variates=False)
             except modules.attribute.Value.DoesNotExist:
-                self._values[attribute.key] = modules.attribute.Value(
-                    product=self._product, attribute=attribute)
+                pass
             else:
                 self._values[attribute.key] = value
+        
+        # Create a new value if none found
+        if attribute.key not in self._values:
+            self._values[attribute.key] = modules.attribute.Value(
+                product=self._product, attribute=attribute)
+                
         return self._values[attribute.key]
 
 

@@ -33,6 +33,7 @@ from django.db.models.query import QuerySet
 from django.utils.translation import ugettext_lazy as _
 
 from sellmo import modules
+from sellmo.magic import ModelMixin
 from sellmo.api.decorators import load
 from sellmo.core.polymorphism import PolymorphicModel, PolymorphicManager
 from sellmo.utils.formatting import call_or_format
@@ -164,7 +165,8 @@ class Value(models.Model):
         null=True,
         blank=True,
         db_index=True,
-        on_delete=models.PROTECT
+        on_delete=models.PROTECT,
+        related_name='values'
     )
 
     def get_value(self):
@@ -351,7 +353,7 @@ class Attribute(models.Model):
 
     def get_object_choices(self):
         if self.__object_choices is None:
-            self.__object_choices = self.object_choices.polymorphic().all()
+            self.__object_choices = self.object_choices.all().polymorphic()
         return self.__object_choices
 
     def save(self, *args, **kwargs):
@@ -367,3 +369,97 @@ class Attribute(models.Model):
 
     class Meta:
         abstract = True
+        
+        
+@load(after='finalize_product_Product')
+def load_manager():
+
+    qs = modules.product.Product.objects.get_query_set()
+
+    class ProductQuerySet(qs.__class__):
+        
+        _prefetch_attributes = None
+        _prefetched_attributes = None
+        _prefetched_values = None
+        _prefetched_value_objects = None
+        
+        def __iter__(self):
+            out = []
+            for obj in super(ProductQuerySet, self).__iter__():
+                out.append(obj)
+            
+            if self._prefetch_attributes is not None:
+                if self._prefetched_attributes is None:
+                    self._prefetched_attributes = self \
+                        ._get_prefetched_attributes(out)
+                if self._prefetched_values is None:
+                    self._prefetched_values = self \
+                        ._get_prefetched_values(out)
+                if self._prefetched_value_objects is None:
+                    self._prefetched_value_objects = ValueObject.objects \
+                        .polymorphic() \
+                        .filter(values__in=self._prefetched_values) \
+                        .distinct()
+                    
+                # Map value objects to pk
+                value_objects = {}
+                for value_object in self._prefetched_value_objects:
+                    value_objects[value_object.pk] = value_object
+                        
+                # Map values to product
+                # And assign value objects
+                product_to_values = {}
+                for value in self._prefetched_values:
+                    if value.product.pk not in product_to_values:
+                        product_to_values[value.product.pk] = []
+                    product_to_values[value.product.pk].append(value)
+                    if value.value_object_id is not None and value.value_object_id in value_objects:
+                        value.value_object = value_objects[value.value_object_id]
+                    
+                for obj in out:
+                    obj.attributes.populate(
+                        product_to_values.get(obj.pk, []),
+                        self._prefetched_attributes)
+                    
+            for obj in out:
+                yield obj
+        
+        def _clone(self, *args, **kwargs):
+            clone = super(ProductQuerySet, self)._clone(*args, **kwargs)
+            if self._prefetch_attributes is not None:
+                clone._prefetch_attributes = list(self._prefetch_attributes)
+            return clone
+            
+        def _get_prefetched_values(self, products):
+            prefetched = modules.attribute \
+                .Value.objects.filter(pk__in=[obj.pk for obj in products]) \
+                .select_related('product__id', 'attribute')
+            if len(self._prefetch_attributes) > 0:
+                prefetched = prefetched.filter(
+                    attribute__key__in=self._prefetch_attributes)
+            return prefetched
+            
+        def _get_prefetched_attributes(self, products):
+            prefetched = modules.attribute.Attribute.objects.all()
+            if len(self._prefetch_attributes) > 0:
+                prefetched = prefetched.filter(
+                    key__in=self._prefetch_attributes)
+            return prefetched
+        
+        def prefetch_attributes(self, *attributes):
+            clone = self._clone()
+            clone._prefetch_attributes = list(attributes)
+            return clone
+
+    class ProductManager(modules.product.Product.objects.__class__):
+        
+        def get_query_set(self):
+            return ProductQuerySet(self.model)
+
+    class Product(ModelMixin):
+        model = modules.product.Product
+        objects = ProductManager()
+
+    # Register
+    modules.product.register('ProductQuerySet', ProductQuerySet)
+    modules.product.register('ProductManager', ProductManager)

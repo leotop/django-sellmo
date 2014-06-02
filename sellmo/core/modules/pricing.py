@@ -326,12 +326,14 @@ class PricingModule(sellmo.Module):
         if index is not None:
             products = self.get_index(index).query(
                 products, index_relation, currency=currency, **kwargs)
-        if query is not None:
+        if query is not None and index is not None:
             # See if we need to sort on price
             if ('sort', 'price') in query:
-                products = products.order_indexes_by('price_amount')
+                products = products.indexes(
+                    lambda qs: qs.order_by('price_amount'))
             elif ('sort', '-price') in query:
-                products = products.order_indexes_by('-price_amount')
+                products = products.indexes(
+                    lambda qs: qs.order_by('-price_amount'))
 
         return {
             'products': products

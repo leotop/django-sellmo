@@ -27,6 +27,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 import re
 import inspect
 
@@ -47,87 +48,133 @@ __all__ = [
 camelize = re.compile(r'(?!^)_([a-zA-Z])')
 
 
+def _make_indexable(queryset, indexes, through):
+    if isinstance(queryset, IndexedQuerySet):
+        raise Exception("This is already an indexed queryset")
+    # Decide correct mro
+    if issubclass(queryset.__class__, QuerySet):
+        # We got a subclass of QuerySet
+        # Subclass -> IndexedQuerySet -> QuerySet
+        bases = (queryset.__class__, IndexedQuerySet)
+    else:
+        # We got a QuerySet
+        bases = (IndexedQuerySet,)
+
+    # Construct new QuerySet class and clone to this class
+    indexed = queryset._clone(klass=type('IndexedQuerySet', bases, {}))
+    indexed._indexes = indexes._clone()
+    indexed._through = through
+    indexed.index = PrefetchedPriceIndex(through)
+    return indexed
+
+
+def _get_query_ordering(query):
+    if query.extra_order_by:
+        return list(query.extra_order_by)
+    elif query.order_by:
+        return list(query.order_by)
+    elif query.default_ordering and query.get_meta().ordering:
+        return list(query.get_meta().ordering)
+    return []
+
+
 class IndexedQuerySet(QuerySet):
 
-    _order_indexes_by = []
-    _is_indexed = True
     _is_sliced = False
+    _indexes = None
+    _through = None
 
-    def _get_order(self):
-        ordering = []
-        if self.query.extra_order_by:
-            ordering = list(self.query.extra_order_by)
-        elif self.query.order_by:
-            ordering = list(self.query.order_by)
-        elif self.query.default_ordering and self.query.get_meta().ordering:
-            ordering = list(self.query.get_meta().ordering)
-
-        for order in self._order_indexes_by:
+    def __get_ordering__(self):
+        # indexes order precedes our order
+        for order in _get_query_ordering(self._indexes.query):
             yield order
-
-        for order in ordering:
+        
+        for order in _get_query_ordering(self.query):
             desc = False
             if order.startswith('-'):
                 order = order[1:]
                 desc = True
             if desc:
-                yield '-{0}__{1}'.format(self._relation, order)
+                yield '-{0}__{1}'.format(self._through, order)
             else:
-                yield '{0}__{1}'.format(self._relation, order)
-
+                yield '{0}__{1}'.format(self._through, order)
+            
+    def __get_select_related__(self):
+        yield self._through
+        if isinstance(self.query.select_related, bool):
+            if self.query.select_related:
+                pass
+        else:
+            for field, _ in self.query.select_related.iteritems():
+                yield '{0}__{1}'.format(self._through, field)
+    
     def __getitem__(self, k):
         clone = self._clone()
-        clone._indexes = clone._get_indexed()[k]
+        clone._indexes = clone._query_indexes()[k]
         clone._is_sliced = True
-        return list(clone)
-
-    def _get_indexed(self):
+        if isinstance(k, slice):
+            return list(clone)
+        
+        clone._indexes = [clone._indexes]
+        return list(clone)[0]
+    
+    def _query_indexes(self):
         if self._is_sliced:
             return self._indexes
+         
+        # At this point we will filter our indexes query against ourselves.   
+        # This won't cause any recursion since Django generates a nested
+        # query. No actual iteration on this query will occur.
         qargs = {
-            '{0}__in'.format(self._relation): self
+            '{0}__in'.format(self._through): self
         }
-        return self._indexes.filter(**qargs).select_related(self._relation) \
-                            .order_by(*self._get_order())
-
+        return self._indexes.filter(**qargs).select_related(
+                            *self.__get_select_related__()) \
+                            .order_by(*self.__get_ordering__())
+    
+    def indexes(self, func):
+        if self._is_sliced:
+            raise Exception("Cannot alter indexes queryset")
+        clone = self._clone()
+        clone._indexes = func(clone._indexes)
+        return clone
+    
+    def join(self):
+        for obj in self._query_indexes():
+            self.index.index(getattr(obj, self._through).pk, obj)
+            yield getattr(obj, self._through), obj
+    
     def iterator(self):
         out = []
-        for obj in self._get_indexed():
-            related = getattr(obj, self._relation)
-            out.append(related)
-            self.index.index(related.pk, obj)
-        return out
-
+        for a, b in self.join():
+            yield a
+    
     def count(self):
-        return self._get_indexed().count()
-
-    def order_indexes_by(self, *field_names):
-        clone = self._clone()
-        clone._order_indexes_by = list(field_names)
-        return clone
-
+        return self._query_indexes().count()
+        
     def _clone(self, *args, **kwargs):
         clone = super(IndexedQuerySet, self)._clone(*args, **kwargs)
         clone._indexes = self._indexes._clone()
-        clone._relation = self._relation
-        clone._order_indexes_by = self._order_indexes_by
+        clone._through = self._through
         clone._is_sliced = self._is_sliced
+        
         # We explicitely do not clone the index, it can safely be shared
         # accross querysets
         clone.index = self.index
+        
         return clone
-
+        
 
 class PrefetchedPriceIndex(object):
 
-    def __init__(self, relation):
-        self.relation = relation
+    def __init__(self, through):
+        self.through = through
         self.indexes = {}
 
     def lookup(self, **kwargs):
-        if self.relation not in kwargs:
-            raise Exception("Relation '{0}' not given.".format(self.relation))
-        return self.indexes[kwargs[self.relation].pk].price
+        if self.through not in kwargs:
+            raise Exception("through '{0}' not given.".format(self.through))
+        return self.indexes[kwargs[self.through].pk].price
 
     def index(self, pk, index):
         self.indexes[pk] = index
@@ -177,8 +224,8 @@ class PriceIndex(object):
         model = type(name, (model,), attr_dict)
         self._model = model
 
-    def _get_query(self, relation=None, nullable=False, **kwargs):
-        fargs, complete = self._get_field_args(relation=relation, **kwargs)
+    def _get_query(self, through=None, nullable=False, **kwargs):
+        fargs, complete = self._get_field_args(through=through, **kwargs)
         orm_lookup = {}
         for key, value in fargs.iteritems():
             if value is None:
@@ -191,11 +238,11 @@ class PriceIndex(object):
             orm_lookup[key] = value
         return Q(**orm_lookup), complete
 
-    def _get_field_args(self, relation=None, **kwargs):
+    def _get_field_args(self, through=None, **kwargs):
         fargs = {}
         complete = True
         for key, value in self.kwargs.iteritems():
-            if key == relation:
+            if key == through:
                 continue
             field_name = value['field_name']
             transform = value['transform']
@@ -210,7 +257,7 @@ class PriceIndex(object):
 
     def add_kwarg(self, name, field=None, field_name=None, required=True, 
                   transform=None, default=None, model=None):
-        if name in ('relation', 'nullable'):
+        if name in ('through', 'nullable'):
             raise Exception(
                 "Resereved kwarg name '{0}"
                 .format(name))
@@ -265,29 +312,15 @@ class PriceIndex(object):
                 pass
         return None
 
-    def query(self, queryset, relation, **kwargs):
-        q, complete = self._get_query(relation=relation, **kwargs)
+    def query(self, queryset, through, **kwargs):
+        q, complete = self._get_query(through=through, **kwargs)
         if complete:
-            queryset = self._get_indexed(
-                queryset, self.model.objects.filter(q), relation)
+            queryset = _make_indexable(
+                queryset, self.model.objects.filter(q), through)
         return queryset
         
-    def _get_indexed(self, queryset, indexes, relation):
-        # Decide correct mro
-        if issubclass(queryset.__class__, QuerySet):
-            # We got a Subclass of QuerySet
-            # Subclass -> IndexedQuerySet -> QuerySet
-            bases = (queryset.__class__, IndexedQuerySet)
-        else:
-            # We got a QuerySet
-            bases = (IndexedQuerySet,)
-    
-        # Construct new QuerySet class and clone to this class
-        indexed = queryset._clone(klass=type('IndexedQuerySet', bases, {}))
-        indexed._indexes = indexes
-        indexed._relation = relation
-        indexed.index = PrefetchedPriceIndex(relation)
-        return indexed
+    def make_indexable(self, queryset, through):
+        return _make_indexable(queryset, self.model.objects.all(), through)
 
     def update(self, **kwargs):
         # First query invalidations

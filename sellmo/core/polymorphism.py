@@ -61,12 +61,31 @@ class PolymorphicOverride(object):
 class PolymorphicQuerySet(QuerySet):
 
     _downcast = False
+    _can_downcast = True
 
     def __init__(self, *args, **kwargs):
+        self._defered_calls = []
         if kwargs.has_key('downcast'):
             self._downcast = kwargs.pop('downcast')
         super(PolymorphicQuerySet, self).__init__(*args, **kwargs)
-
+        
+    def __apply_defered_calls__(self, queryset):
+        for name, args, kwargs in self._defered_calls:
+            queryset = getattr(queryset, name)(*args, **kwargs)
+        return queryset
+        
+    def __defer__call__(self, name, args, kwargs, downcastable=False):
+        if self._downcast:
+            clone = self._clone()
+            clone._defered_calls.append((name, args, kwargs))
+        else:
+            clone = getattr(super(PolymorphicQuerySet, self), name)(*args, **kwargs)
+            if downcastable: 
+                clone._defered_calls.append((name, args, kwargs))
+            else:
+                clone._can_downcast = False
+        return clone
+    
     def iterator(self):
         override = None
         if hasattr(_local, 'overrides'):
@@ -79,47 +98,79 @@ class PolymorphicQuerySet(QuerySet):
         if not downcast:
             return super(PolymorphicQuerySet, self).iterator()
         else:
+            
+            # Query pk and content_type first
+            # Keep ordering and filter out all content types
+            # Afterwards perform seperate queries for each content_type
             content_types = {}
-            content_types_elements = {}
+            content_typed_pks = {}
             order = []
             downcasts = {}
-            result = []
-
-            for el in super(PolymorphicQuerySet, self).iterator():
-                if not content_types.has_key(el.content_type_id):
-                    content_types[el.content_type_id] = el.content_type
-                    content_types_elements[el.content_type_id] = []
-                content_types_elements[el.content_type_id].append(el)
-                order.append(el.pk)
+            out = []
+            
+            # We only query pk and content_type at this point
+            # Ignore any "select_related" expressions
+            for obj in super(PolymorphicQuerySet, self).iterator():
+                if not content_types.has_key(obj.content_type.pk):
+                    content_types[obj.content_type.pk] = obj.content_type
+                    content_typed_pks[obj.content_type.pk] = []
+                content_typed_pks[obj.content_type.pk].append(obj.pk)
+                order.append(obj.pk)
 
             for content_type in content_types.values():
                 model = content_type.model_class()
-                elements = content_types_elements[content_type.pk]
-                pks = [element.pk for element in elements]
-
-                for el in QuerySet(model).filter(pk__in=pks):
-                    downcasts[el.pk] = el
+                for obj in self.__apply_defered_calls__(
+                        QuerySet(model)
+                        .filter(pk__in=content_typed_pks[content_type.pk])):
+                    downcasts[obj.pk] = obj
+                    obj.content_type = content_type
 
             for pk in order:
-                result.append(downcasts[pk])
-
-            return result
+                out.append(downcasts[pk])
+            return out
 
     def _clone(self, *args, **kwargs):
         clone = super(PolymorphicQuerySet, self)._clone(*args, **kwargs)
         clone._downcast = self._downcast
+        clone._can_downcast = self._can_downcast
+        clone._defered_calls = list(self._defered_calls)
         return clone
 
+    def polymorphic(self):
+        if not self._can_downcast:
+            raise Exception("Too late to downcast this queryset")
+            
+        clone = self._clone()
+        if not self._downcast:
+            clone = super(PolymorphicQuerySet, clone) \
+                        .select_related('content_type')
+            clone = super(PolymorphicQuerySet, clone) \
+                        .only('pk', 'content_type')
+            clone._downcast = True
+        return clone
+        
     def delete(self, *args, **kwargs):
         with PolymorphicOverride(False):
-            super(PolymorphicQuerySet, self).delete(*args, **kwargs)
-
-    def polymorphic(self, polymorphic=True):
-        clone = self
-        if polymorphic:
-            clone = clone.prefetch_related('content_type')
-        clone._downcast = polymorphic
-        return clone
+            super(PolymorphicQuerySet, self).delete(args, kwargs)
+    
+    def select_related(self, *args, **kwargs):
+        return self.__defer__call__('select_related', args, kwargs)
+        
+    def only(self, *args, **kwargs):
+        return self.__defer__call__('only', args, kwargs)
+        
+    def defer(self, *args, **kwargs):
+        return self.__defer__call__('defer', args, kwargs)
+        
+    def annotate(self, *args, **kwargs):
+        return self.__defer__call__('annotate', args, kwargs)
+        
+    def extra(self, *args, **kwargs):
+        return self.__defer__call__('extra', args, kwargs)
+        
+    def using(self, *args, **kwargs):
+        return self.__defer__call__('using', args, kwargs, downcastable=True)
+    
 
 
 class PolymorphicManager(models.Manager):

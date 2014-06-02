@@ -73,7 +73,7 @@ def finalize_model():
 class ProductQuerySet(PolymorphicQuerySet):
     
     def indexed(self):
-        return modules.pricing.get_index('product_price').get_indexed(self)
+        return modules.pricing.get_index('product_price').make_indexable(self, 'product')
     
     def for_relatable(self, relatable):
         return self.filter(pk__in=relatable.get_related_products())

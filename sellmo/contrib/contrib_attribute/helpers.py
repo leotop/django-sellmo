@@ -38,38 +38,43 @@ from django.utils.text import capfirst
 
 
 class AttributeHelper(object):
-
+    
     def __init__(self, product):
         self._product = product
         self._values = {}
         self._attributes = {}
         self._populated = False
-
+    
     def get_attribute(self, key):
-        if not self._attributes.has_key(key):
+        if not self._attributes.has_key(key) and not self._populated:
             try:
                 attribute = modules.attribute.Attribute.objects.get(key=key)
             except modules.attribute.Attribute.DoesNotExist:
-                self._attributes[key] = None
+                pass
             else:
                 self._attributes[key] = attribute
 
-        if self._attributes[key] is None:
-            raise AttributeError(key)
-        else:
-            return self._attributes[key]
+        if key not in self._attributes:
+            raise ValueError(key)
+        return self._attributes[key]
 
     def get_value(self, key):
+        # Make sure attribute exists
         attribute = self.get_attribute(key)
-        if not self._values.has_key(attribute.key):
+        if attribute.key not in self._values and not self._populated:
             try:
                 value = modules.attribute.Value.objects.get(
                     attribute=attribute, product=self._product)
             except modules.attribute.Value.DoesNotExist:
-                self._values[attribute.key] = modules.attribute.Value(
-                    product=self._product, attribute=attribute)
+                pass
             else:
                 self._values[attribute.key] = value
+        
+        # Create a new value if none found
+        if attribute.key not in self._values:
+            self._values[attribute.key] = modules.attribute.Value(
+                product=self._product, attribute=attribute)
+                
         return self._values[attribute.key]
 
     def get_value_value(self, key):
@@ -78,15 +83,20 @@ class AttributeHelper(object):
     def set_value_value(self, key, value):
         self.get_value(key).value = value
 
-    def populate(self):
-        if not self.__dict__['_populated']:
-            self.__dict__['_populated'] = True
-            for value in modules.attribute.Value.objects.filter(
-                    product=self._product):
-                attribute = value.attribute
+    def populate(self, values=None, attributes=None):
+        if self._populated:
+            return
+        if values is None:
+            values = self._product.values.all()
+        self._populated = True
+        if attributes:
+            for attribute in attributes:
                 self._attributes[attribute.key] = attribute
-                if not self._values.has_key(attribute.key):
-                    self._values[attribute.key] = value
+        for value in values:
+            attribute = value.attribute
+            self._attributes[attribute.key] = attribute
+            if not self._values.has_key(attribute.key):
+                self._values[attribute.key] = value
 
     def __getitem__(self, key):
         return self.get_value_value(key)
