@@ -238,16 +238,16 @@ class Value(models.Model):
 @load(action='finalize_attribute_Attribute')
 def finalize_model():
 
-    types = list(modules.attribute.Attribute.TYPES)
+    choices = list(modules.attribute.Attribute.TYPE_CHOICES)
     for key, typ in modules.attribute.attribute_types.iteritems():
-        types.append((key, typ['verbose_name']))
+        choices.append((key, typ['verbose_name']))
 
     class Attribute(modules.attribute.Attribute):
         
         type = AttributeTypeField(
             max_length=255,
             db_index=True,
-            choices=types,
+            choices=choices,
             default=modules.attribute.Attribute.TYPE_STRING
         )
         
@@ -285,8 +285,10 @@ class Attribute(models.Model):
     TYPE_STRING = 'string'
     TYPE_INT = 'int'
     TYPE_FLOAT = 'float'
+    
+    TYPES = [TYPE_STRING, TYPE_INT, TYPE_FLOAT]
 
-    TYPES = (
+    TYPE_CHOICES = (
         (TYPE_STRING, _("string")),
         (TYPE_INT, _("integer")),
         (TYPE_FLOAT, _("float")),

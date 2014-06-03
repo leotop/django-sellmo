@@ -156,7 +156,7 @@ def register_attribute_types():
     modules.attribute.register_attribute_type(
         'color',
         ColorAdapter(),
-        verbose_name=_("Color"))
+        verbose_name=_("color"))
 
 
 @load(after='finalize_color_MultiColor')
