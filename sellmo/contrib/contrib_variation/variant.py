@@ -48,7 +48,7 @@ class DuplicateSlugException(Exception):
 
 
 def get_differs_field_name(name):
-    return '%s_differs' % name
+    return '{0}_differs'.format(name)
 
 
 class VariantMixin(object):

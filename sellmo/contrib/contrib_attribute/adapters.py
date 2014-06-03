@@ -28,50 +28,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from functools import wraps
+class AttributeTypeAdapter(object):
 
-from sellmo import modules
+    def parse(self, string):
+        raise NotImplementedError()
 
-from django.db import models
-from django.db.models import Q
-
-
-class ValueQ(Q):
-
-    def __init__(self, attribute, value=None, **kwargs):
-        qargs = dict()
-        qargs['attribute'] = attribute
-
-        suffix = None
-        if value is None:
-            if len(kwargs) == 1:
-                suffix, value = kwargs.popitem()
-
-        if not value is None:
-            value_field = attribute.value_field
-            if not suffix is None:
-                value_field = '{0}__{1}'.format(value_field, suffix)
-            qargs[value_field] = value
-
-        super(ValueQ, self).__init__(**qargs)
-
-
-class ProductQ(Q):
-
-    pks = []
-
-    def __init__(self, attribute=None, value=None, values=None,
-                 product_field='product', **kwargs):
-        if not attribute is None:
-            if values is None:
-                # Query against all values provided by the manager
-                values = modules.attribute.Value.objects.all()
-            self.pks = values.filter(ValueQ(attribute, value, **kwargs)) \
-                             .values_list(product_field, flat=True) \
-                             .distinct()
-            super(ProductQ, self).__init__(pk__in=self.pks)
-        else:
-            super(ProductQ, self).__init__()
-
-    def clone(self):
-        return Q(pk__in=self.pks)
+    def get_choices(self):
+        raise NotImplementedError()
+        
+    

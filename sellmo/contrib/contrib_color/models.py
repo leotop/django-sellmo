@@ -33,15 +33,26 @@ from django.db.models import Q
 from django.db.models.query import QuerySet
 from django.db.models.signals import pre_save, post_save, pre_delete
 from django.utils.translation import ugettext_lazy as _
+from django.contrib.contenttypes.models import ContentType
 
 from sellmo import modules
 from sellmo.api.decorators import load
-from sellmo.contrib.contrib_attribute.models import ValueObject
 from sellmo.contrib.contrib_attribute.query import ValueQ
+from sellmo.contrib.contrib_attribute.adapters import AttributeTypeAdapter
 from sellmo.magic import ModelMixin
 
 
-class Color(ValueObject):
+class ColorAdapter(AttributeTypeAdapter):
+    
+    def get_choices(self):
+        return modules.attribute.ValueObject.objects.all() \
+            .filter(content_type__in=[
+                ContentType.objects.get_for_model(modules.color.Color),
+                ContentType.objects.get_for_model(modules.color.MultiColor)
+            ]).polymorphic()
+    
+
+class Color(models.Model):
 
     name = models.CharField(
         max_length=100,
@@ -66,10 +77,12 @@ class Color(ValueObject):
 
 
 @load(action='finalize_color_Color')
+@load(action='load_attribute_subtypes')
 def finalize_model():
-    class Color(modules.color.Color):
+    class Color(modules.color.Color, modules.attribute.ValueObject):
 
-        class Meta(modules.color.Color.Meta):
+        class Meta(modules.color.Color.Meta,
+                   modules.attribute.ValueObject.Meta):
             app_label = 'attribute'
             verbose_name = _("color")
             verbose_name_plural = _("colors")
@@ -90,7 +103,7 @@ def load_manager():
         objects = ColorManager()
 
 
-class MultiColor(ValueObject):
+class MultiColor(models.Model):
 
     name = models.CharField(
         max_length=100,
@@ -125,15 +138,25 @@ def load_model():
 
 
 @load(action='finalize_color_MultiColor')
+@load(after='finalize_attribute_ValueObject')
 def finalize_model():
-    class MultiColor(modules.color.MultiColor):
+    class MultiColor(modules.color.MultiColor, modules.attribute.ValueObject):
 
-        class Meta(modules.color.MultiColor.Meta):
+        class Meta(modules.color.MultiColor.Meta,
+                   modules.attribute.ValueObject.Meta):
             app_label = 'attribute'
             verbose_name = _("multicolor")
             verbose_name_plural = _("multicolors")
 
     modules.color.MultiColor = MultiColor
+    
+
+@load(before='finalize_attribute_Attribute')
+def register_attribute_types():
+    modules.attribute.register_attribute_type(
+        'color',
+        ColorAdapter(),
+        verbose_name=_("Color"))
 
 
 @load(after='finalize_color_MultiColor')
@@ -224,8 +247,6 @@ class ColorMapping(models.Model):
 
     class Meta:
         abstract = True
-
-#
 
 
 def on_value_pre_save(sender, instance, raw=False, update_fields=None,

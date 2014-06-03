@@ -31,7 +31,9 @@
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable, link
 from sellmo.api.configuration import define_setting
-from sellmo.contrib.contrib_attribute.models import Attribute, Value
+from sellmo.contrib.contrib_attribute.models import (Attribute,
+                                                    Value,
+                                                    ValueObject)
 from sellmo.contrib.contrib_attribute.query import ProductQ
 
 from django.http import Http404
@@ -43,6 +45,9 @@ class AttributeModule(Module):
     namespace = 'attribute'
     Attribute = Attribute
     Value = Value
+    ValueObject = ValueObject
+    
+    attribute_types = {}
     
     value_format = define_setting(
         'VALUE_FORMAT',
@@ -90,3 +95,12 @@ class AttributeModule(Module):
                 attribute=attribute, operator=operator, **kwargs)
             products = out.get('products', products)
         return products
+        
+    @classmethod
+    def register_attribute_type(self, type, adapter, verbose_name=None):
+        if verbose_name is None:
+            verbose_name = unicode(type)
+        self.attribute_types[type] = {
+            'adapter': adapter,
+            'verbose_name': verbose_name
+        }

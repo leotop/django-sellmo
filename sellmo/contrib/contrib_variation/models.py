@@ -96,7 +96,12 @@ def load_manager():
     qs = modules.product.Product.objects.get_query_set()
 
     class ProductQuerySet(qs.__class__):
-
+        
+        def _get_prefetched_values(self, products):
+            prefetched = super(ProductQuerySet, self) \
+                ._get_prefetched_values(products)
+            return prefetched.filter(variates=False)
+        
         def variants(self, exclude=False, only=False):
             if exclude:
                 return self.filter(
@@ -176,7 +181,7 @@ def load_variants():
             verbose_name = _("variant")
             verbose_name_plural = _("variants")
 
-        name = '%sVariant' % subtype.__name__
+        name = '{0}Variant'.format(subtype.__name__)
         attr_dict = {
             'product': models.ForeignKey(
                 subtype,
@@ -641,7 +646,7 @@ class VariationManager(models.Manager):
                 # Get variations for this grouped attribute / value combination
                 qargs = {
                     'values__attribute': group,
-                    'values__%s' % group.value_field: value.get_value(),
+                    'values__{0}'.format(group.value_field): value.get_value(),
                 }
                 variations = modules.variation.Variation.objects.filter(
                     product=product).filter(**qargs)

@@ -30,7 +30,6 @@
 
 from sellmo import modules
 from sellmo.contrib.contrib_attribute.forms import ProductAttributeFormFactory
-from sellmo.contrib.contrib_attribute.models import ValueObject
 
 from django import forms
 from django.forms import ValidationError
@@ -59,14 +58,8 @@ class ProductAttributeMixin(object):
 
 
 class AttributeAdmin(admin.ModelAdmin):
-
+    
     list_display = ['name', 'type', 'required', 'key']
-
-    def formfield_for_manytomany(self, db_field, request, **kwargs):
-        if db_field.name == 'object_choices':
-            kwargs['queryset'] = ValueObject.objects.polymorphic().all()
-        return super(AttributeAdmin, self).formfield_for_manytomany(
-            db_field, request, **kwargs)
 
 
 class ValueAdmin(admin.ModelAdmin):

@@ -48,10 +48,10 @@ def generate_slug(product, values=None, unique=False, full=False, short=False):
                 unicode(value.value)) for value in values]))
 
     for attributes in sequences:
-        slug = u'%(prefix)s-%(attributes)s' % {
-            'attributes': attributes,
-            'prefix': product.slug
-        }
+        slug = u'{prefix}-{attributes}'.format(
+            attributes=attributes,
+            prefix=product.slug
+        )
 
         slug = slugify(slug)
 

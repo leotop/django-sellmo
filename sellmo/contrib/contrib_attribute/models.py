@@ -43,12 +43,21 @@ from sellmo.contrib.contrib_attribute.helpers import AttributeHelper
 
 
 class ValueObject(PolymorphicModel):
-
     class Meta:
-        app_label = 'attribute'
-        verbose_name = _("value object")
-        verbose_name_plural = _("value objects")
+        abstract = True
 
+
+@load(action='finalize_attribute_ValueObject')
+def finalize_model():
+    
+    class ValueObject(modules.attribute.ValueObject):
+        class Meta(modules.attribute.ValueObject.Meta):
+            app_label = 'attribute'
+            verbose_name = _("value object")
+            verbose_name_plural = _("value objects")
+
+    modules.attribute.ValueObject = ValueObject
+    
 
 @load(before='finalize_product_Product')
 def load_model():
@@ -96,12 +105,27 @@ def load_model():
 
     modules.attribute.Value = Value
 
+@load(after='finalize_attribute_ValueObject')
+def load_model():
+    class Value(modules.attribute.Value):
+        value_object = models.ForeignKey(
+            modules.attribute.ValueObject,
+            null=True,
+            blank=True,
+            db_index=True,
+            on_delete=models.PROTECT,
+            related_name='values'
+        )
+        
+        class Meta(modules.attribute.Value.Meta):
+            abstract = True
+    
+    modules.attribute.Value = Value
 
 @load(action='finalize_attribute_Value')
 def finalize_model():
 
     class Value(modules.attribute.Value):
-
         class Meta(modules.attribute.Value.Meta):
             app_label = 'attribute'
             ordering = ['attribute', 'value_string',
@@ -160,15 +184,6 @@ class Value(models.Model):
         default='',
     )
 
-    value_object = models.ForeignKey(
-        ValueObject,
-        null=True,
-        blank=True,
-        db_index=True,
-        on_delete=models.PROTECT,
-        related_name='values'
-    )
-
     def get_value(self):
         field = self.attribute.value_field
         value = getattr(self, field)
@@ -201,13 +216,6 @@ class Value(models.Model):
             return not value is None and len(value) > 0
         return not value is None
 
-    @property
-    def template(self):
-        type = self.attribute.type
-        if self.attribute.type == Attribute.TYPE_OBJECT:
-            type = self.value.__class__.__name__
-        return 'attribute/%s.html' % type.lower()
-
     def save_value(self):
         # Re-assign product
         self.product = self.product
@@ -225,17 +233,24 @@ class Value(models.Model):
 
     class Meta:
         abstract = True
-
+    
 
 @load(action='finalize_attribute_Attribute')
 def finalize_model():
 
-    class Attribute(modules.attribute.Attribute):
-        object_choices = models.ManyToManyField(
-            ValueObject,
-            blank=True
-        )
+    types = list(modules.attribute.Attribute.TYPES)
+    for key, typ in modules.attribute.attribute_types.iteritems():
+        types.append((key, typ['verbose_name']))
 
+    class Attribute(modules.attribute.Attribute):
+        
+        type = AttributeTypeField(
+            max_length=255,
+            db_index=True,
+            choices=types,
+            default=modules.attribute.Attribute.TYPE_STRING
+        )
+        
         class Meta(modules.attribute.Attribute.Meta):
             app_label = 'attribute'
             ordering = ['sort_order', 'name']
@@ -270,13 +285,11 @@ class Attribute(models.Model):
     TYPE_STRING = 'string'
     TYPE_INT = 'int'
     TYPE_FLOAT = 'float'
-    TYPE_OBJECT = 'object'
 
     TYPES = (
         (TYPE_STRING, _("string")),
         (TYPE_INT, _("integer")),
         (TYPE_FLOAT, _("float")),
-        (TYPE_OBJECT, _("object")),
     )
 
     name = models.CharField(
@@ -287,13 +300,6 @@ class Attribute(models.Model):
         max_length=50,
         db_index=True,
         blank=True
-    )
-
-    type = AttributeTypeField(
-        max_length=50,
-        db_index=True,
-        choices=TYPES,
-        default=TYPE_STRING
     )
 
     required = models.BooleanField(
@@ -323,19 +329,23 @@ class Attribute(models.Model):
     def parse(self, string):
         if self.type == self.TYPE_STRING:
             return string
-        elif self.type in (self.TYPE_INT, self.TYPE_OBJECT):
+        elif self.type == self.TYPE_INT:
             try:
                 return int(string)
             except ValueError:
                 pass
         elif self.type == self.TYPE_FLOAT:
             return float(string)
-        raise ValueError(
-            "Could not parse '%s' for attribute '%s'." % (string, self))
+        else:
+            return self._get_adapter().parse(string) 
+        raise ValueError("Could not parse '{0}' for "
+                         "attribute '{1}'.".format(string, self))
 
     @property
     def value_field(self):
-        return 'value_%s' % (self.type,)
+        if self.type in self.TYPES:
+            return 'value_{0}'.format(self.type)
+        return 'value_object'
 
     @property
     def help_text(self):
@@ -348,13 +358,17 @@ class Attribute(models.Model):
     @property
     def validators(self):
         return []
+    
+    def _get_adapter(self):
+        if self.type in modules.attribute.attribute_types:
+            return modules.attribute.attribute_types[self.type]['adapter']
+        else:
+            raise Exception("Attribute '{0}' with type '{1}' "
+                            "has no adapter".format(self.key, self.type))
 
-    __object_choices = None
-
-    def get_object_choices(self):
-        if self.__object_choices is None:
-            self.__object_choices = self.object_choices.all().polymorphic()
-        return self.__object_choices
+    @property
+    def choices(self):
+        return self._get_adapter().get_choices()
 
     def save(self, *args, **kwargs):
         if not self.key:
@@ -396,7 +410,8 @@ def load_manager():
                     self._prefetched_values = self \
                         ._get_prefetched_values(out)
                 if self._prefetched_value_objects is None:
-                    self._prefetched_value_objects = ValueObject.objects \
+                    self._prefetched_value_objects = modules.attribute \
+                        .ValueObject.objects \
                         .polymorphic() \
                         .filter(values__in=self._prefetched_values) \
                         .distinct()
@@ -413,14 +428,16 @@ def load_manager():
                     if value.product.pk not in product_to_values:
                         product_to_values[value.product.pk] = []
                     product_to_values[value.product.pk].append(value)
-                    if value.value_object_id is not None and value.value_object_id in value_objects:
+                    if (value.value_object_id is not None and
+                            value.value_object_id in value_objects):
                         value.value_object = value_objects[value.value_object_id]
                     
                 for obj in out:
+                    # Populate with mapped values and global attributes
                     obj.attributes.populate(
                         product_to_values.get(obj.pk, []),
                         self._prefetched_attributes)
-                    
+                
             for obj in out:
                 yield obj
         
@@ -432,7 +449,7 @@ def load_manager():
             
         def _get_prefetched_values(self, products):
             prefetched = modules.attribute \
-                .Value.objects.filter(pk__in=[obj.pk for obj in products]) \
+                .Value.objects.filter(product__in=[obj.pk for obj in products]) \
                 .select_related('product__id', 'attribute')
             if len(self._prefetch_attributes) > 0:
                 prefetched = prefetched.filter(

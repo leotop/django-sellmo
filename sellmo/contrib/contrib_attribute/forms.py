@@ -78,8 +78,7 @@ class ProductAttributeFormFactory(FormFactory):
     FIELD_CLASSES = {
         modules.attribute.Attribute.TYPE_STRING: forms.CharField,
         modules.attribute.Attribute.TYPE_INT: forms.IntegerField,
-        modules.attribute.Attribute.TYPE_FLOAT: forms.FloatField,
-        modules.attribute.Attribute.TYPE_OBJECT: forms.ModelChoiceField,
+        modules.attribute.Attribute.TYPE_FLOAT: forms.FloatField
     }
 
     def __init__(self, form=forms.ModelForm, mixin=ProductAttributeFormMixin, 
@@ -92,7 +91,10 @@ class ProductAttributeFormFactory(FormFactory):
         return modules.attribute.Attribute.objects.all()
 
     def get_attribute_field(self, attribute):
-        field = self.FIELD_CLASSES[attribute.type]
+        if attribute.type in self.FIELD_CLASSES:
+            field = self.FIELD_CLASSES[attribute.type]
+        else:
+            field = forms.ModelChoiceField
         field = field(
             *self.get_attribute_field_args(attribute, field),
             **self.get_attribute_field_kwargs(attribute, field)
@@ -113,7 +115,7 @@ class ProductAttributeFormFactory(FormFactory):
     def get_attribute_field_args(self, attribute, field):
         args = []
         if field is forms.ModelChoiceField:
-            args.append(attribute.get_object_choices())
+            args.append(attribute.choices)
 
         return args
 

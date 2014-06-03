@@ -43,7 +43,6 @@ from django.contrib.admin.widgets import ForeignKeyRawIdWidget
 from django.contrib.contenttypes.models import ContentType
 from django.core.validators import EMPTY_VALUES
 
-from sellmo.contrib.contrib_attribute.models import ValueObject
 from sellmo.contrib.contrib_attribute.forms import ProductAttributeFormFactory
 from sellmo.contrib.contrib_variation.utils import generate_slug
 
@@ -51,7 +50,7 @@ from sellmo.contrib.contrib_variation.utils import generate_slug
 class SaveFieldMixin(object):
 
     def get_invalidated_values(self, product, attribute, values):
-        field = '%s__in' % (attribute.value_field, )
+        field = '{0}__in'.format(attribute.value_field)
         kwargs = {
             field: values
         }
@@ -62,7 +61,7 @@ class SaveFieldMixin(object):
             attribute=attribute, product=product, variates=True).filter(q)
 
     def get_existing_values(self, product, attribute, values):
-        field = '%s__in' % (attribute.value_field, )
+        field = '{0}__in'.format(attribute.value_field)
         kwargs = {
             field: values
         }
@@ -133,7 +132,7 @@ class SeperatedFloatField(SeperatedInputField, SaveFieldMixin):
 class ObjectField(forms.ModelMultipleChoiceField, SaveFieldMixin):
 
     def from_values(self, values):
-        return ValueObject.objects.filter(
+        return modules.attribute.ValueObject.objects.filter(
             pk__in=[value.get_value().pk for value in values])
 
 
@@ -143,16 +142,27 @@ class ProductVariationFormFactory(ProductAttributeFormFactory):
         modules.attribute.Attribute.TYPE_STRING: SeperatedCharField,
         modules.attribute.Attribute.TYPE_INT: SeperatedIntegerField,
         modules.attribute.Attribute.TYPE_FLOAT: SeperatedFloatField,
-        modules.attribute.Attribute.TYPE_OBJECT: ObjectField,
     }
 
     def get_attributes(self):
         return modules.attribute.Attribute.objects.filter(variates=True)
+        
+    def get_attribute_field(self, attribute):
+        if attribute.type in self.FIELD_CLASSES:
+            field = self.FIELD_CLASSES[attribute.type]
+        else:
+            field = ObjectField
+        field = field(
+            *self.get_attribute_field_args(attribute, field),
+            **self.get_attribute_field_kwargs(attribute, field)
+        )
+    
+        return field
 
     def get_attribute_field_args(self, attribute, field):
         args = []
         if field is ObjectField:
-            args.append(attribute.get_object_choices())
+            args.append(attribute.choices)
 
         return args
 

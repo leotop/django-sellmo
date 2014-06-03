@@ -196,9 +196,7 @@ def get_add_to_cart_formset(formset, cls, product, variations=None,
         formset = AddToCartFormSet(initial=initial)
     else:
         formset = AddToCartFormSet(data)
-
-    key = 'add_to_cart_variation_formset_%s' % variations_key
-    formset.set_redirect_key(key)
+    
     return {
         'formset': formset,
     }
