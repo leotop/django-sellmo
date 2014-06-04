@@ -34,7 +34,7 @@ from sellmo.api.configuration import define_setting
 from sellmo.contrib.contrib_attribute.models import (Attribute,
                                                     Value,
                                                     ValueObject)
-from sellmo.contrib.contrib_attribute.query import ProductQ
+from sellmo.contrib.contrib_attribute.query import product_q
 
 from django.http import Http404
 from django.utils.translation import ugettext_lazy as _
@@ -66,34 +66,69 @@ class AttributeModule(Module):
             out = chain.execute(attributes=attributes, **kwargs)
             attributes = out.get('attributes', attributes)
         return attributes
+    
+    @link(namespace=modules.product.namespace)
+    def list(self, request, products, **kwargs):
+        keys = modules.attribute.Attribute.objects.all() \
+                .values_list('key', flat=True)
+        
+        for key, value in request.GET.items():
+            
+            if key.startswith('attr__'):
+                # Remove attr__ prefix
+                key = key[len('attr__'):]
+            elif key.split('__')[0] not in keys:
+                continue
+            
+            parts = key.split('__')
+            key = parts[0]
+            operator = None
+            if len(parts) == 2:
+                # Operator found
+                operator = parts[1]
+            elif len(parts) > 2:
+                # Invalid length, ignore
+                continue
+            
+            products = self.filter(
+                request=request, products=products, key=key, 
+                value=value, operator=operator)
+    
+        return {
+            'products': products
+        }
 
     @chainable()
-    def filter(self, chain, request, products, attr, value, attribute=None,
+    def filter(self, chain, request, products, key, value, attribute=None,
                operator=None, **kwargs):
-        if not attribute:
+        
+        if attribute is None:
             try:
-                attribute = modules.attribute.Attribute.objects.get(key=attr)
+                attribute = modules.attribute.Attribute.objects.get(key=key)
             except modules.attribute.Attribute.DoesNotExist:
                 return products
+        
         try:
             value = attribute.parse(value)
         except ValueError:
-            pass
+            return products
+        
+        if operator is None:
+            q = product_q(attribute, value)
         else:
-            if operator is None:
-                q = ProductQ(attribute, value)
-            else:
-                qargs = {
-                    operator: value
-                }
-                q = ProductQ(attribute, **qargs)
-            return products.filter(q)
-
+            qargs = {
+                operator: value
+            }
+            q = product_q(attribute, **qargs)
+        
+        products = products.filter(q) 
+         
         if chain:
             out = chain.execute(
-                request=request, products=products, attr=attr, value=value, 
+                request=request, products=products, key=key, value=value, 
                 attribute=attribute, operator=operator, **kwargs)
             products = out.get('products', products)
+        
         return products
         
     @classmethod

@@ -98,9 +98,6 @@ class StoreModule(sellmo.Module):
 
         if not qty is None:
             purchase.qty = qty
-            
-        if purchase.qty > self.qty_limit:
-            raise PurchaseInvalid("Qty over limit")
 
         purchase.calculate(save=False)
 
@@ -110,4 +107,29 @@ class StoreModule(sellmo.Module):
                 qty=purchase.qty, purchase=purchase, **kwargs)
             purchase = out.get('purchase', purchase)
 
+        self.validate_purchase(request=request, purchase=purchase)
         return purchase
+        
+    @chainable()
+    def validate_purchase(self, chain, request, purchase, **kwargs):
+        
+        if purchase.qty > self.qty_limit:
+            raise PurchaseInvalid("Qty over limit")
+            
+        if chain:
+            chain.execute(request=request, purchase=purchase, **kwargs)
+    
+    def can_purchase(self, request, product=None, qty=None, 
+                     purchase=None, **kwargs):
+        try:    
+            if purchase is None:
+                self.make_purchase(request=request, product=product, 
+                                   qty=qty, **kwargs)
+            else:
+                self.validate_purchase(request=request, purchase=purchase)
+        except PurchaseInvalid:
+            return False
+            
+        return True
+        
+            

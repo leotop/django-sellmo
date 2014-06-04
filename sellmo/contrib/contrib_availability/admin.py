@@ -28,43 +28,16 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from functools import wraps
-
 from sellmo import modules
 
-from django.db import models
-from django.db.models import Q
-from django.utils import six
+from django.contrib import admin
+from django.utils.translation import ugettext_lazy as _
 
 
-def value_q(attribute, *args, **kwargs):
-    if not isinstance(attribute, modules.attribute.Attribute):
-        raise ValueError("attribute must be an instance of Attribute")
-    qargs = dict()
-    qargs['attribute'] = attribute
+class SupplierAdmin(admin.ModelAdmin):
 
-    for operator, value in kwargs.iteritems():
-        # Apply operator
-        lookup = '{0}__{1}'.format(attribute.value_field, operator)
-        qargs[lookup] = value
-        
-    for value in args:
-        lookup = attribute.value_field
-        qargs[lookup] = value
+    list_display = ['name', 'allow_backorders']
+    fields = ['name', 'allow_backorders']
     
-    return Q(**qargs)
 
-
-def product_q(attribute, *args, **kwargs):
-    if not isinstance(attribute, modules.attribute.Attribute):
-        raise ValueError("attribute must be an instance of Attribute")
-         
-    values = kwargs.pop('values', modules.attribute.Value.objects.all())
-    through = kwargs.pop('through', 'values')
-    
-    qargs = {
-        '{0}__in'.format(through): values.filter(
-            value_q(attribute, *args, **kwargs))
-    }
-    
-    return Q(**qargs)
+admin.site.register(modules.availability.Supplier, SupplierAdmin)

@@ -37,7 +37,7 @@ from sellmo.contrib.contrib_variation.models import (Variant,
                                                      Variation,
                                                      VariationsState,
                                                      VariationPurchase)
-from sellmo.contrib.contrib_attribute.query import ProductQ
+from sellmo.contrib.contrib_attribute.query import product_q
 
 from django.http import Http404
 from django.utils.translation import ugettext_lazy as _

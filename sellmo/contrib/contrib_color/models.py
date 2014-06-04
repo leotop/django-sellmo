@@ -37,7 +37,7 @@ from django.contrib.contenttypes.models import ContentType
 
 from sellmo import modules
 from sellmo.api.decorators import load
-from sellmo.contrib.contrib_attribute.query import ValueQ
+from sellmo.contrib.contrib_attribute.query import value_q
 from sellmo.contrib.contrib_attribute.adapters import AttributeTypeAdapter
 from sellmo.magic import ModelMixin
 
@@ -50,6 +50,19 @@ class ColorAdapter(AttributeTypeAdapter):
                 ContentType.objects.get_for_model(modules.color.Color),
                 ContentType.objects.get_for_model(modules.color.MultiColor)
             ]).polymorphic()
+            
+    def parse(self, string):
+        try:
+            return modules.color.Color.objects.get(name__iexact=string)
+        except modules.color.Color.DoesNotExist:
+            pass
+        
+        try:
+            return modules.color.MultiColor.objects.get(name__iexact=string)
+        except modules.color.MultiColor.DoesNotExist:
+            pass
+            
+        raise ValueError()
     
 
 class Color(models.Model):
@@ -213,7 +226,7 @@ class ColorMappingManager(models.Manager):
             else:
                 exists = modules.attribute.Value.objects.for_product(product)
 
-            exists = exists.filter(ValueQ(value.attribute, value.value))
+            exists = exists.filter(value_q(value.attribute, value.value))
             if ignore_value:
                 exists = exists.exclude(pk=value.pk)
             exists = exists.count() > 0

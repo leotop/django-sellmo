@@ -43,7 +43,7 @@ from sellmo.contrib.contrib_variation.signals import (variations_invalidating,
 from sellmo.contrib.contrib_variation.helpers import (AttributeHelper,
                                                       VariantAttributeHelper,
                                                       VariationAttributeHelper)
-from sellmo.contrib.contrib_attribute.query import ProductQ
+from sellmo.contrib.contrib_attribute.query import product_q
 
 from django.db import models, transaction, IntegrityError
 from django.db.models import Q, F, Count
@@ -322,7 +322,7 @@ def load_model():
             super(Attribute, self).save(*args, **kwargs)
             if self.variates or old and old.variates:
                 products = modules.product.Product.objects.filter(
-                        ProductQ(attribute=self,
+                        product_q(attribute=self,
                                  product_field='base_product'))
                 modules.variation.Variation.objects.invalidate(
                     products=products)
@@ -402,7 +402,7 @@ def load_model():
             null=True,
             blank=True,
             editable=False,
-            related_name='+'
+            related_name='variant_values'
         )
 
         variates = models.BooleanField(
@@ -481,10 +481,6 @@ class VariationManager(models.Manager):
     def build(self, product):
 
         product = product.downcast()
-
-        # Delete any existing variations (always)
-        existing = self.filter(product=product)
-        existing.delete()
 
         # Get all attributes related to this product
         attributes = modules.attribute.Attribute.objects.which_variate(product)
@@ -580,6 +576,7 @@ class VariationManager(models.Manager):
         
         # Create variations
         sort_order = 0
+        created = []
         while combinations:
             combination = combinations.pop(0)
             values = [value for value in combination if not value is None]
@@ -597,14 +594,14 @@ class VariationManager(models.Manager):
             best = Q()
             for value in values:
                 if getattr(value.product.downcast(), '_is_variant', False):
-                    exact &= ProductQ(value.attribute, value.get_value())
+                    exact &= product_q(value.attribute, value.get_value())
                     if value.attribute != group:
-                        best &= ProductQ(value.attribute, value.get_value())
+                        best &= product_q(value.attribute, value.get_value())
                     else:
-                        best &= ~ProductQ(value.attribute)
+                        best &= ~product_q(value.attribute)
                 else:
-                    exact &= ~ProductQ(value.attribute)
-                    best &= ~ProductQ(value.attribute)
+                    exact &= ~product_q(value.attribute)
+                    best &= ~product_q(value.attribute)
 
             # Try to find exact match
             for q in (exact, best):
@@ -622,19 +619,39 @@ class VariationManager(models.Manager):
                 value for value in values if value.variates
             ]
         
-            variation = modules.variation.Variation.objects.create(
-                id=generate_slug(
-                    product=variant, values=values, full=True, 
-                    unique=False),
-                description=modules.variation.generate_variation_description(
-                    prefix=unicode(variant), values=non_explicit_values),
-                product=product,
-                variant=variant,
-                sort_order=sort_order
-            )
-
+            variation_key = generate_slug(product=variant, values=values, 
+                                          full=True, unique=False)
+            
+            variation_description = modules.variation \
+                .generate_variation_description(prefix=unicode(variant), 
+                                                values=non_explicit_values)
+            
+            try:
+                # See if variation already exists
+                variation = modules.variation.Variation.objects.get(
+                    id=variation_key,
+                    product=product)
+            except modules.variation.Variation.DoesNotExist:
+                # Create
+                variation = modules.variation.Variation.objects.create(
+                    id=variation_key,
+                    description=variation_description,
+                    product=product,
+                    variant=variant,
+                    sort_order=sort_order
+                )
+            else:
+                # Update
+                variation.variant = variant
+                variation.sort_order = sort_order
+                variation.description=variation_description
+                variation.save()
+            
             variation.values.add(*values)
             sort_order += 1
+            
+            # Make sure this variation does not get deleted
+            created.append(variation_key)
 
         # Handle grouping
         if group:
@@ -652,12 +669,12 @@ class VariationManager(models.Manager):
                     product=product).filter(**qargs)
 
                 # Get variant
-                qargs = [ProductQ(group, value.get_value())]
+                qargs = [product_q(group, value.get_value())]
                 if variations.count() > 1:
                     # Get single variant common across all variations
                     for attribute in attributes:
                         if attribute != group:
-                            q = ~ProductQ(attribute)
+                            q = ~product_q(attribute)
                             qargs.append(q)
                 try:
                     variant = product.variants.get(*qargs)
@@ -670,6 +687,11 @@ class VariationManager(models.Manager):
                     logger.info(product.variants.filter(*qargs))
 
                 variations.update(group_variant=variant)
+
+        # Delete any stale variations
+        stale = self.filter(product=product) \
+                    .exclude(pk__in=created)
+        stale.delete()
 
         # Finally update product
         product.variations_invalidated = False

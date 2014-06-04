@@ -33,7 +33,7 @@ from django.http import Http404
 from sellmo import modules
 from sellmo.api.decorators import link
 from sellmo.api.pricing import Price
-from sellmo.contrib.contrib_attribute.query import ProductQ
+from sellmo.contrib.contrib_attribute.query import product_q
 
 from django import forms
 from django.forms.formsets import formset_factory
@@ -41,11 +41,11 @@ from django.contrib.contenttypes.models import ContentType
 
 
 @link(namespace=modules.attribute.namespace, name='filter', capture=True)
-def capture_filter(request, products, attr, value, attribute=None,
+def capture_filter(request, products, key, value, attribute=None,
                    operator=None, **kwargs):
     if not attribute:
         try:
-            attribute = modules.attribute.Attribute.objects.get(key=attr)
+            attribute = modules.attribute.Attribute.objects.get(key=key)
         except modules.attribute.Attribute.DoesNotExist:
             return
 
@@ -57,24 +57,24 @@ def capture_filter(request, products, attr, value, attribute=None,
         yield override_filter
 
 
-def override_filter(module, chain, request, products, attr, value, attribute,
+def override_filter(module, chain, request, products, key, value, attribute,
                     operator=None, **kwargs):
     try:
         value = attribute.parse(value)
     except ValueError:
-        pass
+        return products
+        
+    if operator is None:
+        q = product_q(attribute, value) | product_q(
+            attribute, value, through='variant_values')
     else:
-        if operator is None:
-            q = ProductQ(attribute, value) | ProductQ(
-                attribute, value, product_field='base_product')
-        else:
-            qargs = {
-                operator: value
-            }
-            q = (ProductQ(attribute, **qargs) |
-                 ProductQ(attribute, product_field='base_product' ** qargs))
-        return products.filter(q)
-    return products
+        qargs = {
+            operator: value
+        }
+        q = (product_q(attribute, **qargs) |
+             product_q(attribute, through='variant_values', **qargs))
+    
+    return products.filter(q)
 
 
 @link(namespace=modules.product.namespace)
@@ -144,8 +144,8 @@ def get_purchase_args(form, product, args, **kwargs):
 @link(namespace=modules.cart.namespace)
 def get_add_to_cart_formset(formset, cls, product, variations=None,
                             initial=None, data=None, **kwargs):
-
-    if not variations:
+    
+    if variations is None:
         variations = getattr(product, 'variations', None)
 
     # Before proceeding to custom form creation, check if we're dealing with a
@@ -159,8 +159,7 @@ def get_add_to_cart_formset(formset, cls, product, variations=None,
     }
 
     # Add variation field as either a choice or as a hidden integer
-    if (not modules.variation.batch_buy_enabled 
-            and variations and len(variations) > 1):
+    if not modules.variation.batch_buy_enabled:
         dict['variation'] = forms.ChoiceField(
             choices=[(el.id,
                       modules.variation.get_variation_choice(variation=el))

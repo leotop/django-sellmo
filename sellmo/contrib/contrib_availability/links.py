@@ -28,43 +28,18 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from functools import wraps
-
 from sellmo import modules
-
-from django.db import models
-from django.db.models import Q
-from django.utils import six
+from sellmo.api.decorators import link
+from sellmo.api.store.exceptions import PurchaseInvalid
 
 
-def value_q(attribute, *args, **kwargs):
-    if not isinstance(attribute, modules.attribute.Attribute):
-        raise ValueError("attribute must be an instance of Attribute")
-    qargs = dict()
-    qargs['attribute'] = attribute
-
-    for operator, value in kwargs.iteritems():
-        # Apply operator
-        lookup = '{0}__{1}'.format(attribute.value_field, operator)
-        qargs[lookup] = value
-        
-    for value in args:
-        lookup = attribute.value_field
-        qargs[lookup] = value
+@link(namespace='store')
+def validate_purchase(purchase, **kwargs):
+    # Thread product (or variation) as an AvailabilityBase instance
+    target = purchase.product
+    if hasattr(purchase, 'variation_key'):
+        target = modules.variation.Variation \
+                        .objects.get(pk=purchase.variation_key)
     
-    return Q(**qargs)
-
-
-def product_q(attribute, *args, **kwargs):
-    if not isinstance(attribute, modules.attribute.Attribute):
-        raise ValueError("attribute must be an instance of Attribute")
-         
-    values = kwargs.pop('values', modules.attribute.Value.objects.all())
-    through = kwargs.pop('through', 'values')
-    
-    qargs = {
-        '{0}__in'.format(through): values.filter(
-            value_q(attribute, *args, **kwargs))
-    }
-    
-    return Q(**qargs)
+    if target.stock < purchase.qty and not purchase.product.can_backorder():
+        raise PurchaseInvalid("Product is out of stock")
