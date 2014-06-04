@@ -66,21 +66,12 @@ class CartModule(sellmo.Module):
 
     def __init__(self):
         pre_delete.connect(self.on_delete_cart, sender=self.Cart)
-        pre_delete.connect(self.on_delete_product, sender=modules.product.Product)
 
     def on_delete_cart(self, sender, instance, **kwargs):
+        # Purchases won't cascade on cart deletion
         for purchase in instance.purchases.all():
             if purchase.is_stale(ignore_cart=True):
                 purchase.delete()
-    
-    def on_delete_product(self, sender, instance, **kwargs):
-        for purchase in modules.store.Purchase.objects.filter(
-                product=instance):
-            if purchase.is_stale(ignore_cart=True):
-                cart = purchase.cart
-                purchase.delete()
-                if cart:
-                    cart.calculate()
 
     @context_processor()
     def cart_context(self, chain, request, context, **kwargs):
@@ -195,13 +186,49 @@ class CartModule(sellmo.Module):
         return args
 
     @chainable()
-    def get_cart(self, chain, request=None, cart=None, **kwargs):
+    def get_cart(self, chain, request=None, cart=None, messages=None, 
+                 **kwargs):
+        
+        messages_given = True
+        if messages is None:
+            messages_given = False
+            messages = FlashMessages()
+                 
         if cart is None:
             cart = self.Cart.objects.from_request(request)
+        
+        # Perform a sanity check on cart (and fix if needed)
+        removals = []
+        for purchase in cart:
+            
+            # Make sure no products have been deleted
+            if purchase.product is None:
+                removals.append(purchase)
+            
+            # Make sure this purchase is still valid
+            try:
+                modules.store.validate_purchase(request=request,
+                                                purchase=purchase)
+            except PurchaseInvalid as error:
+                messages.error(request, error)
+                removals.append(purchase)
+            
+        for purchase in removals:
+            # ! Pass along the cart param to prevent recursion !
+            self.remove_purchase(request=request, purchase=purchase, cart=cart)
+        
+        if removals:
+            messages.warning(request, "This cart has changed")
+        
         if chain:
-            out = chain.execute(cart=cart, request=request, **kwargs)
+            out = chain.execute(cart=cart, request=request, messages=messages,
+                                removals=removals, **kwargs)
             if out.has_key('cart'):
                 cart = out['cart']
+        
+        if not messages_given:
+            messages.transmit()
+        
         return cart
 
     @view(r'^$')
@@ -213,7 +240,8 @@ class CartModule(sellmo.Module):
         context['cart'] = cart
 
         if chain:
-            return chain.execute(request=request, cart=cart, context=context, **kwargs)
+            return chain.execute(request=request, cart=cart, context=context,
+                                 **kwargs)
         else:
             raise ViewNotImplemented
     
@@ -244,7 +272,7 @@ class CartModule(sellmo.Module):
                 purchase=purchase, data=request.POST)
 
         # Get the cart
-        cart = self.get_cart(request=request)
+        cart = self.get_cart(request=request, messages=messages)
         
         redirection = redirect(next)
         
@@ -334,7 +362,7 @@ class CartModule(sellmo.Module):
                 redirection = redirect(invalid)
 
         # Get the cart
-        cart = self.get_cart(request=request)
+        cart = self.get_cart(request=request, messages=messages)
 
         if purchases:
             # Add purchases to cart
