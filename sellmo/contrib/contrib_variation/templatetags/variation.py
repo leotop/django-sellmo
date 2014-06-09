@@ -42,19 +42,23 @@ register = template.Library()
 class VariationsTag(Tag):
     name = 'variations'
     options = Options(
-        Flag('grouped', default=False, true_values=['grouped']),
         MultiKeywordArgument('kwargs', required=False),
-        'as',
-        Argument(
-            'varname', default='variations', required=False, resolve=False),
         blocks=[('endvariations', 'nodelist')],
     )
 
-    def render_tag(self, context, grouped, kwargs, varname, nodelist):
+    def render_tag(self, context, kwargs, nodelist):
+        # First try to get grouped variations
+        grouped = True
         variations = modules.variation.get_variations(
             grouped=grouped, **kwargs)
+        if variations is None:
+            grouped = False
+            variations = modules.variation.get_variations(
+                grouped=grouped, **kwargs)
+        
         context.push()
-        context[varname] = variations
+        context['variations'] = variations
+        context['grouped'] = grouped
         output = nodelist.render(context)
         context.pop()
         return output

@@ -34,11 +34,19 @@ from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 
 
+inlines = []
+for model, cls in modules.settings._inline_settings:
+    class InlineModelAdmin(cls):
+        model = model
+    inlines.append(InlineModelAdmin)
+
 class SettingsAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {
             'fields': ['site'],
         }),
     ) + modules.settings.fieldsets
+    
+    inlines = inlines
 
 admin.site.register(modules.settings.SiteSettings, SettingsAdmin)

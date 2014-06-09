@@ -346,7 +346,7 @@ class Order(trackable('sellmo_order')):
 
     def calculate(self, subtotal=None, total=None, save=True):
         self.ensure_state(ORDER_NEW)
-
+        
         if total is None:
             if subtotal is None:
                 subtotal = Price()
@@ -368,7 +368,7 @@ class Order(trackable('sellmo_order')):
         
         self.subtotal = subtotal
         self.total = total
-
+        
         # Update calculcated timestamp and save
         self.calculated = datetime.datetime.now()
         if save:
@@ -391,9 +391,10 @@ class Order(trackable('sellmo_order')):
             self.ensure_state(ORDER_NEW)
         else:
             self.state = ORDER_NEW
-
+        
         self.number = ''
-        self.subtotal = Price()
+        # ONLY Clear total
+        # Clearing subtotal is not needed
         self.total = Price()
         self.calculated = None
         

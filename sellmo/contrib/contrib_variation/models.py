@@ -323,7 +323,7 @@ def load_model():
             if self.variates or old and old.variates:
                 products = modules.product.Product.objects.filter(
                         product_q(attribute=self,
-                                 product_field='base_product'))
+                                 through='variant_values'))
                 modules.variation.Variation.objects.invalidate(
                     products=products)
 

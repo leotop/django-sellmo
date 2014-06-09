@@ -38,8 +38,11 @@ def validate_purchase(purchase, **kwargs):
     # Thread product (or variation) as an AvailabilityBase instance
     target = purchase.product
     if hasattr(purchase, 'variation_key'):
-        target = modules.variation.Variation \
-                        .objects.get(pk=purchase.variation_key)
+        try:
+            target = modules.variation.Variation \
+                            .objects.get(pk=purchase.variation_key)
+        except modules.variation.Variation.DoesNotExist:
+            raise PurchaseInvalid("Variation is unavailable") 
     
     if target.stock < purchase.qty and not purchase.product.can_backorder():
         raise PurchaseInvalid("Product is out of stock")

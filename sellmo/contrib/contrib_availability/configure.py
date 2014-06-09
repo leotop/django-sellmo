@@ -28,10 +28,14 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
+from datetime import time
+
 from django.db import models
+from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 
 from sellmo import modules
+from sellmo.contrib.contrib_availability.models import StoreAvailability
 
 
 group = _("Availability")
@@ -41,3 +45,6 @@ modules.settings.add_setting('allow_backorders', models.BooleanField(
     default=False,
     verbose_name=_("allow backorders"),
 ), group)
+
+modules.settings.add_inline_setting(
+    'availability', StoreAvailability, admin.TabularInline)

@@ -36,6 +36,29 @@ from django.contrib.sites.models import Site
 from django.utils.translation import ugettext_lazy as _
 
 
+@load(after='finalize_settings_SiteSettings')
+def load_inline_settings():
+    inlines = modules.settings._inline_settings
+    modules.settings._inline_settings = []
+    for key, model, admin in inlines:
+        
+        class Meta(model.Meta):
+            app_label = 'settings'
+        
+        name = model.__name__
+        attr_dict = {
+            'Meta': Meta,
+            '__module__': model.__module__,
+            'settings': models.ForeignKey(
+                modules.settings.SiteSettings,
+                related_name=key)
+        }
+        
+        modules.settings._inline_settings.append(
+            (type(name, (model,), attr_dict), admin))
+
+
+
 @load(action='finalize_settings_SiteSettings')
 def finalize_model():
     class SiteSettings(modules.settings.SiteSettings):

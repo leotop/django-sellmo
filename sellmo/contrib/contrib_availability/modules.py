@@ -29,6 +29,7 @@
 
 
 from sellmo import modules, Module
+from sellmo.api.configuration import define_setting
 from sellmo.api.decorators import view, chainable
 from sellmo.api.exceptions import ViewNotImplemented
 from sellmo.contrib.contrib_availability.models import (BackorderBase,
@@ -41,5 +42,9 @@ class AvailabilityModule(Module):
     BackorderBase = BackorderBase
     AvailabilityBase = AvailabilityBase
     Supplier = Supplier
+    
+    time_defined_in = define_setting(
+        'TIME_UNIT',
+        default='days') # days or hours
     
     

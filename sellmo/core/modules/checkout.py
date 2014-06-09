@@ -383,8 +383,11 @@ class CheckoutModule(sellmo.Module):
             # Resolve shipping method
             method = form.cleaned_data['method']
             method = methods[method]
+            # We need to invalidate the order first, this clears any choosen
+            # payment method. Payment method is dependant on shipping method.
             order.invalidate()
             method.ship(order)
+            # Re-calculate, use existing subtotal
             order.calculate(subtotal=order.subtotal)
             processed = True
 
@@ -494,8 +497,8 @@ class CheckoutModule(sellmo.Module):
         if order.pk:
             if order.may_change:
                 order.add(purchase, calculate=False)
-                order.calculate(subtotal=cart.total)
                 order.invalidate()
+                order.calculate(subtotal=cart.total)
             else:
                 order.untrack(request)
 
@@ -504,8 +507,8 @@ class CheckoutModule(sellmo.Module):
         order = self.get_order(request=request)
         if order.pk and order.may_change:
             order.update(purchase, calculate=False)
-            order.calculate(subtotal=cart.total)
             order.invalidate()
+            order.calculate(subtotal=cart.total)
 
     @link(namespace='cart')
     def remove_purchase(self, request, purchase, cart, **kwargs):
@@ -513,8 +516,8 @@ class CheckoutModule(sellmo.Module):
         if order.pk and order.may_change:
             if purchase in order:
                 order.remove(purchase, calculate=False)
-            order.calculate(subtotal=cart.total)
             order.invalidate()
+            order.calculate(subtotal=cart.total)
     
     @link(namespace='customer')
     def get_customer(self, request, customer=None, **kwargs):

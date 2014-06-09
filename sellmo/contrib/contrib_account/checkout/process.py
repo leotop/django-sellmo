@@ -79,4 +79,5 @@ class CheckoutLoginStep(CheckoutStep):
         else:
             context.update(self.invalid_context)
     
-        return modules.checkout.login_step(request=request, context=context)
+        return modules.checkout.login_step(
+            request=request, order=self.order, context=context)

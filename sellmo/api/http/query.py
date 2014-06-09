@@ -116,6 +116,9 @@ class QueryString(object):
             if not self.params[key] == other.params[key]:
                 return False
         return True
+        
+    def __nonzero__(self):
+        return bool(self.params)
 
     def clone(self):
         clone = QueryString()

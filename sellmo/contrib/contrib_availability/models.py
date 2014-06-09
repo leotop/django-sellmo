@@ -61,6 +61,15 @@ def load_model():
                     settings.allow_backorders and 
                     self.allow_backorders is not False and
                     supplier_can_backorder is not False)
+                    
+        def ships_in(self):
+            settings = modules.settings.get_settings()
+            if self.stock > 0:
+                pass
+            elif self.can_backorder():
+                pass
+            else:
+                return False
         
         class Meta(modules.product.Product.Meta,
                    modules.availability.BackorderBase.Meta,
@@ -97,6 +106,16 @@ class BackorderBase(models.Model):
     allow_backorders = models.NullBooleanField(
         default=None,
         verbose_name=_("allow backorders")
+    )
+    
+    min_backorder_time = models.PositiveSmallIntegerField(
+        default=1,
+        verbose_name=_("minimum backorder time")
+    )
+    
+    max_backorder_time = models.PositiveSmallIntegerField(
+        default=1,
+        verbose_name=_("maximum backorder time")
     )
     
     def can_backorder(self):
@@ -152,3 +171,44 @@ class Supplier(models.Model):
 
     class Meta:
         abstract = True
+        
+        
+class StoreAvailability(models.Model):
+    
+    day = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        unique=True,
+        choices=(
+            (1, _("Monday")),
+            (2, _("Tuesday")),
+            (3, _("Wednesday")),
+            (4, _("Thursday")),
+            (5, _("Friday")),
+            (6, _("Saturday")),
+            (7, _("Sunday")),
+        ),
+        verbose_name=_("day")
+    )
+    
+    available = models.BooleanField(
+        default=True,
+        verbose_name=_("available")
+    )
+    
+    available_from = models.TimeField(
+        null=True,
+        blank=True,
+        verbose_name=_("available from")
+    )
+    
+    available_until = models.TimeField(
+        null=True,
+        blank=True,
+        verbose_name=_("available until")
+    )
+    
+    class Meta:
+        abstract = True
+        verbose_name = _("store availability")
+        verbose_name_plural = _("store availability")

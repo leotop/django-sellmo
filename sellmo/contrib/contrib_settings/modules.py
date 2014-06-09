@@ -30,6 +30,8 @@
 
 from django.core.cache import cache
 from django.contrib.sites.models import Site
+from django.contrib import admin
+from django.db import models
 from django.db.models.signals import pre_save, pre_delete
 
 from sellmo import modules, Module
@@ -44,6 +46,7 @@ class SettingsModule(Module):
     namespace = 'settings'
     SiteSettings = SiteSettings
     _settings = []
+    _inline_settings = [] 
 
     def __init__(self, *args, **kwargs):
         # Add settings to SiteSettings
@@ -128,3 +131,12 @@ class SettingsModule(Module):
     @classmethod
     def add_setting(self, key, field, group=None):
         self._settings.append((key, field, group))
+    
+    @classmethod
+    def add_inline_setting(self, key, model, admin=admin.StackedInline):
+        if not model._meta.abstract:
+            raise Exception("Inline setting '{0}' needs to "
+                            "be abstract".format(model))
+        
+        self._inline_settings.append((key, model, admin))         
+        

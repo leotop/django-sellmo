@@ -187,7 +187,7 @@ class VariationModule(Module):
                     variations = result
                 else:
                     return None
-
+        
         if chain:
             out = chain.execute(
                 product=product, grouped=grouped,
