@@ -29,10 +29,11 @@
 
 
 from django import forms
+from django.utils.translation import ugettext_lazy as _
 
 from sellmo import modules
 from sellmo.api.decorators import load
 
 
 class AcceptTermsForm(forms.Form):
-    accept = forms.BooleanField()
+    accept = forms.BooleanField(label=_("I agree to the terms and conditions"))

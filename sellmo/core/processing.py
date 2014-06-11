@@ -51,7 +51,9 @@ class Process(object):
             if step.key == key:
                 break
             elif step.can_skip() or step.is_completed():
-                step = step.get_next_step()
+                next_step = step.get_next_step()
+                next_step._previous_step = step
+                step = next_step
             else:
                 step = None
         else:
@@ -69,6 +71,7 @@ class Process(object):
             if step.is_completed():
                 next_step = step.get_next_step()
                 if next_step:
+                    next_step._previous_step = step
                     step = next_step
                     continue
 
@@ -149,7 +152,7 @@ class Process(object):
     @property
     def previous_step(self):
         if self.current_step:
-            step = self.current_step.get_previous_step()
+            step = self.current_step._previous_step
             if step:
                 step.hookup(self)
             return step
@@ -172,6 +175,7 @@ class ProcessStep(object):
 
     key = None
     process = None
+    _previous_step = None
 
     def __init__(self, key=None):
         if key:
@@ -233,11 +237,5 @@ class ProcessStep(object):
     def get_next_step(self):
         """
         Returns the next step (if any).
-        """
-        return None
-
-    def get_previous_step(self):
-        """
-        Returns the previous step (if any).
         """
         return None
