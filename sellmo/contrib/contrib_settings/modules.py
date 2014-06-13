@@ -82,15 +82,25 @@ class SettingsModule(Module):
         return chain.execute(request=request, context=context, **kwargs)
 
     def on_settings_pre_save(self, sender, instance, **kwargs):
-        self.on_cache_invalidated(instance)
+        self._on_cache_invalidated(instance)
         try:
             old = self.SiteSettings.objects.get(pk=instance.pk)
         except self.SiteSettings.DoesNotExist:
             old = None
+            
+        # The current request will still access the old settings, unless
+        # we overwrite it manually at this point.
+        context = get_context()
+        settings = context['site_settings'] = instance
         self._settings_changed(old, instance)
 
     def on_settings_pre_delete(self, sender, instance, **kwargs):
-        self.on_cache_invalidated(instance)
+        self._on_cache_invalidated(instance)
+        
+        # The current request will still access the old settings, unless
+        # we overwrite it manually at this point.
+        context = get_context()
+        settings = context['site_settings'] = None
         self._settings_changed(instance, None)
 
     def _settings_changed(self, old, new):
@@ -103,29 +113,35 @@ class SettingsModule(Module):
                     sender=self, setting=key, old=old_val,
                     new=new_val, site=site)
 
-    def on_cache_invalidated(self, instance):
+    def _on_cache_invalidated(self, instance):
         cache.delete('site_settings_{0}'.format(instance.site.pk))
 
     def get_settings(self):
         context = get_context()
-        settings = context.get('site_settings', None)
-        if settings is None:
+        settings = context.get('site_settings', False)
+        if settings is False:
             site = Site.objects.get_current()
             if not site:
                 raise self.SiteSettings.DoesNotExist(
                     "Could not retrieve settings, no current site.")
             key = 'site_settings_{0}'.format(site.pk)
-            settings = cache.get(key)
-            if settings is None:
+            # Try get settings from cache
+            settings = cache.get(key, settings)
+        
+        if not settings:
+            if settings is False:
                 try:
                     settings = self.SiteSettings.objects.get(site=site)
                 except self.SiteSettings.DoesNotExist:
-                    raise self.SiteSettings.DoesNotExist(
-                        "Could not retrieve settings, "
-                        "no settings found for site '{0}'"
-                        .format(site))
-                cache.set(key, settings)
+                    pass
+                    
+            if not settings:
+                raise self.SiteSettings.DoesNotExist(
+                    "Could not retrieve settings")
+                    
+            cache.set(key, settings)
             context['site_settings'] = settings
+        
         return settings
 
     @classmethod
@@ -138,5 +154,18 @@ class SettingsModule(Module):
             raise Exception("Inline setting '{0}' needs to "
                             "be abstract".format(model))
         
-        self._inline_settings.append((key, model, admin))         
+        class Meta(model.Meta):
+            app_label = 'settings'
+        
+        name = model.__name__
+        attr_dict = {
+            'Meta': Meta,
+            '__module__': model.__module__,
+            'settings': models.ForeignKey(
+                'settings.SiteSettings',
+                related_name=key)
+        }
+        
+        model = type(name, (model,), attr_dict)
+        self._inline_settings.append((model, admin))         
         

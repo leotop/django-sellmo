@@ -62,8 +62,6 @@ class QtyPriceManager(models.Manager):
     def for_qty(self, *args, **kwargs):
         return self.get_query_set().for_qty(*args, **kwargs)
 
-#
-
 
 @load(action='finalize_qty_pricing_QtyPriceBase')
 def finalize_model():
@@ -168,42 +166,32 @@ def on_invalidate_index(sender, instance, **kwargs):
 
 
 @load(action='finalize_qty_pricing_ProductQtyPrice')
-def finalize_model():
-    class ProductQtyPrice(modules.qty_pricing.ProductQtyPrice):
-
+@load(after='finalize_qty_pricing_QtyPrice')
+def load_model():
+    class ProductQtyPrice(
+            modules.qty_pricing.ProductQtyPrice,
+            modules.qty_pricing.QtyPrice):
+        
         class Meta(modules.qty_pricing.ProductQtyPrice.Meta):
             app_label = 'pricing'
-            verbose_name = _("qty price")
-            verbose_name_plural = _("qty prices")
 
     modules.qty_pricing.ProductQtyPrice = ProductQtyPrice
     post_save.connect(on_invalidate_index, sender=ProductQtyPrice)
     pre_delete.connect(on_invalidate_index, sender=ProductQtyPrice)
 
 
-@load(before='finalize_qty_pricing_ProductQtyPrice')
-@load(after='finalize_qty_pricing_QtyPrice')
-@load(after='finalize_product_Product')
-def load_model():
-    class ProductQtyPrice(
-            modules.qty_pricing.ProductQtyPrice,
-            modules.qty_pricing.QtyPrice):
-        product = models.ForeignKey(
-            modules.product.Product,
-            related_name='qty_prices',
-            verbose_name=_("product"),
-        )
-
-        class Meta(modules.qty_pricing.ProductQtyPrice.Meta):
-            abstract = True
-
-    modules.qty_pricing.ProductQtyPrice = ProductQtyPrice
-
-
 class ProductQtyPrice(models.Model):
+
+    product = models.ForeignKey(
+        'product.Product',
+        related_name='qty_prices',
+        verbose_name=_("product"),
+    )
 
     class Meta:
         abstract = True
+        verbose_name = _("qty price")
+        verbose_name_plural = _("qty prices")
 
 # Setup indexes
 
@@ -243,6 +231,8 @@ class PriceIndexHandle(models.Model):
 
     class Meta:
         abstract = True
+        verbose_name = _("price index")
+        verbose_name_plural = _("price indexes")
 
 
 @load(action='finalize_price_indexing_PriceIndexHandle')
@@ -251,7 +241,5 @@ def finalize_model():
 
         class Meta(modules.price_indexing.PriceIndexHandle.Meta):
             app_label = 'pricing'
-            verbose_name = _("price index")
-            verbose_name_plural = _("price indexes")
 
     modules.price_indexing.PriceIndexHandle = PriceIndexHandle

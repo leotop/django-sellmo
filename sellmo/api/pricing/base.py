@@ -69,9 +69,10 @@ class Currency(object):
 
 class PriceType(object):
 
-    def __init__(self, key, name):
+    def __init__(self, key, name, **extra_fields):
         self.key = key
         self.name = name
+        self.extra_fields = extra_fields
 
     def __str__(self):
         return self.key

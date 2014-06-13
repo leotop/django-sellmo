@@ -38,14 +38,13 @@ from sellmo.api.decorators import load
 
 
 @load(before='finalize_customer_Customer')
-@load(after='finalize_customer_Address')
 def load_model():
     for type in modules.customer.address_types:
         name = '{0}_address'.format(type)
         modules.customer.Customer.add_to_class(
             name,
             models.OneToOneField(
-                modules.customer.Address,
+                'customer.Address',
                 null=True,
                 related_name='+',
                 verbose_name=_(
@@ -85,9 +84,7 @@ def finalize_model():
             )
         
         class Meta(modules.customer.Customer.Meta):
-            app_label = 'customer'
-            verbose_name = _("customer")
-            verbose_name_plural = _("customers")
+            app_label = 'customer' 
 
     modules.customer.Customer = Customer
 
@@ -119,8 +116,10 @@ class Customer(models.Model, Cloneable):
         return clone
 
     class Meta:
-        ordering = ['last_name', 'first_name']
         abstract = True
+        verbose_name = _("customer")
+        verbose_name_plural = _("customers")
+        ordering = ['last_name', 'first_name']
 
 
 @load(after='finalize_customer_Addressee')
@@ -140,8 +139,6 @@ def finalize_model():
 
         class Meta(modules.customer.Address.Meta):
             app_label = 'customer'
-            verbose_name = _("address")
-            verbose_name_plural = _("addresses")
 
     modules.customer.Address = Address
 
@@ -153,8 +150,10 @@ class Address(models.Model, Cloneable):
         return clone
 
     class Meta:
-        ordering = ['last_name', 'first_name']
         abstract = True
+        verbose_name = _("address")
+        verbose_name_plural = _("addresses")
+        ordering = ['last_name', 'first_name']
 
 
 @load(action='finalize_customer_Contactable')

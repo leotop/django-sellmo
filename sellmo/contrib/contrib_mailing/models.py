@@ -41,8 +41,6 @@ def finalize_model():
 
         class Meta(modules.mailing.MailStatus.Meta):
             app_label = 'mailing'
-            verbose_name = _("mail status")
-            verbose_name_plural = _("mail statuses")
 
     modules.mailing.MailStatus = MailStatus
 
@@ -94,3 +92,5 @@ class MailStatus(models.Model):
 
     class Meta:
         abstract = True
+        verbose_name = _("mail status")
+        verbose_name_plural = _("mail statuses")

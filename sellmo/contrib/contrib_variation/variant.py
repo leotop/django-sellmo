@@ -151,11 +151,6 @@ class VariantMixin(object):
 
         super(VariantMixin, self).save(*args, **kwargs)
 
-    class Meta:
-        app_label = 'product'
-        verbose_name = _("variant")
-        verbose_name_plural = _("variants")
-
 
 class VariantFieldDescriptor(object):
 

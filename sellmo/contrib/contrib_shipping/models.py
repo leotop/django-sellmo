@@ -42,60 +42,13 @@ from django.utils.translation import ugettext_lazy as _
 
 @load(action='finalize_shipping_Shipment')
 @load(after='finalize_checkout_Shipment')
-@load(after='finalize_shipping_ShippingCarrier')
-@load(after='finalize_shipping_ShippingMethod')
 def finalize_model():
-    class Shipment(modules.checkout.Shipment, modules.shipping.Shipment):
-
-        carrier = models.ForeignKey(
-            modules.shipping.ShippingCarrier,
-            on_delete=models.SET_NULL,
-            null=True,
-            blank=True,
-            verbose_name=_("carrier"),
-        )
-
-        method = models.ForeignKey(
-            modules.shipping.ShippingMethod,
-            on_delete=models.SET_NULL,
-            null=True,
-            blank=True,
-            verbose_name=_("carrier"),
-        )
-
-        def save(self, *args, **kwargs):
-            if not self.description and self.method:
-                self.description = self.method.name
-                if self.carrier:
-                    self.description = _(u"{0} by {1}").format(
-                        self.description, self.carrier.name)
-
-            super(Shipment, self).save(*args, **kwargs)
-
-        def get_method(self):
-            if not self.method:
-                raise Exception(
-                    "This shipment no longer has a shipping method.")
-            for method in self.method.get_methods():
-                if method.carrier == self.carrier:
-                    return method
-            raise Exception("Shipping method could not be resolved.")
-
-        def __unicode__(self):
-            try:
-                method = self.get_method()
-            except Exception:
-                pass
-            else:
-                return unicode(method)
-            return super(Shipment, self).__unicode__()
-
+    class Shipment(modules.shipping.Shipment, modules.checkout.Shipment):
+        
         class Meta(
-                modules.checkout.Shipment.Meta,
-                modules.shipping.Shipment.Meta):
+                modules.shipping.Shipment.Meta,
+                modules.checkout.Shipment.Meta):
             app_label = 'shipping'
-            verbose_name = _("shipment")
-            verbose_name_plural = _("shipments")
 
     modules.shipping.Shipment = Shipment
 
@@ -107,29 +60,54 @@ class Shipment(models.Model):
         blank=True,
         verbose_name=_("description"),
     )
-
+    
+    carrier = models.ForeignKey(
+        'shipping.ShippingCarrier',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name=_("carrier"),
+    )
+    
+    method = models.ForeignKey(
+        'shipping.ShippingMethod',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name=_("carrier"),
+    )
+        
+    def save(self, *args, **kwargs):
+        if not self.description and self.method:
+            self.description = self.method.name
+            if self.carrier:
+                self.description = _(u"{0} by {1}").format(
+                    self.description, self.carrier.name)
+    
+        super(Shipment, self).save(*args, **kwargs)
+    
+    def get_method(self):
+        if not self.method:
+            raise Exception(
+                "This shipment no longer has a shipping method.")
+        for method in self.method.get_methods():
+            if method.carrier == self.carrier:
+                return method
+        raise Exception("Shipping method could not be resolved.")
+    
     def __unicode__(self):
+        try:
+            method = self.get_method()
+        except Exception:
+            pass
+        else:
+            return unicode(method)
         return self.description
 
     class Meta:
         abstract = True
-
-
-@load(after='finalize_shipping_ShippingCarrier')
-@load(before='finalize_shipping_ShippingMethod')
-def load_model():
-    class ShippingMethod(modules.shipping.ShippingMethod):
-
-        carriers = models.ManyToManyField(
-            modules.shipping.ShippingCarrier,
-            blank=True,
-            verbose_name=_("carriers")
-        )
-
-        class Meta(modules.shipping.ShippingMethod.Meta):
-            abstract = True
-
-    modules.shipping.ShippingMethod = ShippingMethod
+        verbose_name = _("shipment")
+        verbose_name_plural = _("shipments")
 
 
 @load(action='finalize_shipping_ShippingMethod')
@@ -138,8 +116,6 @@ def finalize_model():
 
         class Meta(modules.shipping.ShippingMethod.Meta):
             app_label = 'shipping'
-            verbose_name = _("shipping method")
-            verbose_name_plural = _("shipping methods")
 
     modules.shipping.ShippingMethod = ShippingMethod
 
@@ -164,6 +140,12 @@ class ShippingMethod(PolymorphicModel):
         max_length=80,
         verbose_name=_("name"),
     )
+    
+    carriers = models.ManyToManyField(
+        'shipping.ShippingCarrier',
+        blank=True,
+        verbose_name=_("carriers")
+    )
 
     def get_methods(self):
         if self.carriers.count() == 0:
@@ -180,6 +162,8 @@ class ShippingMethod(PolymorphicModel):
 
     class Meta:
         abstract = True
+        verbose_name = _("shipping method")
+        verbose_name_plural = _("shipping methods")
 
 
 @load(action='finalize_shipping_ShippingCarrier')
@@ -192,8 +176,6 @@ def finalize_model():
 
         class Meta(modules.shipping.ShippingCarrier.Meta):
             app_label = 'shipping'
-            verbose_name = _("shipping carrier")
-            verbose_name_plural = _("shipping carriers")
 
     modules.shipping.ShippingCarrier = ShippingCarrier
 
@@ -222,3 +204,5 @@ class ShippingCarrier(models.Model):
 
     class Meta:
         abstract = True
+        verbose_name = _("shipping carrier")
+        verbose_name_plural = _("shipping carriers")

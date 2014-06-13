@@ -57,8 +57,6 @@ def finalize_model():
 
         class Meta(modules.product.Product.Meta):
             app_label = 'product'
-            verbose_name = _("product")
-            verbose_name_plural = _("products")
 
     modules.product.Product = Product
     index = modules.pricing.create_index('product_price')
@@ -122,8 +120,10 @@ class Product(PolymorphicModel):
         return 'product.product', (self.slug,)
 
     class Meta:
-        ordering = ['slug']
         abstract = True
+        verbose_name = _("product")
+        verbose_name_plural = _("products")
+        ordering = ['slug']
 
 
 class ProductRelatableQuerySet(QuerySet):

@@ -30,9 +30,14 @@
 
 from sellmo import modules
 from sellmo.api.configuration import define_setting
+from sellmo.contrib.contrib_shipping \
+           .methods.tiered_shipping.models import TieredShippingTier
 
 
 class ShippingModule(modules.shipping):
+    
+    TieredShippingTier = TieredShippingTier
+    
     namespace = 'shipping'
     max_tier_attributes = define_setting(
         'MAX_TIER_ATTRIBUTES',

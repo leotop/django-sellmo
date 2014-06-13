@@ -42,6 +42,7 @@ def finalize_model():
         class Meta(modules.pricing.PriceIndexBase.Meta):
             abstract = True
             app_label = 'pricing'
+    
     modules.pricing.PriceIndexBase = PriceIndexBase
 
 

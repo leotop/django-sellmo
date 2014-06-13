@@ -71,8 +71,6 @@ def finalize_model():
 
         class Meta(modules.cash_payment.CashPayment.Meta):
             app_label = 'checkout'
-            verbose_name = _("cash payment")
-            verbose_name_plural = _("cash payments")
 
     modules.cash_payment.CashPayment = CashPayment
 
@@ -81,3 +79,5 @@ class CashPayment(models.Model):
 
     class Meta:
         abstract = True
+        verbose_name = _("cash payment")
+        verbose_name_plural = _("cash payments")

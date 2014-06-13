@@ -90,37 +90,6 @@ def load_model():
     )
 
 
-@load(after='finalize_checkout_Payment')
-@load(after='finalize_checkout_Shipment')
-@load(before='finalize_checkout_Order')
-def load_model():
-
-    class Order(modules.checkout.Order):
-        payment = models.OneToOneField(
-            modules.checkout.Payment,
-            related_name='order',
-            null=True,
-            blank=True,
-            on_delete=models.SET_NULL,
-            verbose_name=_("payment")
-        )
-
-        shipment = models.OneToOneField(
-            modules.checkout.Shipment,
-            related_name='order',
-            null=True,
-            blank=True,
-            on_delete=models.SET_NULL,
-            verbose_name=_("shipment")
-        )
-
-        class Meta(modules.checkout.Order.Meta):
-            abstract = True
-
-    modules.checkout.Order = Order
-
-
-@load(after='finalize_customer_Customer')
 @load(after='finalize_customer_Contactable')
 @load(before='finalize_checkout_Order')
 def load_model():
@@ -130,7 +99,7 @@ def load_model():
     class Order(modules.checkout.Order):
 
         customer = models.ForeignKey(
-            modules.customer.Customer,
+            'customer.Customer',
             null=not modules.customer.customer_required,
             blank=not modules.customer.customer_required,
             related_name='orders',
@@ -160,7 +129,6 @@ def load_model():
         modules.checkout.Order = Order
 
 
-@load(after='finalize_customer_Address')
 @load(before='finalize_checkout_Order')
 def load_model():
 
@@ -169,7 +137,7 @@ def load_model():
         modules.checkout.Order.add_to_class(
             name,
             models.OneToOneField(
-                modules.customer.Address,
+                'customer.Address',
                 null=True,
                 related_name='+',
                 verbose_name=_(
@@ -178,12 +146,11 @@ def load_model():
         )
 
 
-@load(after='finalize_checkout_Order')
 @load(before='finalize_store_Purchase')
 def load_model():
     class Purchase(modules.store.Purchase):
         order = models.ForeignKey(
-            modules.checkout.Order,
+            'checkout.Order',
             null=True,
             editable=False,
             related_name='purchases',
@@ -206,8 +173,6 @@ def finalize_model():
 
         class Meta(modules.checkout.Order.Meta):
             app_label = 'checkout'
-            verbose_name = _("order")
-            verbose_name_plural = _("orders")
 
     modules.checkout.Order = Order
 
@@ -218,8 +183,6 @@ def finalize_model():
 
         class Meta(modules.checkout.Shipment.Meta):
             app_label = 'checkout'
-            verbose_name = _("shipment")
-            verbose_name_plural = _("shipments")
 
     modules.checkout.Shipment = Shipment
 
@@ -230,8 +193,6 @@ def finalize_model():
 
         class Meta(modules.checkout.Payment.Meta):
             app_label = 'checkout'
-            verbose_name = _("payment")
-            verbose_name_plural = _("payments")
 
     modules.checkout.Payment = Payment
 
@@ -276,8 +237,24 @@ class Order(trackable('sellmo_order')):
         null=True,
         verbose_name=_("calculated at"),
     )
-
-    #
+    
+    payment = models.OneToOneField(
+        'checkout.Payment',
+        related_name='order',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        verbose_name=_("payment")
+    )
+    
+    shipment = models.OneToOneField(
+        'checkout.Shipment',
+        related_name='order',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        verbose_name=_("shipment")
+    )
 
     def get_address(self, type):
         try:
@@ -587,8 +564,10 @@ class Order(trackable('sellmo_order')):
             return unicode(_(u"unplaced order"))
 
     class Meta:
-        ordering = ['-pk']
         abstract = True
+        verbose_name = _("order")
+        verbose_name_plural = _("orders")
+        ordering = ['-pk']
 
 
 class Shipment(PolymorphicModel):
@@ -603,6 +582,8 @@ class Shipment(PolymorphicModel):
 
     class Meta:
         abstract = True
+        verbose_name = _("shipment")
+        verbose_name_plural = _("shipments")
 
 
 class Payment(PolymorphicModel):
@@ -620,3 +601,5 @@ class Payment(PolymorphicModel):
 
     class Meta:
         abstract = True
+        verbose_name = _("payment")
+        verbose_name_plural = _("payments")

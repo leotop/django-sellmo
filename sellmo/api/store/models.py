@@ -43,24 +43,6 @@ from sellmo.core.polymorphism import (PolymorphicModel, PolymorphicManager,
                                       PolymorphicQuerySet)
 
 
-@load(after='finalize_product_Product')
-@load(before='finalize_store_Purchase')
-def load_model():
-    class Purchase(modules.store.Purchase):
-        product = models.ForeignKey(
-            modules.product.Product,
-            verbose_name=_("product"),
-            on_delete=models.SET_NULL,
-            null=True,
-            blank=True,
-        )
-
-        class Meta(modules.store.Purchase.Meta):
-            abstract = True
-
-    modules.store.Purchase = Purchase
-
-
 @load(action='finalize_store_Purchase')
 def finalize_model():
 
@@ -76,8 +58,6 @@ def finalize_model():
 
         class Meta(modules.store.Purchase.Meta):
             app_label = 'store'
-            verbose_name = _("purchase")
-            verbose_name_plural = ("purchases")
 
     modules.store.Purchase = Purchase
 
@@ -120,6 +100,14 @@ class Purchase(PolymorphicModel, Cloneable):
     qty = models.PositiveIntegerField(
         default=1,
         verbose_name=_("qty"),
+    )
+    
+    product = models.ForeignKey(
+        'product.Product',
+        verbose_name=_("product"),
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
     )
     
     def get_subtotal_kwargs(self):
@@ -177,4 +165,7 @@ class Purchase(PolymorphicModel, Cloneable):
 
     class Meta:
         abstract = True
-        ordering = ['id']
+        verbose_name = _("purchase")
+        verbose_name_plural = ("purchases")
+        ordering = ['pk']
+        

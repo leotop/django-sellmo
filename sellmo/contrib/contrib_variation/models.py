@@ -390,14 +390,12 @@ def load_manager():
 
 
 @load(before='finalize_attribute_Value')
-@load(after='finalize_product_Product')
-@load(after='finalize_variation_VariationRule')
 def load_model():
 
     class Value(modules.attribute.Value):
 
         base_product = models.ForeignKey(
-            modules.product.Product,
+            'product.Product',
             db_index=True,
             null=True,
             blank=True,
@@ -417,54 +415,12 @@ def load_model():
 
 
 @load(action='finalize_variation_Variation')
-@load(after='finalize_attribute_Value')
-@load(after='finalize_product_Product')
 def finalize_model():
 
     class Variation(modules.variation.Variation):
-
-        # The product we are based on
-        product = models.ForeignKey(
-            modules.product.Product,
-            db_index=True,
-            editable=False,
-            related_name='+',
-            verbose_name=_("product"),
-        )
-
-        # The variant we are based on (can be product)
-        variant = models.ForeignKey(
-            modules.product.Product,
-            db_index=True,
-            editable=False,
-            related_name='+',
-            verbose_name=_("variant"),
-        )
-
-        # The variant we are based on and which is common across every
-        # variation in the group (can be a product)
-        group_variant = models.ForeignKey(
-            modules.product.Product,
-            db_index=True,
-            editable=False,
-            null=True,
-            related_name='+',
-            verbose_name=_("group variant"),
-        )
-
-        #
-        values = models.ManyToManyField(
-            modules.attribute.Value,
-            editable=False,
-            related_name='+',
-            verbose_name=_("values"),
-        )
-
+        
         class Meta(modules.variation.Variation.Meta):
             app_label = 'variation'
-            ordering = ['sort_order']
-            verbose_name = _("variation")
-            verbose_name_plural = _("variations")
 
     modules.variation.Variation = Variation
 
@@ -750,6 +706,42 @@ class Variation(models.Model):
         primary_key=True,
         editable=False,
     )
+    
+    # The product we are based on
+    product = models.ForeignKey(
+        'product.Product',
+        db_index=True,
+        editable=False,
+        related_name='+',
+        verbose_name=_("product"),
+    )
+    
+    # The variant we are based on (can be product)
+    variant = models.ForeignKey(
+        'product.Product',
+        db_index=True,
+        editable=False,
+        related_name='+',
+        verbose_name=_("variant"),
+    )
+    
+    # The variant we are based on and which is common across every
+    # variation in the group (can be a product)
+    group_variant = models.ForeignKey(
+        'product.Product',
+        db_index=True,
+        editable=False,
+        null=True,
+        related_name='+',
+        verbose_name=_("group variant"),
+    )
+    
+    values = models.ManyToManyField(
+        'attribute.Value',
+        editable=False,
+        related_name='+',
+        verbose_name=_("values"),
+    )
 
     sort_order = models.SmallIntegerField(
         verbose_name=_("sort order"),
@@ -767,24 +759,18 @@ class Variation(models.Model):
 
     class Meta:
         abstract = True
+        ordering = ['sort_order']
+        verbose_name = _("variation")
+        verbose_name_plural = _("variations")
 
 
 @load(action='finalize_variation_VariationsState')
-@load(after='finalize_product_Product')
 def finalize_model():
 
     class VariationsState(modules.variation.VariationsState):
-
-        product = models.OneToOneField(
-            modules.product.Product,
-            editable=False,
-            related_name='variations_state'
-        )
-
+        
         class Meta(modules.variation.VariationsState.Meta):
             app_label = 'variation'
-            verbose_name = _("variations state")
-            verbose_name_plural = _("variations states")
 
     modules.variation.VariationsState = VariationsState
 
@@ -826,12 +812,20 @@ class VariationsState(models.Model):
         default=False,
         editable=False,
     )
+    
+    product = models.OneToOneField(
+        'product.Product',
+        editable=False,
+        related_name='variations_state'
+    )
+    
+    def __unicode__(self):
+        return unicode(self.product)
 
     class Meta:
         abstract = True
-
-    def __unicode__(self):
-        return unicode(self.product)
+        verbose_name = _("variations state")
+        verbose_name_plural = _("variations states")
 
 
 class VariationPurchase(models.Model):
@@ -850,6 +844,8 @@ class VariationPurchase(models.Model):
 
     class Meta:
         abstract = True
+        verbose_name = _("variation purchase")
+        verbose_name_plural = _("variation purchases")
 
 
 @load(after='finalize_store_Purchase')
@@ -879,8 +875,6 @@ def finalize_model():
                 modules.variation.VariationPurchase.Meta,
                 modules.store.Purchase.Meta):
             app_label = 'store'
-            verbose_name = _("variation purchase")
-            verbose_name_plural = _("variation purchases")
 
     modules.variation.VariationPurchase = VariationPurchase
     modules.variation.register(

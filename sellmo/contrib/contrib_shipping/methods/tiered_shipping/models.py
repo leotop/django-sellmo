@@ -72,48 +72,28 @@ def load_subtypes():
 def finalize_model():
 
     class TieredShippingTier(modules.shipping.TieredShippingTier):
-
-        objects = TieredShippingTierManager()
-
-        method = models.ForeignKey(
-            modules.shipping.TieredShippingMethod,
-            related_name='tiers'
-        )
-
+        
         class Meta(modules.shipping.TieredShippingTier.Meta):
             app_label = 'shipping'
-            verbose_name = _("tiered shipping tier")
-            verbose_name_plural = _("tiered shipping tiers")
-            ordering = ['costs']
 
-    modules.shipping.register_subtype(TieredShippingTier)
+    modules.shipping.TieredShippingTier = TieredShippingTier
 
 
 @load(before='finalize_shipping_TieredShippingTier')
 def load_model():
 
-    class TieredShippingTier(models.Model):
-
+    class TieredShippingTier(modules.shipping.TieredShippingTier):
+        
         costs = modules.pricing.construct_pricing_field(
             verbose_name=_("shipping rate"),
         )
-
+        
         min_amount = modules.pricing.construct_pricing_field(
             verbose_name=_("minimum amount"),
         )
-
-        class Meta:
+        
+        class Meta(modules.shipping.TieredShippingTier.Meta):
             abstract = True
-
-    def get_attribute_name(i):
-        settings = modules.settings.get_settings()
-        attribute = getattr(
-            settings, 'shipping_tier_attribute{0}'.format(i + 1))
-        if not attribute:
-            attribute = _("value {0}".format(i + 1))
-        return _(u"max {0}").format(attribute)
-
-    get_attribute_name = lazy(get_attribute_name, six.text_type)
 
     if modules.shipping.max_tier_attributes > 0:
         for i in range(modules.shipping.max_tier_attributes):
@@ -126,7 +106,7 @@ def load_model():
                 )
             )
 
-    modules.shipping.register_subtype(TieredShippingTier)
+    modules.shipping.TieredShippingTier = TieredShippingTier
 
 
 class TieredShippingTierQuerySet(QuerySet):
@@ -180,6 +160,33 @@ class TieredShippingTierManager(models.Manager):
 
     def get_query_set(self):
         return TieredShippingTierQuerySet(self.model)
+        
+
+class TieredShippingTier(models.Model):
+    
+    objects = TieredShippingTierManager()
+    
+    method = models.ForeignKey(
+        'shipping.TieredShippingMethod',
+        related_name='tiers'
+    )
+    
+    class Meta:
+        abstract = True
+        verbose_name = _("tiered shipping tier")
+        verbose_name_plural = _("tiered shipping tiers")
+        ordering = ['costs']
+
+
+def get_attribute_name(i):
+    settings = modules.settings.get_settings()
+    attribute = getattr(
+        settings, 'shipping_tier_attribute{0}'.format(i + 1))
+    if not attribute:
+        attribute = _("value {0}".format(i + 1))
+    return _(u"max {0}").format(attribute)
+
+get_attribute_name = lazy(get_attribute_name, six.text_type)
 
 
 @load(before='finalize_settings_SiteSettings')

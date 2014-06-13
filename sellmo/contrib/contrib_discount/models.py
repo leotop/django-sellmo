@@ -80,9 +80,11 @@ def on_discount_pre_delete(sender, instance, **kwargs):
 def on_group_post_save(sender, instance, **kwargs):
     invalidate_indexes(group=instance)
     
+
 def on_discount_groups_changed(sender, instance, **kwargs):
     invalidate_indexes(discount=instance)
     
+
 def invalidate_indexes(discount=None, group=None):
     if discount:
         modules.pricing.get_index('product_price').update(
@@ -110,13 +112,8 @@ def hookup_invalidation():
         post_save.connect(
             on_group_post_save, sender=modules.discount.DiscountGroup)
 
-# Make sure to load directly after finalize_product_ProductRelatable and thus
-# directly after finalize_product_Product
 
-
-@load(after='finalize_product_Product')
 @load(after='finalize_product_ProductRelatable')
-@load(after='finalize_discount_DiscountGroup')
 @load(action='finalize_discount_Discount')
 def finalize_model():
 
@@ -134,26 +131,18 @@ def finalize_model():
     class Discount(modules.discount.Discount, modules.product.ProductRelatable):
 
         objects = DiscountManager()
-
-        products = models.ManyToManyField(
-            modules.product.Product,
-            related_name='discounts',
-            blank=True,
-        )
         
         if modules.discount.user_discount_enabled:
             groups = models.ManyToManyField(
-                modules.discount.DiscountGroup,
+                'discount.DiscountGroup',
                 related_name='discounts',
                 blank=True,
             )
-
+        
         class Meta(
                 modules.discount.Discount.Meta,
                 modules.product.ProductRelatable.Meta):
             app_label = 'discount'
-            verbose_name = _("discount")
-            verbose_name_plural = _("discounts")
 
     modules.discount.Discount = Discount
     modules.discount.register('DiscountQuerySet', DiscountManager)
@@ -167,6 +156,12 @@ class Discount(PolymorphicModel):
         verbose_name=_("name"),
         unique=True
     )
+    
+    products = models.ManyToManyField(
+        'product.Product',
+        related_name='discounts',
+        blank=True,
+    )
 
     def get_related_products_query(self):
         return super(Discount, self).get_related_products_query() | Q(discounts=self)
@@ -177,32 +172,31 @@ class Discount(PolymorphicModel):
     def apply(self, price):
         raise NotImplementedError()
 
-    class Meta:
-        abstract = True
-
     def __unicode__(self):
         return self.name
-        
-        
+
+    class Meta:
+        abstract = True
+        verbose_name = _("discount")
+        verbose_name_plural = _("discounts")
+
+
 @load(action='finalize_discount_DiscountGroup')
 def finalize_model():
     class DiscountGroup(modules.discount.DiscountGroup):
         
         class Meta(modules.discount.DiscountGroup.Meta):
             app_label = 'discount'
-            verbose_name = _("discount group")
-            verbose_name_plural = _("discount groups")
             
     modules.discount.DiscountGroup = DiscountGroup
     
-    
-@load(after='finalize_discount_DiscountGroup')
+
 @load(before='finalize_customer_Customer')
 def load_model():
     class Customer(modules.customer.Customer):
         
         discount_group = models.ForeignKey(
-            modules.discount.DiscountGroup,
+            'discount.DiscountGroup',
             null=True,
             blank=True,
             verbose_name=_("discount group"),
@@ -221,18 +215,21 @@ class DiscountGroup(models.Model):
         verbose_name=_("name"),
         unique=True
     )
-        
-    class Meta:
-        abstract = True
     
     def __unicode__(self):
         return self.name
+        
+    class Meta:
+        abstract = True
+        verbose_name = _("discount group")
+        verbose_name_plural = _("discount groups")
+    
 
 def get_discount_groups():
     return [None] + list(modules.discount.DiscountGroup.objects.all())
-        
+   
+     
 @load(before='finalize_store_Purchase')
-@load(after='finalize_discount_DiscountGroup')
 def load_model():
     if modules.discount.user_discount_enabled:
         class Purchase(modules.store.Purchase):
@@ -245,7 +242,7 @@ def load_model():
                 return kwargs
             
             discount_group = models.ForeignKey(
-                modules.discount.DiscountGroup,
+                'discount.DiscountGroup',
                 null=True,
                 editable=False,
                 on_delete=models.SET_NULL
@@ -256,15 +253,15 @@ def load_model():
                 
         modules.store.Purchase = Purchase
         
+
 @load(after='finalize_product_Product')
-@load(after='finalize_discount_DiscountGroup')
 def setup_indexes():
     if modules.discount.user_discount_enabled:
         index = modules.pricing.get_index('product_price')
         index.add_kwarg(
             'discount_group',
             models.ForeignKey(
-                modules.discount.DiscountGroup,
+                'discount.DiscountGroup',
                 null=True),
             required=False,
             default=get_discount_groups,

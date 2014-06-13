@@ -96,7 +96,6 @@ def hookup_invalidation():
 # directly after finalize_product_Product
 
 
-@load(after='finalize_product_Product')
 @load(after='finalize_product_ProductRelatable')
 @load(action='finalize_tax_Tax')
 def finalize_model():
@@ -116,18 +115,10 @@ def finalize_model():
 
         objects = TaxManager()
 
-        products = models.ManyToManyField(
-            modules.product.Product,
-            related_name='taxes',
-            blank=True,
-        )
-
         class Meta(
                 modules.tax.Tax.Meta,
                 modules.product.ProductRelatable.Meta):
             app_label = 'tax'
-            verbose_name = _("tax")
-            verbose_name_plural = _("taxes")
 
     modules.tax.Tax = Tax
     modules.tax.register('TaxQuerySet', TaxQuerySet)
@@ -141,6 +132,12 @@ class Tax(PolymorphicModel):
         verbose_name=_("name"),
         unique=True
     )
+    
+    products = models.ManyToManyField(
+        'product.Product',
+        related_name='taxes',
+        blank=True,
+    )
 
     def get_related_products_query(self):
         return super(Tax, self).get_related_products_query() | Q(taxes=self)
@@ -151,8 +148,10 @@ class Tax(PolymorphicModel):
     def apply(self, price):
         raise NotImplementedError()
 
-    class Meta:
-        abstract = True
-
     def __unicode__(self):
         return self.name
+
+    class Meta:
+        abstract = True
+        verbose_name = _("tax")
+        verbose_name_plural = _("taxes")

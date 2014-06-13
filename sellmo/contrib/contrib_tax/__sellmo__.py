@@ -28,10 +28,17 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
+from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from sellmo import modules
 from sellmo.api.pricing import PriceType
 
+tax = PriceType('tax',_("tax"),
+    tax=(models.ForeignKey, ('tax.Tax',), {
+        'null': True,
+        'related_name': '+',
+        'editable': False,
+    }))
 
-modules.pricing.types += [PriceType('tax', _("tax"))]
+modules.pricing.types += [tax]

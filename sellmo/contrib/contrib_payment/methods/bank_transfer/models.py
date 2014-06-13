@@ -55,8 +55,6 @@ def finalize_model():
 
         class Meta(modules.bank_transfer.BankTransferPayment.Meta):
             app_label = 'checkout'
-            verbose_name = _("bank transfer payment")
-            verbose_name_plural = _("bank transfers payments")
 
     modules.bank_transfer.BankTransferPayment = BankTransferPayment
 
@@ -65,3 +63,5 @@ class BankTransferPayment(models.Model):
 
     class Meta:
         abstract = True
+        verbose_name = _("bank transfer payment")
+        verbose_name_plural = _("bank transfers payments")

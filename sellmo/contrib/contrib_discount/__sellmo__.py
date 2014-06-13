@@ -28,10 +28,18 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
+from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from sellmo import modules
 from sellmo.api.pricing import PriceType
 
 
-modules.pricing.types += [PriceType('discount', _("discount"))]
+discount = PriceType('discount',_("discount"),
+    discount=(models.ForeignKey, ('discount.Discount',), {
+        'null': True,
+        'related_name': '+',
+        'editable': False,
+    }))
+
+modules.pricing.types += [discount]

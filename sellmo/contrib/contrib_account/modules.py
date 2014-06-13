@@ -30,9 +30,10 @@
 
 import sellmo
 from sellmo import modules
-from sellmo.api.decorators import view, chainable, link
+from sellmo.api.decorators import view, chainable, link, context_processor
 from sellmo.api.exceptions import ViewNotImplemented
 from sellmo.api.configuration import define_import
+from sellmo.api.messaging import FlashMessages
 from sellmo.contrib.contrib_account.models import User
 from sellmo.contrib.contrib_account.forms import (UserChangeForm,
                                                   UserCreationForm)
@@ -66,15 +67,28 @@ class AccountModule(sellmo.Module):
     PasswordResetForm = define_import(
         'PASSWORD_RESET_FORM',
         default='django.contrib.auth.forms.PasswordResetForm')
+        
+    @context_processor()
+    def login_form_context(self, chain, request, context, **kwargs):
+        if 'login_form' not in context:
+            user, form, processed = self.process_login(request=request)
+            context['login_form'] = form
+        return chain.execute(request=request, context=context, **kwargs)
     
     @view(r'^login/$')
-    def login(self, chain, request, context=None, next=None, **kwargs):
+    def login(self, chain, request, context=None, next=None, 
+              invalid='account.login', messages=None, **kwargs):
+                
+        if messages is None:
+            messages = FlashMessages()
+
         if next is None:
             next = settings.LOGIN_REDIRECT_URL
         
         next = request.POST.get(
             'next', request.GET.get('next', next))
-        
+        invalid = request.POST.get(
+            'invalid', request.GET.get('invalid', invalid))
         if context is None:
             context = {}
         
@@ -85,15 +99,21 @@ class AccountModule(sellmo.Module):
         user, form, processed = self.process_login(request=request, data=data)
         context['form'] = form
         
+        redirection = None
         if processed:
             self.login_user(request=request, user=user)
-        redirection = redirect(next)
+            redirection = redirect(next)
+        elif data and invalid != 'account.login':
+            # We don't want to redirect to ourselves
+            redirection = redirect(invalid)
         
         if chain:
             return chain.execute(
                 request, user=user, form=form, processed=processed,
-                context=context, redirection=redirection, **kwargs)
-        elif processed:
+                context=context, next=next, invalid=invalid,
+                redirection=redirection, messages=messages, **kwargs)
+        elif redirection:
+            messages.transmit()
             return redirection
         else:
             raise ViewNotImplemented

@@ -185,8 +185,14 @@ class PricingModule(sellmo.Module):
                             verbose_name, ' ', key.name)
                     else:
                         fargs['verbose_name'] = key.name
-
+                
                 attr_dict[field] = self.construct_pricing_field(**fargs)
+                
+                extra_fields = getattr(key, 'extra_fields', {})
+                for extra_field_name, extra_field in extra_fields.iteritems():
+                    name = '{0}_{1}'.format(field, extra_field_name)
+                    attr_dict[name] = extra_field[0](
+                        *extra_field[1], **extra_field[2])
 
         out = type(name, (model,), attr_dict)
         return out

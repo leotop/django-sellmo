@@ -46,8 +46,6 @@ def finalize_model():
     class User(modules.account.User):
         class Meta:
             app_label = 'account'
-            verbose_name = _('user')
-            verbose_name_plural = _('users')
 
     modules.account.User = User
 
@@ -117,3 +115,5 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     class Meta:
         abstract = True
+        verbose_name = _('user')
+        verbose_name_plural = _('users')

@@ -40,12 +40,11 @@ from sellmo.api.pricing import Price
 from sellmo.utils.tracking import trackable
 
 
-@load(after='finalize_cart_Cart')
 @load(before='finalize_store_Purchase')
 def load_model():
     class Purchase(modules.store.Purchase):
         cart = models.ForeignKey(
-            modules.cart.Cart,
+            'cart.Cart',
             null=True,
             editable=False,
             on_delete=models.SET_NULL,
@@ -77,8 +76,6 @@ def finalize_model():
 
         class Meta(modules.cart.Cart.Meta):
             app_label = 'cart'
-            verbose_name = _("cart")
-            verbose_name_plural = _("carts")
 
     modules.cart.Cart = Cart
 
@@ -184,3 +181,6 @@ class Cart(trackable('sellmo_cart')):
 
     class Meta:
         abstract = True
+        verbose_name = _("cart")
+        verbose_name_plural = _("carts")
+        ordering = ['-pk']

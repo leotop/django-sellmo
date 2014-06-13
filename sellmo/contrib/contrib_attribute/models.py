@@ -45,6 +45,8 @@ from sellmo.contrib.contrib_attribute.helpers import AttributeHelper
 class ValueObject(PolymorphicModel):
     class Meta:
         abstract = True
+        verbose_name = _("value object")
+        verbose_name_plural = _("value objects")
 
 
 @load(action='finalize_attribute_ValueObject')
@@ -53,8 +55,6 @@ def finalize_model():
     class ValueObject(modules.attribute.ValueObject):
         class Meta(modules.attribute.ValueObject.Meta):
             app_label = 'attribute'
-            verbose_name = _("value object")
-            verbose_name_plural = _("value objects")
 
     modules.attribute.ValueObject = ValueObject
     
@@ -77,61 +77,12 @@ def load_model():
     modules.product.Product = Product
 
 
-@load(after='finalize_attribute_Attribute')
-@load(after='finalize_product_Product')
-@load(before='finalize_attribute_Value')
-def load_model():
-
-    class Value(modules.attribute.Value):
-
-        # The attribute to which we belong
-        attribute = models.ForeignKey(
-            modules.attribute.Attribute,
-            db_index=True,
-            verbose_name=_(u"attribute"),
-            related_name='values',
-            on_delete=models.PROTECT
-        )
-
-        # The product to which we apply
-        product = models.ForeignKey(
-            modules.product.Product,
-            db_index=True,
-            related_name='values',
-        )
-
-        class Meta(modules.attribute.Value.Meta):
-            abstract = True
-
-    modules.attribute.Value = Value
-
-@load(after='finalize_attribute_ValueObject')
-def load_model():
-    class Value(modules.attribute.Value):
-        value_object = models.ForeignKey(
-            modules.attribute.ValueObject,
-            null=True,
-            blank=True,
-            db_index=True,
-            on_delete=models.PROTECT,
-            related_name='values'
-        )
-        
-        class Meta(modules.attribute.Value.Meta):
-            abstract = True
-    
-    modules.attribute.Value = Value
-
 @load(action='finalize_attribute_Value')
 def finalize_model():
 
     class Value(modules.attribute.Value):
         class Meta(modules.attribute.Value.Meta):
             app_label = 'attribute'
-            ordering = ['attribute', 'value_string',
-                        'value_int', 'value_float', 'value_object']
-            verbose_name = _("value")
-            verbose_name_plural = _("values")
 
     modules.attribute.Value = Value
 
@@ -183,6 +134,31 @@ class Value(models.Model):
         blank=True,
         default='',
     )
+    
+    value_object = models.ForeignKey(
+        'attribute.ValueObject',
+        null=True,
+        blank=True,
+        db_index=True,
+        on_delete=models.PROTECT,
+        related_name='values'
+    )
+    
+    # E(A)V
+    attribute = models.ForeignKey(
+        'attribute.Attribute',
+        db_index=True,
+        verbose_name=_(u"attribute"),
+        related_name='values',
+        on_delete=models.PROTECT
+    )
+    
+    # (E)AV
+    product = models.ForeignKey(
+        'product.Product',
+        db_index=True,
+        related_name='values',
+    )
 
     def get_value(self):
         field = self.attribute.value_field
@@ -233,6 +209,10 @@ class Value(models.Model):
 
     class Meta:
         abstract = True
+        ordering = ['attribute', 'value_string',
+                    'value_int', 'value_float', 'value_object']
+        verbose_name = _("value")
+        verbose_name_plural = _("values")
     
 
 @load(action='finalize_attribute_Attribute')
@@ -253,9 +233,6 @@ def finalize_model():
         
         class Meta(modules.attribute.Attribute.Meta):
             app_label = 'attribute'
-            ordering = ['sort_order', 'name']
-            verbose_name = _("attribute")
-            verbose_name_plural = _("attributes")
 
     modules.attribute.Attribute = Attribute
 
@@ -385,6 +362,9 @@ class Attribute(models.Model):
 
     class Meta:
         abstract = True
+        ordering = ['sort_order', 'name']
+        verbose_name = _("attribute")
+        verbose_name_plural = _("attributes")
         
         
 @load(after='finalize_product_Product')

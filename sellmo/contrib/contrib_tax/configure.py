@@ -39,24 +39,21 @@ from django.utils.translation import ugettext_lazy as _
 group = _("Taxes")
 
 
-@load(after='finalize_tax_Tax')
-def finalize_model():
+modules.settings.add_setting('payment_costs_tax', models.ForeignKey(
+    'tax.Tax',
+    related_name='+',
+    null=True,
+    blank=True,
+    verbose_name=_("payment costs tax"),
+), group)
 
-    modules.settings.add_setting('payment_costs_tax', models.ForeignKey(
-        modules.tax.Tax,
-        related_name='+',
-        null=True,
-        blank=True,
-        verbose_name=_("payment costs tax"),
-    ), group)
-
-    modules.settings.add_setting('shipping_costs_tax', models.ForeignKey(
-        modules.tax.Tax,
-        related_name='+',
-        null=True,
-        blank=True,
-        verbose_name=_("shipping costs tax"),
-    ), group)
+modules.settings.add_setting('shipping_costs_tax', models.ForeignKey(
+    'tax.Tax',
+    related_name='+',
+    null=True,
+    blank=True,
+    verbose_name=_("shipping costs tax"),
+), group)
 
 
 modules.settings.add_setting('tax_inclusive', models.BooleanField(

@@ -29,6 +29,7 @@
 
 
 from sellmo import modules
+from sellmo.core.local import get_context
 from sellmo.api.decorators import link
 from sellmo.api.pricing import Price
 
@@ -37,24 +38,47 @@ namespace = modules.pricing.namespace
 
 
 @link()
+def retrieve(stampable, prop, price=None, **kwargs):
+    field = '{0}_tax_tax'.format(prop)
+    tax_id = getattr(stampable, '{0}_id'.format(field), None)
+    if tax_id is not None:
+        context = get_context()
+        taxes = context.get('taxes', {})
+        if not tax_id in taxes:
+            # Query now
+            taxes[tax_id] = getattr(stampable, field)
+            context['taxes'] = taxes
+        price.context['tax'] = taxes[tax_id]
+    return {
+        'price': price
+    }
+
+
+@link()
+def stamp(stampable, prop, price, **kwargs):
+    if 'tax' in price.context:
+        field = '{0}_tax_tax'.format(prop)
+        setattr(stampable, field, price.context['tax'])
+
+
+@link()
 def get_price(price, product=None, shipping_method=None, payment_method=None, 
               **kwargs):
-    taxes = []
+    tax = None
     if product:
         try:
             tax = modules.tax.Tax.objects.polymorphic() \
                          .best_for_product(product)
-            taxes.append(tax)
         except modules.tax.Tax.DoesNotExist:
             pass
     elif shipping_method or payment_method:
         settings = modules.settings.get_settings()
         if shipping_method and settings.shipping_costs_tax:
-            taxes = [settings.shipping_costs_tax.downcast()]
+            tax = settings.shipping_costs_tax.downcast()
         elif shipping_method and settings.payment_costs_tax:
-            taxes = [settings.payment_costs_tax.downcast()]
+            tax = settings.payment_costs_tax.downcast()
 
-    for tax in taxes:
+    if tax:
         price = tax.apply(price)
 
     return {

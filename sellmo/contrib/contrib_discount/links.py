@@ -31,11 +31,36 @@
 from django.db.models import Q
 
 from sellmo import modules
+from sellmo.core.local import get_context
 from sellmo.api.decorators import link
 from sellmo.api.pricing import Price
 
 
 namespace = modules.pricing.namespace
+
+
+@link()
+def retrieve(stampable, prop, price=None, **kwargs):
+    field = '{0}_discount_discount'.format(prop)
+    discount_id = getattr(stampable, '{0}_id'.format(field), None)
+    if discount_id is not None:
+        context = get_context()
+        discounts = context.get('discounts', {})
+        if not discount_id in discounts:
+            # Query now
+            discounts[discount_id] = getattr(stampable, field)
+            context['discounts'] = discounts
+        price.context['discount'] = discounts[discount_id]
+    return {
+        'price': price
+    }
+
+
+@link()
+def stamp(stampable, prop, price, **kwargs):
+    if 'discount' in price.context:
+        field = '{0}_discount_discount'.format(prop)
+        setattr(stampable, field, price.context['discount'])
 
 
 @link(namespace=modules.product.namespace, capture=True)
@@ -63,7 +88,7 @@ def make_purchase(request, purchase, **kwargs):
 
 @link()
 def get_price(price, product=None, discount_group=None, **kwargs):
-    discounts = []
+    discount = None
     if product:
         try:
             discount = modules.discount.Discount.objects.polymorphic()
@@ -73,11 +98,10 @@ def get_price(price, product=None, discount_group=None, **kwargs):
                     q |= Q(groups=discount_group)
                 discount = discount.filter(q)
             discount = discount.best_for_product(product)
-            discounts.append(discount)
         except modules.discount.Discount.DoesNotExist:
             pass
 
-    for discount in discounts:
+    if discount:
         price = discount.apply(price)
 
     return {

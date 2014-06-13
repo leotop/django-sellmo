@@ -35,14 +35,14 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 
-@load(after='finalize_attribute_Attribute')
+@load()
 def add_settings():
     if modules.shipping.max_tier_attributes > 0:
         for i in range(modules.shipping.max_tier_attributes):
             modules.settings.add_setting(
                 'shipping_tier_attribute{0}'.format(i + 1),
                 models.ForeignKey(
-                    modules.attribute.Attribute,
+                    'attribute.Attribute',
                     null=True,
                     blank=True,
                     related_name='+',

@@ -44,7 +44,6 @@ from django.utils.translation import ugettext_lazy as _
 from mptt.models import MPTTModel, TreeForeignKey, TreeManager
 
 
-@load(after='finalize_category_Category')
 @load(before='finalize_product_ProductRelatable')
 def load_model():
     class ProductRelatable(modules.product.ProductRelatable):
@@ -53,7 +52,7 @@ def load_model():
             ['categories'])
 
         categories = models.ManyToManyField(
-            modules.category.Category,
+            'category.Category',
             related_name='%(app_label)s_%(class)s_related',
             blank=True,
         )
@@ -106,8 +105,6 @@ def finalize_model():
 
         class Meta(modules.category.Category.Meta):
             app_label = 'category'
-            verbose_name = _("category")
-            verbose_name_plural = _("categories")
 
     # Hookup signals
     post_save.connect(on_cache_invalidation, sender=Category)
@@ -192,7 +189,6 @@ def load_model():
 
 
 @load(before='finalize_product_Product')
-@load(after='finalize_category_Category')
 def load_model():
     class Product(modules.product.Product):
 
@@ -222,7 +218,7 @@ def load_model():
                 self.save()
 
         categories = models.ManyToManyField(
-            modules.category.Category,
+            'category.Category',
             blank=True,
             null=True,
             related_name='products',
@@ -230,7 +226,7 @@ def load_model():
         )
 
         primary_category = models.ForeignKey(
-            modules.category.Category,
+            'category.Category',
             blank=True,
             null=True,
             on_delete=models.SET_NULL,
@@ -366,3 +362,6 @@ class Category(MPTTModel):
 
     class Meta:
         abstract = True
+        verbose_name = _("category")
+        verbose_name_plural = _("categories")
+    

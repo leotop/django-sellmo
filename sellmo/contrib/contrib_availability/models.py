@@ -37,7 +37,6 @@ from sellmo.api.decorators import load
     
 @load(before='finalize_product_Product')
 @load(after='finalize_availability_Backorder')
-@load(after='finalize_availability_Supplier')
 @load(after='finalize_availability_AvailabilityBase')
 def load_model():
     class Product(modules.product.Product,
@@ -45,7 +44,7 @@ def load_model():
                    modules.availability.AvailabilityBase):
         
         supplier = models.ForeignKey(
-            modules.availability.Supplier,
+            'availability.Supplier',
             null=True,
             blank=True,
             verbose_name=_("supplier")
@@ -153,8 +152,6 @@ def finalize_model():
         class Meta(modules.availability.Supplier.Meta,
                    modules.availability.BackorderBase.Meta):
             app_label = 'availability'
-            verbose_name = _("supplier")
-            verbose_name_plural = _("suppliers")
 
     modules.availability.Supplier = Supplier
 
@@ -171,6 +168,8 @@ class Supplier(models.Model):
 
     class Meta:
         abstract = True
+        verbose_name = _("supplier")
+        verbose_name_plural = _("suppliers")
         
         
 class StoreAvailability(models.Model):

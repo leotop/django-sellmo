@@ -53,8 +53,6 @@ def finalize_model():
 
         class Meta(modules.mollie_ideal.MollieIdealPayment.Meta):
             app_label = 'checkout'
-            verbose_name = _("mollie ideal payment")
-            verbose_name_plural = _("mollie ideal payments")
 
     modules.mollie_ideal.MollieIdealPayment = MollieIdealPayment
 
@@ -142,3 +140,5 @@ class MollieIdealPayment(models.Model):
 
     class Meta:
         abstract = True
+        verbose_name = _("mollie ideal payment")
+        verbose_name_plural = _("mollie ideal payments")

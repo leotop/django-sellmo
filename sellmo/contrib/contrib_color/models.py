@@ -87,6 +87,8 @@ class Color(models.Model):
     class Meta:
         abstract = True
         ordering = ['name']
+        verbose_name = _("color")
+        verbose_name_plural = _("colors")
 
 
 @load(action='finalize_color_Color')
@@ -97,8 +99,6 @@ def finalize_model():
         class Meta(modules.color.Color.Meta,
                    modules.attribute.ValueObject.Meta):
             app_label = 'attribute'
-            verbose_name = _("color")
-            verbose_name_plural = _("colors")
 
     modules.color.Color = Color
 
@@ -123,6 +123,11 @@ class MultiColor(models.Model):
         unique=True,
         verbose_name=_("name")
     )
+    
+    colors = models.ManyToManyField(
+        'attribute.Color',
+        verbose_name=_("colors")
+    )
 
     def polymorphic_natural_key(self):
         return (self.name,)
@@ -133,21 +138,8 @@ class MultiColor(models.Model):
     class Meta:
         abstract = True
         ordering = ['name']
-
-
-@load(before='finalize_color_MultiColor')
-@load(after='finalize_color_Color')
-def load_model():
-    class MultiColor(modules.color.MultiColor):
-        colors = models.ManyToManyField(
-            modules.color.Color,
-            verbose_name=_("colors")
-        )
-
-        class Meta(modules.color.MultiColor.Meta):
-            abstract = True
-
-    modules.color.MultiColor = MultiColor
+        verbose_name = _("multicolor")
+        verbose_name_plural = _("multicolors")
 
 
 @load(action='finalize_color_MultiColor')
@@ -158,8 +150,6 @@ def finalize_model():
         class Meta(modules.color.MultiColor.Meta,
                    modules.attribute.ValueObject.Meta):
             app_label = 'attribute'
-            verbose_name = _("multicolor")
-            verbose_name_plural = _("multicolors")
 
     modules.color.MultiColor = MultiColor
     
@@ -252,6 +242,27 @@ class ColorMappingManager(models.Manager):
 class ColorMapping(models.Model):
 
     objects = ColorMappingManager()
+    
+    color = models.ForeignKey(
+        'attribute.Color',
+        db_index=True,
+        editable=False,
+        related_name='+'
+    )
+    
+    product = models.ForeignKey(
+        'product.Product',
+        db_index=True,
+        editable=False,
+        related_name='+',
+    )
+    
+    attribute = models.ForeignKey(
+        'attribute.Attribute',
+        db_index=True,
+        editable=False,
+        related_name='+',
+    )
 
     def __unicode__(self):
         return (
@@ -259,6 +270,9 @@ class ColorMapping(models.Model):
             .format(self.product, self.attribute, self.color))
 
     class Meta:
+        unique_together = ('product', 'attribute', 'color')
+        verbose_name = _("color mapping")
+        verbose_name_plural =_("color mappings")
         abstract = True
 
 
@@ -289,35 +303,9 @@ def listen():
 
 
 @load(action='finalize_color_ColorMapping')
-@load(after='finalize_color_Color')
-@load(after='finalize_attribute_Attribute')
-@load(after='finalize_product_Product')
 def finalize_model():
     class ColorMapping(modules.color.ColorMapping):
-
-        color = models.ForeignKey(
-            modules.color.Color,
-            db_index=True,
-            editable=False,
-            related_name='+'
-        )
-
-        product = models.ForeignKey(
-            modules.product.Product,
-            db_index=True,
-            editable=False,
-            related_name='+',
-        )
-
-        attribute = models.ForeignKey(
-            modules.attribute.Attribute,
-            db_index=True,
-            editable=False,
-            related_name='+',
-        )
-
         class Meta(modules.color.ColorMapping.Meta):
-            unique_together = ('product', 'attribute', 'color')
             app_label = 'color'
 
     modules.color.ColorMapping = ColorMapping
