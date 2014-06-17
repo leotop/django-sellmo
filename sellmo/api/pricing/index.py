@@ -50,7 +50,7 @@ camelize = re.compile(r'(?!^)_([a-zA-Z])')
 
 def _make_indexable(queryset, indexes, through):
     if isinstance(queryset, IndexedQuerySet):
-        raise Exception("This is already an indexed queryset")
+        raise Exception("This is already an indexed queryset.")
     # Decide correct mro
     if issubclass(queryset.__class__, QuerySet):
         # We got a subclass of QuerySet
@@ -134,7 +134,7 @@ class IndexedQuerySet(QuerySet):
     
     def indexes(self, func):
         if self._is_sliced:
-            raise Exception("Cannot alter indexes queryset")
+            raise Exception("Cannot alter the indexes queryset.")
         clone = self._clone()
         clone._indexes = func(clone._indexes)
         return clone
@@ -173,7 +173,7 @@ class PrefetchedPriceIndex(object):
 
     def lookup(self, **kwargs):
         if self.through not in kwargs:
-            raise Exception("through '{0}' not given.".format(self.through))
+            raise Exception("through arg '{0}' not given.".format(self.through))
         return self.indexes[kwargs[self.through].pk].price
 
     def index(self, pk, index):
@@ -259,17 +259,17 @@ class PriceIndex(object):
                   transform=None, default=None, model=None):
         if name in ('through', 'nullable'):
             raise Exception(
-                "Resereved kwarg name '{0}"
+                "Resereved kwarg name '{0}."
                 .format(name))
         if name in self.kwargs:
             raise Exception(
-                "Index '{0}' already has a kwarg '{1}'"
+                "Index '{0}' already has a kwarg named '{1}'."
                 .format(self, name))
         if not field_name:
             field_name = name
         if self._model is not None:
             raise Exception(
-                "Index '{0}' is already build."
+                "Index '{0}' has already been constructed."
                 .format(self))
         if not required and field.null is False:
             raise Exception(

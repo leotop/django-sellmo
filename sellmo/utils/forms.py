@@ -28,6 +28,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
+from django.forms.formsets import BaseFormSet
+
 class FormFactory(object):
 
     def factory(self):
@@ -35,3 +37,18 @@ class FormFactory(object):
 
     def __get__(self, obj, objtype):
         return self.factory()
+
+
+def get_error_message(form_or_formset):
+    if isinstance(form_or_formset, BaseFormSet):
+        forms = list(form_or_formset)
+    else:
+        forms = [form_or_formset]
+    messages = []
+    for form in forms:
+        for error in form.errors.values():
+            message = error.as_text()
+            if message.startswith("* "):
+                message = message.replace("* ", "")
+            messages.append(message)
+    return ", ".join(messages)

@@ -84,7 +84,7 @@ class ProductModule(sellmo.Module):
             product = self.single(
                 request=request).polymorphic().get(slug=product_slug)
         except self.Product.DoesNotExist:
-            raise Http404("""Product '%s' not found.""" % product_slug)
+            raise Http404("Product '{0}' not found.".format(product_slug))
         
         if chain:
             return chain.execute(

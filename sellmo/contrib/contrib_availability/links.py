@@ -31,6 +31,7 @@
 from sellmo import modules
 from sellmo.api.decorators import link
 from sellmo.api.store.exceptions import PurchaseInvalid
+from django.utils.translation import ugettext_lazy as _
 
 
 @link(namespace='store')
@@ -42,7 +43,7 @@ def validate_purchase(purchase, **kwargs):
             target = modules.variation.Variation \
                             .objects.get(pk=purchase.variation_key)
         except modules.variation.Variation.DoesNotExist:
-            raise PurchaseInvalid("Variation is unavailable") 
+            raise PurchaseInvalid(_("Variation is unavailable."))
     
     if target.stock < purchase.qty and not purchase.product.can_backorder():
-        raise PurchaseInvalid("Product is out of stock")
+        raise PurchaseInvalid(_("Product is out of stock."))

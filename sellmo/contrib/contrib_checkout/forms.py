@@ -36,4 +36,5 @@ from sellmo.api.decorators import load
 
 
 class AcceptTermsForm(forms.Form):
-    accept = forms.BooleanField(label=_("I agree to the terms and conditions"))
+    accept = forms.BooleanField(label=_("I agree to the terms and "
+                                        "conditions."))

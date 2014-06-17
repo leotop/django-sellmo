@@ -64,7 +64,7 @@ class TieredShippingMethod(ShippingMethod):
         try:
             costs = self.method.tiers.for_order(order).costs
         except modules.shipping.TieredShippingTier.DoesNotExist:
-            raise Exception(_("Cannot get shipping costs for this order"))
+            raise Exception(_("Cannot get shipping costs for this order."))
 
         if self.carrier:
             costs += self.carrier.extra_costs

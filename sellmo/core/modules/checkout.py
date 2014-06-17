@@ -33,8 +33,9 @@ from django.http import Http404
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ImproperlyConfigured
 from django.shortcuts import redirect
-from django.utils.decorators import method_decorator
 from django.db import models, transaction
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext_lazy as _
 
 import sellmo
 from sellmo import modules
@@ -220,7 +221,7 @@ class CheckoutModule(sellmo.Module):
 
         # Now make sure this order has some actual purchases
         if not order:
-            raise Http404("Nothing to order")
+            raise Http404("Nothing to order.")
 
         if process is None:
             process = self.get_checkout_process(request=request, order=order)
@@ -297,7 +298,7 @@ class CheckoutModule(sellmo.Module):
         # Retrieve order from session data
         order = self.get_completed_order(request=request)
         if order is None:
-            raise Http404("No order has been checked out")
+            raise Http404("No order has been checked out.")
 
         # Append to context
         context['order'] = order
@@ -325,10 +326,10 @@ class CheckoutModule(sellmo.Module):
 
         #
         if not order:
-            raise Http404("No order to cancel")
+            raise Http404("No order to cancel.")
 
         if not order.may_cancel:
-            raise Http404("Cannot cancel this order")
+            raise Http404("This order may not be cancelled.")
 
         #
         if data and 'cancel_order' in data:

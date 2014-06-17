@@ -30,6 +30,7 @@
 
 from django.db import models
 from django.db.models.query import QuerySet
+from django.utils.translation import ugettext_lazy as _
 
 import sellmo
 from sellmo import modules
@@ -54,7 +55,7 @@ class StoreModule(sellmo.Module):
 
         for existing in existing_purchases:
             if not existing.pk:
-                raise Exception("Can only merge persistent existing purchases")
+                raise Exception("Can only merge persistent existing purchases.")
 
         purchase = purchase.downcast()
         manager = purchase.__class__.objects
@@ -114,7 +115,7 @@ class StoreModule(sellmo.Module):
     def validate_purchase(self, chain, request, purchase, **kwargs):
         
         if purchase.qty > self.qty_limit:
-            raise PurchaseInvalid("Qty over limit")
+            raise PurchaseInvalid(_("Qty over limit."))
             
         if chain:
             chain.execute(request=request, purchase=purchase, **kwargs)

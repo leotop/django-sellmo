@@ -266,7 +266,7 @@ class VariantAttributeFormMixin(object):
         # Enforce at least one variated value
         if not values:
             raise ValidationError(
-                _("A variant requires at least one variated attribute"))
+                _("A variant requires at least one variated attribute."))
 
         # Generate slug if needed
         if cleaned_data.has_key('slug'):

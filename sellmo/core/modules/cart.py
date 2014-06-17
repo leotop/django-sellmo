@@ -37,6 +37,8 @@ from django.views.decorators.http import require_POST
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.module_loading import import_by_path
+from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext
 
 import sellmo
 from sellmo import modules
@@ -47,6 +49,7 @@ from sellmo.api.cart.models import Cart
 from sellmo.api.cart.forms import AddToCartForm, EditPurchaseForm
 from sellmo.api.store.exceptions import PurchaseInvalid
 from sellmo.api.messaging import FlashMessages
+from sellmo.utils.forms import get_error_message
 
 
 class CartModule(sellmo.Module):
@@ -179,9 +182,9 @@ class CartModule(sellmo.Module):
         # Purchase args should always contain
         # 'product', 'qty'
         if not args.has_key('product'):
-            raise Exception("Purchase arg 'product' was not given")
+            raise Exception("Purchase arg 'product' was not given.")
         if not args.has_key('qty'):
-            raise Exception("Purchase arg 'qty' was not given")
+            raise Exception("Purchase arg 'qty' was not given.")
 
         return args
 
@@ -218,7 +221,8 @@ class CartModule(sellmo.Module):
             self.remove_purchase(request=request, purchase=purchase, cart=cart)
         
         if removals:
-            messages.warning(request, "This cart has changed")
+            messages.warning(request, _("Your cart has been changed, one or "
+                                      "more items are no longer valid."))
         
         if chain:
             out = chain.execute(cart=cart, request=request, messages=messages,
@@ -288,10 +292,17 @@ class CartModule(sellmo.Module):
                         request=request, **purchase_args)
                     self.update_purchase(
                         request=request, purchase=purchase, cart=cart)
+                    messages.success(request, _("Your cart has been "
+                                                "updated."))
                 except PurchaseInvalid as error:
+                    messages.error(request, _("Your cart could not be "
+                                              "updated."))
                     messages.error(request, error)
                     redirection = redirect(invalid)
             else:
+                messages.error(request, _("Your cart could not be "
+                                          "updated."))
+                messages.error(request, get_error_message(form))
                 redirection = redirect(invalid)
         
         if chain:
@@ -350,6 +361,9 @@ class CartModule(sellmo.Module):
                         purchase = modules.store.make_purchase(
                             request=request, **purchase_args)
                     except PurchaseInvalid as error:
+                        messages.error(request, _("{0} could not be added to "
+                                                  "your cart.")
+                                                  .format(product))
                         messages.error(request, error)
                         redirection = redirect(invalid)
                         # We will redirect to invalid, but keep on adding
@@ -359,6 +373,8 @@ class CartModule(sellmo.Module):
                     purchases.append(purchase)
                     
             else:
+                messages.error(request, _("Your cart could not be updated."))
+                messages.error(request, get_error_message(formset))
                 redirection = redirect(invalid)
 
         # Get the cart
@@ -370,7 +386,13 @@ class CartModule(sellmo.Module):
                 try:
                     self.add_purchase(
                         request=request, purchase=purchase, cart=cart)
+                    messages.success(request, _("{0} has been added to your "
+                                              "cart.")
+                                              .format(purchase.product))
                 except PurchaseInvalid as error:
+                    messages.error(request, _("{0} could not be added to "
+                                              "your cart.")
+                                              .format(purchase.product))
                     messages.error(request, error)
                     redirection = redirect(invalid)
 
