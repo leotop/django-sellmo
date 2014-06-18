@@ -52,7 +52,7 @@ class InformationStep(CheckoutStep):
         for type in modules.customer.address_types:
             if self.order.get_address(type) is None:
                 return False
-        if self.order.needs_shipping and self.order.shipment is None:
+        if self.order.needs_shipping() and self.order.shipment is None:
             return False
         return True
 
@@ -64,7 +64,7 @@ class InformationStep(CheckoutStep):
         next_step = modules.checkout.get_checkout_step(
             key='payment_method', order=self.order,
             request=self.request, step=step)
-        if self.order.needs_shipping:
+        if self.order.needs_shipping():
             return self.order.shipment.get_method().process(
                 request=self.request, order=self.order,
                 next_step=next_step)
@@ -81,7 +81,7 @@ class InformationStep(CheckoutStep):
         context['contactable_form'] = form
         success &= processed
 
-        if self.order.needs_shipping:
+        if self.order.needs_shipping():
             method, form, processed = modules.checkout.process_shipping_method(
                 request=request, order=self.order,
                 prefix='shipping_method', data=data)

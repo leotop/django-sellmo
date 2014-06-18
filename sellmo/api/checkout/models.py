@@ -265,23 +265,16 @@ class Order(trackable('sellmo_order')):
     def set_address(self, type, value):
         self.ensure_state(ORDER_NEW)
         setattr(self, '{0}_address'.format(type), value)
-
-    #
-
+    
     def proxy(self, purchases):
         self._proxy = purchases
-
-    #
-
-    @property
+    
     def needs_shipping(self):
         for purchase in self:
             if getattr(purchase.product.downcast(), 'needs_shipping', True):
                 return True
         return False
-
-    #
-
+    
     def add(self, purchase, save=True, calculate=True):
         self.ensure_state(ORDER_NEW)
         if self.pk is None:

@@ -60,25 +60,11 @@ def load_model():
             verbose_name=_("supplier")
         )
         
-        @property
-        def min_backorder_delay(self):
-            a = super(Product, self).min_backorder_delay
+        def get_min_backorder_delay(self):
+            a = super(Product, self).get_min_backorder_delay()
             b = None
             if self.supplier:
-                b = self.supplier.min_backorder_delay
-            if a and b:
-                return a if a > b else b
-            elif a:
-                return a
-            elif b:
-                return b
-                
-        @property
-        def max_backorder_delay(self):
-            a = super(Product, self).max_backorder_delay
-            b = None
-            if self.supplier:
-                b = self.supplier.max_backorder_delay
+                b = self.supplier.get_min_backorder_delay()
             if a and b:
                 return a if a > b else b
             elif a:
@@ -86,12 +72,23 @@ def load_model():
             elif b:
                 return b
         
-        @property
+        def get_max_backorder_delay(self):
+            a = super(Product, self).get_max_backorder_delay()
+            b = None
+            if self.supplier:
+                b = self.supplier.get_max_backorder_delay()
+            if a and b:
+                return a if a > b else b
+            elif a:
+                return a
+            elif b:
+                return b
+        
         def can_backorder(self):
             settings = modules.settings.get_settings()
             supplier_can_backorder = None
             if self.supplier is not None:
-                supplier_can_backorder = self.supplier.can_backorder
+                supplier_can_backorder = self.supplier.can_backorder()
             return (self.allow_backorders is True or 
                     supplier_can_backorder or
                     settings.allow_backorders and 
@@ -110,9 +107,9 @@ def load_model():
             max_delay = timedelta()
             
             # Apply any backorder delay
-            if stock == 0 and self.can_backorder:
-                min_delay += self.min_backorder_delay
-                max_delay += self.max_backorder_delay
+            if stock == 0 and self.can_backorder():
+                min_delay += self.get_min_backorder_delay()
+                max_delay += self.get_max_backorder_delay()
             elif stock == 0:
                 return None
             
@@ -198,15 +195,12 @@ class BackorderBase(models.Model):
         verbose_name=_("maximum backorder time")
     )
     
-    @property
-    def min_backorder_delay(self):
+    def get_min_backorder_delay(self):
         return _get_timedelta(self.min_backorder_time)
-        
-    @property
-    def max_backorder_delay(self):
+    
+    def get_max_backorder_delay(self):
         return _get_timedelta(self.max_backorder_time)
     
-    @property
     def can_backorder(self):
         settings = modules.settings.get_settings()
         return (self.allow_backorders is True or 

@@ -317,16 +317,16 @@ class Category(MPTTModel):
             "Inactive categories will be hidden from the site."
         )
     )
-
-    @property
-    def descendants(self):
+    
+    def get_descendants(self, *args, **kwargs):
         qs = modules.category.Category.objects.get_query_set()
-        return self.get_descendants()._clone(klass=qs.__class__)
-
-    @property
-    def ancestors(self):
+        return super(Category, self).get_descendants(*args, **kwargs) \
+                                    ._clone(klass=qs.__class__)
+    
+    def get_ancestors(self, *args, **kwargs):
         qs = modules.category.Category.objects.get_query_set()
-        return self.get_ancestors()._clone(klass=qs.__class__)
+        return super(Category, self).get_ancestors(*args, **kwargs) \
+                                    ._clone(klass=qs.__class__)
 
     def get_full_name(self, ancestors=None):
         if ancestors is None:

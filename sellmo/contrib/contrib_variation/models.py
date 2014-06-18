@@ -134,27 +134,24 @@ def load_model():
     for subtype in modules.variation.product_subtypes:
         class Product(ModelMixin):
             model = subtype
-
-            @property
-            def grouped_by(self):
+            
+            def get_grouped_by(self):
                 try:
                     return modules.attribute.Attribute.objects \
                                   .which_variate(self).get(groups=True)
                 except modules.attribute.Attribute.DoesNotExist:
                     return None
-
-            @property
-            def grouped_choices(self):
-                group = self.grouped_by
+            
+            def get_grouped_choices(self):
+                group = self.get_grouped_by()
                 if group:
                     return modules.attribute.Value.objects \
                                   .which_variate(self) \
                                   .for_attribute(group, distinct=True)
                 else:
                     return None
-
-            @property
-            def variated_by(self):
+            
+            def get_variated_by(self):
                 return modules.attribute.Attribute.objects.which_variate(self)
 
             def get_variations(self, invalidated=False):
@@ -165,10 +162,6 @@ def load_model():
                                   .filter(variant=self)
                 return modules.variation.Variation.objects \
                               .for_product(self, invalidated=invalidated)
-
-            @property
-            def variations(self):
-                return self.get_variations()
 
 
 @load(action='load_variants')
