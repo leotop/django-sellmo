@@ -108,8 +108,8 @@ def finalize_model():
         def get_by_natural_key(self, name):
             return self.get(name=name)
 
-        def get_query_set(self):
-            return TaxQuerySet(self.model)
+        def get_queryset(self):
+            return TaxQuerySet(self.model, using=self._db)
 
     class Tax(modules.tax.Tax, modules.product.ProductRelatable):
 

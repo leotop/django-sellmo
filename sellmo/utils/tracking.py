@@ -31,6 +31,7 @@
 import types
 
 from django.db import models
+from django.db.models.query import QuerySet
 
 
 class UntrackableError(Exception):
@@ -38,10 +39,12 @@ class UntrackableError(Exception):
 
 
 def trackable(session_key):
-
+    manager = TrackingManager()
+    manager._session_key = session_key
+    
     class TrackableModel(models.Model):
 
-        objects = TrackingManager(session_key)
+        objects = manager
 
         def track(self, request):
             if self.pk is None:
@@ -55,26 +58,39 @@ def trackable(session_key):
             abstract = True
 
     return TrackableModel
-
-
-class TrackingManager(models.Manager):
-
-    def __init__(self, session_key=None, *args, **kwargs):
-        self._session_key = session_key
-        super(TrackingManager, self).__init__(*args, **kwargs)
-
-    def exists(self, request):
-        return request.session.get(self._session_key, False) != False
-
-    def existing(self, request):
-        try:
-            obj = self.get(pk=request.session.get(self._session_key))
-        except self.model.DoesNotExist:
-            obj = self.model()
-        return obj
-
-    def from_request(self, request):
-        if self.exists(request):
-            return self.existing(request)
+    
+    
+class TrackingBase(object):
+    
+    _session_key = None
+    
+    def is_tracked(self, request):
+        return self._get_session_key() in request.session
+    
+    def _get_session_key(self):
+        if self._session_key is None:
+            raise Exception("Session related operations cannot be performed")
+        return self._session_key
+    
+class TrackingQuerySet(TrackingBase, QuerySet):
+    
+    def try_get_tracked(self, request):
+        if self.is_tracked(request):
+            return self.get(pk=request.session.get(self._get_session_key()))
         else:
             return self.model()
+            
+    def _clone(self, *args, **kwargs):
+        clone = super(TrackingQuerySet, self)._clone(*args, **kwargs)
+        clone._session_key = self._session_key
+        return clone
+
+class TrackingManager(TrackingBase, models.Manager):
+    
+    def try_get_tracked(self, *args, **kwargs):
+        return self.get_queryset().try_get_tracked(*args, **kwargs)
+    
+    def get_queryset(self):
+        qs = TrackingQuerySet(self.model, using=self._db)
+        qs._session_key = self._session_key
+        return qs

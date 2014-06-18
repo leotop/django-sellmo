@@ -156,10 +156,10 @@ class TieredShippingTierQuerySet(QuerySet):
 class TieredShippingTierManager(models.Manager):
 
     def for_order(self, *args, **kwargs):
-        return self.get_query_set().for_order(*args, **kwargs)
+        return self.get_queryset().for_order(*args, **kwargs)
 
-    def get_query_set(self):
-        return TieredShippingTierQuerySet(self.model)
+    def get_queryset(self):
+        return TieredShippingTierQuerySet(self.model, using=self._db)
         
 
 class TieredShippingTier(models.Model):

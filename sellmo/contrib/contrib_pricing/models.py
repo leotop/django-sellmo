@@ -56,11 +56,11 @@ class QtyPriceQuerySet(QuerySet):
 
 class QtyPriceManager(models.Manager):
 
-    def get_query_set(self):
-        return QtyPriceQuerySet(self.model)
+    def get_queryset(self):
+        return QtyPriceQuerySet(self.model, using=self._db)
 
     def for_qty(self, *args, **kwargs):
-        return self.get_query_set().for_qty(*args, **kwargs)
+        return self.get_queryset().for_qty(*args, **kwargs)
 
 
 @load(action='finalize_qty_pricing_QtyPriceBase')

@@ -458,10 +458,10 @@ class CheckoutModule(sellmo.Module):
     @chainable()
     def get_order(self, chain, request=None, order=None, **kwargs):
         if order is None:
-            order = self.Order.objects.from_request(request)
+            order = self.Order.objects.try_get_tracked(request)
             if not order.is_new and not order.is_pending:
                 order.untrack(request)
-                order = self.Order.objects.from_request(request)
+                order = self.Order.objects.try_get_tracked(request)
         if chain:
             out = chain.execute(request=request, order=order, **kwargs)
             order = out.get('order', order)

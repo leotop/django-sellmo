@@ -190,14 +190,14 @@ class PolymorphicManager(models.Manager):
         return content_type.model_class().objects \
                            .get_by_polymorphic_natural_key(*key)
 
-    def get_query_set(self):
-        qs = self._cls(self.model)
+    def get_queryset(self):
+        qs = self._cls(self.model, using=self._db)
         if self._downcast:
             qs = qs.polymorphic()
         return qs
 
     def polymorphic(self, *args, **kwargs):
-        return self.get_query_set().polymorphic(*args, **kwargs)
+        return self.get_queryset().polymorphic(*args, **kwargs)
 
 
 class PolymorphicModel(models.Model):

@@ -105,14 +105,14 @@ class ValueManager(models.Manager):
             product=modules.product.Product.get_by_natural_key(*product)
         )
 
-    def get_query_set(self):
-        return ValueQuerySet(self.model)
+    def get_queryset(self):
+        return ValueQuerySet(self.model, using=self._db)
 
     def for_product(self, *args, **kwargs):
-        return self.get_query_set().for_product(*args, **kwargs)
+        return self.get_queryset().for_product(*args, **kwargs)
 
     def for_attribute(self, *args, **kwargs):
-        return self.get_query_set().for_attribute(*args, **kwargs)
+        return self.get_queryset().for_attribute(*args, **kwargs)
 
 
 class Value(models.Model):
@@ -248,11 +248,11 @@ class AttributeManager(models.Manager):
     def get_by_natural_key(self, key):
         return self.get(key=key)
 
-    def get_query_set(self):
-        return AttributeQuerySet(self.model)
+    def get_queryset(self):
+        return AttributeQuerySet(self.model, using=self._db)
 
     def for_product(self, *args, **kwargs):
-        return self.get_query_set().for_product(*args, **kwargs)
+        return self.get_queryset().for_product(*args, **kwargs)
 
 
 class Attribute(models.Model):
@@ -370,7 +370,7 @@ class Attribute(models.Model):
 @load(after='finalize_product_Product')
 def load_manager():
 
-    qs = modules.product.Product.objects.get_query_set()
+    qs = modules.product.Product.objects.get_queryset()
 
     class ProductQuerySet(qs.__class__):
         
@@ -452,8 +452,8 @@ def load_manager():
 
     class ProductManager(modules.product.Product.objects.__class__):
         
-        def get_query_set(self):
-            return ProductQuerySet(self.model)
+        def get_queryset(self):
+            return ProductQuerySet(self.model, using=self._db)
 
     class Product(ModelMixin):
         model = modules.product.Product

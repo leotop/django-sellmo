@@ -125,8 +125,8 @@ def finalize_model():
         def get_by_natural_key(self, name):
             return self.get(name=name)
 
-        def get_query_set(self):
-            return DiscountQuerySet(self.model)
+        def get_queryset(self):
+            return DiscountQuerySet(self.model, using=self._db)
 
     class Discount(modules.discount.Discount, modules.product.ProductRelatable):
 

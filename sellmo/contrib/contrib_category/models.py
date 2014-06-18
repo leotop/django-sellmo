@@ -116,7 +116,7 @@ def finalize_model():
 @load(after='finalize_product_Product')
 def load_manager():
 
-    qs = modules.product.Product.objects.get_query_set()
+    qs = modules.product.Product.objects.get_queryset()
 
     class ProductQuerySet(qs.__class__):
 
@@ -130,10 +130,10 @@ def load_manager():
     class ProductManager(modules.product.Product.objects.__class__):
 
         def in_category(self, *args, **kwargs):
-            return self.get_query_set().in_category(*args, **kwargs)
+            return self.get_queryset().in_category(*args, **kwargs)
 
-        def get_query_set(self):
-            return ProductQuerySet(self.model)
+        def get_queryset(self):
+            return ProductQuerySet(self.model, using=self._db)
 
     class Product(ModelMixin):
         model = modules.product.Product
@@ -148,7 +148,7 @@ def load_manager():
 def load_manager():
     if getattr(params, 'dumpdata', False):
         # Override manager with specialized dumpdata manager
-        qs = modules.category.Category.objects.get_query_set()
+        qs = modules.category.Category.objects.get_queryset()
 
         class CategoryQuerySet(qs.__class__):
 
@@ -158,8 +158,8 @@ def load_manager():
 
         class CategoryManager(modules.category.Category.objects.__class__):
 
-            def get_query_set(self):
-                return CategoryQuerySet(self.model)
+            def get_queryset(self):
+                return CategoryQuerySet(self.model, using=self._db)
 
         class Category(ModelMixin):
             model = modules.category.Category
@@ -266,13 +266,13 @@ class CategoryManager(TreeManager):
         return category
 
     def in_parent(self, *args, **kwargs):
-        return self.get_query_set().in_parent(*args, **kwargs)
+        return self.get_queryset().in_parent(*args, **kwargs)
 
     def active(self, *args, **kwargs):
-        return self.get_query_set().active(*args, **kwargs)
+        return self.get_queryset().active(*args, **kwargs)
 
-    def get_query_set(self):
-        return CategoryQuerySet(self.model)
+    def get_queryset(self):
+        return CategoryQuerySet(self.model, using=self._db)
 
 
 class Category(MPTTModel):
@@ -319,12 +319,12 @@ class Category(MPTTModel):
     )
     
     def get_descendants(self, *args, **kwargs):
-        qs = modules.category.Category.objects.get_query_set()
+        qs = modules.category.Category.objects.get_queryset()
         return super(Category, self).get_descendants(*args, **kwargs) \
                                     ._clone(klass=qs.__class__)
     
     def get_ancestors(self, *args, **kwargs):
-        qs = modules.category.Category.objects.get_query_set()
+        qs = modules.category.Category.objects.get_queryset()
         return super(Category, self).get_ancestors(*args, **kwargs) \
                                     ._clone(klass=qs.__class__)
 

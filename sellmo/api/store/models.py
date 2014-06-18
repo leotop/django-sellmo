@@ -72,11 +72,11 @@ class PurchaseQuerySet(PolymorphicQuerySet):
 
 class PurchaseManager(PolymorphicManager):
 
-    def get_query_set(self):
-        return PurchaseQuerySet(self.model)
+    def get_queryset(self):
+        return PurchaseQuerySet(self.model, using=self._db)
 
     def mergeable_with(self, *args, **kwargs):
-        return self.get_query_set().mergeable_with(*args, **kwargs)
+        return self.get_queryset().mergeable_with(*args, **kwargs)
 
 
 class Purchase(PolymorphicModel, Cloneable):

@@ -83,7 +83,7 @@ class ProductManager(PolymorphicManager):
         super(ProductManager, self).__init__(cls=cls, **kwargs)
 
     def for_relatable(self, *args, **kwargs):
-        return self.get_query_set().for_relatable(*args, **kwargs)
+        return self.get_queryset().for_relatable(*args, **kwargs)
 
     def get_by_polymorphic_natural_key(self, slug):
         return self.get(slug=slug)
@@ -145,13 +145,13 @@ class ProductRelatableQuerySet(QuerySet):
 class ProductRelatableManager(models.Manager):
 
     def for_product(self, *args, **kwargs):
-        return self.get_query_set().for_product(*args, **kwargs)
+        return self.get_queryset().for_product(*args, **kwargs)
 
     def best_for_product(self, *args, **kwargs):
-        return self.get_query_set().best_for_product(*args, **kwargs)
+        return self.get_queryset().best_for_product(*args, **kwargs)
 
-    def get_query_set(self):
-        return ProductRelatableQuerySet(self.model)
+    def get_queryset(self):
+        return ProductRelatableQuerySet(self.model, using=self._db)
 
 
 class ProductRelatable(models.Model):
@@ -164,7 +164,7 @@ class ProductRelatable(models.Model):
     )
 
     def get_related_products(self):
-        products = modules.product.Product.objects.get_query_set()
+        products = modules.product.Product.objects.get_queryset()
         if self.all_products:
             return products.all()
         else:

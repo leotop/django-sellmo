@@ -186,14 +186,14 @@ class ColorMappingQuerySet(QuerySet):
 
 class ColorMappingManager(models.Manager):
 
-    def get_query_set(self):
-        return ColorMappingQuerySet(self.model)
+    def get_queryset(self):
+        return ColorMappingQuerySet(self.model, using=self._db)
 
     def for_product(self, *args, **kwargs):
-        return self.get_query_set().for_product(*args, **kwargs)
+        return self.get_queryset().for_product(*args, **kwargs)
 
     def for_attribute(self, *args, **kwargs):
-        return self.get_query_set().for_attribute(*args, **kwargs)
+        return self.get_queryset().for_attribute(*args, **kwargs)
 
     def map_or_unmap(self, value, ignore_value=False):
         color = value.value

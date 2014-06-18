@@ -93,7 +93,7 @@ def load_model():
 @load(after='finalize_product_Product')
 def load_manager():
 
-    qs = modules.product.Product.objects.get_query_set()
+    qs = modules.product.Product.objects.get_queryset()
 
     class ProductQuerySet(qs.__class__):
         
@@ -115,11 +115,11 @@ def load_manager():
 
     class ProductManager(modules.product.Product.objects.__class__):
 
-        def get_query_set(self):
-            return ProductQuerySet(self.model)
+        def get_queryset(self):
+            return ProductQuerySet(self.model, using=self._db)
 
         def variants(self, *args, **kwargs):
-            return self.get_query_set().variants(*args, **kwargs)
+            return self.get_queryset().variants(*args, **kwargs)
 
     class Product(ModelMixin):
         model = modules.product.Product
@@ -258,7 +258,7 @@ def listen():
 @load(after='finalize_attribute_Attribute')
 def load_manager():
 
-    qs = modules.attribute.Attribute.objects.get_query_set()
+    qs = modules.attribute.Attribute.objects.get_queryset()
 
     class AttributeQuerySet(qs.__class__):
 
@@ -275,15 +275,15 @@ def load_manager():
 
     class AttributeManager(modules.attribute.Attribute.objects.__class__):
 
-        def get_query_set(self):
-            return AttributeQuerySet(self.model)
+        def get_queryset(self):
+            return AttributeQuerySet(self.model, using=self._db)
 
         def for_product_or_variants_of(self, *args, **kwargs):
-            return self.get_query_set() \
+            return self.get_queryset() \
                        .for_product_or_variants_of(*args, **kwargs)
 
         def which_variate(self, *args, **kwargs):
-            return self.get_query_set().which_variate(*args, **kwargs)
+            return self.get_queryset().which_variate(*args, **kwargs)
 
     class Attribute(ModelMixin):
         model = modules.attribute.Attribute
@@ -329,7 +329,7 @@ def load_model():
 @load(after='finalize_attribute_Value')
 def load_manager():
 
-    qs = modules.attribute.Value.objects.get_query_set()
+    qs = modules.attribute.Value.objects.get_queryset()
 
     class ValueQuerySet(qs.__class__):
 
@@ -364,15 +364,15 @@ def load_manager():
 
     class ValueManager(modules.attribute.Value.objects.__class__):
 
-        def get_query_set(self):
-            return ValueQuerySet(self.model)
+        def get_queryset(self):
+            return ValueQuerySet(self.model, using=self._db)
 
         def for_product_or_variants_of(self, *args, **kwargs):
-            return self.get_query_set() \
+            return self.get_queryset() \
                        .for_product_or_variants_of(*args, **kwargs)
 
         def which_variate(self, *args, **kwargs):
-            return self.get_query_set().which_variate(*args, **kwargs)
+            return self.get_queryset().which_variate(*args, **kwargs)
 
     class Value(ModelMixin):
         model = modules.attribute.Value
@@ -657,8 +657,8 @@ class VariationManager(models.Manager):
                     product.variations_invalidated = True
                     variations_invalidated.send(self, product=product)
 
-    def get_query_set(self):
-        return VariationQuerySet(self.model)
+    def get_queryset(self):
+        return VariationQuerySet(self.model, using=self._db)
 
     def for_product(self, product, invalidated=False):
         product = product.downcast()
@@ -676,12 +676,12 @@ class VariationManager(models.Manager):
             build()
         
         # Get variations
-        variations = self.get_query_set().for_product(product)
+        variations = self.get_queryset().for_product(product)
 
         if not invalidated and variations.count() == 0:
             # No variations, build
             build()
-            variations = self.get_query_set().for_product(product)
+            variations = self.get_queryset().for_product(product)
 
         return variations
 
@@ -845,7 +845,7 @@ class VariationPurchase(models.Model):
 @load(action='finalize_variation_VariationPurchase')
 def finalize_model():
 
-    qs = modules.store.Purchase.objects.get_query_set()
+    qs = modules.store.Purchase.objects.get_queryset()
 
     class VariationPurchaseQuerySet(qs.__class__):
 
@@ -855,8 +855,8 @@ def finalize_model():
 
     class VariationPurchaseManager(modules.store.Purchase.objects.__class__):
 
-        def get_query_set(self):
-            return VariationPurchaseQuerySet(self.model)
+        def get_queryset(self):
+            return VariationPurchaseQuerySet(self.model, using=self._db)
 
     class VariationPurchase(
             modules.variation.VariationPurchase,

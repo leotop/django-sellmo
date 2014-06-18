@@ -55,10 +55,10 @@ class PriceIndexQuerySet(QuerySet):
 class PriceIndexManager(models.Manager):
 
     def invalidate(self, *args, **kwargs):
-        return self.get_query_set().all().invalidate(*args, **kwargs)
+        return self.get_queryset().all().invalidate(*args, **kwargs)
 
-    def get_query_set(self):
-        return PriceIndexQuerySet(self.model)
+    def get_queryset(self):
+        return PriceIndexQuerySet(self.model, using=self._db)
 
 
 class PriceIndexBase(models.Model):
