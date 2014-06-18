@@ -48,7 +48,13 @@ class CheckoutModule(modules.checkout):
         
     invoice_writer = define_import(
         'INVOICE_WRITER',
-        default='sellmo.contrib.contrib_checkout.reporting.InvoiceWriter')
+        default='sellmo.contrib.contrib_checkout.reporting' \
+                '.InvoiceWriter')
+        
+    order_confirmation_writer = define_import(
+        'ORDER_CONFIRMATION_WRITER',
+        default='sellmo.contrib.contrib_checkout.reporting' \
+                '.OrderConfirmationWriter')
     
     notification_to_email = define_setting(
         'NOTIFICATION_TO_EMAIL',
@@ -59,8 +65,8 @@ class CheckoutModule(modules.checkout):
         default=ORDER_MAILS)
         
     @chainable()
-    def render_order_confirmation(self, chain, format, order, data=None,
-                                  **kwargs):
+    def render_order_confirmation_email(self, chain, format, order, data=None,
+                                        **kwargs):
         if chain:
             out = chain.execute(
                 format=format, order=order, data=data, **kwargs)
@@ -68,8 +74,8 @@ class CheckoutModule(modules.checkout):
         return data
 
     @chainable()
-    def render_order_notification(self, chain, format, order, data=None,
-                                  **kwargs):
+    def render_order_notification_email(self, chain, format, order, data=None,
+                                        **kwargs):
         if chain:
             out = chain.execute(
                 format=format, order=order, data=data, **kwargs)
@@ -77,8 +83,8 @@ class CheckoutModule(modules.checkout):
         return data
 
     @chainable()
-    def render_shipping_notification(self, chain, format, order, data=None,
-                                     **kwargs):
+    def render_shipping_notification_email(self, chain, format, order, 
+                                           data=None, **kwargs):
         if chain:
             out = chain.execute(
                 format=format, order=order, data=data, **kwargs)
@@ -86,10 +92,21 @@ class CheckoutModule(modules.checkout):
         return data
         
     @chainable()
-    def render_invoice(self, chain, order, internal=False, data=None,
-                       **kwargs):
+    def render_invoice_report(self, chain, order, internal=False, data=None,
+                              **kwargs):
         if chain:
             out = chain.execute(
                 order=order, internal=internal, data=data, **kwargs)
             data = out.get('data', data)
         return data
+        
+    @chainable()
+    def render_order_confirmation_report(self, chain, order, internal=False,
+                                         data=None, **kwargs):
+        if chain:
+            out = chain.execute(
+                order=order, internal=internal, data=data, **kwargs)
+            data = out.get('data', data)
+        return data
+        
+        

@@ -510,7 +510,7 @@ msgstr "Order notificatie"
 
 #: contrib/contrib_checkout/mailing.py:177
 msgid "Shipping notification"
-msgstr "Verzend notificatie"
+msgstr "Verzendbevestiging"
 
 #: contrib/contrib_checkout/models.py:63
 msgid "order mail"

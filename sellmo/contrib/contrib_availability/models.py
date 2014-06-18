@@ -27,12 +27,22 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from datetime import timedelta, datetime
 
 from django.db import models
+from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 
 from sellmo import modules
 from sellmo.api.decorators import load
+
+
+def _get_timedelta(value):
+    if value is not None:
+        return timedelta(**{
+            modules.availability.time_defined_in: value
+        })
+    return timedelta()
     
     
 @load(before='finalize_product_Product')
@@ -50,25 +60,89 @@ def load_model():
             verbose_name=_("supplier")
         )
         
+        @property
+        def min_backorder_delay(self):
+            a = super(Product, self).min_backorder_delay
+            b = None
+            if self.supplier:
+                b = self.supplier.min_backorder_delay
+            if a and b:
+                return a if a > b else b
+            elif a:
+                return a
+            elif b:
+                return b
+                
+        @property
+        def max_backorder_delay(self):
+            a = super(Product, self).max_backorder_delay
+            b = None
+            if self.supplier:
+                b = self.supplier.max_backorder_delay
+            if a and b:
+                return a if a > b else b
+            elif a:
+                return a
+            elif b:
+                return b
+        
+        @property
         def can_backorder(self):
             settings = modules.settings.get_settings()
             supplier_can_backorder = None
             if self.supplier is not None:
-                supplier_can_backorder = self.supplier.can_backorder()
+                supplier_can_backorder = self.supplier.can_backorder
             return (self.allow_backorders is True or 
                     supplier_can_backorder or
                     settings.allow_backorders and 
                     self.allow_backorders is not False and
                     supplier_can_backorder is not False)
-                    
-        def ships_in(self):
+        
+        def get_shipping_delay(self, stock=None, now=None):
+            if now is None:
+                now = datetime.now()
+            
+            if stock is None:
+                stock = self.stock
+            
             settings = modules.settings.get_settings()
-            if self.stock > 0:
-                pass
-            elif self.can_backorder():
-                pass
-            else:
-                return False
+            min_delay = timedelta()
+            max_delay = timedelta()
+            
+            # Apply any backorder delay
+            if stock == 0 and self.can_backorder:
+                min_delay += self.min_backorder_delay
+                max_delay += self.max_backorder_delay
+            elif stock == 0:
+                return None
+            
+            # Get store availability
+            try:
+                nearest = settings.availability.get_nearest_availability()
+            except StoreAvailability.DoesNotExist:
+                return None
+            
+            # Get offset based of store availability
+            offset = nearest.day - now.isoweekday()
+            # Check against current time
+            if (offset == 0 and nearest.available_from and
+                    nearest.available_until and
+                    nearest.available_until < now.time()):
+                offset = 7
+            elif offset < 0:
+                offset = 7 + offset
+                
+            # Apply store availablity offset
+            min_delay += timedelta(days=offset)
+            max_delay += timedelta(days=offset)
+            if nearest.available_from:
+                dt = datetime.combine(now.date(), nearest.available_from)
+                min_delay += dt - now
+            if nearest.available_until:
+                dt = datetime.combine(now.date(), nearest.available_until)
+                max_delay += dt - now
+            
+            return min_delay, max_delay
         
         class Meta(modules.product.Product.Meta,
                    modules.availability.BackorderBase.Meta,
@@ -87,6 +161,11 @@ def load_model():
     
     class Variation(modules.variation.Variation,
                    modules.availability.AvailabilityBase):
+        
+        def get_shipping_delay(self, stock=None, now=None):
+            if stock is None:
+                stock = self.stock
+            return self.product.get_shipping_delay(stock=stock, now=now)
         
         class Meta(modules.variation.Variation.Meta,
                    modules.availability.AvailabilityBase.Meta):
@@ -108,15 +187,26 @@ class BackorderBase(models.Model):
     )
     
     min_backorder_time = models.PositiveSmallIntegerField(
-        default=1,
+        null=True,
+        blank=True,
         verbose_name=_("minimum backorder time")
     )
     
     max_backorder_time = models.PositiveSmallIntegerField(
-        default=1,
+        null=True,
+        blank=True,
         verbose_name=_("maximum backorder time")
     )
     
+    @property
+    def min_backorder_delay(self):
+        return _get_timedelta(self.min_backorder_time)
+        
+    @property
+    def max_backorder_delay(self):
+        return _get_timedelta(self.max_backorder_time)
+    
+    @property
     def can_backorder(self):
         settings = modules.settings.get_settings()
         return (self.allow_backorders is True or 
@@ -172,11 +262,42 @@ class Supplier(models.Model):
         verbose_name_plural = _("suppliers")
         
         
+class StoreAvailabilityManager(models.Manager):
+    
+    def get_nearest_availability(self):
+        available = self.filter(available=True)
+        if not available:
+            raise self.model.DoesNotExist()
+        
+        now = datetime.now()
+        q = ((Q(available_from__isnull=True) |
+            Q(available_from__lte=now.time())) &
+            (Q(available_until__isnull=True) |
+            Q(available_until__gte=now.time())))
+        
+        # Loop through days, beginnin with today ending with today
+        first = True
+        for day in range(now.isoweekday(), 8) + range(1, now.isoweekday() + 1):
+            try:
+                if first:
+                    # Make sure today's time is checked
+                    nearest = available.filter(q)
+                    first = False
+                else:
+                    nearest = available.all()
+                nearest = nearest.get(day=day)
+            except self.model.DoesNotExist:
+                continue
+            else:
+                return nearest
+                
+        raise self.model.DoesNotExist()
+        
 class StoreAvailability(models.Model):
     
+    objects = StoreAvailabilityManager()
+    
     day = models.PositiveSmallIntegerField(
-        null=True,
-        blank=True,
         unique=True,
         choices=(
             (1, _("Monday")),
@@ -206,6 +327,9 @@ class StoreAvailability(models.Model):
         blank=True,
         verbose_name=_("available until")
     )
+    
+    def __unicode__(self):
+        return self.get_day_display()
     
     class Meta:
         abstract = True

@@ -114,6 +114,12 @@ class AccountModule(modules.account):
         
         # See if we completed the process
         if process.completed:
+            # Assign last completed order
+            order = modules.checkout.get_completed_order(request=request)
+            if order is not None:
+                order.customer = customer
+                order.save()
+            
             # Redirect to login view
             redirection = redirect(reverse('account.login'))
         

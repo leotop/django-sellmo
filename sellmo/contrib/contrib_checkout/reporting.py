@@ -34,6 +34,27 @@ from sellmo.api.reporting import ReportWriter
 from django.utils.translation import ugettext_lazy as _
 
 
+class OrderConfirmationWriter(ReportWriter):
+
+    format = 'html'
+
+    def __init__(self, output_format, order, internal=False):
+        self.output_format = output_format
+        self.order = order
+        self.internal = internal
+
+    def get_name(self):
+        return "confirmation_{0}".format(self.order.number)
+
+    def negotiate_param(self, key, value, **params):
+        return super(OrderConfirmationWriter, self).negotiate_param(
+            key, value, **params)
+
+    def get_data(self, **params):
+        return modules.checkout.render_order_confirmation_report(
+            order=self.order, internal=self.internal)
+            
+            
 class InvoiceWriter(ReportWriter):
 
     format = 'html'
@@ -50,5 +71,5 @@ class InvoiceWriter(ReportWriter):
         return super(InvoiceWriter, self).negotiate_param(key, value, **params)
 
     def get_data(self, **params):
-        return modules.checkout.render_invoice(
+        return modules.checkout.render_invoice_report(
             order=self.order, internal=self.internal)

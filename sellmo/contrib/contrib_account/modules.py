@@ -32,7 +32,7 @@ import sellmo
 from sellmo import modules
 from sellmo.api.decorators import view, chainable, link, context_processor
 from sellmo.api.exceptions import ViewNotImplemented
-from sellmo.api.configuration import define_import
+from sellmo.api.configuration import define_import, define_setting
 from sellmo.api.messaging import FlashMessages
 from sellmo.contrib.contrib_account.models import User
 from sellmo.contrib.contrib_account.forms import (UserChangeForm,
@@ -51,6 +51,11 @@ class AccountModule(sellmo.Module):
     namespace = 'account'
     
     User = User
+    
+    allow_get_logout = define_setting(
+        'ALLOW_GET_LOGOUT',
+        default=False
+    )
     
     UserChangeForm = define_import(
         'USER_CHANGE_FORM',
@@ -170,7 +175,7 @@ class AccountModule(sellmo.Module):
         redirection = None
         processed = False
         
-        if request.method == 'POST':
+        if request.method == 'POST' or self.allow_get_logout:
             self.logout_user(request=request, user=user)
             processed = True
             redirection = redirect(next)

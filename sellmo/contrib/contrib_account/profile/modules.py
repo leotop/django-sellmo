@@ -31,6 +31,7 @@ from django.http import Http404
 
 
 from sellmo import modules
+from sellmo.api.checkout.models import ORDER_NEW
 from sellmo.api.decorators import view, chainable, link
 from sellmo.api.exceptions import ViewNotImplemented
 from sellmo.api.configuration import define_import
@@ -39,15 +40,54 @@ from sellmo.api.configuration import define_import
 class AccountModule(modules.account):
     
     @view(r'^profile/$')
-    def profile(self, chain, request, customer=None, context=None, **kwargs):
+    def profile(self, chain, request, customer=None, orders=None,
+                context=None, **kwargs):
+        if context is None:
+            context = {}
+        
         if customer is None:
             customer = modules.customer.get_customer(request=request)
             
         if customer is None:
-            raise Http404("Not a customer")
+            raise Http404("Not a customer.")
+            
+        if orders is None:
+            orders = customer.orders.exclude(state=ORDER_NEW)
+            
+        context['customer'] = customer
+        context['orders'] = orders
         
         if chain:
-            return chain.execute(
-                request=request, customer=customer, context=None, **kwargs)
-        
+            return chain.execute(request=request, customer=customer, 
+                                 orders=orders, context=context, **kwargs)
         raise ViewNotImplemented
+        
+    @view(r'^order/(?P<order_number>[-a-zA-Z0-9_]+)/$')
+    def order(self, chain, request, order_number, customer=None, order=None,
+              context=None, **kwargs):
+        
+        if context is None:
+            context = {}
+        
+        if customer is None:
+            customer = modules.customer.get_customer(request=request)
+            
+        if customer is None:
+            raise Http404("Not a customer.")
+            
+        if order is None:
+            try:
+                order = customer.orders.exclude(state=ORDER_NEW) \
+                                .get(number=order_number)
+            except modules.checkout.Order.DoesNotExist:
+                raise Http404("No matching order.")
+        
+        context['customer'] = customer
+        context['order'] = order
+        
+        if chain:
+            return chain.execute(request=request, customer=customer, 
+                                 order_number=order_number, order=order,
+                                 context=context, **kwargs)
+        raise ViewNotImplemented
+        

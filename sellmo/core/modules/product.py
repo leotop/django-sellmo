@@ -77,17 +77,21 @@ class ProductModule(sellmo.Module):
         return products
 
     @view(r'^(?P<product_slug>[-a-zA-Z0-9_]+)/$')
-    def product(self, chain, request, product_slug, context=None, **kwargs):
+    def product(self, chain, request, product_slug, product=None,
+                context=None, **kwargs):
+        
         if context is None:
             context = {}
-        try:
-            product = self.single(
-                request=request).polymorphic().get(slug=product_slug)
-        except self.Product.DoesNotExist:
-            raise Http404("Product '{0}' not found.".format(product_slug))
+            
+        if product is None:
+            try:
+                product = self.single(request=request).polymorphic() \
+                              .get(slug=product_slug)
+            except self.Product.DoesNotExist:
+                raise Http404("Product '{0}' not found.".format(product_slug))
         
         if chain:
-            return chain.execute(
-                request, product=product, context=context, **kwargs)
+            return chain.execute(request=request, product_slug=product_slug,
+                                 product=product, context=context, **kwargs)
         else:
             raise ViewNotImplemented

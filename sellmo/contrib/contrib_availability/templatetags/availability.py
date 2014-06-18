@@ -28,16 +28,30 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sellmo import modules
+from datetime import datetime
 
-from django.contrib import admin
-from django.utils.translation import ugettext_lazy as _
+from django import template
 
 
-class SupplierAdmin(admin.ModelAdmin):
+register = template.Library()
 
-    list_display = ['name', 'allow_backorders']
-    fields = ['name', 'allow_backorders', 'min_backorder_time', 'max_backorder_time']
+
+@register.filter
+def shipping_date(value, method='avg'):
+    """Returns the appropriate shipping date for the given product or cart.
+    :param method: can be one of three values 'avg', 'min', 'max'
+    """
+    delay = value.get_shipping_delay()
+    if delay is None:
+        return None
     
-
-admin.site.register(modules.availability.Supplier, SupplierAdmin)
+    min_delay, max_delay = delay
+    if method == 'min':
+        return datetime.now() + min_delay
+    elif method =='max':
+        return datetime.now() + max_delay
+    elif method == 'avg':
+        return datetime.now() + ((min_delay + max_delay) / 2)
+    
+    raise ValueError('method')
+    

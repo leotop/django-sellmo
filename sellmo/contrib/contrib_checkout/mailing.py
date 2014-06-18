@@ -124,14 +124,14 @@ class OrderConfirmationWriter(MailWriter):
         return _("Order confirmation")
 
     def get_body(self, format):
-        return modules.checkout.render_order_confirmation(
+        return modules.checkout.render_order_confirmation_email(
             format=format, order=self.order)
 
     def get_to(self):
         return self.order.email
 
     def get_attachments(self):
-        report = reporter.get_report('invoice', context={
+        report = reporter.get_report('order_confirmation', context={
             'order': self.order
         })
         return [
@@ -150,14 +150,14 @@ class OrderNotificationWriter(MailWriter):
         return _("Order notification")
 
     def get_body(self, format):
-        return modules.checkout.render_order_notification(
+        return modules.checkout.render_order_notification_email(
             format=format, order=self.order)
 
     def get_to(self):
         return modules.checkout.notification_to_email
 
     def get_attachments(self):
-        report = reporter.get_report('invoice', context={
+        report = reporter.get_report('order_confirmation', context={
             'order': self.order,
             'internal': True,
         })
@@ -177,8 +177,16 @@ class ShippingNotificationWriter(MailWriter):
         return _("Shipping notification")
 
     def get_body(self, format):
-        return modules.checkout.render_shipping_notification(
+        return modules.checkout.render_shipping_notification_email(
             format=format, order=self.order)
 
     def get_to(self):
         return self.order.email
+        
+    def get_attachments(self):
+        report = reporter.get_report('invoice', context={
+            'order': self.order,
+        })
+        return [
+            (report.filename, report.data, report.mimetype)
+        ]
