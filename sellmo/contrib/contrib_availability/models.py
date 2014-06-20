@@ -63,26 +63,22 @@ def load_model():
         
         def get_min_backorder_delay(self):
             a = super(Product, self).get_min_backorder_delay()
-            b = None
+            b = timedelta()
             if self.supplier:
                 b = self.supplier.get_min_backorder_delay()
-            if a and b:
-                return a if a > b else b
-            elif a:
+            if a > b:
                 return a
-            elif b:
+            else:
                 return b
         
         def get_max_backorder_delay(self):
             a = super(Product, self).get_max_backorder_delay()
-            b = None
+            b = timedelta()
             if self.supplier:
                 b = self.supplier.get_max_backorder_delay()
-            if a and b:
-                return a if a > b else b
-            elif a:
+            if a > b:
                 return a
-            elif b:
+            else:
                 return b
         
         def can_backorder(self):
