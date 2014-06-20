@@ -150,7 +150,7 @@ class PolymorphicQuerySet(QuerySet):
         
     def delete(self, *args, **kwargs):
         with PolymorphicOverride(False):
-            super(PolymorphicQuerySet, self).delete(args, kwargs)
+            super(PolymorphicQuerySet, self).delete(*args, **kwargs)
             
     def filter(self, *args, **kwargs):
         return self.__defer__call__('filter', args, kwargs, inheritable=True)

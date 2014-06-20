@@ -47,14 +47,19 @@ class VariationsTag(Tag):
     )
 
     def render_tag(self, context, kwargs, nodelist):
-        # First try to get grouped variations
-        grouped = True
-        variations = modules.variation.get_variations(
-            grouped=grouped, **kwargs)
-        if variations is None:
-            grouped = False
+        
+        try:
+            # First try to get grouped variations
+            grouped = True
             variations = modules.variation.get_variations(
                 grouped=grouped, **kwargs)
+            if variations is None:
+                grouped = False
+                variations = modules.variation.get_variations(
+                    grouped=grouped, **kwargs)
+        except Exception as ex:
+            print ex
+            raise
         
         context.push()
         context['variations'] = variations
