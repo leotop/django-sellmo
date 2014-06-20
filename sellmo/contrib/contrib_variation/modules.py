@@ -148,27 +148,31 @@ class VariationModule(Module):
     def get_variations(self, chain, product, grouped=False, variations=None,
                        **kwargs):
         if variations is None:
-            variations = modules.variation.Variation.objects.for_product(
-                product)
+            variations = modules.variation.Variation \
+                                .objects.for_product(product)
             if grouped:
                 attributes = modules.attribute.Attribute.objects \
                                     .which_variate(product=product)
                 group = attributes.filter(groups=True).first()
                 if group:
                     result = []
-                    values = modules.attribute.Value.objects \
-                                    .which_variate(product) \
-                                    .for_attribute(
-                                        attribute=group, distinct=True)
-                    values = modules.attribute.get_sorted_values(
-                        values=values, attribute=group)
+                    
+                    values = (modules.attribute.Value.objects
+                                .which_variate(product)
+                                .for_attribute(group)
+                                .attribute_values()
+                                .distinct())
+                    values = (modules.attribute
+                                .get_sorted_values(values=values,
+                                                    attribute=group))
+                    
                     for value in values:
                         # Get variations for this grouped attribute / value
                         # combination
                         qargs = {
                             'values__attribute': group,
                             'values__{0}'.format(group.value_field): 
-                                value.get_value(),
+                                value,
                             'product': product,
                         }
 

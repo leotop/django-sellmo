@@ -43,7 +43,7 @@ from sellmo.contrib.contrib_variation.signals import (variations_invalidating,
 from sellmo.contrib.contrib_variation.helpers import (AttributeHelper,
                                                       VariantAttributeHelper,
                                                       VariationAttributeHelper)
-from sellmo.contrib.contrib_attribute.query import product_q
+from sellmo.contrib.contrib_attribute.query import product_q, value_q
 
 from django.db import models, transaction, IntegrityError
 from django.db.models import Q, F, Count
@@ -55,6 +55,7 @@ from django.utils.translation import ugettext_lazy as _
 
 import sys
 import logging
+import itertools
 
 
 logger = logging.getLogger('sellmo')
@@ -97,10 +98,10 @@ def load_manager():
 
     class ProductQuerySet(qs.__class__):
         
-        def _get_prefetched_values(self, products):
-            prefetched = super(ProductQuerySet, self) \
-                ._get_prefetched_values(products)
-            return prefetched.filter(variates=False)
+        def _get_prefetched_values(self):
+            return super(ProductQuerySet, self) \
+                        ._get_prefetched_values() \
+                        .filter(variates=False)
         
         def variants(self, exclude=False, only=False):
             if exclude:
@@ -140,15 +141,6 @@ def load_model():
                     return modules.attribute.Attribute.objects \
                                   .which_variate(self).get(groups=True)
                 except modules.attribute.Attribute.DoesNotExist:
-                    return None
-            
-            def get_grouped_choices(self):
-                group = self.get_grouped_by()
-                if group:
-                    return modules.attribute.Value.objects \
-                                  .which_variate(self) \
-                                  .for_attribute(group, distinct=True)
-                else:
                     return None
             
             def get_variated_by(self):
@@ -337,24 +329,6 @@ def load_manager():
             q = Q(product=product) | Q(base_product=product)
             return self.filter(q)
 
-        def for_attribute(self, attribute, distinct=False):
-            q = self.filter(attribute=attribute)
-            if distinct:
-                values = q.values_list(
-                    attribute.value_field, flat=True).distinct()
-                distinct = []
-                for value in values:
-                    qargs = {
-                        attribute.value_field: value
-                    }
-                    id = q.filter(**qargs) \
-                          .annotate(does_variate=Count('variates')) \
-                          .order_by('-does_variate')[0].id
-                    distinct.append(id)
-                return q.filter(id__in=distinct)
-            else:
-                return q
-
         def which_variate(self, product):
             return self.filter(
                 Q(attribute__variates=True) &
@@ -431,7 +405,7 @@ class VariationManager(models.Manager):
 
         product = product.downcast()
 
-        # Get all attributes related to this product
+        # Get all variating attributes for this product
         attributes = modules.attribute.Attribute.objects.which_variate(product)
         if attributes.count() == 0:
             return
@@ -443,137 +417,89 @@ class VariationManager(models.Manager):
         attributes = list(attributes)
 
         # Keep track of explicit attributes
+        """
         explicits = {}
         for attribute in attributes:
-            for value in modules.attribute.Value.objects \
-                                .which_variate(product) \
-                                .for_attribute(attribute, distinct=True):
-                if value.variates:
-                    explicits[attribute.key] = False
-                    break
+            values = modules.attribute.Value.objects \
+                            .which_variate(product) \
+                            .for_attribute(attribute)
+            if values.filter(variates=True).count() > 0:
+                explicits[attribute.key] = False
             else:
                 explicits[attribute.key] = True
-
-        # Create all possible variations
-        combinations = []
+        """
         
-        def _combine(attributes, combination):
-            if attributes:
-                attribute = attributes[0]
-                values = modules.attribute.Value.objects.which_variate(
-                    product).for_attribute(attribute, distinct=True)
-                for value in modules.attribute.get_sorted_values(
-                        values=values, attribute=attribute):
-                    _combine(attributes[1:], combination + [value])
-            else:
-                for value in list(combination):
-                    index = combination.index(value)
-                    if not value.variates:
-                        combination[index] = value.get_value()
-                combinations.append(combination)
-        
-        _combine(attributes, [])
-        
-        # Mix in variants
-        for variant in product.variants.all():
-            # Find values related to this variant
-            values = modules.attribute.Value.objects.for_product(
-                variant).filter(attribute__in=attributes)
-        
-            for combination in combinations:
-                for value in values:
-                    index = attributes.index(value.attribute)
-                    current = combination[index]
-                    if isinstance(current, modules.attribute.Value):
-                        current = current.get_value()
-                    if current != value.get_value():
-                        break
-                else:
-                    # Override with variant values
-                    for value in values:
-                        index = attributes.index(value.attribute)
-                        combination[index] = value
-        
-        # Fix non existent explicit combinations
-        for attribute in attributes:
-            if explicits[attribute.key]:
-                index = attributes.index(attribute)
-                for combination in combinations:
-                    value = combination[index]
-                    if not isinstance(value, modules.attribute.Value):
-                        combination[index] = None
-        
-        # Filter out non existent combinations
-        for combination in list(combinations):
-            for value in combination:
-                if (value is not None and 
-                        not isinstance(value, modules.attribute.Value)):
-                    index = combinations.index(combination)
-                    combinations.pop(index)
-                    break
-        
-        # Filter out duplicate combinations
-        existing = []
-        for combination in list(combinations):
-            signature = [
-                value.get_value() for value in combination if 
-                not value is None]
-            if signature in existing:
-                index = combinations.index(combination)
-                combinations.pop(index)
-            existing.append(signature)
+        # Create all possible variation combinations
+        combinations = itertools.product(*[
+            (modules.attribute.get_sorted_values(
+                values=(modules.attribute.Value.objects
+                    .which_variate(product)
+                    .for_attribute(attribute)
+                    .attribute_values()
+                    .distinct()),
+                attribute=attribute))
+            for attribute in attributes])
+            
         
         # Create variations
         sort_order = 0
         created = []
-        while combinations:
-            combination = combinations.pop(0)
-            values = [value for value in combination if not value is None]
+        for combination in combinations:
+            
+            # Find all values which could be in this combination.
+            # Values can be explicitly assigned to a variant, or 
+            # they could variate this product.
+            values = Q()
+            for attribute, value in zip(attributes, combination):
+                values |= value_q(attribute, value)
         
-            # Skip empties
-            if not values:
+            values = (modules.attribute.Value.objects
+                        .which_variate(product)
+                        .filter(values))
+                        
+            # Filter implicit values
+            implicits = values.filter(variates=True)
+            
+            # Find all remaining variants which can be matched
+            # against the values in this combination.
+            variants = product.variants.filter(
+                pk__in=(values.exclude(product=product)
+                    .order_by('product')
+                    .distinct()
+                    .values('product')))
+                                        
+            # Find most explicit value combination
+            explicits = modules.attribute.Value.objects.none()
+            for variant in variants:
+                current = values.filter(product=variant)
+                if current.count() > explicits.count():
+                    explicits = current
+                    
+            # Resolve variant
+            variant = product if not explicits else explicits[0].product
+            
+            # Resolve actual values
+            if variant == product:
+                # All implicit
+                values = implicits
+            else:
+                implicits = implicits.exclude(attribute__in=explicits
+                    .values('attribute'))   
+                values = values.filter(Q(pk__in=implicits) | Q(pk__in=explicits))
+            
+            # See if this is a valid combination
+            if values.count() != len(combination):
+                if values.count() > len(combination):
+                    logger.warning("Invalid variation values {0} for "
+                                   "product {1}.".format(values, product))
                 continue
             
-            # Find variant
-            variant = product
-            # Will match a variant who matches all this combination's values
-            exact = Q()
-            # Will match a variant who matches all this combination's values
-            # except the group
-            best = Q()
-            for value in values:
-                if getattr(value.product.downcast(), '_is_variant', False):
-                    exact &= product_q(value.attribute, value.get_value())
-                    if value.attribute != group:
-                        best &= product_q(value.attribute, value.get_value())
-                    else:
-                        best &= ~product_q(value.attribute)
-                else:
-                    exact &= ~product_q(value.attribute)
-                    best &= ~product_q(value.attribute)
-
-            # Try to find exact match
-            for q in (exact, best):
-                if q:
-                    try:
-                        variant = product.variants.get(q)
-                    except (modules.product.Product.DoesNotExist, 
-                            modules.product.Product.MultipleObjectsReturned):
-                        continue
-                    else:
-                        break
-        
-            # Collect non explicit values
-            non_explicit_values = [
-                value for value in values if value.variates
-            ]
-        
             variation_key = generate_slug(product=variant, values=values, 
                                           full=True, unique=False)
             
             variation_description = modules.variation \
                 .generate_variation_description(prefix=unicode(variant), 
-                                                values=non_explicit_values)
+                                                values=implicits)
             
             try:
                 # See if variation already exists
@@ -608,17 +534,20 @@ class VariationManager(models.Manager):
             # variations in this group
             for value in modules.attribute.Value.objects \
                                 .which_variate(product) \
-                                .for_attribute(attribute=group, distinct=True):
+                                .for_attribute(attribute=group) \
+                                .attribute_values() \
+                                .distinct():
+                
                 # Get variations for this grouped attribute / value combination
                 qargs = {
                     'values__attribute': group,
-                    'values__{0}'.format(group.value_field): value.get_value(),
+                    'values__{0}'.format(group.value_field): value,
                 }
                 variations = modules.variation.Variation.objects.filter(
                     product=product).filter(**qargs)
 
                 # Get variant
-                qargs = [product_q(group, value.get_value())]
+                qargs = [product_q(group, value)]
                 if variations.count() > 1:
                     # Get single variant common across all variations
                     for attribute in attributes:

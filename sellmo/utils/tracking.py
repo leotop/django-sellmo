@@ -76,9 +76,11 @@ class TrackingQuerySet(TrackingBase, QuerySet):
     
     def try_get_tracked(self, request):
         if self.is_tracked(request):
-            return self.get(pk=request.session.get(self._get_session_key()))
-        else:
-            return self.model()
+            try:
+                return self.get(pk=request.session.get(self._get_session_key()))
+            except self.model.DoesNotExist:
+                pass
+        return self.model()
             
     def _clone(self, *args, **kwargs):
         clone = super(TrackingQuerySet, self)._clone(*args, **kwargs)

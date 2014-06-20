@@ -104,36 +104,54 @@ class Cart(trackable('sellmo_cart')):
     )
 
     def add(self, purchase, save=True, calculate=True):
+        # Clear cache ! IMPORTANT
+        self.__purchases = None
+        
         if self.pk is None:
             self.save()
         purchase.cart = self
+        
         if save:
             purchase.save()
             if calculate:
                 self.calculate()
 
     def update(self, purchase, save=True, calculate=True):
+        # Clear cache ! IMPORTANT
+        self.__purchases = None
+        
         if purchase.cart != self:
             raise Exception("We don't own this purchase")
+            
         if purchase.qty == 0:
             self.remove(purchase, save=False)
+        
         if save:
             purchase.save()
             if calculate:
                 self.calculate()
 
     def remove(self, purchase, save=True, calculate=True):
+        # Clear cache ! IMPORTANT
+        self.__purchases = None
+        
         if purchase.cart != self:
             raise Exception("We don't own this purchase")
+        
         purchase.cart = None
+        
         if save:
             purchase.save()
             if calculate:
                 self.calculate()
 
     def clear(self, save=True, calculate=True):
+        # Clear cache ! IMPORTANT
+        self.__purchases = None
+        
         for purchase in self:
             self.remove(purchase, save=save, calculate=False)
+        
         if save:
             if calculate:
                 self.calculate()
@@ -161,17 +179,25 @@ class Cart(trackable('sellmo_cart')):
         self.calculated = datetime.datetime.now()
         if save:
             self.save()
+    
+    
+    # Cache purchases queryset since prefetching isn't safe.
+    __purchases = None
+    @property
+    def _purchases(self):
+        if self.__purchases is None:
+            self.__purchases = self.purchases.polymorphic().all()
+        return self.__purchases
 
     def __contains__(self, purchase):
         return purchase.cart == self
-
+    
     def __iter__(self):
-        if hasattr(self, 'purchases'):
-            for purchase in self.purchases.polymorphic().all():
-                yield purchase
+        for purchase in self._purchases:
+            yield purchase
 
     def __len__(self):
-        return self.purchases.count()
+        return self._purchases.count()
 
     def __nonzero__(self):
         return len(self) > 0

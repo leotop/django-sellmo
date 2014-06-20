@@ -29,7 +29,7 @@
 
 
 from django.db import models
-from django.db.models.query import QuerySet
+from django.db.models.query import QuerySet, ValuesQuerySet
 from django.utils.translation import ugettext_lazy as _
 
 from sellmo import modules
@@ -40,6 +40,9 @@ from sellmo.utils.formatting import call_or_format
 from sellmo.contrib.contrib_attribute.fields import (AttributeKeyField, 
                                                      AttributeTypeField)
 from sellmo.contrib.contrib_attribute.helpers import AttributeHelper
+
+
+VALUE_FIELDS = ['value_string', 'value_int', 'value_float', 'value_object']
 
 
 class ValueObject(PolymorphicModel):
@@ -87,14 +90,102 @@ def finalize_model():
     modules.attribute.Value = Value
 
 
+class AttributeValuesQuerySet(ValuesQuerySet):
+    
+    def __is_assigned__(self, row, field):
+        value = row[field]
+        if field == 'value_string':
+            return value is not None and len(value) > 0
+        return value is not None
+    
+    def iterator(self):
+        last_field = None
+        fields = []
+        out = []
+        for row in super(AttributeValuesQuerySet, self).iterator():
+            # Try last used value field and yield
+            if last_field and self.__is_assigned__(row, last_field):
+                out.append((last_field, row[last_field]))
+                continue
+            
+            # Find (new) used value field and yield
+            for field in VALUE_FIELDS:
+                if self.__is_assigned__(row, field):
+                    # Keep track of this field
+                    last_field = field
+                    # Keep track of used fields
+                    if field not in fields:
+                        fields.append(field)
+                    out.append((field, row[field]))
+                    break
+                    
+        # Lookup ValueObjects
+        value_objects = {}
+        if 'value_object' in fields:
+            for obj in (modules.attribute.ValueObject.objects
+                    .polymorphic().filter(pk__in=self.values('value_object'))):
+                value_objects[obj.pk] = obj
+            
+        for field, value in out:
+            if field == 'value_object':
+                yield value_objects[value]
+            else:
+                yield value
+                
+    
+
 class ValueQuerySet(QuerySet):
+
+    _prefetch_value_objects = False
+    _prefetched_value_objects = None
 
     def for_product(self, product):
         return self.filter(product=product)
 
     def for_attribute(self, attribute):
         return self.filter(attribute=attribute)
-
+        
+    def attribute_values(self, attribute=None):
+        values = self.values(*VALUE_FIELDS)
+        return values._clone(klass=AttributeValuesQuerySet)
+        
+    def _clone(self, *args, **kwargs):
+        clone = super(ValueQuerySet, self)._clone(*args, **kwargs)
+        clone._prefetch_value_objects = self._prefetch_value_objects
+        return clone
+    
+    def prefetch_value_objects(self):
+        clone = self._clone()
+        clone._prefetch_value_objects = True
+        return clone
+    
+    def __iter__(self):
+        out = []
+        for obj in super(ValueQuerySet, self).__iter__():
+            out.append(obj)
+        
+        if self._prefetch_value_objects:
+            if self._prefetched_value_objects is None:
+                self._prefetched_value_objects = modules.attribute \
+                    .ValueObject.objects \
+                    .polymorphic() \
+                    .filter(values__in=self) \
+                    .distinct()
+                
+            # Map value objects to pk
+            value_objects = {}
+            for value_object in self._prefetched_value_objects:
+                value_objects[value_object.pk] = value_object
+            
+            # Assign value objects
+            for value in out:
+                if (value.value_object_id is not None and
+                        value.value_object_id in value_objects):
+                    value.value_object = value_objects[value.value_object_id]
+            
+        for obj in out:
+            yield obj
+    
 
 class ValueManager(models.Manager):
 
@@ -189,8 +280,8 @@ class Value(models.Model):
         value = self.get_value()
         field = self.attribute.value_field
         if field == 'value_string':
-            return not value is None and len(value) > 0
-        return not value is None
+            return value is not None and len(value) > 0
+        return value is not None
 
     def save_value(self):
         # Re-assign product
@@ -209,8 +300,7 @@ class Value(models.Model):
 
     class Meta:
         abstract = True
-        ordering = ['attribute', 'value_string',
-                    'value_int', 'value_float', 'value_object']
+        ordering = ['attribute'] + VALUE_FIELDS
         verbose_name = _("value")
         verbose_name_plural = _("values")
     
@@ -296,8 +386,11 @@ class Attribute(models.Model):
 
     def save(self, *args, **kwargs):
         old = None
+        
         if self.pk:
             old = modules.attribute.Attribute.objects.get(pk=self.pk)
+        elif not self.key:
+            self.key = AttributeKeyField.create_key_from_name(self.name)
 
         if self.type != old.type:
             raise Exception((_(u"Cannot change attribute type "
@@ -349,11 +442,6 @@ class Attribute(models.Model):
     def choices(self):
         return self._get_adapter().get_choices()
 
-    def save(self, *args, **kwargs):
-        if not self.key:
-            self.key = AttributeKeyField.create_key_from_name(self.name)
-        super(Attribute, self).save(*args, **kwargs)
-
     def natural_key(self):
         return (self.key,)
 
@@ -377,7 +465,6 @@ def load_manager():
         _prefetch_attributes = None
         _prefetched_attributes = None
         _prefetched_values = None
-        _prefetched_value_objects = None
         
         def __iter__(self):
             out = []
@@ -387,32 +474,17 @@ def load_manager():
             if self._prefetch_attributes is not None:
                 if self._prefetched_attributes is None:
                     self._prefetched_attributes = self \
-                        ._get_prefetched_attributes(out)
+                        ._get_prefetched_attributes()
                 if self._prefetched_values is None:
                     self._prefetched_values = self \
-                        ._get_prefetched_values(out)
-                if self._prefetched_value_objects is None:
-                    self._prefetched_value_objects = modules.attribute \
-                        .ValueObject.objects \
-                        .polymorphic() \
-                        .filter(values__in=self._prefetched_values) \
-                        .distinct()
-                    
-                # Map value objects to pk
-                value_objects = {}
-                for value_object in self._prefetched_value_objects:
-                    value_objects[value_object.pk] = value_object
+                        ._get_prefetched_values()
                         
                 # Map values to product
-                # And assign value objects
                 product_to_values = {}
                 for value in self._prefetched_values:
                     if value.product.pk not in product_to_values:
                         product_to_values[value.product.pk] = []
                     product_to_values[value.product.pk].append(value)
-                    if (value.value_object_id is not None and
-                            value.value_object_id in value_objects):
-                        value.value_object = value_objects[value.value_object_id]
                     
                 for obj in out:
                     # Populate with mapped values and global attributes
@@ -429,16 +501,17 @@ def load_manager():
                 clone._prefetch_attributes = list(self._prefetch_attributes)
             return clone
             
-        def _get_prefetched_values(self, products):
+        def _get_prefetched_values(self):
             prefetched = modules.attribute \
-                .Value.objects.filter(product__in=[obj.pk for obj in products]) \
-                .select_related('product__id', 'attribute')
+                .Value.objects.filter(product__in=self) \
+                .select_related('product__id', 'attribute') \
+                .prefetch_value_objects()
             if len(self._prefetch_attributes) > 0:
                 prefetched = prefetched.filter(
                     attribute__key__in=self._prefetch_attributes)
             return prefetched
             
-        def _get_prefetched_attributes(self, products):
+        def _get_prefetched_attributes(self):
             prefetched = modules.attribute.Attribute.objects.all()
             if len(self._prefetch_attributes) > 0:
                 prefetched = prefetched.filter(

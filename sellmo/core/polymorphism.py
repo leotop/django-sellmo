@@ -74,13 +74,14 @@ class PolymorphicQuerySet(QuerySet):
             queryset = getattr(queryset, name)(*args, **kwargs)
         return queryset
         
-    def __defer__call__(self, name, args, kwargs, downcastable=False):
-        if self._downcast:
+    def __defer__call__(self, name, args, kwargs, inheritable=False):
+        if not inheritable and self._downcast:
             clone = self._clone()
             clone._defered_calls.append((name, args, kwargs))
         else:
-            clone = getattr(super(PolymorphicQuerySet, self), name)(*args, **kwargs)
-            if downcastable: 
+            func = getattr(super(PolymorphicQuerySet, self), name)
+            clone = func(*args, **kwargs)
+            if inheritable: 
                 clone._defered_calls.append((name, args, kwargs))
             else:
                 clone._can_downcast = False
@@ -99,34 +100,34 @@ class PolymorphicQuerySet(QuerySet):
             return super(PolymorphicQuerySet, self).iterator()
         else:
             
-            # Query pk and content_type first
             # Keep ordering and filter out all content types
             # Afterwards perform seperate queries for each content_type
             content_types = {}
-            content_typed_pks = {}
             order = []
             downcasts = {}
             out = []
             
-            # We only query pk and content_type at this point
-            # Ignore any "select_related" expressions
+            # Perform original query against ourselves so that we 
+            # receive correct ordering and we can resolve only the 
+            # content types needed for downcasting
             for obj in super(PolymorphicQuerySet, self).iterator():
+                # Collect content type
                 if not content_types.has_key(obj.content_type.pk):
                     content_types[obj.content_type.pk] = obj.content_type
-                    content_typed_pks[obj.content_type.pk] = []
-                content_typed_pks[obj.content_type.pk].append(obj.pk)
+                # Keep order
                 order.append(obj.pk)
 
+            # For each content type perform the actual query
             for content_type in content_types.values():
                 model = content_type.model_class()
-                for obj in self.__apply_defered_calls__(
-                        QuerySet(model)
-                        .filter(pk__in=content_typed_pks[content_type.pk])):
+                # At this point apply defered query calls
+                for obj in self.__apply_defered_calls__(QuerySet(model)):
                     downcasts[obj.pk] = obj
                     obj.content_type = content_type
 
             for pk in order:
                 out.append(downcasts[pk])
+            
             return out
 
     def _clone(self, *args, **kwargs):
@@ -144,14 +145,18 @@ class PolymorphicQuerySet(QuerySet):
         if not self._downcast:
             clone = super(PolymorphicQuerySet, clone) \
                         .select_related('content_type')
-            clone = super(PolymorphicQuerySet, clone) \
-                        .only('pk', 'content_type')
             clone._downcast = True
         return clone
         
     def delete(self, *args, **kwargs):
         with PolymorphicOverride(False):
             super(PolymorphicQuerySet, self).delete(args, kwargs)
+            
+    def filter(self, *args, **kwargs):
+        return self.__defer__call__('filter', args, kwargs, inheritable=True)
+        
+    def exclude(self, *args, **kwargs):
+        return self.__defer__call__('exclude', args, kwargs, inheritable=True)
     
     def select_related(self, *args, **kwargs):
         return self.__defer__call__('select_related', args, kwargs)
@@ -169,7 +174,7 @@ class PolymorphicQuerySet(QuerySet):
         return self.__defer__call__('extra', args, kwargs)
         
     def using(self, *args, **kwargs):
-        return self.__defer__call__('using', args, kwargs, downcastable=True)
+        return self.__defer__call__('using', args, kwargs, inheritable=True)
     
 
 
@@ -268,3 +273,4 @@ class PolymorphicModel(models.Model):
 
     class Meta:
         abstract = True
+    

@@ -198,14 +198,7 @@ class CartModule(sellmo.Module):
             messages = FlashMessages()
                  
         if cart is None:
-            cart = self.Cart.objects.prefetch_related('purchases') \
-                       .try_get_tracked(request)
-        
-        for purchase in cart:
-            print purchase
-            
-        for purchase in cart:
-            print purchase
+            cart = self.Cart.objects.try_get_tracked(request)
         
         # Perform a sanity check on cart (and fix if needed)
         removals = []
