@@ -31,6 +31,7 @@ from datetime import timedelta, datetime
 
 from django.db import models
 from django.db.models import Q
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import ugettext_lazy as _
 
 from sellmo import modules
@@ -116,7 +117,7 @@ def load_model():
             # Get store availability
             try:
                 nearest = settings.availability.get_nearest_availability()
-            except StoreAvailability.DoesNotExist:
+            except ObjectDoesNotExist:
                 return None
             
             # Get offset based of store availability
