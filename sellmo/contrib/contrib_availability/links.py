@@ -37,13 +37,15 @@ from django.utils.translation import ugettext_lazy as _
 @link(namespace='store')
 def validate_purchase(purchase, **kwargs):
     # Thread product (or variation) as an AvailabilityBase instance
-    target = purchase.product
+    product_or_variant = purchase.product
     if hasattr(purchase, 'variation_key'):
         try:
-            target = modules.variation.Variation \
+            product_or_variant = modules.variation.Variation \
                             .objects.get(pk=purchase.variation_key)
         except modules.variation.Variation.DoesNotExist:
             raise PurchaseInvalid(_("Variation is unavailable."))
     
-    if target.stock < purchase.qty and not purchase.product.can_backorder():
+    if (product_or_variant is not None and
+            product_or_variant.stock < purchase.qty and 
+            not purchase.product.can_backorder()):
         raise PurchaseInvalid(_("Product is out of stock."))
