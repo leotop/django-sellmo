@@ -53,18 +53,23 @@ class ProductVariationsCache(Cache):
         # Query them all
         all_variations = list(PKIterator(modules.variation.Variation,
                                          all_variations))
-
+        
         # Reconstruct
         if grouped:
-            products = modules.product.Product.objects.all().polymorphic()
+            product_qs = modules.product.Product.objects.all().polymorphic()
+            value_object_qs = modules.attribute.ValueObject.objects \
+                                     .all().polymorphic()
             grouped_variations = []
             
             if len(cache) > 0:
                 all_values = [variation['value'] for variation in cache]
                 all_variants = [variation['variant'] for variation in cache]
-                all_variants = list(PKIterator(products, all_variants))
+                all_variants = list(PKIterator(product_qs, all_variants))
                 attribute = modules.attribute.Attribute.objects \
                                    .get(pk=cache[0]['attribute'])
+                
+                if attribute.value_field == 'value_object':
+                    all_values = list(PKIterator(value_object_qs, all_values))
             
             for variation in cache:
 
@@ -75,10 +80,6 @@ class ProductVariationsCache(Cache):
                 all_values = all_values[1:]
                 variant = all_variants[0]
                 all_variants = all_variants[1:]
-                
-                if attribute.value_field == 'value_object':
-                    value = modules.attribute.ValueObject.objects \
-                                   .get(pk=value).downcast()
                 
                 grouped_variations.append({
                     'attribute': attribute,

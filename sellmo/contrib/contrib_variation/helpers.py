@@ -97,18 +97,26 @@ class VariantAttributeHelper(AttributeHelper):
 
 
 class VariationAttributeHelper(object):
-
+    
     def __init__(self, variation):
         self._variation = variation
-        self._variant = variation.variant.downcast()
-
-    def __iter__(self):
-        values = {}
+        self._values = {}
+        self._populated = False
+        
+    def populate(self):
+        if self._populated:
+            return
+        variant = self._variation.variant.downcast()
+        self._values = {}
+        self._populated = True
         for value in self._variation.values.all():
-            values[value.attribute.key] = value
-        for value in self._variant.attributes:
-            if value.attribute.key not in values:
-                values[value.attribute.key] = value
-        for value in values.values():
+            self._values[value.attribute.key] = value
+        for value in variant.attributes:
+            if value.attribute.key not in self._values:
+                self._values[value.attribute.key] = value
+    
+    def __iter__(self):
+        self.populate()
+        for value in self._values.values():
             if value.is_assigned:
                 yield value

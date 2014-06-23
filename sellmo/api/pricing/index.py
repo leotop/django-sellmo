@@ -292,14 +292,12 @@ class PriceIndex(object):
         q, complete = self.build_query(**kwargs)
         if complete:
             try:
-                return self.model.objects.get(q).delete()
+                index = self.model.objects.get(q)
             except self.model.DoesNotExist:
-                pass
-        fargs, complete = self._get_field_args(**kwargs)
-        if complete:
-            obj = self.model(**fargs)
-            obj.price = price
-            obj.save()
+                fargs, complete = self._get_field_args(**kwargs)
+                index = self.model(**fargs)
+            index.price = price
+            index.save()
             return True
         return False
 

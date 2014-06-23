@@ -213,7 +213,7 @@ class PricingModule(sellmo.Module):
 
     @chainable()
     def update_index(self, chain, identifier, delay=False, **kwargs):
-
+        
         # Collect index kwargs
         out = {}
         out.update(kwargs)
