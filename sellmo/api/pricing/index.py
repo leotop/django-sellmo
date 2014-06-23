@@ -224,20 +224,6 @@ class PriceIndex(object):
         model = type(name, (model,), attr_dict)
         self._model = model
 
-    def _get_query(self, through=None, nullable=False, **kwargs):
-        fargs, complete = self._get_field_args(through=through, **kwargs)
-        orm_lookup = {}
-        for key, value in fargs.iteritems():
-            if value is None:
-                if nullable:
-                    continue
-                key = '{0}__isnull'.format(key)
-                value = True
-            if isinstance(value, (tuple, list, QuerySet)):
-                key = '{0}__in'.format(key)
-            orm_lookup[key] = value
-        return Q(**orm_lookup), complete
-
     def _get_field_args(self, through=None, **kwargs):
         fargs = {}
         complete = True
@@ -287,9 +273,23 @@ class PriceIndex(object):
 
     def is_kwarg(self, name):
         return name in self.kwargs
+        
+    def build_query(self, through=None, nullable=False, **kwargs):
+        fargs, complete = self._get_field_args(through=through, **kwargs)
+        orm_lookup = {}
+        for key, value in fargs.iteritems():
+            if value is None:
+                if nullable:
+                    continue
+                key = '{0}__isnull'.format(key)
+                value = True
+            if isinstance(value, (tuple, list, QuerySet)):
+                key = '{0}__in'.format(key)
+            orm_lookup[key] = value
+        return Q(**orm_lookup), complete
 
     def index(self, price, **kwargs):
-        q, complete = self._get_query(**kwargs)
+        q, complete = self.build_query(**kwargs)
         if complete:
             try:
                 return self.model.objects.get(q).delete()
@@ -304,7 +304,7 @@ class PriceIndex(object):
         return False
 
     def lookup(self, **kwargs):
-        q, complete = self._get_query(**kwargs)
+        q, complete = self.build_query(**kwargs)
         if complete:
             try:
                 return self.model.objects.get(q).price
@@ -312,8 +312,8 @@ class PriceIndex(object):
                 pass
         return None
 
-    def query(self, queryset, through, **kwargs):
-        q, complete = self._get_query(through=through, **kwargs)
+    def mixin(self, queryset, through, **kwargs):
+        q, complete = self.build_query(through=through, **kwargs)
         if complete:
             queryset = _make_indexable(
                 queryset, self.model.objects.filter(q), through)
@@ -323,10 +323,6 @@ class PriceIndex(object):
         return _make_indexable(queryset, self.model.objects.all(), through)
 
     def update(self, **kwargs):
-        # First query invalidations
-        q, complete = self._get_query(nullable=True, **kwargs)
-        invalidations = self.model.objects.filter(q)
-
         # Fill defaults
         for key, value in self.kwargs.iteritems():
             if key not in kwargs and value['default']:
@@ -350,19 +346,15 @@ class PriceIndex(object):
                     .format(self, key))
             if self.kwargs[key].get('model', None) is not None:
                 model = self.kwargs[key]['model']
+                # Validate model
                 if isinstance(value, QuerySet) and not value.model is model:
                     raise ValueError(
                         "Index '{0}' update kwarg '{1}' "
                         "is not a valid QuerySet."
                         .format(self, key))
-                elif not isinstance(value, QuerySet):
-                    # Yes this is safe
-                    kwargs[key] = model.objects.filter(
-                        pk__in=[el.pk for el in value])
 
         # Now update with provided kwargs
-        modules.pricing.update_index(
-            index=self.identifier, invalidations=invalidations, **kwargs)
+        modules.pricing.update_index(identifier=self.identifier, **kwargs)
 
     @property
     def model(self):

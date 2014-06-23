@@ -54,9 +54,9 @@ def get_price(price, product=None, currency=None, qty=1, **kwargs):
 
 if celery.enabled and not getattr(params, 'worker_mode', False):
     @link(capture=True)
-    def update_index(index, invalidations, **kwargs):
+    def update_index(identifier, **kwargs):
         yield override_update_index
 
 
-def override_update_index(module, chain, index, invalidations, **kwargs):
-    tasks.queue_update.apply_async((index, invalidations), kwargs)
+def override_update_index(module, chain, identifier, **kwargs):
+    tasks.queue_update.apply_async((identifier,), kwargs)

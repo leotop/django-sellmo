@@ -120,8 +120,13 @@ class PolymorphicQuerySet(QuerySet):
             # For each content type perform the actual query
             for content_type in content_types.values():
                 model = content_type.model_class()
+                # Make sure to filter at content_type even though we
+                # query a subtyped model. We could still query models
+                # which inherit from this subtype (A -> B -> C).
+                qs = QuerySet(model).filter(content_type=content_type)
                 # At this point apply defered query calls
-                for obj in self.__apply_defered_calls__(QuerySet(model)):
+                qs = self.__apply_defered_calls__(qs)
+                for obj in qs:
                     downcasts[obj.pk] = obj
                     obj.content_type = content_type
 

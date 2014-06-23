@@ -212,18 +212,16 @@ class PricingModule(sellmo.Module):
         return self.indexes[identifier]
 
     @chainable()
-    def update_index(self, chain, index, invalidations, delay=False,
-                     **kwargs):
+    def update_index(self, chain, identifier, delay=False, **kwargs):
 
         # Collect index kwargs
         out = {}
         out.update(kwargs)
         if chain:
-            out.update(chain.execute(
-                index=index, invalidations=invalidations, **kwargs))
+            out.update(chain.execute(identifier=identifier, **kwargs))
 
         # Get actual index
-        index = self.get_index(index)
+        index = self.get_index(identifier)
 
         # Filter out kwargs
         iargs = {
@@ -248,13 +246,11 @@ class PricingModule(sellmo.Module):
         combine(iargs)
 
         if not delay:
-            # Invalidate indexes
-            invalidations.invalidate()
             # Create indexes
             for combination in combinations:
                 index.index(self.get_price(**combination), **combination)
         else:
-            return invalidations, combinations
+            return combinations
 
     @chainable()
     def retrieve(self, chain, stampable, prop, price=None, **kwargs):
@@ -330,8 +326,8 @@ class PricingModule(sellmo.Module):
         if currency is None:
             currency = self.get_currency()
         if index is not None:
-            products = self.get_index(index).query(
-                products, index_relation, currency=currency, **kwargs)
+            products = self.get_index(index).mixin(products, index_relation, 
+                                                   currency=currency, **kwargs)
         if query is not None and index is not None:
             # See if we need to sort on price
             if ('sort', 'price') in query:

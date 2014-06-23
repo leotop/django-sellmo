@@ -34,21 +34,15 @@ from sellmo.contrib.contrib_variation.signals import (variations_invalidating,
                                                       variations_invalidated)
 
 
-def list_from_pks(queryset, pks):
-    mapping = {}
-    out = []
-    for el in queryset:
-        mapping[el.pk] = el
-    for el in pks:
-        out.append(mapping[el])
-    return out
+from sellmo.utils.query import PKIterator
 
 
 class ProductVariationsCache(Cache):
 
     @staticmethod
     def materialize(cache, grouped=False):
-        # Collect all variations so we can do one big query
+        
+        # Collect all variations so we can perform one big query.
         if not grouped:
             all_variations = list(cache)
         else:
@@ -57,26 +51,21 @@ class ProductVariationsCache(Cache):
                 all_variations += el['variations']
 
         # Query them all
-        all_variations = list_from_pks(
-            modules.variation.Variation.objects.filter(pk__in=all_variations),
-            all_variations)
+        all_variations = list(PKIterator(modules.variation.Variation,
+                                         all_variations))
 
         # Reconstruct
         if grouped:
+            products = modules.product.Product.objects.all().polymorphic()
             grouped_variations = []
+            
             if len(cache) > 0:
                 all_values = [variation['value'] for variation in cache]
-                all_values = list_from_pks(
-                    modules.attribute.Value.objects.filter(pk__in=all_values),
-                    all_values)
                 all_variants = [variation['variant'] for variation in cache]
-                all_variants = list_from_pks(
-                    modules.product.Product.objects.polymorphic().filter(
-                        pk__in=all_variants), 
-                    all_variants)
-                attribute = modules.attribute.Attribute.objects.get(
-                    pk=cache[0]['attribute'])
-
+                all_variants = list(PKIterator(products, all_variants))
+                attribute = modules.attribute.Attribute.objects \
+                                   .get(pk=cache[0]['attribute'])
+            
             for variation in cache:
 
                 # Get our slice
@@ -86,13 +75,17 @@ class ProductVariationsCache(Cache):
                 all_values = all_values[1:]
                 variant = all_variants[0]
                 all_variants = all_variants[1:]
-
-                grouped_variations += [{
+                
+                if attribute.value_field == 'value_object':
+                    value = modules.attribute.ValueObject.objects \
+                                   .get(pk=value).downcast()
+                
+                grouped_variations.append({
                     'attribute': attribute,
                     'value': value,
                     'variations': variations,
                     'variant': variant,
-                }]
+                })
 
             variations = grouped_variations
         else:
@@ -116,7 +109,6 @@ class ProductVariationsCache(Cache):
     def capture(self, product, grouped=False, **kwargs):
         variations = self.get(self.get_variations_key(product.pk, grouped))
         variations_hit = variations is not None
-
         if variations_hit:
             try:
                 variations = self.materialize(variations, grouped)
@@ -125,7 +117,7 @@ class ProductVariationsCache(Cache):
                 self.delete(self.get_variations_key(product.pk, grouped))
                 variations = None
                 variations_hit = False
-
+        
         return {
             'variations': variations,
             'variations_hit': variations_hit
@@ -137,11 +129,15 @@ class ProductVariationsCache(Cache):
             cache = []
             for variation in variations:
                 if not grouped:
-                    cache.append(variation.key)
+                    cache.append(variation.pk)
                 else:
+                    attribute = variation['attribute']
+                    value = variation['value']
+                    if attribute.value_field == 'value_object':
+                        value = value.pk
                     cache.append({
-                        'attribute': variation['attribute'].pk,
-                        'value': variation['value'].pk,
+                        'attribute': attribute.pk,
+                        'value': value,
                         'variations': [el.pk for el in 
                             variation['variations']],
                         'variant': variation['variant'].pk,

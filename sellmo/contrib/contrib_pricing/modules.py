@@ -39,6 +39,7 @@ from sellmo.contrib.contrib_pricing.models import (QtyPriceBase,
                                                    QtyPriceRatio,
                                                    ProductQtyPrice,
                                                    PriceIndexHandle)
+from sellmo.utils.query import PKIterator
 
 from django.db import transaction
 from django.db.models.query import QuerySet
@@ -97,8 +98,6 @@ class PriceIndexingModule(Module):
             return handle.updates
         else:
             return {
-                'invalidations': modules.pricing.get_index(handle.index)
-                    .model.objects.none(),
                 'kwargs': {},
             }
 
@@ -106,106 +105,95 @@ class PriceIndexingModule(Module):
         handle.updates = updates
         handle.save()
 
-    def _merge_kwarg(self, key, existing, new):
-        if isinstance(existing, QuerySet) and isinstance(new, QuerySet):
-            # Make sure we are dealing with the same model
-            if existing.model != new.model:
-                raise Exception(
-                    "Cannot merge query sets '{0}'."
-                    .format(key))
-            merged = [pk for pk in existing.values_list('pk', flat=True)]
-            merged.extend(
-                [pk for pk in new.values_list('pk', flat=True)
-                 if pk not in merged])
-            merged = existing.model.objects.filter(pk__in=merged)
-        else:
-            merged = list(existing)
-            merged.extend([value for value in new if value not in existing])
+    def _merge_kwarg(self, index, key, existing, new):
+        merged = list(existing)
+        merged.extend([value for value in new if value not in existing])
         return merged
+        
+    def _convert_kwarg(self, index, key, value):
+        if index.kwargs[key].get('model', None) is not None:
+            if isinstance(value, QuerySet):
+                return list(value.values_list('pk', flat=True))
+            else:
+                return [obj.pk for obj in value]
+        else:
+            return list(value)
 
     @chainable()
-    def queue_update(self, chain, index, invalidations, **kwargs):
+    def queue_update(self, chain, identifier, **kwargs):
+        index = modules.pricing.get_index(identifier)
         with transaction.atomic():
             handle = self._get_handle(index)
             updates = self._read_updates(handle)
 
-            # Merge invalidations
-            existing = updates['invalidations']
-            merged = [pk for pk in existing.values_list('pk', flat=True)]
-            merged.extend(
-                [pk for pk in invalidations.values_list('pk', flat=True)
-                 if pk not in merged])
-            updates['invalidations'] = modules.pricing.get_index(
-                index).model.objects.filter(pk__in=merged)
-
-            # merge kwargs
-            merged = dict(updates['kwargs'])
+            # Merge kwargs
+            existing = dict(updates['kwargs'])
             for key, value in kwargs.iteritems():
                 if not value:
                     # Skip empty lists (or querysets)
                     continue
-                if key not in merged:
-                    merged[key] = value
-                else:
-                    merged[key] = self._merge_kwarg(key, merged[key], value)
-            updates['kwargs'] = merged
+                
+                value = self._convert_kwarg(index, key, value)
+                if key in existing:
+                    value = self._merge_kwarg(key, index, existing[key], value)
+                existing[key] = value
+            
+            updates['kwargs'] = existing
             self._write_updates(handle, updates)
-
+            
     @chainable()
     def handle_updates(self, chain, **kwargs):
         for identifier, index in modules.pricing.indexes.iteritems():
-            with transaction.atomic():
-                handle = self._get_handle(identifier)
-                if handle.updates is None:
-                    continue
-                updates = self._read_updates(handle)
-                self._write_updates(handle, None)
-
-            logger.info("Index '{0}' is updating.".format(identifier))
-
-            # Requery kwargs (query could have become invalid)
-            for key, value in updates['kwargs'].iteritems():
-                if index.kwargs[key].get('model', None) is not None:
-                    model = index.kwargs[key]['model']
-                    updates['kwargs'][key] = model.objects.filter(
-                        pk__in=value.values_list('pk', flat=True))
-
-            # Requery invalidations
-            invalidations = updates['invalidations']
-            updates['invalidations'] = invalidations.model.objects.filter(
-                pk__in=invalidations.values_list('pk', flat=True))
-
-            invalidations, combinations = modules.pricing.update_index(
-                index=identifier,
-                invalidations=updates['invalidations'],
-                delay=True,
-                **updates['kwargs']
-            )
-
-            with transaction.atomic():
-                logger.info("Invalidating {1} indexes for index '{0}'".format(
-                    identifier, invalidations.count()))
-                invalidations.invalidate()
-
-                logger.info(
-                    "Creating {1} indexes for index '{0}'"
+            self._handle_updates(identifier, index)
+            
+    def _handle_updates(self, identifier, index):
+        with transaction.atomic():
+            handle = self._get_handle(identifier)
+            if handle.updates is None:
+                # Nothing to update
+                return
+            # Read and clear updates
+            updates = self._read_updates(handle)
+            self._write_updates(handle, None)
+        
+        logger.info("Index '{0}' is updating.".format(identifier))
+        
+        # Resolve actual kwargs
+        kwargs = {}
+        for key, value in updates['kwargs'].iteritems():
+            if index.kwargs[key].get('model', None) is not None:
+                model = index.kwargs[key]['model']
+                kwargs[key] = PKIterator(model, value)
+            else:
+                kwargs[key] = value
+        
+        combinations = modules.pricing.update_index(
+            identifier=identifier,
+            delay=True,
+            **kwargs
+        )
+        
+        logger.info("Updating {1} indexes for index '{0}'"
                     .format(identifier, len(combinations)))
-                for combination in combinations:
-                    price = modules.pricing.get_price(**combination)
-                    signature = ", ".join(str(value)
-                                          for value in combination.values())
-                    if index.index(price, **combination):
-                        logger.info(
-                        "Index {1}={2} created for index '{0}'"
+    
+        with transaction.atomic():
+            for combination in combinations:
+                price = modules.pricing.get_price(**combination)
+                signature = ", ".join(str(value) for value in 
+                                      combination.values())
+                
+                if index.index(price, **combination):
+                    logger.info("Index {1}={2} created for index '{0}'"
                         .format(identifier, signature, price.amount))
-                    else:
-                        logger.info(
-                            "Index {1}={2} omitted for index '{0}'"
-                            .format(identifier, signature, price.amount))
+                else:
+                    logger.info("Index {1}={2} omitted for index '{0}'"
+                        .format(identifier, signature, price.amount))
+            
+            handle = self._get_handle(identifier)
+            handle.updated = datetime.now()
+            handle.save()
+        
+        logger.info("Index '{0}' updated.".format(index))
+        
 
-            with transaction.atomic():
-                handle = self._get_handle(identifier)
-                handle.updated = datetime.now()
-                handle.save()
 
-            logger.info("Index '{0}' updated.".format(index))

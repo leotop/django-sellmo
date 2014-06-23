@@ -40,11 +40,14 @@ logger = logging.getLogger('sellmo')
 
 @shared_task
 def build_variations(product):
-    logger.info("Building variations for product '{0}'".format(
-        product))
-    modules.variation.Variation.objects.build(product)
+    if modules.product.Product.objects.exists(pk=product):
+        logger.info("Building variations "
+                    " for product '{0}'".format(product))
+        modules.variation.Variation.objects.build(product)
 
 @shared_task
 def invalidate_variations(products):
     logger.info("Invalidating variations")
+    # Requery products to get an up to date queryset
+    products = products.model.objects.filter(pk__in=products)
     modules.variation.Variation.objects.invalidate(products)

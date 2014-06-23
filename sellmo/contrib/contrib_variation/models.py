@@ -415,19 +415,6 @@ class VariationManager(models.Manager):
 
         # CONVERT TO LIST FOR PERFORMANCE AND INDEXING
         attributes = list(attributes)
-
-        # Keep track of explicit attributes
-        """
-        explicits = {}
-        for attribute in attributes:
-            values = modules.attribute.Value.objects \
-                            .which_variate(product) \
-                            .for_attribute(attribute)
-            if values.filter(variates=True).count() > 0:
-                explicits[attribute.key] = False
-            else:
-                explicits[attribute.key] = True
-        """
         
         # Create all possible variation combinations
         combinations = itertools.product(*[
@@ -439,7 +426,6 @@ class VariationManager(models.Manager):
                     .distinct()),
                 attribute=attribute))
             for attribute in attributes])
-            
         
         # Create variations
         sort_order = 0
@@ -719,8 +705,8 @@ def load_model():
             variations_state.invalidated = value
             variations_state.save()
 
-        variations_invalidated = property(
-            get_variations_invalidated, set_variations_invalidated)
+        variations_invalidated = property(get_variations_invalidated,
+                                          set_variations_invalidated)
 
         class Meta(modules.product.Product.Meta):
             abstract = True

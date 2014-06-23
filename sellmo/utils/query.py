@@ -27,28 +27,44 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.db import models
+
 from django.db.models.query import QuerySet
-from django.utils.translation import ugettext_lazy as _
-
-from sellmo import modules
-from sellmo.api.decorators import load
 
 
-@load(action='finalize_pricing_PriceIndexBase')
-def finalize_model():
-    class PriceIndexBase(modules.pricing.PriceIndexBase):
-
-        class Meta(modules.pricing.PriceIndexBase.Meta):
-            abstract = True
-            app_label = 'pricing'
+class PKIterator(object):
     
-    modules.pricing.PriceIndexBase = PriceIndexBase
-
-
-class PriceIndexBase(models.Model):
+    """
+    Queries a set of pks against the given model. Seperate 
+    queries are used if the length of 'pks' exceeds 'step'.
+    This in order to limit the length of the sql IN clause.
+    Order of pks is kept. If pk is not found, it will be 
+    ignored.
+    """
     
-    class Meta:
-        abstract = True
-
-
+    _result_cache = None
+    _queryset = None
+    
+    def __init__(self, model_or_queryset, pks, step=250):
+        if not isinstance(model_or_queryset, QuerySet):
+            # Must be a Model then
+            model_or_queryset = model_or_queryset.objects.all()
+        self._queryset = model_or_queryset
+        self._pks = list(pks)
+        self._step = step
+    
+    def __iter__(self):
+        if self._result_cache is None:
+            self._result_cache = {}
+            for i in xrange(0, len(self._pks), self._step):
+                sliced = self._pks[i:i+self._step]
+                for obj in self._queryset.filter(pk__in=sliced):
+                    self._result_cache[obj.pk] = obj
+        for pk in self._pks:
+            obj = self._result_cache.get(pk, None)
+            if obj is not None:
+                yield obj
+        
+    def __len__(self):
+        if self._result_cache is None:
+            self.__iter__()
+        return len(self._result_cache)

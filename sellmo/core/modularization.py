@@ -96,7 +96,7 @@ class MountPoint(object):
     def __getattr__(self, name):
         if name in self._modules:
             return self._modules[name]
-        raise AttributeError()
+        raise AttributeError(name)
 
     def __iter__(self):
         for module in self._modules.itervalues():
