@@ -30,8 +30,6 @@
 
 from django.core.management.commands.loaddata import Command as BaseCommand
 
-from sellmo.core.polymorphism import PolymorphicOverride
-
 import sys
 import logging
 
@@ -42,5 +40,4 @@ params.loaddata = True
 class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
-        with PolymorphicOverride(False):
-            super(Command, self).handle(*args, **kwargs)
+        super(Command, self).handle(*args, **kwargs)

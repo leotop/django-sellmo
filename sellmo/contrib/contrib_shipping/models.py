@@ -32,7 +32,8 @@ from sellmo import modules
 from sellmo.api.decorators import load
 from sellmo.core.polymorphism import (PolymorphicModel,
                                       PolymorphicManager,
-                                      PolymorphicQuerySet)
+                                      PolymorphicQuerySet,
+                                      PolymorphicForeignKey)
 from sellmo.api.checkout import ShippingMethod as _ShippingMethod
 
 from django.db import models
@@ -69,7 +70,7 @@ class Shipment(models.Model):
         verbose_name=_("carrier"),
     )
     
-    method = models.ForeignKey(
+    method = PolymorphicForeignKey(
         'shipping.ShippingMethod',
         on_delete=models.SET_NULL,
         null=True,
@@ -121,8 +122,6 @@ def finalize_model():
 
 
 class ShippingMethod(PolymorphicModel):
-
-    objects = PolymorphicManager(downcast=True)
 
     active = models.BooleanField(
         default=True,

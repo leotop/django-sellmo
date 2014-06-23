@@ -90,7 +90,7 @@ if not using_dist:
 
 setup(
     name="Sellmo",
-    version='0.2.1054',
+    version='0.2.1060',
     url='http://www.adaptiv.nl/',
     author='Adaptiv Design',
     author_email='raymond@adaptiv.nl',

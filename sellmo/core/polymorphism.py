@@ -28,10 +28,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-import types
-from threading import local
-from collections import deque
-
 from django.db import models
 from django.db.models.query import QuerySet
 from django.contrib.contenttypes.models import ContentType
@@ -39,23 +35,39 @@ from django.contrib.admin.util import quote
 from django.utils.functional import allow_lazy
 
 
-_local = local()
+from sellmo import modules
+from sellmo.magic.patching import monkeypatch_class
 
 
-class PolymorphicOverride(object):
+def _polymorphic_descriptor(descriptor):
+    class PolymorphicDescriptor(descriptor):
+        def __get__(self, instance, instance_type=None):
+            result = super(PolymorphicDescriptor, self) \
+                .__get__(instance, instance_type)
+            if getattr(result, 'pk', None) is not None:
+                result = result.downcast()
+            return result
+    
+    return PolymorphicDescriptor
 
-    def __init__(self, polymorphic=True):
-        self._polymorphic = polymorphic
 
-    def __enter__(self):
-        if not hasattr(_local, 'overrides'):
-            _local.overrides = deque()
-        _local.overrides.append(self._polymorphic)
+class PolymorphicRelation(object):
+    def contribute_to_class(self, cls, name, virtual_only=False):
+        # Call original contribute_to_class
+        super(PolymorphicRelation, self) \
+            .contribute_to_class(cls, name, virtual_only)
+        # Get descriptor class
+        descriptor = getattr(cls, self.name).__class__
+        # Overwrite with polymorphic desriptor
+        setattr(cls, self.name, _polymorphic_descriptor(descriptor)(self))    
+    
 
-    def __exit__(self, exc_type, exc_value, traceback):
-        _local.overrides.pop()
-        if not _local.overrides:
-            del _local.overrides
+class PolymorphicForeignKey(PolymorphicRelation, models.ForeignKey):
+    pass
+    
+
+class PolymorphicOneToOneField(PolymorphicRelation, models.OneToOneField):
+    pass
 
 
 class PolymorphicQuerySet(QuerySet):
@@ -88,15 +100,7 @@ class PolymorphicQuerySet(QuerySet):
         return clone
     
     def iterator(self):
-        override = None
-        if hasattr(_local, 'overrides'):
-            override = _local.overrides[-1]  # peek
-        downcast = (
-            self._downcast and override is not False
-            or override is True
-        )
-
-        if not downcast:
+        if not self._downcast:
             return super(PolymorphicQuerySet, self).iterator()
         else:
             
@@ -104,6 +108,7 @@ class PolymorphicQuerySet(QuerySet):
             # Afterwards perform seperate queries for each content_type
             content_types = {}
             order = []
+            bases = {}
             downcasts = {}
             out = []
             
@@ -115,6 +120,7 @@ class PolymorphicQuerySet(QuerySet):
                 if not content_types.has_key(obj.content_type.pk):
                     content_types[obj.content_type.pk] = obj.content_type
                 # Keep order
+                bases[obj.pk] = obj
                 order.append(obj.pk)
 
             # For each content type perform the actual query
@@ -127,8 +133,11 @@ class PolymorphicQuerySet(QuerySet):
                 # At this point apply defered query calls
                 qs = self.__apply_defered_calls__(qs)
                 for obj in qs:
-                    downcasts[obj.pk] = obj
+                    base = bases[obj.pk]
+                    base._downcasted = obj
                     obj.content_type = content_type
+                    obj._downcasted_from = base
+                    downcasts[obj.pk] = obj
 
             for pk in order:
                 out.append(downcasts[pk])
@@ -152,10 +161,6 @@ class PolymorphicQuerySet(QuerySet):
                         .select_related('content_type')
             clone._downcast = True
         return clone
-        
-    def delete(self, *args, **kwargs):
-        with PolymorphicOverride(False):
-            super(PolymorphicQuerySet, self).delete(*args, **kwargs)
             
     def filter(self, *args, **kwargs):
         return self.__defer__call__('filter', args, kwargs, inheritable=True)
@@ -187,8 +192,7 @@ class PolymorphicManager(models.Manager):
 
     use_for_related_fields = True
 
-    def __init__(self, cls=PolymorphicQuerySet, downcast=False):
-        self._downcast = downcast
+    def __init__(self, cls=PolymorphicQuerySet):
         self._cls = cls
         super(PolymorphicManager, self).__init__()
 
@@ -201,10 +205,7 @@ class PolymorphicManager(models.Manager):
                            .get_by_polymorphic_natural_key(*key)
 
     def get_queryset(self):
-        qs = self._cls(self.model, using=self._db)
-        if self._downcast:
-            qs = qs.polymorphic()
-        return qs
+        return self._cls(self.model, using=self._db)
 
     def polymorphic(self, *args, **kwargs):
         return self.get_queryset().polymorphic(*args, **kwargs)
@@ -215,6 +216,7 @@ class PolymorphicModel(models.Model):
     content_type = models.ForeignKey(ContentType, editable=False)
     objects = PolymorphicManager()
     _downcasted = None
+    _downcasted_from = None
 
     @classmethod
     def get_admin_url(cls, content_type, object_id):
@@ -228,25 +230,16 @@ class PolymorphicModel(models.Model):
 
     def save(self, *args, **kwargs):
         if self.content_type_id is None:
-            self.content_type = ContentType.objects.get_for_model(
-                self.__class__)
+            self.content_type = (ContentType.objects
+                                 .get_for_model(self.__class__))
         super(PolymorphicModel, self).save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        assert self._get_pk_val() is not None, (
-            "{0} object can't be deleted because its {1} "
-            "attribute is set to None."
-            .format(self._meta.object_name, self._meta.pk.attname))
-        with PolymorphicOverride(False):
-            upcasted = self.__class__.objects.get(pk=self.pk)
-            super(PolymorphicModel, upcasted).delete(*args, **kwargs)
 
     def downcast(self):
         if not self._downcasted:
             downcasted = self
             if not self.content_type_id is None:
                 model = self.content_type.model_class()
-                if(model != self.__class__):
+                if model is not self.__class__:
                     try:
                         downcasted = model.objects.get(pk=self.pk)
                     except model.DoesNotExist:
@@ -255,12 +248,13 @@ class PolymorphicModel(models.Model):
                             "lookup failed for pk '{1}'"
                             .format(model, self.pk))
             self._downcasted = downcasted
+            self._downcasted._downcasted_from = self
         return self._downcasted
 
     def can_downcast(self):
         if not self.content_type_id is None:
             model = self.content_type.model_class()
-            return model != self.__class__
+            return model is not self.__class__
         return False
 
     def resolve_content_type(self):
@@ -279,3 +273,18 @@ class PolymorphicModel(models.Model):
     class Meta:
         abstract = True
     
+    
+# South support
+
+try:
+    from south.modelsinspector import add_introspection_rules
+except ImportError:
+    pass
+else:
+    add_introspection_rules(
+        [], 
+        ["^sellmo\.core\.polymorphism\.PolymorphicForeignKey"])
+    add_introspection_rules(
+        [], 
+        ["^sellmo\.core\.polymorphism\.PolymorphicOneToOneField"])
+

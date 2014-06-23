@@ -37,7 +37,9 @@ from django.utils.translation import ugettext_lazy as _
 from sellmo import modules
 from sellmo.api.pricing import Price
 from sellmo.api.decorators import load
-from sellmo.core.polymorphism import PolymorphicModel, PolymorphicManager
+from sellmo.core.polymorphism import (PolymorphicModel,
+                                      PolymorphicManager,
+                                      PolymorphicOneToOneField)
 from sellmo.utils.tracking import trackable
 from sellmo.signals.checkout import *
 
@@ -238,7 +240,7 @@ class Order(trackable('sellmo_order')):
         verbose_name=_("calculated at"),
     )
     
-    payment = models.OneToOneField(
+    payment = PolymorphicOneToOneField(
         'checkout.Payment',
         related_name='order',
         null=True,
@@ -247,7 +249,7 @@ class Order(trackable('sellmo_order')):
         verbose_name=_("payment")
     )
     
-    shipment = models.OneToOneField(
+    shipment = PolymorphicOneToOneField(
         'checkout.Shipment',
         related_name='order',
         null=True,
@@ -564,9 +566,7 @@ class Order(trackable('sellmo_order')):
 
 
 class Shipment(PolymorphicModel):
-
-    objects = PolymorphicManager(downcast=True)
-
+    
     def get_method(self):
         raise NotImplementedError()
 
@@ -580,9 +580,7 @@ class Shipment(PolymorphicModel):
 
 
 class Payment(PolymorphicModel):
-
-    objects = PolymorphicManager(downcast=True)
-
+    
     # Flags
     instant = True
 

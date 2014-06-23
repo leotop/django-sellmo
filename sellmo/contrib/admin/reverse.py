@@ -55,7 +55,8 @@ class ReverseInlineFormSet(BaseModelFormSet):
             obj = None
 
         if obj:
-            queryset = self.model.objects.filter(pk=obj.id)
+            # Will fix polymorphic behaviour
+            queryset = obj.__class__.objects.filter(pk=obj.id)
         else:
             queryset = self.model.objects.none()
 
