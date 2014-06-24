@@ -35,10 +35,6 @@ from django.contrib.admin.util import quote
 from django.utils.functional import allow_lazy
 
 
-from sellmo import modules
-from sellmo.magic.patching import monkeypatch_class
-
-
 def _polymorphic_descriptor(descriptor):
     class PolymorphicDescriptor(descriptor):
         def __get__(self, instance, instance_type=None):
