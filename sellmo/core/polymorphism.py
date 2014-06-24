@@ -82,7 +82,7 @@ class PolymorphicQuerySet(QuerySet):
         
     def __apply_defered_calls__(self, qs):
         for name, args, kwargs in self._defered_calls:
-            qs = getattr(queryset, name)(*args, **kwargs)
+            qs = getattr(qs, name)(*args, **kwargs)
         return qs
         
     def __defer__call__(self, name, args, kwargs, inheritable=False):
