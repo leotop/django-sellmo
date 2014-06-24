@@ -97,9 +97,9 @@ def get_price(price, product=None, discount_group=None, **kwargs):
                 if discount_group:
                     q |= Q(groups=discount_group)
                 discount = discount.filter(q)
-            discount = discount.best_for_product(product)
+            discount = discount.get_best_for_product(product)
         except modules.discount.Discount.DoesNotExist:
-            pass
+            discount = None
 
     if discount:
         price = discount.apply(price)

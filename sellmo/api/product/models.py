@@ -132,7 +132,7 @@ class ProductRelatableQuerySet(QuerySet):
         return self.filter(self.model.get_for_product_query(product=product)) \
                    .distinct()
 
-    def best_for_product(self, product):
+    def get_best_for_product(self, product):
         matches = self.for_product(product)
         if matches:
             return self.model.get_best_for_product(
@@ -147,8 +147,8 @@ class ProductRelatableManager(models.Manager):
     def for_product(self, *args, **kwargs):
         return self.get_queryset().for_product(*args, **kwargs)
 
-    def best_for_product(self, *args, **kwargs):
-        return self.get_queryset().best_for_product(*args, **kwargs)
+    def get_best_for_product(self, *args, **kwargs):
+        return self.get_queryset().get_best_for_product(*args, **kwargs)
 
     def get_queryset(self):
         return ProductRelatableQuerySet(self.model, using=self._db)

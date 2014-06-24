@@ -39,7 +39,7 @@ from sellmo.contrib.contrib_pricing.models import (QtyPriceBase,
                                                    QtyPriceRatio,
                                                    ProductQtyPrice,
                                                    PriceIndexHandle)
-from sellmo.utils.query import PKIterator
+from sellmo.core.query import PKIterator
 
 from django.db import transaction
 from django.db.models.query import QuerySet

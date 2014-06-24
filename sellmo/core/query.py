@@ -32,7 +32,7 @@ from django.db.models.query import QuerySet
 
 
 class PKIterator(object):
-    
+
     """
     Queries a set of pks against the given model. Seperate 
     queries are used if the length of 'pks' exceeds 'step'.
@@ -40,10 +40,10 @@ class PKIterator(object):
     Order of pks is kept. If pk is not found, it will be 
     ignored.
     """
-    
+
     _result_cache = None
     _queryset = None
-    
+
     def __init__(self, model_or_queryset, pks, step=250):
         if not isinstance(model_or_queryset, QuerySet):
             # Must be a Model then
@@ -51,7 +51,7 @@ class PKIterator(object):
         self._queryset = model_or_queryset
         self._pks = list(pks)
         self._step = step
-    
+
     def __iter__(self):
         if self._result_cache is None:
             self._result_cache = {}
@@ -63,7 +63,7 @@ class PKIterator(object):
             obj = self._result_cache.get(pk, None)
             if obj is not None:
                 yield obj
-        
+
     def __len__(self):
         if self._result_cache is None:
             self.__iter__()

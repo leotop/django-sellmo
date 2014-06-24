@@ -35,6 +35,9 @@ from django.contrib.admin.util import quote
 from django.utils.functional import allow_lazy
 
 
+from sellmo.core.query import PKIterator
+
+
 def _polymorphic_descriptor(descriptor):
     class PolymorphicDescriptor(descriptor):
         def __get__(self, instance, instance_type=None):
@@ -77,10 +80,10 @@ class PolymorphicQuerySet(QuerySet):
             self._downcast = kwargs.pop('downcast')
         super(PolymorphicQuerySet, self).__init__(*args, **kwargs)
         
-    def __apply_defered_calls__(self, queryset):
+    def __apply_defered_calls__(self, qs):
         for name, args, kwargs in self._defered_calls:
-            queryset = getattr(queryset, name)(*args, **kwargs)
-        return queryset
+            qs = getattr(queryset, name)(*args, **kwargs)
+        return qs
         
     def __defer__call__(self, name, args, kwargs, inheritable=False):
         if not inheritable and self._downcast:
@@ -102,39 +105,51 @@ class PolymorphicQuerySet(QuerySet):
             
             # Keep ordering and filter out all content types
             # Afterwards perform seperate queries for each content_type
+            
+            # PK mapping for used content_types
             content_types = {}
+            
+            # Contains mapping of content type to list of matching pks
+            lookups = {}
+            
             order = []
             bases = {}
             downcasts = {}
-            out = []
             
             # Perform original query against ourselves so that we 
             # receive correct ordering and we can resolve only the 
             # content types needed for downcasting
             for obj in super(PolymorphicQuerySet, self).iterator():
-                # Collect content type
                 if not content_types.has_key(obj.content_type.pk):
+                    # New content type found
                     content_types[obj.content_type.pk] = obj.content_type
-                # Keep order
+                    lookups[obj.content_type] = []
+                
+                lookups[obj.content_type].append(obj.pk)
+                
+                # Keep track of base objects so we can later
+                # assign them to the downcasted objects.
                 bases[obj.pk] = obj
+                # Retain order
                 order.append(obj.pk)
 
             # For each content type perform the actual query
-            for content_type in content_types.values():
+            for content_type, lookups in lookups.iteritems():
                 model = content_type.model_class()
-                # Make sure to filter at content_type even though we
-                # query a subtyped model. We could still query models
-                # which inherit from this subtype (A -> B -> C).
-                qs = QuerySet(model).filter(content_type=content_type)
+                qs = model.objects.all()
                 # At this point apply defered query calls
                 qs = self.__apply_defered_calls__(qs)
-                for obj in qs:
+                # Now query using a PKIterator to safely handle
+                # large IN clauses. Also transform lookups into
+                # a set, so we don't query redundant pk's. 
+                for obj in PKIterator(qs, set(lookups)):
                     base = bases[obj.pk]
                     base._downcasted = obj
                     obj.content_type = content_type
                     obj._downcasted_from = base
                     downcasts[obj.pk] = obj
 
+            out = []
             for pk in order:
                 out.append(downcasts[pk])
             
@@ -157,12 +172,6 @@ class PolymorphicQuerySet(QuerySet):
                         .select_related('content_type')
             clone._downcast = True
         return clone
-            
-    def filter(self, *args, **kwargs):
-        return self.__defer__call__('filter', args, kwargs, inheritable=True)
-        
-    def exclude(self, *args, **kwargs):
-        return self.__defer__call__('exclude', args, kwargs, inheritable=True)
     
     def select_related(self, *args, **kwargs):
         return self.__defer__call__('select_related', args, kwargs)
@@ -173,11 +182,11 @@ class PolymorphicQuerySet(QuerySet):
     def defer(self, *args, **kwargs):
         return self.__defer__call__('defer', args, kwargs)
         
-    def annotate(self, *args, **kwargs):
-        return self.__defer__call__('annotate', args, kwargs)
-        
     def extra(self, *args, **kwargs):
-        return self.__defer__call__('extra', args, kwargs)
+        return self.__defer__call__('filter', args, kwargs, inheritable=True)
+        
+    def annotate(self, *args, **kwargs):
+        return self.__defer__call__('filter', args, kwargs, inheritable=True)
         
     def using(self, *args, **kwargs):
         return self.__defer__call__('using', args, kwargs, inheritable=True)

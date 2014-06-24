@@ -225,6 +225,8 @@ class VariationModule(Module):
                 price_adjustment = (
                     modules.pricing.get_price(product=variant)
                     - modules.pricing.get_price(product=variant.product))
+                
+                print modules.pricing.get_price(product=variant)
 
             values = self.variation_value_seperator.join(
                 [unicode(value)

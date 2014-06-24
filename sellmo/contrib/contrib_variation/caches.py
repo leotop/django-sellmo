@@ -34,7 +34,7 @@ from sellmo.contrib.contrib_variation.signals import (variations_invalidating,
                                                       variations_invalidated)
 
 
-from sellmo.utils.query import PKIterator
+from sellmo.core.query import PKIterator
 
 
 class ProductVariationsCache(Cache):
