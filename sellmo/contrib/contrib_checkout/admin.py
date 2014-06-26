@@ -84,10 +84,12 @@ class OrderAdmin(ReverseModelAdmin):
 
     inline_type = 'stacked'
     inline_reverse = ['shipment', 'payment'] + \
-        ['{0}_address'.format(address) for address in modules.customer.address_types]
+        ['{0}_address'.format(address) for address in 
+         modules.customer.address_types]
 
     list_display = [
-        'order', 'number', 'status', 'total_amount', 'paid', 'modified', 'actions_link']
+        'order', 'number', 'status', 'total_amount', 'paid', 'modified',
+        'action_links']
     list_display_links = ['order']
 
     raw_id_fields = ['customer']
@@ -98,11 +100,23 @@ class OrderAdmin(ReverseModelAdmin):
     def order(self, obj):
         return unicode(obj)
 
-    def actions_link(self, obj):
-        return ("<a href='{0}'>Print Invoice</a>"
-                .format(reverse('admin:checkout.invoice', args=(obj.pk,))))
-    actions_link.allow_tags = True
-    actions_link.short_description = _("Actions")
+    def action_links(self, obj):
+        links = []
+        if reporter.can_report('invoice'):
+            links.append(("<a href='{0}'>Print Invoice</a>"
+                         .format(reverse(
+                            'admin:checkout.invoice',
+                            args=(obj.pk,)))))
+        if reporter.can_report('order_confirmation'):
+            links.append(("<a href='{0}'>Print Order Confirmation</a>"
+                          .format(reverse(
+                            'admin:checkout.order_confirmation',
+                            args=(obj.pk,)))))
+                            
+        return "<div>{0}</div>".format("&nbsp;/&nbsp;".join(links))
+                  
+    action_links.allow_tags = True
+    action_links.short_description = _("Actions")
 
     def invoice(self, request, id):
         order = modules.checkout.Order.objects.get(pk=id)
@@ -113,14 +127,34 @@ class OrderAdmin(ReverseModelAdmin):
         response = HttpResponse(content_type=invoice.mimetype)
         response.write(invoice.data)
         return response
+        
+    def order_confirmation(self, request, id):
+        order = modules.checkout.Order.objects.get(pk=id)
+        invoice = reporter.get_report('order_confirmation', context={
+            'order': order
+        })
+    
+        response = HttpResponse(content_type=invoice.mimetype)
+        response.write(invoice.data)
+        return response
 
     def get_urls(self):
         urls = super(OrderAdmin, self).get_urls()
-        custom_urls = patterns(
-            '',
-            url(r'^(.+)/invoice/$', self.admin_site.admin_view(self.invoice),
-                name='checkout.invoice'),
-        )
-        return custom_urls + urls
+        
+        if reporter.can_report('invoice'):
+            urls = (patterns('', 
+                        url(r'^(.+)/invoice/$',
+                        self.admin_site.admin_view(self.invoice),
+                        name='checkout.invoice'),)
+                    + urls)
+        
+        if reporter.can_report('order_confirmation'):
+            urls = (patterns('', 
+                        url(r'^(.+)/order_confirmation/$',
+                        self.admin_site.admin_view(self.order_confirmation),
+                        name='checkout.order_confirmation'),)
+                    + urls)
+        
+        return urls
 
 admin.site.register(modules.checkout.Order, OrderAdmin)

@@ -55,10 +55,13 @@ for message_type, config in modules.checkout.order_mails.iteritems():
 
 
 # Register report writers
-reporter.register('invoice',
-                  modules.checkout.invoice_writer)
-reporter.register('order_confirmation',
-                  modules.checkout.order_confirmation_writer)
+if modules.checkout.invoice_writer:
+    reporter.register('invoice',
+                      modules.checkout.invoice_writer)
+
+if modules.checkout.order_confirmation_writer:
+    reporter.register('order_confirmation',
+                      modules.checkout.order_confirmation_writer)
 
 
 def on_mail_init(sender, message_type, message_reference, context, **kwargs):

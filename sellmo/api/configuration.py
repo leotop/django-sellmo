@@ -57,7 +57,7 @@ def define_setting(key, required=True, transform=None, prefix=_prefix,
         transform=transform, **kwargs)
     
 def define_import(key, required=True, prefix=_prefix, **kwargs):
-    transform = lambda path : import_by_path(path)
+    transform = lambda path : import_by_path(path) if path else None
     return define_setting(
         key, required=required, transform=transform, **kwargs)
                    

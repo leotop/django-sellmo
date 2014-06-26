@@ -131,12 +131,13 @@ class OrderConfirmationWriter(MailWriter):
         return self.order.email
 
     def get_attachments(self):
-        report = reporter.get_report('order_confirmation', context={
-            'order': self.order
-        })
-        return [
-            (report.filename, report.data, report.mimetype)
-        ]
+        if reporter.can_report('order_confirmation'):
+            report = reporter.get_report('order_confirmation', context={
+                'order': self.order
+            })
+            return [
+                (report.filename, report.data, report.mimetype)
+            ]
 
 
 class OrderNotificationWriter(MailWriter):
@@ -157,13 +158,14 @@ class OrderNotificationWriter(MailWriter):
         return modules.checkout.notification_to_email
 
     def get_attachments(self):
-        report = reporter.get_report('order_confirmation', context={
-            'order': self.order,
-            'internal': True,
-        })
-        return [
-            (report.filename, report.data, report.mimetype)
-        ]
+        if reporter.can_report('order_confirmation'):
+            report = reporter.get_report('order_confirmation', context={
+                'order': self.order,
+                'internal': True,
+            })
+            return [
+                (report.filename, report.data, report.mimetype)
+            ]
 
 
 class ShippingNotificationWriter(MailWriter):
@@ -184,9 +186,10 @@ class ShippingNotificationWriter(MailWriter):
         return self.order.email
         
     def get_attachments(self):
-        report = reporter.get_report('invoice', context={
-            'order': self.order,
-        })
-        return [
-            (report.filename, report.data, report.mimetype)
-        ]
+        if reporter.can_report('invoice'):
+            report = reporter.get_report('invoice', context={
+                'order': self.order,
+            })
+            return [
+                (report.filename, report.data, report.mimetype)
+            ]

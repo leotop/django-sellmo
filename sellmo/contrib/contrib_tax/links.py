@@ -63,7 +63,10 @@ def stamp(stampable, prop, price, **kwargs):
 
 @link()
 def get_price(price, product=None, shipping_method=None, payment_method=None, 
-              **kwargs):
+              raw=False, **kwargs):
+    if raw:
+        return
+              
     tax = None
     if product:
         try:

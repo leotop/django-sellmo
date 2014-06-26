@@ -87,7 +87,10 @@ def make_purchase(request, purchase, **kwargs):
 
 
 @link()
-def get_price(price, product=None, discount_group=None, **kwargs):
+def get_price(price, product=None, discount_group=None, raw=False, **kwargs):
+    if raw:
+        return
+    
     discount = None
     if product:
         try:
