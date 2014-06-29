@@ -39,7 +39,7 @@ if celery.enabled and getattr(params, 'worker_mode', False):
         CELERYBEAT_SCHEDULE={
             'handle-updates-every-5-minutes': {
                 'task': 'sellmo.contrib.contrib_pricing.tasks.handle_updates',
-                'schedule': datetime.timedelta(seconds=10),
+                'schedule': datetime.timedelta(minutes=5),
             },
         }
     )
