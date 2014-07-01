@@ -34,13 +34,15 @@ from celery import shared_task
 
 from sellmo import modules
 
+from django.db.models.query import QuerySet
+
 
 logger = logging.getLogger('sellmo')
 
 
 @shared_task
 def build_variations(product):
-    if modules.product.Product.objects.exists(pk=product):
+    if modules.product.Product.objects.filter(pk=product).exists():
         logger.info("Building variations "
                     " for product '{0}'".format(product))
         modules.variation.Variation.objects.build(product)
@@ -49,5 +51,9 @@ def build_variations(product):
 def invalidate_variations(products):
     logger.info("Invalidating variations")
     # Requery products to get an up to date queryset
-    products = products.model.objects.filter(pk__in=products)
+    if isinstance(products, QuerySet):
+        products = products.model.objects.filter(pk__in=products)
+    else:
+        products = (modules.product.Product.objects
+                        .filter(pk__in=[product.pk for product in products]))
     modules.variation.Variation.objects.invalidate(products)
