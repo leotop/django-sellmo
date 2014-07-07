@@ -164,7 +164,8 @@ class VariationModule(Module):
                                 .distinct())
                     values = (modules.attribute
                                 .get_sorted_values(values=values,
-                                                    attribute=group))
+                                                    attribute=group,
+                                                    product=product))
                     
                     for value in values:
                         # Get variations for this grouped attribute / value

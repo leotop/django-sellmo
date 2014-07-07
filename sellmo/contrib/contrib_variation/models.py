@@ -407,8 +407,6 @@ class VariationManager(models.Manager):
 
         # Get all variating attributes for this product
         attributes = modules.attribute.Attribute.objects.which_variate(product)
-        if attributes.count() == 0:
-            return
 
         # Do we have an attribute which groups ?
         group = attributes.filter(groups=True).first()
@@ -416,16 +414,20 @@ class VariationManager(models.Manager):
         # CONVERT TO LIST FOR PERFORMANCE AND INDEXING
         attributes = list(attributes)
         
-        # Create all possible variation combinations
-        combinations = itertools.product(*[
-            (modules.attribute.get_sorted_values(
-                values=(modules.attribute.Value.objects
-                    .which_variate(product)
-                    .for_attribute(attribute)
-                    .attribute_values()
-                    .distinct()),
-                attribute=attribute))
-            for attribute in attributes])
+        if attributes:
+            # Create all possible variation combinations
+            combinations = itertools.product(*[
+                (modules.attribute.get_sorted_values(
+                    values=(modules.attribute.Value.objects
+                        .which_variate(product)
+                        .for_attribute(attribute)
+                        .attribute_values()
+                        .distinct()),
+                    attribute=attribute,
+                    product=product))
+                for attribute in attributes])
+        else:
+            combinations = []
         
         # Create variations
         sort_order = 0

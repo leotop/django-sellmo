@@ -54,9 +54,11 @@ class AttributeModule(Module):
         default=u"{value.value}")
 
     @chainable()
-    def get_sorted_values(self, chain, values, attribute=None, **kwargs):
+    def get_sorted_values(self, chain, values, attribute=None,
+                          product=None, **kwargs):
         if chain:
-            out = chain.execute(values=values, attribute=attribute, **kwargs)
+            out = chain.execute(values=values, attribute=attribute,
+                                product=product, **kwargs)
             values = out.get('values', values)
         return values
 
