@@ -392,9 +392,11 @@ class Attribute(models.Model):
         elif not self.key:
             self.key = AttributeKeyField.create_key_from_name(self.name)
 
-        if self.type != old.type:
-            raise Exception((_(u"Cannot change attribute type "
-                               u"of an attribute that is already in use.")))
+        if old is not None and old.values.count() > 0:
+            if self.type != old.type:
+                raise Exception((_("Cannot change attribute type "
+                                   "of an attribute that is already "
+                                   " in use.")))
 
         super(Attribute, self).save(*args, **kwargs)
 
