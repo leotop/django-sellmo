@@ -36,10 +36,10 @@ from sellmo import modules, celery, params
 if celery.enabled and getattr(params, 'worker_mode', False):
     from sellmo.boot.boot_sellmo.boot import celery_app as app
     app.conf.update(
-        CELERYBEAT_SCHEDULE={
+        CELERYBEAT_SCHEDULE=dict({
             'handle-updates-every-5-minutes': {
                 'task': 'sellmo.contrib.contrib_pricing.tasks.handle_updates',
                 'schedule': datetime.timedelta(minutes=5),
             },
-        }
+        }, **app.conf.get('CELERYBEAT_SCHEDULE', {}))
     )
