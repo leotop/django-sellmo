@@ -28,8 +28,5 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sellmo import boot
-
-
-if boot.model_boot:
-    from sellmo.boot.boot_modules import boot
+from sellmo.contrib.account.registration \
+           .simple_registration.process import SimpleRegistrationProcess

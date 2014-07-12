@@ -28,8 +28,31 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sellmo import boot
+from django.apps import AppConfig
+
+    
+class _AppConfigMeta(type):
+    def __new__(cls, name, bases, attrs):
+        out = super(_AppConfigMeta, cls).__new__(cls, name, bases, attrs)
+        
+        # __new__ will also be called for the ContribAppConfig class. 
+        # Do not proceed with any further initialization. Ignore it..
+        if out.__ignore__:
+            out.__ignore__ = False
+            return out
+            
+        # Assign a prefixed label if needed
+        if not 'label' in attrs:
+            out.label = '{0}{1}'.format(out.prefix, out.name.rpartition(".")[2])
+        
+        return out
 
 
-if boot.model_boot:
-    from sellmo.boot.boot_modules import boot
+class ContribAppConfig(AppConfig):
+    
+    __metaclass__ = _AppConfigMeta
+    # __new__ will also be called for the ContribAppConfig class. 
+    # We need a flag to ignore it.
+    __ignore__ = True
+    
+    prefix = 'contrib_'

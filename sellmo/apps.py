@@ -28,8 +28,16 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sellmo import boot
+from django.apps import AppConfig
+from sellmo.boot.boot_modules import boot
 
 
-if boot.model_boot:
-    from sellmo.boot.boot_modules import boot
+class DefaultConfig(AppConfig):
+    name = 'sellmo'
+    
+    def ready(self):
+        from sellmo import boot
+        boot.model_boot = False # Order is ital
+        
+        
+        from sellmo.boot.boot_sellmo import boot

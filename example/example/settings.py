@@ -91,10 +91,10 @@ INSTALLED_APPS = (
     'sellmo.contrib.contrib_customer.addresses.default_address',
     'customer',
     
-    'sellmo.contrib.contrib_account',
-    'sellmo.contrib.contrib_account.profile',
-    'sellmo.contrib.contrib_account.registration',
-    'sellmo.contrib.contrib_account.registration.simple_registration',
+    'sellmo.contrib.account',
+    'sellmo.contrib.account.profile',
+    'sellmo.contrib.account.registration',
+    'sellmo.contrib.account.registration.simple_registration',
     'account',
     
     'sellmo.contrib.contrib_shipping',

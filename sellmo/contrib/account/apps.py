@@ -28,5 +28,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sellmo.contrib.contrib_account.registration \
-           .simple_registration.process import SimpleRegistrationProcess
+from sellmo.contrib.apps import ContribAppConfig
+
+
+class DefaultConfig(ContribAppConfig):
+    name = 'sellmo.contrib.account'

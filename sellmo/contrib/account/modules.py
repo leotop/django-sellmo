@@ -34,8 +34,8 @@ from sellmo.api.decorators import view, chainable, link, context_processor
 from sellmo.api.exceptions import ViewNotImplemented
 from sellmo.api.configuration import define_import, define_setting
 from sellmo.api.messaging import FlashMessages
-from sellmo.contrib.contrib_account.models import User
-from sellmo.contrib.contrib_account.forms import (UserChangeForm,
+from sellmo.contrib.account.models import User
+from sellmo.contrib.account.forms import (UserChangeForm,
                                                   UserCreationForm)
 
 from django.http import Http404
@@ -59,11 +59,11 @@ class AccountModule(sellmo.Module):
     
     UserChangeForm = define_import(
         'USER_CHANGE_FORM',
-        default='sellmo.contrib.contrib_account.forms.UserChangeForm')
+        default='sellmo.contrib.account.forms.UserChangeForm')
     
     UserCreationForm = define_import(
         'USER_CREATION_FORM',
-        default='sellmo.contrib.contrib_account.forms.UserCreationForm')
+        default='sellmo.contrib.account.forms.UserCreationForm')
         
     AuthenticationForm = define_import(
         'AUTHENTICATION_FORM',

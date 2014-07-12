@@ -29,7 +29,7 @@
 
 
 from sellmo import modules
-from sellmo.contrib.contrib_account.registration \
+from sellmo.contrib.account.registration \
            .process import (RegistrationProcess,
                             RegistrationStep)
 

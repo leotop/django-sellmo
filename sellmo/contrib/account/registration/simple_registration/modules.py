@@ -41,7 +41,7 @@ class AccountModule(modules.account):
     
     RegistrationProcess = define_import(
         'REGISTRATION_PROCESS',
-        default='sellmo.contrib.contrib_account.registration'
+        default='sellmo.contrib.account.registration'
                 '.simple_registration.SimpleRegistrationProcess')
                 
     @chainable()

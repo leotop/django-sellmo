@@ -28,8 +28,4 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sellmo import boot
-
-
-if boot.model_boot:
-    from sellmo.boot.boot_modules import boot
+default_app_config = 'sellmo.contrib.account.apps.DefaultConfig'

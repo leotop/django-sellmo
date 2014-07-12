@@ -37,3 +37,6 @@ class Params(object):
     pass
 
 params = Params()
+
+
+default_app_config = 'sellmo.apps.DefaultConfig'

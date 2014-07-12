@@ -28,8 +28,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sellmo import boot
+from sellmo.contrib.apps import ContribAppConfig
 
 
-if boot.model_boot:
-    from sellmo.boot.boot_modules import boot
+class DefaultConfig(ContribAppConfig):
+    name = 'sellmo.contrib.account.checkout'
+    prefix = 'contrib_account_'
