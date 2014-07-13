@@ -78,10 +78,10 @@ if len(sys.argv) > 1 and sys.argv[1] == 'bdist_wininst':
         file_info[0] = '\\PURELIB\\%s' % file_info[0]
 
 install_requires = [
-    'django>=1.6.0',
-    'django-mptt>=0.6.0',
+    'django>=1.7.0',
+    'django-mptt>=0.6.1',
     'django-classy-tags',
-    'celery>=3.1.0',
+    'celery>=3.1.13',
 ]
 
 kwargs = {}
@@ -90,7 +90,7 @@ if not using_dist:
 
 setup(
     name="Sellmo",
-    version='0.2.1074',
+    version='0.3.1000',
     url='http://www.adaptiv.nl/',
     author='Adaptiv Design',
     author_email='raymond@adaptiv.nl',

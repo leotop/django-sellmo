@@ -26,11 +26,3 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-
-
-from sellmo.core.modules.product import ProductModule
-from sellmo.core.modules.pricing import PricingModule
-from sellmo.core.modules.store import StoreModule
-from sellmo.core.modules.cart import CartModule
-from sellmo.core.modules.customer import CustomerModule
-from sellmo.core.modules.checkout import CheckoutModule

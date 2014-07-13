@@ -30,3 +30,7 @@
 
 from sellmo.contrib.account.registration \
            .simple_registration.process import SimpleRegistrationProcess
+           
+           
+default_app_config = ('sellmo.contrib.account.registration.'
+                      'simple_registration.apps.DefaultConfig')

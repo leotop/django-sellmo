@@ -1,13 +1,13 @@
 from sellmo import modules
 from sellmo.utils.forms import FormFactory
-from sellmo.contrib.contrib_product.admin import (ProductParentAdminBase, 
+from sellmo.contrib.product.admin import (ProductParentAdminBase, 
                                                   ProductAdminBase)
-from sellmo.contrib.contrib_category.admin import (ProductCategoryListFilter,
+from sellmo.contrib.category.admin import (ProductCategoryListFilter,
                                                    ProductCategoriesMixin)
-from sellmo.contrib.contrib_variation.admin import (VariantAttributeMixin,
+from sellmo.contrib.variation.admin import (VariantAttributeMixin,
                                                     ProductVariationMixin)
-from sellmo.contrib.contrib_attribute.admin import ProductAttributeMixin
-from sellmo.contrib.contrib_tax.forms import ProductTaxesForm
+from sellmo.contrib.attribute.admin import ProductAttributeMixin
+from sellmo.contrib.tax.forms import ProductTaxesForm
 
 from django import forms
 from django.contrib import admin

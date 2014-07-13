@@ -29,15 +29,41 @@
 
 
 from django.apps import AppConfig
-from sellmo.boot.boot_modules import boot
+from django.utils.module_loading import import_by_path
+
+from sellmo import celery, caching
+from sellmo.core.main import Sellmo
+from sellmo.api.configuration import define_setting
 
 
 class DefaultConfig(AppConfig):
     name = 'sellmo'
+    core_modules  = define_setting(
+        'SELLMO_CORE_MODULES',
+        default=[
+            'sellmo.core.modules.pricing.PricingModule',
+            'sellmo.core.modules.product.ProductModule',
+            'sellmo.core.modules.store.StoreModule',
+            'sellmo.core.modules.cart.CartModule',
+            'sellmo.core.modules.checkout.CheckoutModule',
+            'sellmo.core.modules.customer.CustomerModule',
+        ]
+    )
+    
+    def __init__(self, *args, **kwargs):
+        super(DefaultConfig, self).__init__(*args, **kwargs)
+        
+        # Load core modules
+        for module in self.core_modules:
+            import_by_path(module)
+            
+        if celery.enabled:
+            import sellmo.celery.integration
+            sellmo.celery.integration.setup()
+        
+        if caching.enabled:
+            import sellmo.caching.integration
+            sellmo.caching.integration.setup()
     
     def ready(self):
-        from sellmo import boot
-        boot.model_boot = False # Order is ital
-        
-        
-        from sellmo.boot.boot_sellmo import boot
+        sellmo = Sellmo()

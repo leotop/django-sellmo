@@ -53,42 +53,42 @@ INSTALLED_APPS = (
     'sellmo.boot.boot_modules',
     
     # !! Enables user settings, required for certain contrib apps.
-    'sellmo.contrib.contrib_settings',
+    'sellmo.contrib.settings',
     'settings',
     
     # Enhances Sellmo's core mailing functionality.
-    'sellmo.contrib.contrib_mailing',
+    'sellmo.contrib.mailing',
     'mailing',
     
     # Enhances Sellmo's basic Product definition.
-    'sellmo.contrib.contrib_product',
+    'sellmo.contrib.product',
     # At least 1 Product subtype is needed.
-    'sellmo.contrib.contrib_product.subtypes.simple_product',
+    'sellmo.contrib.product.subtypes.simple_product',
     'product',
     
-    'sellmo.contrib.contrib_category',
+    'sellmo.contrib.category',
     'category',
     
-    'sellmo.contrib.contrib_attribute',
+    'sellmo.contrib.attribute',
     'attribute',
     
-    'sellmo.contrib.contrib_search',
+    'sellmo.contrib.search',
     
-    'sellmo.contrib.contrib_pricing',
+    'sellmo.contrib.pricing',
     'pricing',
     
-    'sellmo.contrib.contrib_variation',
+    'sellmo.contrib.variation',
     'variation',
     
-    'sellmo.contrib.contrib_cart',
+    'sellmo.contrib.cart',
     'cart',
     
-    'sellmo.contrib.contrib_tax',
-    'sellmo.contrib.contrib_tax.subtypes.percent_tax',
+    'sellmo.contrib.tax',
+    'sellmo.contrib.tax.subtypes.percent_tax',
     'tax',
     
-    'sellmo.contrib.contrib_customer',
-    'sellmo.contrib.contrib_customer.addresses.default_address',
+    'sellmo.contrib.customer',
+    'sellmo.contrib.customer.addresses.default_address',
     'customer',
     
     'sellmo.contrib.account',
@@ -97,21 +97,21 @@ INSTALLED_APPS = (
     'sellmo.contrib.account.registration.simple_registration',
     'account',
     
-    'sellmo.contrib.contrib_shipping',
-    'sellmo.contrib.contrib_shipping.methods.flat_shipping',
-    'sellmo.contrib.contrib_shipping.methods.tiered_shipping',
+    'sellmo.contrib.shipping',
+    'sellmo.contrib.shipping.methods.flat_shipping',
+    'sellmo.contrib.shipping.methods.tiered_shipping',
     'shipping',
     
-    'sellmo.contrib.contrib_payment',
-    'sellmo.contrib.contrib_payment.methods.bank_transfer',
-    'sellmo.contrib.contrib_payment.methods.cash_payment',
+    'sellmo.contrib.payment',
+    'sellmo.contrib.payment.methods.bank_transfer',
+    'sellmo.contrib.payment.methods.cash_payment',
     'payment',
     
-    'sellmo.contrib.contrib_checkout',
-    'sellmo.contrib.contrib_checkout.multistep_checkout',
+    'sellmo.contrib.checkout',
+    'sellmo.contrib.checkout.multistep_checkout',
     'checkout',
     
-    'sellmo.contrib.contrib_store',
+    'sellmo.contrib.store',
     'store',
     
     # Enables polymorphism in admin

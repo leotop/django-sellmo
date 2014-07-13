@@ -28,9 +28,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
+import logging
 from threading import local
 
 from sellmo import params
+
+
+logger = logging.getLogger('sellmo')
 
 
 _local = local()
@@ -45,9 +49,8 @@ def new_context():
 
 def get_context():
     if not hasattr(_local, 'context'):
-        if getattr(params, 'worker_mode', False):
-            return {}
-        raise Exception("Local context could not be retrieved.")
+        logger.warning("Local context could not be retrieved.")
+        return {}
     return _local.context
 
 
