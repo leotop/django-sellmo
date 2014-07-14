@@ -179,11 +179,17 @@ class TieredShippingTier(models.Model):
 
 
 def get_attribute_name(i):
-    settings = modules.settings.get_settings()
-    attribute = getattr(
-        settings, 'shipping_tier_attribute{0}'.format(i + 1))
+    try:
+        settings = modules.settings.get_settings()
+    except Exception:
+        attribute = None
+    else:
+        attribute = getattr(settings,
+                            'shipping_tier_attribute{0}'.format(i + 1))
+    
     if not attribute:
         attribute = _("value {0}".format(i + 1))
+    
     return _(u"max {0}").format(attribute)
 
 get_attribute_name = lazy(get_attribute_name, six.text_type)
