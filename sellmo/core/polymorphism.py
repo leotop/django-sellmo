@@ -277,19 +277,3 @@ class PolymorphicModel(models.Model):
 
     class Meta:
         abstract = True
-    
-    
-# South support
-
-try:
-    from south.modelsinspector import add_introspection_rules
-except ImportError:
-    pass
-else:
-    add_introspection_rules(
-        [], 
-        ["^sellmo\.core\.polymorphism\.PolymorphicForeignKey"])
-    add_introspection_rules(
-        [], 
-        ["^sellmo\.core\.polymorphism\.PolymorphicOneToOneField"])
-

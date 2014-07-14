@@ -78,17 +78,3 @@ class AttributeTypeField(models.CharField):
                 _("Cannot change attribute type "
                   "of an attribute that is already in use."))
 
-
-# South support
-
-try:
-    from south.modelsinspector import add_introspection_rules
-except ImportError:
-    pass
-else:
-    add_introspection_rules(
-        [], 
-        ["^sellmo\.contrib\.attribute\.fields\.AttributeKeyField"])
-    add_introspection_rules(
-        [],
-        ["^sellmo\.contrib\.attribute\.fields\.AttributeTypeField"])

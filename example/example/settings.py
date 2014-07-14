@@ -41,9 +41,6 @@ INSTALLED_APPS = (
     # This comes in handy for rendering forms
     'widget_tweaks',
     
-    # Use South for model migrations
-    'south',
-    
     # --- Sellmo BEGIN ---
     
     # !! Include this localization purposes
