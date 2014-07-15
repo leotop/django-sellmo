@@ -41,3 +41,4 @@ def queue_update(identifier, **kwargs):
 @shared_task
 def handle_updates():
     modules.price_indexing.handle_updates()
+    

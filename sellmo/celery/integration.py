@@ -38,12 +38,8 @@ from sellmo.signals.core import post_init
 
 app = Celery()
 app.config_from_object(settings)
-
-
-def on_post_init(sender, **kwargs):
-    # Will load tasks.py after sellmo has been initialized
-    app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
+app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
 
 
 def setup():
-    post_init.connect(on_post_init)
+    pass
