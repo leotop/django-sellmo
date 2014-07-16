@@ -402,7 +402,7 @@ class VariationManager(models.Manager):
 
     @transaction.atomic
     def build(self, product):
-
+        
         product = product.downcast()
 
         # Get all variating attributes for this product
