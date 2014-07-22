@@ -48,7 +48,7 @@ ORDER_NEW = 'new'
 ORDER_PENDING = 'pending'
 ORDER_COMPLETED = 'completed'
 ORDER_CLOSED = 'closed'
-ORDER_CANCELED = 'canceled'
+ORDER_CANCELLED = 'cancelled'
 
 
 @load(before='finalize_checkout_Order')
@@ -398,8 +398,8 @@ class Order(trackable('sellmo_order')):
         return self.state == ORDER_CLOSED
 
     @property
-    def is_canceled(self):
-        return self.state == ORDER_CANCELED
+    def is_cancelled(self):
+        return self.state == ORDER_CANCELLED
 
     def ensure_state(self, state):
         if self.state != state:
@@ -523,8 +523,8 @@ class Order(trackable('sellmo_order')):
                 order_pending.send(sender=self, order=self)
             elif self.state == ORDER_COMPLETED:
                 order_completed.send(sender=self, order=self)
-            elif self.state == ORDER_CANCELED:
-                order_canceled.send(sender=self, order=self)
+            elif self.state == ORDER_CANCELLED:
+                order_cancelled.send(sender=self, order=self)
             elif self.state == ORDER_CLOSED:
                 order_closed.send(sender=self, order=self)
 

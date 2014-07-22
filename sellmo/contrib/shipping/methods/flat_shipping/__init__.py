@@ -27,8 +27,9 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 from sellmo.contrib.shipping \
-     .methods.flat_shipping.base import FlatShippingMethod
+     .methods.flat_shipping.methods import FlatShippingMethod
 
 
 default_app_config = ('sellmo.contrib.shipping.methods.flat_shipping.'

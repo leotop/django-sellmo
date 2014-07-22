@@ -58,7 +58,12 @@ ORDER_MAILS = {
         'send_once': True,
         'send_events': [
             {
+                'on_paid': True,
+                'instant_payment': True
+            },
+            {
                 'on_pending': True,
+                'instant_payment': False
             }
         ]
     },

@@ -1,0 +1,2 @@
+mollie-api-python
+requests>=2.0.0

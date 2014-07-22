@@ -29,7 +29,7 @@
 
 
 from sellmo.contrib.payment \
-     .methods.cash_payment.base import CashPaymentMethod
+     .methods.cash_payment.methods import CashPaymentMethod
 
 
 default_app_config = ('sellmo.contrib.payment.methods.cash_payment.'

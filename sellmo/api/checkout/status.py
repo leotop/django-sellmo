@@ -35,7 +35,7 @@ from django.utils.functional import allow_lazy
 ORDER_EVENTS = [
     'on_pending',
     'on_completed',
-    'on_canceled',
+    'on_cancelled',
     'on_closed',
     'on_paid'
 ]
@@ -44,11 +44,11 @@ ORDER_EVENTS = [
 ORDER_STATUSES = {
     'new': (_("New"), {
         'initial': True,
-        'flow': ['awaiting_payment', 'processing', 'completed', 'canceled'],
+        'flow': ['awaiting_payment', 'processing', 'completed', 'cancelled'],
         'state': 'new',
     }),
     'awaiting_payment': (_("Awaiting payment"), {
-        'flow': ['canceled', 'payment_received', 'processing', 'completed'],
+        'flow': ['cancelled', 'payment_received', 'processing', 'completed'],
         'on_pending': True,
         'state': 'pending',
     }),
@@ -58,7 +58,7 @@ ORDER_STATUSES = {
         'state': 'pending',
     }),
     'processing': (_("Processing"), {
-        'flow': ['canceled', 'completed', 'on_hold'],
+        'flow': ['cancelled', 'completed', 'on_hold'],
         'state': 'pending',
     }),
     'on_hold': (_("On hold"), {
@@ -74,9 +74,9 @@ ORDER_STATUSES = {
         'flow': ['closed'],
         'state': 'completed',
     }),
-    'canceled': (_("Canceled"), {
-        'state': 'canceled',
-        'on_canceled': True,
+    'cancelled': (_("Canceled"), {
+        'state': 'cancelled',
+        'on_cancelled': True,
     }),
     'closed': (_("Closed"), {
         'state': 'closed',

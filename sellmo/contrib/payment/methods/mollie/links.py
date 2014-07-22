@@ -28,9 +28,18 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sellmo.contrib.payment \
-     .methods.bank_transfer.methods import BankTransferPaymentMethod
+from django.utils.translation import ugettext_lazy as _
+
+from sellmo import modules
+from sellmo.api.decorators import link
 
 
-default_app_config = ('sellmo.contrib.payment.methods.bank_transfer.'
-                      'apps.DefaultConfig')
+namespace = modules.checkout.namespace
+
+
+@link()
+def get_payment_methods(order, methods, **kwargs):
+    methods.update(modules.mollie.get_methods())
+    return {
+        'methods': methods
+    }

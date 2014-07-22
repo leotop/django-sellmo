@@ -27,10 +27,17 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+# !!
+# Should probally be moved to a seperate package in the future.
+# Although it serves as a good example.
 
-from sellmo.contrib.apps import ContribAppConfig
+# New Mollie payments API
 
 
-class DefaultConfig(ContribAppConfig):
-    name = 'sellmo.contrib.payment.methods.mollie_ideal'
-    prefix = 'contrib_payment_methods_'
+from sellmo.contrib.payment \
+        .methods.mollie.methods import (MolliePaymentMethod,
+                                        MollieIDealPaymentMethod)
+
+
+default_app_config = ('sellmo.contrib.payment.methods.mollie.'
+                      'apps.DefaultConfig')

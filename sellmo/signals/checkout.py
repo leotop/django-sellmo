@@ -36,7 +36,7 @@ __all__ = [
     'order_paid',
     'order_completed',
     'order_closed',
-    'order_canceled',
+    'order_cancelled',
     'order_state_changed',
     'order_status_changed',
 ]
@@ -46,7 +46,7 @@ order_pending = django.dispatch.Signal()
 order_paid = django.dispatch.Signal()
 order_completed = django.dispatch.Signal()
 order_closed = django.dispatch.Signal()
-order_canceled = django.dispatch.Signal()
+order_cancelled = django.dispatch.Signal()
 
 
 order_state_changed = django.dispatch.Signal()

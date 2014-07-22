@@ -35,8 +35,6 @@ from sellmo.api.exceptions import ViewNotImplemented
 from sellmo.api.configuration import define_import, define_setting
 from sellmo.api.messaging import FlashMessages
 from sellmo.contrib.account.models import User
-from sellmo.contrib.account.forms import (UserChangeForm,
-                                                  UserCreationForm)
 
 from django.http import Http404
 from django.core.exceptions import ObjectDoesNotExist

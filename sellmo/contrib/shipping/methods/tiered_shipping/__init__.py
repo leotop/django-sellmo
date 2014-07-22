@@ -29,7 +29,7 @@
 
 
 from sellmo.contrib.shipping \
-     .methods.tiered_shipping.base import TieredShippingMethod
+     .methods.tiered_shipping.methods import TieredShippingMethod
 
 
 default_app_config = ('sellmo.contrib.shipping.methods.tiered_shipping.'

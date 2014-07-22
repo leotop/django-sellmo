@@ -30,6 +30,7 @@
 
 from sellmo import modules
 from sellmo.api.pricing import Price
+from sellmo.utils.protocol import RaiseNotImplementedError
 from django.utils.translation import ugettext_lazy as _
 
 
@@ -41,13 +42,8 @@ __all__ = [
 
 class MethodBase(object):
 
-    def get_name(self):
-        raise NotImplementedError()
-    name = property(get_name)
-
-    def get_identifier(self):
-        raise NotImplementedError()
-    identifier = property(get_identifier)
+    name = RaiseNotImplementedError("name")
+    identifier = RaiseNotImplementedError("identifier")
 
     def get_costs(self, order, **kwargs):
         raise NotImplementedError()

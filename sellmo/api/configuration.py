@@ -57,9 +57,11 @@ def define_setting(key, required=True, transform=None, prefix=_prefix,
         transform=transform, **kwargs)
     
 def define_import(key, required=True, prefix=_prefix, **kwargs):
-    transform = lambda path : import_by_path(path) if path else None
+    if 'transform' not in kwargs:
+        transform = lambda path : import_by_path(path) if path else None
+        kwargs['transform'] = transform
     return define_setting(
-        key, required=required, transform=transform, **kwargs)
+        key, required=required, **kwargs)
                    
 class _LazySetting(object):
     

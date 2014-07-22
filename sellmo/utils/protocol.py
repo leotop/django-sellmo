@@ -28,13 +28,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sellmo.contrib.payment \
-     .methods.mollie_ideal.base import MollieIdealPaymentMethod
-
-# !!
-# Should probally be moved to a seperate package in the future.
-# Although it serves as a good example.
-
-
-default_app_config = ('sellmo.contrib.payment.methods.mollie_ideal.'
-                      'apps.DefaultConfig')
+class RaiseNotImplementedError(object):
+    def __init__(self, message=None):
+        self.message = message
+        
+    def __get__(self, obj, objtype):
+        raise NotImplementedError(self.message)

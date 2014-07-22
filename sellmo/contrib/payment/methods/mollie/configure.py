@@ -28,48 +28,18 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sellmo import modules
-from sellmo.api.pricing import Price
-from sellmo.api.checkout import PaymentMethod
-
-from sellmo.contrib.payment.methods.mollie_ideal.process import *
-
+from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+from sellmo import modules
 
-class MollieIdealPaymentMethod(PaymentMethod):
 
-    identifier = 'ideal'
-    name = _("iDeal")
+group = _("Mollie")
 
-    def process(self, order, request, next_step):
-        if order.is_paid:
-            return next_step
 
-        # Get our payment
-        payment = order.payment.downcast()
+modules.settings.add_setting('mollie_api_key', models.CharField(
+    max_length=255,
+    blank=True,
+    verbose_name=_("mollie api key")
+), group)
 
-        # Check status
-        if payment.is_pending:
-            # Did not (yet) receive a response from mollie
-            return MollieIdealPendingStep(
-                order=order, request=request, next_step=next_step)
-        elif payment.is_completed and not payment.is_success:
-            # Transaction has failed
-            return MollieIdealFailureStep(
-                order=order, request=request, next_step=next_step)
-
-        return MollieIdealBankSelectStep(
-            order=order, request=request, next_step=next_step)
-
-    def new_payment(self, order):
-        return modules.mollie_ideal.MollieIdealPayment()
-
-    def get_costs(self, order, currency=None, **kwargs):
-        return modules.pricing.get_price(price=Price(0), payment_method=self)
-
-    def __unicode__(self):
-        settings = modules.settings.get_settings()
-        if settings.mollie_ideal_name:
-            return settings.mollie_ideal_name
-        return super(MollieIdealPaymentMethod, self).__unicode__()

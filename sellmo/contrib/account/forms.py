@@ -33,18 +33,6 @@ from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.forms import ReadOnlyPasswordHashField
 
 from sellmo import modules
-from sellmo.api.decorators import load
-
-
-@load(action='load_account_UserChangeForm')
-@load(after='finalize_account_User')
-def load_form():
-    class UserChangeForm(modules.account.UserChangeForm):
-        class Meta:
-            model = modules.account.User
-            fields = '__all__'
-
-    modules.account.UserChangeForm = UserChangeForm
 
 
 class UserChangeForm(forms.ModelForm):
@@ -64,17 +52,10 @@ class UserChangeForm(forms.ModelForm):
         # This is done here, rather than on the field, because the
         # field does not have access to the initial value
         return self.initial["password"]
-
-
-@load(action='load_account_UserCreationForm')
-@load(after='finalize_account_User')
-def load_form():
-    class UserCreationForm(modules.account.UserCreationForm):
-        class Meta:
-            model = modules.account.User
-            fields = ("email",)
-
-    modules.account.UserCreationForm = UserCreationForm
+        
+    class Meta:
+        model = modules.account.User
+        fields = '__all__'
 
 
 class UserCreationForm(forms.ModelForm):
@@ -107,3 +88,7 @@ class UserCreationForm(forms.ModelForm):
         if commit:
             user.save()
         return user
+        
+    class Meta:
+        model = modules.account.User
+        fields = ("email",)

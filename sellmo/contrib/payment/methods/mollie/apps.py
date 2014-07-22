@@ -28,31 +28,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sellmo import modules
-from sellmo.api.pricing import Price
-from sellmo.api.checkout import ShippingMethod
+from sellmo.contrib.apps import ContribAppConfig
 
 
-class FlatShippingMethod(ShippingMethod):
-
-    identifier = None
-    name = None
-
-    def new_shipment(self, order):
-        return modules.shipping.Shipment(
-            method=self.method,
-            carrier=self.carrier,
-        )
-
-    def __init__(self, identifier, name, method, carrier=None):
-        self.identifier = identifier
-        self.name = name
-        self.method = method
-        self.carrier = carrier
-
-    def get_costs(self, order, currency=None, **kwargs):
-        costs = self.method.costs
-        if self.carrier:
-            costs += self.carrier.extra_costs
-        return modules.pricing.get_price(
-            price=Price(costs), shipping_method=self)
+class DefaultConfig(ContribAppConfig):
+    name = 'sellmo.contrib.payment.methods.mollie'
+    prefix = 'contrib_payment_methods_'
