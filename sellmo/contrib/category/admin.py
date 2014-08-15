@@ -38,7 +38,7 @@ from django.contrib.admin.sites import NotRegistered
 
 class CategoryAdminBase(admin.ModelAdmin):
 
-    def queryset(self, request):
+    def get_queryset(self, request):
         # optimize the list display.
         return super(CategoryAdminBase, self).queryset(request).flat_ordered()
 
@@ -62,7 +62,7 @@ class ProductCategoryListFilter(admin.SimpleListFilter):
         return [(str(category.pk), unicode(category)) for category in 
                 modules.category.Category.objects.all().flat_ordered()]
 
-    def queryset(self, request, queryset):
+    def get_queryset(self, request, queryset):
         pk = self.value()
         if pk != None:
             category = modules.category.Category.objects.get(pk=pk)
@@ -79,7 +79,7 @@ class CategoryParentListFilter(admin.SimpleListFilter):
         return [(str(category.pk), unicode(category)) for category in
                 modules.category.Category.objects.all().flat_ordered()]
 
-    def queryset(self, request, queryset):
+    def get_queryset(self, request, queryset):
         pk = self.value()
         if pk != None:
             category = modules.category.Category.objects.get(pk=pk)

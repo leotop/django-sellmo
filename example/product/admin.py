@@ -79,7 +79,7 @@ class ProductParentAdmin(ProductParentAdminBase):
     list_filter = [ProductCategoryListFilter, 'active', 'featured']
     search_fields = ['name', 'slug', 'sku']
 
-    def queryset(self, queryset):
+    def get_queryset(self, queryset):
         return modules.product.Product.objects.variants(exclude=True)
 
 

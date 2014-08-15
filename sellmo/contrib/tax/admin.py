@@ -49,7 +49,7 @@ class TaxParentAdmin(PolymorphicParentModelAdmin):
     list_display_links = ['name']
     search_fields = ['name']
 
-    def queryset(self, queryset):
+    def get_queryset(self, queryset):
         return modules.tax.Tax.objects.all()
 
 admin.site.register(modules.tax.Tax, TaxParentAdmin)

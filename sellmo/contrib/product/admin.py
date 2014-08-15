@@ -49,5 +49,5 @@ class ProductParentAdminBase(PolymorphicParentModelAdmin):
     list_display_links = ['slug']
     search_fields = ['slug']
 
-    def queryset(self, queryset):
+    def get_queryset(self, queryset):
         return modules.product.Product.objects.all()

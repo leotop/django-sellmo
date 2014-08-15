@@ -49,7 +49,7 @@ class DiscountParentAdmin(PolymorphicParentModelAdmin):
     list_display_links = ['name']
     search_fields = ['name']
 
-    def queryset(self, queryset):
+    def get_queryset(self, queryset):
         return modules.discount.Discount.objects.all()
 
 
