@@ -1,6 +1,6 @@
 # Copyright (c) 2014, Adaptiv Design
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 
@@ -59,10 +59,10 @@ class ProductCategoryListFilter(admin.SimpleListFilter):
     parameter_name = 'category'
 
     def lookups(self, request, model_admin):
-        return [(str(category.pk), unicode(category)) for category in 
+        return [(str(category.pk), unicode(category)) for category in
                 modules.category.Category.objects.all().flat_ordered()]
 
-    def get_queryset(self, request, queryset):
+    def queryset(self, request, queryset):
         pk = self.value()
         if pk != None:
             category = modules.category.Category.objects.get(pk=pk)
@@ -79,7 +79,7 @@ class CategoryParentListFilter(admin.SimpleListFilter):
         return [(str(category.pk), unicode(category)) for category in
                 modules.category.Category.objects.all().flat_ordered()]
 
-    def get_queryset(self, request, queryset):
+    def queryset(self, request, queryset):
         pk = self.value()
         if pk != None:
             category = modules.category.Category.objects.get(pk=pk)

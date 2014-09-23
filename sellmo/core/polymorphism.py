@@ -183,7 +183,7 @@ class PolymorphicQuerySet(QuerySet):
         return self.__defer__call__('defer', args, kwargs)
         
     def extra(self, *args, **kwargs):
-        return self.__defer__call__('filter', args, kwargs, inheritable=True)
+        return self.__defer__call__('extra', args, kwargs, inheritable=True)
         
     def annotate(self, *args, **kwargs):
         return self.__defer__call__('filter', args, kwargs, inheritable=True)
