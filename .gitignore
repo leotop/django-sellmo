@@ -13,6 +13,7 @@ pylint.html
 # Python generated files #
 ######################
 *.pyc
+*.egg-info
 
 # OS generated files #
 ######################
