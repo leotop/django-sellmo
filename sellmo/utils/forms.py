@@ -30,6 +30,7 @@
 
 from django.forms.formsets import BaseFormSet
 
+
 class FormFactory(object):
 
     def factory(self):
