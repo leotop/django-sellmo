@@ -40,10 +40,11 @@ def shipping_date(value, method='avg'):
     """Returns the appropriate shipping date for the given product or cart.
     :param method: can be one of three values 'avg', 'min', 'max'
     """
+    
     delay = value.get_shipping_delay()
     if delay is None:
         return None
-    
+        
     min_delay, max_delay = delay
     if method == 'min':
         return timezone.now() + min_delay

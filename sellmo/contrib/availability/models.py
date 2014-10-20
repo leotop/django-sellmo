@@ -27,7 +27,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from django.db import models
 from django.db.models import Q
@@ -94,6 +94,8 @@ def load_model():
                     supplier_can_backorder is not False)
         
         def get_shipping_delay(self, stock=None, now=None):
+            tz = timezone.get_current_timezone()
+            
             if now is None:
                 now = timezone.now()
             
@@ -130,11 +132,14 @@ def load_model():
             # Apply store availablity offset
             min_delay += timedelta(days=offset)
             max_delay += timedelta(days=offset)
+            
             if nearest.available_from:
                 dt = datetime.combine(now.date(), nearest.available_from)
+                dt = timezone.make_aware(dt, tz)
                 min_delay += dt - now
             if nearest.available_until:
                 dt = datetime.combine(now.date(), nearest.available_until)
+                dt = timezone.make_aware(dt, tz)
                 max_delay += dt - now
             
             return min_delay, max_delay
