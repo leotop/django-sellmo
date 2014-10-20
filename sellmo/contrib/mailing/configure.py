@@ -29,7 +29,8 @@
 
 
 import logging
-import datetime
+
+from django.utils import timezone
 
 from sellmo import modules
 from sellmo.signals.mailing import mail_init, mail_send, mail_failed
@@ -58,7 +59,7 @@ def on_mail_send(sender, message_type, message_reference, message=None,
     except modules.mailing.MailStatus.DoesNotExist:
         pass
     else:
-        status.send = datetime.datetime.now()
+        status.send = timezone.now()
         if message:
             status.send_to = u"; ".join(message.to)
         status.delivered = True
@@ -76,7 +77,7 @@ def on_mail_failed(sender, message_type, message_reference, message=None,
     except modules.mailing.MailStatus.DoesNotExist:
         pass
     else:
-        status.send = datetime.datetime.now()
+        status.send = timezone.now()
         if message:
             status.send_to = u"; ".join(message.to)
         status.failure_message = reason

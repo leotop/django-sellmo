@@ -28,11 +28,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-import datetime
-
 from django.db import models
 from django.db.models import Q
 from django.db.models.query import QuerySet
+from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
 from sellmo import modules
@@ -133,7 +132,7 @@ class Purchase(PolymorphicModel, Cloneable):
         self.total = total
 
         # Update calculcated timestamp and save
-        self.calculated = datetime.datetime.now()
+        self.calculated = timezone.now()
         if save:
             self.save()
 

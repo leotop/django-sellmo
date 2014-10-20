@@ -28,10 +28,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-import datetime
-
 from django import dispatch
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
 from sellmo import modules
@@ -176,7 +175,7 @@ class Cart(trackable('sellmo_cart')):
         self.total = total
 
         # Update calculcated timestamp and save
-        self.calculated = datetime.datetime.now()
+        self.calculated = timezone.now()
         if save:
             self.save()
     

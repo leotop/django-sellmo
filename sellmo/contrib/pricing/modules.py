@@ -29,7 +29,6 @@
 
 
 import logging
-from datetime import datetime
 
 from sellmo import modules, Module
 from sellmo.api.decorators import chainable
@@ -43,6 +42,7 @@ from sellmo.core.query import PKIterator
 
 from django.db import transaction
 from django.db.models.query import QuerySet
+from django.utils import timezone
 
 
 logger = logging.getLogger('sellmo')
@@ -190,7 +190,7 @@ class PriceIndexingModule(Module):
                         .format(identifier, signature, price.amount))
             
             handle = self._get_handle(identifier)
-            handle.updated = datetime.now()
+            handle.updated = timezone.now()
             handle.save()
         
         logger.info("Index '{0}' updated.".format(index))

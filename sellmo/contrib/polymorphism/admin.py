@@ -277,7 +277,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         Expose the custom URLs for the subclasses and the URL resolver.
         """
         urls = super(PolymorphicParentModelAdmin, self).get_urls()
-        info = self.model._meta.app_label, self.model._meta.module_name
+        info = self.model._meta.app_label, self.model._meta.model_name
 
         # Patch the change URL so it's not a big catch-all; allowing all custom URLs to be added to the end.
         # The url needs to be recreated, patching url.regex is not an option Django 1.4's LocaleRegexProvider changed it.

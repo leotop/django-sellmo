@@ -28,9 +28,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from datetime import datetime
-
 from django import template
+from django.utils import timezone
 
 
 register = template.Library()
@@ -47,11 +46,11 @@ def shipping_date(value, method='avg'):
     
     min_delay, max_delay = delay
     if method == 'min':
-        return datetime.now() + min_delay
+        return timezone.now() + min_delay
     elif method =='max':
-        return datetime.now() + max_delay
+        return timezone.now() + max_delay
     elif method == 'avg':
-        return datetime.now() + ((min_delay + max_delay) / 2)
+        return timezone.now() + ((min_delay + max_delay) / 2)
     
     raise ValueError('method')
     

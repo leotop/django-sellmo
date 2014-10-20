@@ -27,11 +27,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from datetime import timedelta, datetime
+from datetime import timedelta
 
 from django.db import models
 from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
 from sellmo import modules
@@ -94,7 +95,7 @@ def load_model():
         
         def get_shipping_delay(self, stock=None, now=None):
             if now is None:
-                now = datetime.now()
+                now = timezone.now()
             
             if stock is None:
                 stock = self.stock
@@ -260,7 +261,7 @@ class StoreAvailabilityManager(models.Manager):
         if not available:
             raise self.model.DoesNotExist()
         
-        now = datetime.now()
+        now = timezone.now()
         q = ((Q(available_from__isnull=True) |
             Q(available_from__lte=now.time())) &
             (Q(available_until__isnull=True) |
