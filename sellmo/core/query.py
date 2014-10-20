@@ -66,5 +66,5 @@ class PKIterator(object):
 
     def __len__(self):
         if self._result_cache is None:
-            self.__iter__()
+            list(self.__iter__())
         return len(self._result_cache)

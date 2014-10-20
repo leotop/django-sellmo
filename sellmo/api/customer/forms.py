@@ -49,8 +49,10 @@ class CustomerForm(forms.ModelForm):
 class ContactableForm(forms.ModelForm):
     class Meta:
         model = modules.customer.Contactable
+        exclude = []
 
 
 class AddressForm(forms.ModelForm):
     class Meta:
         model = modules.customer.Address
+        exclude = []
