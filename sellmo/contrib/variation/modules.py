@@ -268,5 +268,5 @@ class VariationModule(Module):
                 description=description, **kwargs)
             if out.has_key('description'):
                 description = out['description']
-
+        
         return description

@@ -402,9 +402,8 @@ class VariationManager(models.Manager):
 
     @transaction.atomic
     def build(self, product):
-        
         product = product.downcast()
-
+        
         # Get all variating attributes for this product
         attributes = modules.attribute.Attribute.objects.which_variate(product)
 
@@ -464,29 +463,34 @@ class VariationManager(models.Manager):
                     explicits = current
                     
             # Resolve variant
-            variant = product if not explicits else explicits[0].product
+            variant = product if not explicits else explicits[0].product.downcast()
             
             # Resolve actual values
             if variant == product:
-                # All implicit
+                # All values are implicit  since we don't have a variant
                 values = implicits
             else:
+                # Collect all values by comining implicit and explicits
                 implicits = implicits.exclude(attribute__in=explicits
-                    .values('attribute'))   
+                    .values('attribute'))
                 values = values.filter(Q(pk__in=implicits) | Q(pk__in=explicits))
             
-            # See if this is a valid combination
+            # See if this is a valid values combination
             if values.count() != len(combination):
                 if values.count() > len(combination):
                     logger.warning("Invalid variation values {0} for "
                                    "product {1}.".format(values, product))
                 continue
             
+            # Generate a unique key (uses slug format) for this variation 
             variation_key = generate_slug(product=variant, values=values, 
                                           full=True, unique=False)
             
+            # Generate description (does not use all values only implicits).
+            # This because unicode(variant) also calls upon 
+            # generate_variation_description() with it's own explicit values.
             variation_description = modules.variation \
-                .generate_variation_description(prefix=unicode(variant), 
+                .generate_variation_description(prefix=unicode(variant),
                                                 values=implicits)
             
             try:
@@ -507,7 +511,7 @@ class VariationManager(models.Manager):
                 # Update
                 variation.variant = variant
                 variation.sort_order = sort_order
-                variation.description=variation_description
+                variation.description = variation_description
                 variation.save()
             
             variation.values.add(*values)
@@ -579,7 +583,7 @@ class VariationManager(models.Manager):
 
     def for_product(self, product, invalidated=False):
         product = product.downcast()
-
+        
         # Capture IntegrityError's as these are caused by concurrency.
         # Output will always be valid due to transactions.
         def build():
@@ -587,7 +591,7 @@ class VariationManager(models.Manager):
                 self.build(product)
             except IntegrityError as ex:
                 pass
-
+        
         if not invalidated and product.variations_invalidated:
             # Variations invalidated, rebuild
             build()

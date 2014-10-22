@@ -175,19 +175,16 @@ class PolymorphicQuerySet(QuerySet):
     
     def select_related(self, *args, **kwargs):
         return self.__defer__call__('select_related', args, kwargs)
-        
+    
     def only(self, *args, **kwargs):
         return self.__defer__call__('only', args, kwargs)
-        
+    
     def defer(self, *args, **kwargs):
         return self.__defer__call__('defer', args, kwargs)
-        
-    def extra(self, *args, **kwargs):
-        return self.__defer__call__('extra', args, kwargs, inheritable=True)
-        
+    
     def annotate(self, *args, **kwargs):
-        return self.__defer__call__('filter', args, kwargs, inheritable=True)
-        
+        return self.__defer__call__('annotate', args, kwargs, inheritable=True)
+    
     def using(self, *args, **kwargs):
         return self.__defer__call__('using', args, kwargs, inheritable=True)
     
