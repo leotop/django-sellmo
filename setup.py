@@ -37,7 +37,7 @@ EXCLUDE_FROM_PACKAGES = ['example']
 
 setup(
     name='Sellmo',
-    version='0.4.1.2',
+    version='0.4.1.3',
     url='http://www.adaptiv.nl/',
     author='Raymond Reggers - Adaptiv Design',
     author_email='raymond@adaptiv.nl',
