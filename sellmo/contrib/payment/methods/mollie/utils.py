@@ -36,6 +36,8 @@ def generate_internal_id():
      
 
 def fix_amount(amount):
+    # We'll convert any amount to a 2 decimal float.
+    # We do not ceil or floor values
     if isinstance(amount, basestring):
         return float(amount)
-    return float(int(amount * 100) / 100)
+    return float(int(amount * 100)) / 100
