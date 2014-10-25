@@ -59,12 +59,17 @@ def product_q(attribute, *args, **kwargs):
     if not isinstance(attribute, modules.attribute.Attribute):
         raise ValueError("attribute must be an instance of Attribute")
          
-    values = kwargs.pop('values', modules.attribute.Value.objects.all())
-    through = kwargs.pop('through', 'values')
+    values = kwargs.pop('values', attribute.values.all())
+    
+    # Through is reversed. This is done on purpose. This way we can make a 
+    # subquery instead of a join. This way multiple productq's can be logically
+    # combined. If a join is made the logical operations apply to the join
+    # and not the product query itself. 
+    through = kwargs.pop('through', 'product')
     
     qargs = {
-        '{0}__in'.format(through): values.filter(
-            value_q(attribute, *args, **kwargs))
+        'pk__in'.format(through): values.filter(
+            value_q(attribute, *args, **kwargs)).values(through)
     }
     
     return Q(**qargs)

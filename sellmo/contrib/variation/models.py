@@ -308,7 +308,7 @@ def load_model():
             if self.variates or old and old.variates:
                 products = modules.product.Product.objects.filter(
                         product_q(attribute=self,
-                                 through='variant_values'))
+                                 through='base_product'))
                 modules.variation.Variation.objects.invalidate(
                     products=products)
 
@@ -537,24 +537,28 @@ class VariationManager(models.Manager):
                 }
                 variations = modules.variation.Variation.objects.filter(
                     product=product).filter(**qargs)
-
+                
                 # Get variant
                 qargs = [product_q(group, value)]
                 if variations.count() > 1:
                     # Get single variant common across all variations
                     for attribute in attributes:
                         if attribute != group:
-                            q = ~product_q(attribute)
-                            qargs.append(q)
+                            qargs.append(~product_q(attribute))
+                
                 try:
                     variant = product.variants.get(*qargs)
                 except modules.product.Product.DoesNotExist:
                     variant = product
                 except modules.product.Product.MultipleObjectsReturned:
-                    logger.warning(
-                        "Invalid variant consruction in combination "
-                        "with grouping")
-                    logger.info(product.variants.filter(*qargs))
+                    variant = product
+                    logger.warning("Product {product} has multiple variants "
+                                   "which conflict with the following "
+                                   "attribute/value combinations: "
+                                   "{attribute}/{value}"
+                                   .format(product=product,
+                                           attribute=group,
+                                           value=value))
 
                 variations.update(group_variant=variant)
 
@@ -592,7 +596,7 @@ class VariationManager(models.Manager):
             except IntegrityError as ex:
                 pass
         
-        if not invalidated and product.variations_invalidated:
+        if True or not invalidated and product.variations_invalidated:
             # Variations invalidated, rebuild
             build()
         

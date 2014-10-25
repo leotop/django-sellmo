@@ -66,13 +66,13 @@ def override_filter(module, chain, request, products, key, value, attribute,
         
     if operator is None:
         q = product_q(attribute, value) | product_q(
-            attribute, value, through='variant_values')
+            attribute, value, through='base_product')
     else:
         qargs = {
             operator: value
         }
         q = (product_q(attribute, **qargs) |
-             product_q(attribute, through='variant_values', **qargs))
+             product_q(attribute, through='base_product', **qargs))
     
     return products.filter(q)
 
