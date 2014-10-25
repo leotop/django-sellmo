@@ -596,7 +596,7 @@ class VariationManager(models.Manager):
             except IntegrityError as ex:
                 pass
         
-        if True or not invalidated and product.variations_invalidated:
+        if invalidated and product.variations_invalidated:
             # Variations invalidated, rebuild
             build()
         
