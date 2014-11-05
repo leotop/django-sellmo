@@ -146,14 +146,14 @@ def load_model():
             def get_variated_by(self):
                 return modules.attribute.Attribute.objects.which_variate(self)
 
-            def get_variations(self, invalidated=False):
+            def get_variations(self, allow_build=True):
                 if getattr(self, '_is_variant', False):
                     return modules.variation.Variation.objects \
                                   .for_product(
-                                    self.product, invalidated=invalidated) \
+                                    self.product, allow_build=allow_build) \
                                   .filter(variant=self)
                 return modules.variation.Variation.objects \
-                              .for_product(self, invalidated=invalidated)
+                              .for_product(self, allow_build=allow_build)
 
 
 @load(action='load_variants')
@@ -230,8 +230,8 @@ def on_value_pre_save(sender, instance, raw=False, *args, **kwargs):
 def on_value_post_save(sender, instance, raw=False, *args, **kwargs):
     if not raw:
         modules.variation.Variation.objects.invalidate(
-            instance.base_product if 
-            instance.base_product else instance.product)
+            instance.base_product if instance.base_product 
+            else instance.product)
 
 
 def on_value_pre_delete(sender, instance, *args, **kwargs):
@@ -402,6 +402,7 @@ class VariationManager(models.Manager):
 
     @transaction.atomic
     def build(self, product):
+        
         product = product.downcast()
         
         # Get all variating attributes for this product
@@ -585,7 +586,7 @@ class VariationManager(models.Manager):
     def get_queryset(self):
         return VariationQuerySet(self.model, using=self._db)
 
-    def for_product(self, product, invalidated=False):
+    def for_product(self, product, allow_build=True):
         product = product.downcast()
         
         # Capture IntegrityError's as these are caused by concurrency.
@@ -596,14 +597,14 @@ class VariationManager(models.Manager):
             except IntegrityError as ex:
                 pass
         
-        if invalidated and product.variations_invalidated:
+        if allow_build and product.variations_invalidated:
             # Variations invalidated, rebuild
             build()
         
         # Get variations
         variations = self.get_queryset().for_product(product)
 
-        if not invalidated and variations.count() == 0:
+        if allow_build and variations.count() == 0:
             # No variations, build
             build()
             variations = self.get_queryset().for_product(product)

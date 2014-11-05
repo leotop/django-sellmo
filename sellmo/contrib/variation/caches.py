@@ -156,7 +156,7 @@ class VariationChoiceCache(Cache):
         product = product.downcast()
         keys = [
             self.get_choice_key(variation.pk) for variation in
-            product.get_variations(invalidated=True)
+            product.get_variations(allow_build=False)
         ]
         self.delete(*keys)
 
