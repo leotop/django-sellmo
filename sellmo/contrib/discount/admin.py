@@ -37,7 +37,7 @@ from django.utils.translation import ugettext_lazy as _
 
 
 class DiscountAdminBase(admin.ModelAdmin):
-    pass
+    filter_horizontal = ['products', 'categories']
 
 
 class DiscountParentAdmin(PolymorphicParentModelAdmin):
