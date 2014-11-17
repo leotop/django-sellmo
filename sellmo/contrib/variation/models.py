@@ -433,54 +433,84 @@ class VariationManager(models.Manager):
         sort_order = 0
         created = []
         for combination in combinations:
-            
             # Find all values which could be in this combination.
             # Values can be explicitly assigned to a variant, or 
             # they could variate this product.
-            values = Q()
+            q = Q()
             for attribute, value in zip(attributes, combination):
-                values |= value_q(attribute, value)
+                q |= value_q(attribute, value)
         
-            values = (modules.attribute.Value.objects
+            all_values = (modules.attribute.Value.objects
                         .which_variate(product)
-                        .filter(values))
+                        .filter(q))
                         
             # Filter implicit values
-            implicits = values.filter(variates=True)
+            implicits = all_values.filter(variates=True)
             
             # Find all remaining variants which can be matched
-            # against the values in this combination.
+            # against one ore more values in this combination.
             variants = product.variants.filter(
-                pk__in=(values.exclude(product=product)
+                pk__in=(all_values.exclude(product=product)
                     .order_by('product')
                     .distinct()
                     .values('product')))
+                    
+            # If no variants are matched, variant equals product
+            variant = product
                                         
             # Find most explicit value combination
+            grouped_explicitly = None
             explicits = modules.attribute.Value.objects.none()
             for variant in variants:
-                current = values.filter(product=variant)
-                if current.count() > explicits.count():
+                current = all_values.filter(product=variant)
+                if current.count() == len(combination):
+                    # This must be the most explicit combination
                     explicits = current
-                    
-            # Resolve variant
-            variant = product if not explicits else explicits[0].product.downcast()
+                    break
+                else:
+                    # If variations are grouped, ignore the grouping
+                    # attribute when determening most explicit variant.
+                    a = current.exclude(attribute=group).count()
+                    b =  explicits.exclude(attribute=group).count()
+                    if explicits.count() == 0 or a > b:
+                        # Before overriding try keep track of an explicit
+                        # grouped value
+                        if group:
+                            try:
+                                grouped_explicitly = explicits.get(attribute=group)
+                            except modules.attribute.Value.DoesNotExist:
+                                pass
+                        explicits = current
             
+            if explicits.count() > 0:
+                # A variant did match
+                variant = explicits[0].product.downcast()
+            
+            values = modules.attribute.Value.objects.none()
             # Resolve actual values
             if variant == product:
                 # All values are implicit  since we don't have a variant
                 values = implicits
             else:
-                # Collect all values by comining implicit and explicits
+                # Collect all values by combining implicit values and values
+                # in the explicits queryset
                 implicits = implicits.exclude(attribute__in=explicits
                     .values('attribute'))
-                values = values.filter(Q(pk__in=implicits) | Q(pk__in=explicits))
+                values = all_values.filter(Q(pk__in=implicits) 
+                                           | Q(pk__in=explicits))
+                
+                # Now account for grouping behaviour
+                if group and grouped_explicitly and values.filter(attribute=group).count() == 0:
+                    # Seem like the grouped value was left out due to a more
+                    # explicit value combination, filter again
+                    values = all_values.filter(Q(pk__in=implicits) 
+                                                | Q(pk__in=explicits)
+                                                | Q(pk=grouped_explicitly.pk))
             
-            # See if this is a valid values combination
+            # Make sure this is a valid values combination
             if values.count() != len(combination):
-                if values.count() > len(combination):
-                    logger.warning("Invalid variation values {0} for "
-                                   "product {1}.".format(values, product))
+                logger.warning("Invalid variation values {0} for "
+                               "product {1}.".format(values, product))
                 continue
             
             # Generate a unique key (uses slug format) for this variation 
