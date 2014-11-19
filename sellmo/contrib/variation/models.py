@@ -472,14 +472,18 @@ class VariationManager(models.Manager):
                     # attribute when determening most explicit variant.
                     a = current.exclude(attribute=group).count()
                     b =  explicits.exclude(attribute=group).count()
+                    
+                    # Try keep track of an explicit grouped value
+                    # We only allow value combinations containing a single
+                    # grouped value.
+                    if group and not grouped_explicitly and a == 0:
+                        try:
+                            grouped_explicitly = current.get(attribute=group)
+                        except modules.attribute.Value.DoesNotExist:
+                            pass
+                    
                     if explicits.count() == 0 or a > b:
-                        # Before overriding try keep track of an explicit
-                        # grouped value
-                        if group:
-                            try:
-                                grouped_explicitly = explicits.get(attribute=group)
-                            except modules.attribute.Value.DoesNotExist:
-                                pass
+                        # Found more explicit match.. override
                         explicits = current
             
             if explicits.count() > 0:

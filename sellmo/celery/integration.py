@@ -37,7 +37,7 @@ from sellmo.signals.core import post_init
 
 
 app = Celery()
-app.config_from_object(settings)
+app.config_from_object('django.conf:settings')
 app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
 
 
