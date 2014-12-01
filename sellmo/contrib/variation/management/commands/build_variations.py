@@ -42,4 +42,5 @@ class Command(BaseCommand):
             self.stdout.write(
                 "Building variations for product '{0}'."
                 .format(product.slug))
+            modules.variation.Variation.objects.invalidate(product)
             modules.variation.Variation.objects.build(product)

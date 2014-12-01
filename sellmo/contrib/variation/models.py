@@ -433,45 +433,50 @@ class VariationManager(models.Manager):
         sort_order = 0
         created = []
         for combination in combinations:
+            
             # Find all values which could be in this combination.
             # Values can be explicitly assigned to a variant, or 
             # they could variate this product.
             q = Q()
             for attribute, value in zip(attributes, combination):
                 q |= value_q(attribute, value)
-        
+            
             all_values = (modules.attribute.Value.objects
                         .which_variate(product)
                         .filter(q))
-                        
-            # Filter implicit values
+
+            # Filter out implicits and explicits
             implicits = all_values.filter(variates=True)
+            explicits = all_values.filter(variates=False)
             
             # Find all remaining variants which can be matched
-            # against one ore more values in this combination.
+            # against one ore more explicit values in this combination.
             variants = product.variants.filter(
-                pk__in=(all_values.exclude(product=product)
+                pk__in=(explicits
                     .order_by('product')
                     .distinct()
                     .values('product')))
-                    
-            # If no variants are matched, variant equals product
-            variant = product
                                         
             # Find most explicit value combination
             grouped_explicitly = None
-            explicits = modules.attribute.Value.objects.none()
+            most_explicit = modules.attribute.Value.objects.none()
+            
             for variant in variants:
-                current = all_values.filter(product=variant)
+                current = explicits.filter(product=variant)
+                
+                # Make sure this variant does not belong to a different combination
+                if current.count() != variant.values.which_variate(product).filter(variates=False).count():
+                    continue
+                
                 if current.count() == len(combination):
                     # This must be the most explicit combination
-                    explicits = current
+                    most_explicit = current
                     break
                 else:
                     # If variations are grouped, ignore the grouping
                     # attribute when determening most explicit variant.
                     a = current.exclude(attribute=group).count()
-                    b =  explicits.exclude(attribute=group).count()
+                    b =  most_explicit.exclude(attribute=group).count()
                     
                     # Try keep track of an explicit grouped value
                     # We only allow value combinations containing a single
@@ -482,13 +487,18 @@ class VariationManager(models.Manager):
                         except modules.attribute.Value.DoesNotExist:
                             pass
                     
-                    if explicits.count() == 0 or a > b:
+                    if most_explicit.count() == 0 or a > b:
                         # Found more explicit match.. override
-                        explicits = current
+                        most_explicit = current
+                        
+            explicits = most_explicit
             
             if explicits.count() > 0:
                 # A variant did match
                 variant = explicits[0].product.downcast()
+            else:
+                # If no variants are matched, variant equals product
+                variant = product
             
             values = modules.attribute.Value.objects.none()
             # Resolve actual values
@@ -511,10 +521,8 @@ class VariationManager(models.Manager):
                                                 | Q(pk__in=explicits)
                                                 | Q(pk=grouped_explicitly.pk))
             
-            # Make sure this is a valid values combination
+            # Make sure this combination actually exists
             if values.count() != len(combination):
-                logger.warning("Invalid variation values {0} for "
-                               "product {1}.".format(values, product))
                 continue
             
             # Generate a unique key (uses slug format) for this variation 
