@@ -48,9 +48,6 @@ class QtyPriceQuerySet(QuerySet):
         match = self.filter(qty__lte=qty).order_by('-qty').first()
         if match:
             return match
-        match = self.all().order_by('qty').first()
-        if match:
-            return match
         raise self.model.DoesNotExist()
 
 
