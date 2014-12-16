@@ -296,7 +296,9 @@ class Value(models.Model):
     natural_key.dependencies = ['attribute.attribute', 'product.product']
 
     def __unicode__(self):
-        return call_or_format(modules.attribute.value_format, value=self)
+        # Do not simply supply value=self, this would encourage recursive calls to
+        # __unicode__
+        return call_or_format(modules.attribute.value_format, value=self.value, attribute=self.attribute)
 
     class Meta:
         abstract = True

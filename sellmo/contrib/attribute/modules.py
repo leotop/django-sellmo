@@ -51,7 +51,7 @@ class AttributeModule(Module):
     
     value_format = define_setting(
         'VALUE_FORMAT',
-        default=u"{value.value}")
+        default=u"{value}")
 
     @chainable()
     def get_sorted_values(self, chain, values, attribute=None,
