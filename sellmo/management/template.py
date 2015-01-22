@@ -18,7 +18,7 @@ from optparse import make_option
 from os import path
 
 import django
-from django.template import Template, Context
+from django.template import Template, Context, TemplateSyntaxError
 from django.utils import archive
 from django.utils.six.moves.urllib.request import urlretrieve
 from django.utils._os import rmtree_errorhandler
@@ -138,7 +138,7 @@ class TemplateCommand(BaseCommand):
         # Setup a stub settings environment for template rendering
         from django.conf import settings
         if not settings.configured:
-            settings.configure()
+            settings.configure(DEBUG=True, TEMPLATE_DEBUG=True)
 
         template_dir = self.handle_template(options.get('template'),
                                             base_subdir)
@@ -208,12 +208,17 @@ class TemplateCommand(BaseCommand):
                     
                 # Only render matching extensions
                 if filename.endswith(extensions) or filename in extra_files:
-                    template = Template(content)
                     
                     if self.verbosity >= 2:
                         self.stdout.write("Rendering %s\n" % old_path)
+                    
+                    try:
+                        template = Template(content)
+                        content = template.render(Context(context, autoescape=False))
+                    except Exception:
+                        self.stdout.write("Rendering failed %s\n" % old_path)
+                        raise
                         
-                    content = template.render(Context(context, autoescape=False))
                     content = content.encode('utf-8')
                 
                 if relative_dir:

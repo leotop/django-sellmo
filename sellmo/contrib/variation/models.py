@@ -29,11 +29,14 @@
 
 
 from sellmo import modules, celery, params
+
+if celery.enabled:
+    from sellmo.contrib.variation import tasks
+
 from sellmo.api.decorators import load
 from sellmo.magic import ModelMixin
 from sellmo.utils.formatting import call_or_format
 from sellmo.core.polymorphism import PolymorphicModel, PolymorphicManager
-from sellmo.contrib.variation import tasks
 from sellmo.contrib.variation.variant import (VariantFieldDescriptor,
                                                       VariantMixin,
                                                       get_differs_field_name)

@@ -11,8 +11,13 @@ from sellmo.management.template import TemplateCommand
 DEFAULT_APPS = [
     'store',
     'product',
+    'category',
+    'attribute',
+    'variation',
     'cart',
-    'checkout'
+    'checkout',
+    'account',
+    'settings',
 ]
 
 

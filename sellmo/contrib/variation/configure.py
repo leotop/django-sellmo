@@ -30,7 +30,9 @@
 
 from sellmo import modules, celery
 from sellmo.contrib.variation.signals import variations_invalidated
-from sellmo.contrib.variation import tasks
+
+if celery.enabled:
+    from sellmo.contrib.variation import tasks
 
 
 def on_variations_invalidated(sender, product, **kwargs):

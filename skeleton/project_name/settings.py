@@ -8,6 +8,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.6/ref/settings/
 """
 
+from django.utils.translation import ugettext_lazy as _
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
@@ -30,7 +32,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = (
-    'django.contrib.admin',
+    
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -41,7 +43,6 @@ INSTALLED_APPS = (
     
     {% if 'settings' in apps %}
     'sellmo.contrib.settings',
-    'settings',
     {% endif %}
     
     {% if 'product' in apps %}
@@ -54,8 +55,6 @@ INSTALLED_APPS = (
     
     {% if 'attribute' in apps %}
     'sellmo.contrib.attribute',
-    {% if not bare %}
-    'attribute',
     {% endif %}
     
     {% if 'variation' in apps %}
@@ -88,7 +87,6 @@ INSTALLED_APPS = (
     'sellmo.contrib.payment.methods.bank_transfer',
     'sellmo.contrib.payment.methods.cash_payment',
     {% endif %}
-    'payment',
     {% endif %}
     
     {% if 'shipping' in apps %}
@@ -97,7 +95,6 @@ INSTALLED_APPS = (
     'sellmo.contrib.shipping.methods.flat_shipping',
     'sellmo.contrib.shipping.methods.tiered_shipping',
     {% endif %}
-    'shipping',
     {% endif %}
     
     {% if 'customer' in apps %}
@@ -105,7 +102,6 @@ INSTALLED_APPS = (
     'sellmo.contrib.customer',
     'sellmo.contrib.customer.addresses.default_address',
     {% endif %}
-    'customer',
     {% endif %}
     
     {% if 'account' in apps %}
@@ -127,7 +123,6 @@ INSTALLED_APPS = (
     {% if not bare %}
     'sellmo.contrib.discount.subtypes.percent_discount',
     {% endif %}
-    'discount',
     {% endif %}
     
     {% if 'tax' in apps %}
@@ -137,22 +132,18 @@ INSTALLED_APPS = (
     {% if not bare %}
     'sellmo.contrib.tax.subtypes.percent_tax',
     {% endif %}
-    'tax',
     {% endif %}
     
     {% if 'availability' in apps %}
     'sellmo.contrib.availability',
-    'availability',
     {% endif %}
     
     {% if 'search' in apps %}
     'sellmo.contrib.search',
-    'search',
     {% endif %}
     
     {% if 'mailing' in apps %}
     'sellmo.contrib.mailing',
-    'mailing',
     {% endif %}
     
     {% if 'store' in apps %}
@@ -170,6 +161,12 @@ INSTALLED_APPS = (
     # Overrides dumpdata and loaddata commands
     'sellmo.contrib.data',
     {% endif %}
+    
+    # Place admin after sellmo apps.
+    # This way sellmo apps can load dependencies
+    # first, after which ModelAdmin's can
+    # be loaded by the Django Admin.
+    'django.contrib.admin',
 
 )
 
@@ -293,7 +290,7 @@ SELLMO_ORDER_STATUSES = {
 }
 {% endif %}
 
-{% if not bare}
+{% if not bare %}
 SELLMO_REPORT_GENERATORS = [
     'sellmo.contrib.reporting.generators.weasyprint_reporting.WeasyPrintReportGenerator'
 ]
@@ -310,7 +307,7 @@ SELLMO_REPORTING_PARAMS = {
 }
 {% endif %}
 
-{% if 'mailing' in apps and celery }
+{% if 'mailing' in apps and celery %}
 SELLMO_MAIL_HANDLER = 'sellmo.contrib.mailing.handlers.celery_mailing.CeleryMailHandler'
 {% endif %}
 
