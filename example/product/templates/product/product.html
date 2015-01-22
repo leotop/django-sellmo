@@ -1,7 +1,0 @@
-{% extends "store.html" %}
-{% load sellmo_cart %}
-
-{% block title %}{{ product.name }}{% endblock %}
-{% block content %}
-  {% add_to_cart_formset product %}
-{% endblock %}

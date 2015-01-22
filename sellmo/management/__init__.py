@@ -28,43 +28,20 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-import os
-import sys
-
-from setuptools import setup, find_packages
-from distutils.sysconfig import get_python_lib
+from django.conf import settings
+from django.core.management import ManagementUtility as _ManagementUtility
 
 
-EXCLUDE_FROM_PACKAGES = ['example']
+class ManagementUtility(_ManagementUtility):
+    def execute(self):
+        # Fool the Django ManagementUtility
+        settings.configure()
+        # Add the management/commands from sellmo
+        # These are all global and do not need a project
+        settings.INSTALLED_APPS = ['sellmo']
+        super(ManagementUtility, self).execute()
 
 
-setup(
-    name='Sellmo',
-    version='0.4.2.6',
-    url='http://www.adaptiv.nl/',
-    author='Raymond Reggers - Adaptiv Design',
-    author_email='raymond@adaptiv.nl',
-    description=('Django e-commerce.'),
-    license='BSD',
-    entry_points={'console_scripts': [
-        'sellmo-cli = sellmo.management:execute_from_command_line',
-    ]},
-    packages=find_packages(exclude=EXCLUDE_FROM_PACKAGES),
-    include_package_data=True,
-    install_requires=[
-        'PyYAML',
-        'django>=1.7.0,<1.8',
-        'django-mptt>=0.6.1',
-        'django-classy-tags',
-        'django-picklefield',
-    ],
-    zip_safe=False,
-    classifiers=[
-        'Framework :: Sellmo',
-        'Intended Audience :: Developers',
-        'Operating System :: OS Independent',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
-    ],
-)
+def execute_from_command_line(argv=None):
+    utility = ManagementUtility(argv)
+    utility.execute()
