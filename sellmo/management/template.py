@@ -72,8 +72,12 @@ class TemplateCommand(BaseCommand):
                     action='append', default=[],
                     help='Exta file name(s) to render. '
                          'Separate multiple files with commas, or use '
-                         '-n multiple times.')
+                         '-n multiple times.'),
+        make_option('--override', '-o', dest='override',
+                    action='store_true', default=False,
+                    help='Overrides any existing file if destination exists.')
     )
+    
     requires_system_checks = False
     # Can't import settings during this command, because they haven't
     # necessarily been created.
@@ -84,7 +88,7 @@ class TemplateCommand(BaseCommand):
     # setting might not be available at all.
     leave_locale_alone = True
 
-    def handle(self, app_or_project, name, target=None, **options):
+    def handle(self, app_or_project, name, target=None, override=False, **options):
         self.app_or_project = app_or_project
         self.paths_to_remove = []
         self.verbosity = int(options.get('verbosity'))
@@ -98,10 +102,10 @@ class TemplateCommand(BaseCommand):
                 os.makedirs(top_dir)
             except OSError as e:
                 if e.errno == errno.EEXIST:
-                    message = "'%s' already exists" % top_dir
+                    if not override:
+                        raise CommandError("'%s' already exists" % top_dir)
                 else:
-                    message = e
-                raise CommandError(message)
+                    raise CommandError(e)
         else:
             top_dir = os.path.abspath(path.expanduser(target))
             if not os.path.exists(top_dir):
@@ -179,7 +183,7 @@ class TemplateCommand(BaseCommand):
                 old_path = path.join(root, filename)
                 new_path = path.join(top_dir, relative_dir,
                                      filename.replace(base_name, name))
-                if path.exists(new_path):
+                if path.exists(new_path) and not override:
                     raise CommandError("%s already exists, overlaying a "
                                        "project or app into an existing "
                                        "directory won't replace conflicting "

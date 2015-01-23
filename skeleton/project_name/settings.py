@@ -38,11 +38,15 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    {% if 'settings' in apps %}
+    'django.contrib.sites',
+    {% endif %}
     
     'sellmo',
     
     {% if 'settings' in apps %}
     'sellmo.contrib.settings',
+    'settings',
     {% endif %}
     
     {% if 'product' in apps %}
@@ -55,6 +59,7 @@ INSTALLED_APPS = (
     
     {% if 'attribute' in apps %}
     'sellmo.contrib.attribute',
+    'attribute',
     {% endif %}
     
     {% if 'variation' in apps %}
@@ -87,6 +92,7 @@ INSTALLED_APPS = (
     'sellmo.contrib.payment.methods.bank_transfer',
     'sellmo.contrib.payment.methods.cash_payment',
     {% endif %}
+    'payment',
     {% endif %}
     
     {% if 'shipping' in apps %}
@@ -95,6 +101,7 @@ INSTALLED_APPS = (
     'sellmo.contrib.shipping.methods.flat_shipping',
     'sellmo.contrib.shipping.methods.tiered_shipping',
     {% endif %}
+    'shipping',
     {% endif %}
     
     {% if 'customer' in apps %}
@@ -102,6 +109,7 @@ INSTALLED_APPS = (
     'sellmo.contrib.customer',
     'sellmo.contrib.customer.addresses.default_address',
     {% endif %}
+    'customer',
     {% endif %}
     
     {% if 'account' in apps %}
@@ -123,6 +131,7 @@ INSTALLED_APPS = (
     {% if not bare %}
     'sellmo.contrib.discount.subtypes.percent_discount',
     {% endif %}
+    'discount',
     {% endif %}
     
     {% if 'tax' in apps %}
@@ -132,18 +141,22 @@ INSTALLED_APPS = (
     {% if not bare %}
     'sellmo.contrib.tax.subtypes.percent_tax',
     {% endif %}
+    'tax',
     {% endif %}
     
     {% if 'availability' in apps %}
     'sellmo.contrib.availability',
+    'availability',
     {% endif %}
     
     {% if 'search' in apps %}
     'sellmo.contrib.search',
+    'search',
     {% endif %}
     
     {% if 'mailing' in apps %}
     'sellmo.contrib.mailing',
+    'mailing',
     {% endif %}
     
     {% if 'store' in apps %}
@@ -248,6 +261,11 @@ STATICFILES_DIRS = (
 TEMPLATE_DIRS = (
     os.path.join(BASE_DIR, 'templates'),
 )
+
+{% if 'account' in apps %}
+AUTH_USER_MODEL = 'account.User'
+LOGIN_REDIRECT_URL = 'account.profile'
+{% endif %}
 
 {% if 'pricing' in apps %}
 SELLMO_INDEXABLE_QTYS = [1, 9999999]

@@ -18,6 +18,10 @@ DEFAULT_APPS = [
     'checkout',
     'account',
     'settings',
+    'mailing',
+    'customer',
+    'shipping',
+    'payment',
 ]
 
 
@@ -73,6 +77,7 @@ class Command(TemplateCommand):
         apps = tuple(handle_apps(options.pop('apps')))
         
         super(Command, self).handle('project', project_name, target, apps=apps, **options)
+        self.stdout.write("Now run python manage.py makemigrations %s\n" % ' '.join(apps))
         
     def preprocess_file(self, filename, context):
         # First make sure this app should be generated

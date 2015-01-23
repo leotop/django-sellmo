@@ -1,0 +1,14 @@
+{
+  "name": "staticfiles",
+  "version": "1.0.0",
+  "description": "Staticfiles dependencies",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Raymond Reggers",
+  "license": "N/A",
+  "devDependencies": {
+    
+  }
+}

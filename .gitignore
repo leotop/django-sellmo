@@ -1,17 +1,18 @@
-# Migrations #
-######################
-example/migrations
-
-# Sqlite databases #
-######################
+# Example #
+###########
 example/db.sqlite3
+example/migrations
+example/example/static/node_modules
+example/example/static/build
+example/example/static/src
+example/*/migrations
 
 # PyLint generated files #
-######################
+##########################
 pylint.html
 
 # Python generated files #
-######################
+##########################
 *.pyc
 *.egg-info
 
