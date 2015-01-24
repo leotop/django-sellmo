@@ -267,13 +267,13 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 STATICFILES_DIRS = (
-    os.path.join(BASE_DIR, 'assets'),
+    os.path.join(BASE_DIR, '{{ project_name }}', 'static'),
 )
 
 # Template files (HTML)
 
 TEMPLATE_DIRS = (
-    os.path.join(BASE_DIR, 'templates'),
+    os.path.join(BASE_DIR, '{{ project_name }}', 'templates'),
 )
 
 {% if 'account' in apps %}

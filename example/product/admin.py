@@ -9,14 +9,9 @@ from sellmo.contrib.variation.admin import (VariantAttributeMixin,
 from sellmo.contrib.attribute.admin import ProductAttributeMixin
 from sellmo.contrib.tax.forms import ProductTaxesForm
 
-from django import forms
 from django.contrib import admin
-from django.contrib.contenttypes.generic import GenericTabularInline
 from django.db import models
-from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
-from django.contrib.admin.sites import NotRegistered
-from django.contrib.contenttypes.models import ContentType
 
 from sorl.thumbnail import get_thumbnail
 
@@ -96,6 +91,7 @@ class ProductParentAdmin(ProductParentAdminBase):
         (modules.product.SimpleProduct, SimpleProductAdmin),
 
     ]
+    
     polymorphic_list = False
 
     list_display = ['thumbnail', 'name', 'active', 'featured', 'slug', 'sku', 'stock']
