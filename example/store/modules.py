@@ -2,6 +2,8 @@ from sellmo import modules
 from sellmo.api.decorators import view
 from sellmo.api.http.query import QueryString
 
+from django.shortcuts import render
+
 
 class StoreModule(modules.store):
     
@@ -14,7 +16,7 @@ class StoreModule(modules.store):
         
         query = QueryString(request)
         featured = modules.product.Product.objects.filter(featured=True)
-        featured = modules.product.list(request=request, products=products, query=query).polymorphic()
+        featured = modules.product.list(request=request, products=featured, query=query).polymorphic()
 
         context.update({
             'featured': featured[:8]

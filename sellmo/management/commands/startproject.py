@@ -11,6 +11,7 @@ from sellmo.management.template import TemplateCommand
 DEFAULT_APPS = [
     'store',
     'product',
+    'pricing',
     'category',
     'attribute',
     'variation',
@@ -22,6 +23,9 @@ DEFAULT_APPS = [
     'customer',
     'shipping',
     'payment',
+    'tax',
+    'discount',
+    'availability',
 ]
 
 
@@ -77,7 +81,7 @@ class Command(TemplateCommand):
         apps = tuple(handle_apps(options.pop('apps')))
         
         super(Command, self).handle('project', project_name, target, apps=apps, **options)
-        self.stdout.write("Now run python manage.py makemigrations %s\n" % ' '.join(apps))
+        self.stdout.write("\nNow run: python manage.py makemigrations %s\n" % ' '.join(apps))
         
     def preprocess_file(self, filename, context):
         # First make sure this app should be generated

@@ -45,9 +45,6 @@ class PurchaseInline(admin.TabularInline):
     extra = 0
 
     raw_id_fields = ['product']
-    autocomplete_lookup_fields = {
-        'fk': ['product'],
-    }
 
 
 class OrderMailInline(admin.TabularInline):
@@ -93,9 +90,6 @@ class OrderAdmin(ReverseModelAdmin):
     list_display_links = ['order']
 
     raw_id_fields = ['customer']
-    autocomplete_lookup_fields = {
-        'fk': ['customer'],
-    }
     
     def order(self, obj):
         return unicode(obj)

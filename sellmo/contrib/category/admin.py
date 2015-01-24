@@ -116,9 +116,6 @@ class CategoryAdmin(CategoryAdminBase):
     full_slug.short_description = _("full slug")
 
     raw_id_fields = ['parent']
-    autocomplete_lookup_fields = {
-        'fk': ['parent'],
-    }
 
     prepopulated_fields = {
         'slug': ('name',),

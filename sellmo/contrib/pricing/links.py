@@ -31,7 +31,9 @@
 from sellmo import modules, celery, params
 from sellmo.api.decorators import link
 from sellmo.api.pricing import Price
-from sellmo.contrib.pricing import tasks
+
+if celery.enabled:
+    from sellmo.contrib.pricing import tasks
 
 
 namespace = modules.pricing.namespace

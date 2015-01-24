@@ -1,10 +1,12 @@
-from django.conf.urls import patterns, include, url
+from django.conf.urls import patterns, include
 
 from django.contrib import admin
 admin.autodiscover()
 
-urlpatterns = patterns(
-    '',
-   url(r'^admin/', include(admin.site.urls)),
-   url(r'', include('sellmo.core.urls')),
+urlpatterns = patterns('',
+    {% if not bare %}
+    (r'^grappelli/', include('grappelli.urls')),
+    {% endif %}
+    (r'^admin/', include(admin.site.urls)),
+    (r'', include('sellmo.core.urls')),
 )

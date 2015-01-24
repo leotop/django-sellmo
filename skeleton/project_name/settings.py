@@ -14,6 +14,9 @@ from django.utils.translation import ugettext_lazy as _
 import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
+{% if 'settings' in apps %}
+SITE_ID = 1
+{% endif %}
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
@@ -32,6 +35,10 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = (
+    
+    {% if not bare %}
+    'grappelli',
+    {% endif %}
     
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -55,6 +62,13 @@ INSTALLED_APPS = (
     'sellmo.contrib.product.subtypes.simple_product',
     {% endif %}
     'product',
+    {% endif %}
+    
+    {% if 'pricing' in apps %}
+    {% if not bare %}
+    'sellmo.contrib.pricing',
+    {% endif %}
+    'pricing',
     {% endif %}
     
     {% if 'attribute' in apps %}
@@ -339,4 +353,8 @@ SELLMO_CELERY_ENABLED = True
 
 {% if caching %}
 SELLMO_CACHING_ENABLED = True
+{% endif %}
+
+{% if not bare %}
+GRAPPELLI_ADMIN_TITLE = '{{ project_name|capfirst }}'
 {% endif %}

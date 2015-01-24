@@ -32,6 +32,8 @@ _url_drive_re = re.compile('^([a-z])[:|]', re.I)
 
 DEFAULT_EXTENSIONS = [
     'py',
+    'txt',
+    'html',
 ]
 
 FRONT_MATTER_REGEX = re.compile(r'^-{3,}$', re.MULTILINE)

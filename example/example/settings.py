@@ -15,11 +15,14 @@ import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 
+SITE_ID = 1
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'dh@py67-9&)ul2)su7$b66a*3qox=p82fphz0*zlh3&%ly^lxh'
+SECRET_KEY = '99vu$tu%s#v1pn#s099^w6ar@tp4t07rfm4(i@!ay1jqdju$$g'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -32,6 +35,10 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = (
+    
+    
+    'grappelli',
+    
     
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -55,6 +62,13 @@ INSTALLED_APPS = (
     'sellmo.contrib.product.subtypes.simple_product',
     
     'product',
+    
+    
+    
+    
+    'sellmo.contrib.pricing',
+    
+    'pricing',
     
     
     
@@ -126,9 +140,27 @@ INSTALLED_APPS = (
     
     
     
+    # Put this before taxing to assure a correct pricing chain
+    'sellmo.contrib.discount',
+    
+    'sellmo.contrib.discount.subtypes.percent_discount',
+    
+    'discount',
     
     
     
+    # Put this after other pricing apps
+    # to assure a correct pricing chain
+    'sellmo.contrib.tax',
+    
+    'sellmo.contrib.tax.subtypes.percent_tax',
+    
+    'tax',
+    
+    
+    
+    'sellmo.contrib.availability',
+    'availability',
     
     
     
@@ -244,6 +276,8 @@ LOGIN_REDIRECT_URL = 'account.profile'
 
 
 
+SELLMO_INDEXABLE_QTYS = [1, 9999999]
+
 
 
 SELLMO_CHECKOUT_PROCESS = 'checkout.process.MultiStepCheckoutProcess'
@@ -306,3 +340,6 @@ SELLMO_REPORTING_PARAMS = {
 
 
 
+
+
+GRAPPELLI_ADMIN_TITLE = 'Example'

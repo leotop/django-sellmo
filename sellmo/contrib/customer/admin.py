@@ -45,9 +45,6 @@ class CustomerAdmin(ReverseModelAdmin):
 
     if modules.customer.auth_enabled:
         raw_id_fields = ['user']
-        autocomplete_lookup_fields = {
-            'fk': ['user'],
-        }
 
 
 admin.site.register(modules.customer.Customer, CustomerAdmin)
