@@ -1,0 +1,21 @@
+{% load sellmo_pricing thumbnail%}
+<ul class="row list-unstyled product-list">
+{% for product in products %}
+  <li class="{% if classes %}{{ classes }}{% else %}col-sm-4 col-lg-3{% endif %}">
+    <a href="{{ product.get_absolute_url }}" class="thumbnail">
+      {% if not product.main_image %}
+      <img data-src="holder.js/100%x180" alt="{{ product }}">
+      {% else %}
+      {% thumbnail product.main_image "280x280" padding=True as img %}
+      <img src="{{ img.url }}" width="{{ img.width }}" height="{{ img.height }}" alt="{{ product }}">
+      {% endthumbnail %}
+      {% endif %}
+      <div class="caption">
+        <h4 class="product-brand">{{ product.attributes.brand }}</h4>
+        <h3 class="product-name">{{ product }}</h3>
+        <h4 class="product-price">{% price product=product index=index %}{{ price }}{% endprice %}</h4>
+      </div>
+    </a>
+  </li>
+{% endfor %}
+</ul>

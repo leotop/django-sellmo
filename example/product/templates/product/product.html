@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% load static thumbnail sellmo_pricing variation availability %}
+
+{% block html_title %}{{ product }}{% endblock %}
+
+{% block html %}
+{% variations product=product %}
+{{ block.super }}
+{% endvariations %}
+{% endblock %}
+
+{% block page %}
+<div id="product">
+  {{ block.super }}
+</div>
+{% endblock %}
+
+{% block scripts %}
+  {{ block.super }}
+  
+  <script type="text/javascript" src="{% static "build/js/product.js" %}"></script>
+  
+  {% verbatim %}
+  <script id="product-availability-template" type="text/x-handlebars-template">
+    {{#if stock}}
+    <div class="alert alert-success">
+      <strong>{{stock}} op voorraad.</strong>
+      {{#if delay}}
+      Verzending {{ delay }}.
+      {{/if}}
+    </div>
+    {{else}}
+    <div class="alert alert-danger">
+      <strong>Niet op voorraad.</strong>
+      {{#if delay}}
+      Dit product is leverbaar vanaf {{ delay }}.
+      {{else}}
+      Helaas is dit product niet leverbaar.
+      {{/if}}
+    </div>
+    {{/if}}
+  </script>
+  {% endverbatim %}
+  
+  <script type="text/javascript">
+    $(function(){
+      var stocks = {};
+      var delays = {};
+      var stock = null;
+      var delay = null;
+      {% if grouped %}
+        {% for group in variations %}
+          {% for variation in group.variations %}
+          stocks['{{ variation.pk }}'] = {{ variation.stock }};
+          delays['{{ variation.pk }}'] = {% include 'product/_delay.html' with date=variation|shipping_date %};
+          {% endfor %}
+        {% endfor %}
+      {% else %}
+        {% if variations %}
+        {% for variation in variations %}
+          delays['{{ variation.pk }}'] = {{ variation.stock }};
+          delays['{{ variation.pk }}'] = {% include 'product/_delay.html' with date=variation|shipping_date %};
+        {% endfor %}
+        {% else %}
+          stock = {{ product.stock }};
+          delay = {% include 'product/_delay.html' with date=product|shipping_date %};
+        {% endif %}
+      {% endif %}
+      
+      var options = {}
+      if (stock != null) {
+        options['stock'] = stock;
+        options['delay'] = delay;
+      } else {
+        options['stocks'] = stocks;
+        options['delays'] = delays;
+      }
+      
+      $('.add-to-cart').productAvailability(options);
+      
+    });
+  </script>
+  
+{% endblock %}
+
+{% block content %}
+{% with brand=product.attributes.brand %}
+  <div class="row">
+
+    <div class="col-sm-7">
+      {% thumbnail product.main_image "600x600" padding=True as img %}
+      <div class="product-image thumbnail">
+        <img class="zoom" src="{{ img.url }}" width="{{ img.width }}" height="{{ img.height }}" alt="{{ product }}"  data-zoom-image="{{ product.main_image.url }}">
+      </div>
+      {% endthumbnail %}
+    </div>
+
+    <div class="col-sm-5">
+      <div class="page-header">
+        <h1>{{ product.name }}</h1>
+      </div>
+      <p class="product-short-description">{% if product.short_description %}{{ product.short_description }}{% else %}{{ brand.short_description }}{% endif %}</p>
+      {% if brand %}
+      <div class="product-brand">
+        {% if brand.logo %}
+          {% thumbnail brand.logo "x50" format="PNG" as img %}
+           <img src="{{ img.url }}" width="{{ img.width }}" height="{{ img.height }}" alt="{{ brand }}">
+          {% endthumbnail %}
+        {% else %}
+          {{ brand }}
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% if grouped %}
+        <ul class="nav nav-pills product-group-pills">
+        {% for group in variations %}
+          <li{% if forloop.counter0 == 0 %} class="active"{% endif %}><a href="#{{ group.value }}" data-toggle="pill">{{ group.value }}</a></li>
+        {% endfor %}
+        </ul>
+        <div class="tab-content product-groups">
+        {% for group in variations %}
+          <div id="{{ group.value }}" class="tab-pane{% if forloop.counter0 == 0 %} active{% endif %}">
+            {% include "product/_add_to_cart.html" with product=group.variant variations=group.variations %}
+          </div>
+        {% endfor %}
+      </div>
+      {% else %}
+        {% include "product/_add_to_cart.html" %}
+      {% endif %}
+
+      <h3 class="h4">Kenmerken</h3>
+      <hr/>
+      <table class="table table-striped table-bordered">
+        <tbody>
+          <tr>
+            <th class="col-xs-5">Fabrikantnummer</th>
+            <td class="col-xs-7">{% if product.sku %}{{ product.sku }}{% else %}onbekend{% endif %}</td>
+          </tr>
+          {% for value in product.attributes %}
+          <tr>
+            <th>{{ value.attribute }}</th>
+            <td>{{ value }}</th>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+    </div>
+  </div>
+{% endwith %}
+{% endblock %}
+
+{% block extra %}
+<div class="container">
+  <div class="divider-lg-top">
+    <h3 class="h4">Ook interessant</h3>
+    <hr/>
+  </div>
+  {% include "product/_product_list.html" with products=featured index=featured.index classes="col-sm-4 col-xs-6 col-md-3" %}
+</div>
+{{ block.super }}
+{% endblock %}
+

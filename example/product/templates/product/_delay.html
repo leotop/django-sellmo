@@ -1,0 +1,8 @@
+{% spaceless %}
+{% load humanize %}
+{% if date %}
+"{{ date|naturalday }}"
+{% else %}
+false
+{% endif %}
+{% endspaceless %}

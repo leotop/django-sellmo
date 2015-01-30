@@ -17,14 +17,14 @@ def index(request, context, **kwargs):
 
 @link()
 def category(request, category, context, **kwargs):
-    query = QueryString(request)
+    qs = QueryString(request)
     
     # Query all products in this category
     products = modules.product.Product.objects.in_category(category).polymorphic()
     
     # Pass queryset through product module and include http query
     # for further filtering and sorting
-    products = modules.product.list(request=request, products=products, query=query)
+    products = modules.product.list(request=request, products=products, query=qs)
     
     # Get root category
     if not category.is_leaf_node():
@@ -39,7 +39,7 @@ def category(request, category, context, **kwargs):
         'root': root,
         'category': category,
         'index': getattr(products, 'index', None),
-        'query': query
+        'qs': qs
     })
 
     return render(request, 'category/category.html', context)

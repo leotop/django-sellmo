@@ -1,5 +1,4 @@
-
-{% load staticfiles %}
+{% load staticfiles thumbnail category %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -10,60 +9,177 @@
     <meta name="author" content="">
     <link rel="icon" href="../../favicon.ico">
 
-    <title>Starter Template for Bootstrap</title>
-
+    <title>{% block html-title %}{{ settings.store_name }}{% endblock %}</title>
+    {% block stylesheets %}
     <!--Stylesheets
     ================================================== -->
     
     <!-- Production stylesheets -->
     <!--
-    <link rel="stylesheet" href="{% static "dist/screen.css" %}">
+    <link rel="stylesheet" href="{% static "dist/css/screen.css" %}">
     -->
     
     <!-- Development stylesheets -->
     <link rel="stylesheet" href="{% static "build/css/screen.css" %}">
+    {% endblock %}
     
   </head>
 
   <body>
 
-    <nav class="navbar navbar-inverse navbar-fixed-top">
-      <div class="container">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="#">Project name</a>
+    <div id="site">
+      {% block navbar %}
+        <div class="header">
+          <div class="container">
+            <div class="pull-left">
+              <a href="{% url 'store.index' %}" class="logo"></a>
+            </div>
+          </div>
         </div>
-        <div id="navbar" class="collapse navbar-collapse">
-          <ul class="nav navbar-nav">
-            <li class="active"><a href="#">Home</a></li>
-            <li><a href="#about">About</a></li>
-            <li><a href="#contact">Contact</a></li>
+        <div id="navigation" class="navbar navbar-default" role="navigation">
+          <div class="container">
+            {% include "_navbar.html" with category=category %}
+          </div>
+        </div>
+      {% endblock %}
+    
+      {% block page %}
+      <div id="page">
+          {% block messages %}
+          <div class="container">
+            {% if messages %}
+            <ul class="messages list-unstyled">
+              {% for message in messages %}
+              <li class="alert alert-dismissable alert-{{ message.tags }}">
+                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                {{ message }}
+              </li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+          </div>
+          {% endblock %}
+    
+          {% block content-wrap %}
+            <div class="container">
+            {% block content %}
+            {% endblock %}
+            </div>
+          {% endblock %}
+    
+          {% block extra %}
+          <div class="container">
+            <div class="row">
+              <div class="col-sm-6">
+                <div class="divider-lg-top">
+                  <h3 class="h4">Winkelinformatie</h3>
+                  <hr/>
+                </div>
+                <div class="list-group">
+                  <a class="list-group-item" href="a">a</a>
+                  <a class="list-group-item" href="b">b</a>
+                  <a class="list-group-item" href="c">c</a>
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <div class="divider-lg-top">
+                  <h3 class="h4">Heeft u een vraag?</h3>
+                  <hr/>
+                </div>
+                <div class="well">
+                  <form class="contact-form" method="post" action="{% url 'store.contact' %}?next={{ request.path }}">{% csrf_token %}
+                    {% include "store/_contact_form.html" with form=contact_form %}
+                    <input type="submit" value="Versturen" class="btn btn-primary"/>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endblock %}
+    
+        </div> <!-- /container -->
+      </div> <!-- /page -->
+      {% endblock %}
+    
+      <!-- FOOTER -->
+      <footer>
+        <div class="footer-top">
+          <div class="container">
+            <div class="row">
+              <ul>
+                <li><span class="fa fa-lg fa-truck"></span> Gratis verzending *</li>
+                <li><span class="fa fa-lg fa-phone"></span> Klantenservice <strong>{{ settings.contact_phone_number }}</strong></li>
+                <li><span class="fa fa-lg fa-reply"></span> Gratis retourneren **</li>
+              </ul>
+            </div>
+          </div><!-- /container -->
+        </div>
+        <div class="container">
+          {% categories nested cached 3600 %}
+          <ul class="row category-list">
+            {% node %}
+            <li>
+              <a href="{{ absolute_url }}">{{ node.name }}</a>
+              {% if not node.is_leaf_node %}
+              <ul>
+                {{ children }}
+              </ul>
+              {% endif %}
+            </li>
+            {% endnode %}
           </ul>
-        </div><!--/.nav-collapse -->
-      </div>
-    </nav>
-
-    <div class="container">
-
-      <div class="starter-template">
-        <h1>Bootstrap starter template</h1>
-        <p class="lead">Use this document as a way to quickly start any new project.<br> All you get is this text and a mostly barebones HTML document.</p>
-      </div>
-
-    </div><!-- /.container -->
-
-
-    <!-- Javascript
+          {% endcategories %}
+          <ul class="rw brands">
+            {% for brand in brands %}
+              {% if brand.logo %}
+              {% thumbnail brand.logo "x50" format="PNG" as img %}
+              <li><a href="#"><img src="{{ img.url }}" width="{{ img.width }}" height="{{ img.height }}" alt="{{ brand }}"></a></li>
+              {% endthumbnail %}
+              {% endif %}
+            {% endfor %}
+          </ul>
+          <hr/>
+          <div class="clearfix">
+            <div class="pull-left">
+              <p><small>&copy; {% now "Y" %} {{ settings.store_name }}</small></p>
+            </div>
+            <ul class="pull-right social">
+              {% if settings.facebook_url %}
+              <li>
+                <a href="{{ settings.facebook_url }}" class="btn btn-social-icon btn-facebook">
+                  <i class="fa fa-facebook"></i>
+                </a>
+              </li>
+              {% endif %}
+              {% if settings.twitter_url %}
+              <li>
+                <a href="{{ settings.twitter_url }}" class="btn btn-social-icon btn-twitter">
+                  <i class="fa fa-twitter"></i>
+                </a>
+              </li>
+              {% endif %}
+              {% if settings.googleplus_url %}
+              <li>
+                <a href="{{ settings.googleplus_url }}" class="btn btn-social-icon btn-google-plus">
+                  <i class="fa fa-google-plus"></i>
+                </a>
+              </li>
+              {% endif %}
+            </ul>
+          </div>
+        </div><!-- /container -->
+      </footer>
+    </div>
+    
+    {% block scripts %}
+    <!-- Scripts
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
     
     <!-- Development javascript -->
     <script type="text/javascript" src="{% static "bower_components/jquery/dist/jquery.js" %}"></script>
+    <script type="text/javascript" src="{% static "bower_components/bootstrap/dist/js/bootstrap.js" %}"></script>
+    {% endblock %}
     
   </body>
 </html>

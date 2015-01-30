@@ -26,6 +26,7 @@ def load_model():
         
         sku = models.CharField(
             max_length=80,
+            blank=True,
             verbose_name=_("sku")
         )
         

@@ -1,0 +1,55 @@
+{% load i18n sellmo_http %}
+<div class="btn-group">
+  <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+    {% query sort='name' as a %}{% query sort='-name' as b %}
+      {% if qs >= a or qs >= b %}
+        {% if qs >= a %}
+        {% trans "A-Z" %}
+        {% else %}
+        {% trans "Z-A" %}
+        {% endif %}
+      {% endif %}
+    {% endquery %}{% endquery %}
+    {% query sort='price' as a %}{% query sort='-price' as b %}
+      {% if qs >= a or qs >= b %}
+        {% if qs >= a %}
+        {% trans "Price ascending" %}
+        {% else %}
+        {% trans "Price descending" %}
+        {% endif %}
+      {% endif %}
+    {% endquery %}{% endquery %}
+    {% if not 'sort' in qs %}
+      {% trans "Relevancy" %}
+    {% endif %}
+    &nbsp;<span class="caret"></span>
+  </button>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+    {% query sort='name' as a %}{% query sort='-name' as b %}
+      {% if qs >= a or qs >= b %}
+        {% if qs >= a %}
+        {% modquery qs sort='-name' as qs %}<a class="active" href="?{{ qs }}">{% trans "Z-A" %}</a>{% endmodquery %}
+        {% else %}
+        {% modquery qs sort='name' as qs %}<a class="active" href="?{{ qs }}">{% trans "A-Z" %}</a>{% endmodquery %}
+        {% endif %}
+      {% else %}
+        {% modquery qs sort='name' as qs %}<a href="?{{ qs }}">{% trans "A-Z" %}</a>{% endmodquery %}
+      {% endif %}
+    {% endquery %}{% endquery %}
+    </li>
+    <li>
+    {% query sort='price' as a %}{% query sort='-price' as b %}
+      {% if qs >= a or qs >= b %}
+        {% if qs >= a %}
+        {% modquery qs sort='-price' as qs %}<a class="active" href="?{{ qs }}">{% trans "Price descending" %}</a>{% endmodquery %}
+        {% else %}
+        {% modquery qs sort='price' as qs %}<a class="active" href="?{{ qs }}">{% trans "Price ascending" %}</a>{% endmodquery %}
+        {% endif %}
+      {% else %}
+        {% modquery qs sort='price' as qs %}<a href="?{{ qs }}">{% trans "Price ascending" %}</a>{% endmodquery %}
+      {% endif %}
+    {% endquery %}{% endquery %}
+    </li>
+  </ul>
+</div>

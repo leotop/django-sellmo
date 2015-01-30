@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load i18n category sellmo_http %}
+
+{% block html_title %}{{ category.name }}{% endblock %}
+
+{% block page %}
+<div id="category">
+  {{ block.super }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="category-header row">
+  <h1 class="category-name col-sm-3">{{ category.name }}</h1>
+  <div class="col-sm-9">
+    <div class="row">
+      <div class="col-xs-6">
+        <div class="product-count">
+          {% blocktrans count counter=products.paginator.count %}
+          {{ counter }} product
+          {% plural %}
+          {{ counter }} products
+          {% endblocktrans %}  
+        </div>
+      </div>
+      <div class="col-xs-6">
+        <div class="product-sort">
+          {% include "product/_product_sort.html" %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="col-md-3">
+    {% categories flat current=category parent=root cached 3600 %}
+    <h4>{% trans "Categories" %}</h4>
+    <hr/>
+    <div class="list-group">
+      {% node %}
+        <a href="{{ absolute_url }}{% if qs %}?{{ qs }}{% endif %}" class="list-group-item{% if current == 'exact' %} active{% endif %}">
+          {{ node.name }}
+        </a>
+      {% endnode %}
+    </div>
+    {% endcategories %}
+    {% if brands %}
+    <h4>{% trans "Brands" %}</h4>
+    <hr/>
+    <div class="list-group">
+      {% for brand in brands %}
+      {% query brand=brand.slug as a %}
+      {% if qs >= a %}
+      {% modquery qs brand=None as qs %}<a href="?{{ qs }}" class="list-group-item active">{{ brand }}</a>{% endmodquery %}
+      {% else %}
+      {% modquery qs brand=brand.slug as qs %}<a href="?{{ qs }}" class="list-group-item">{{ brand }}</a>{% endmodquery %}
+      {% endif %}
+      {% endquery %}
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+  <div class="col-md-9">
+    {% include "product/_product_list.html" with products=products classes="col-sm-4 col-xs-6" %}
+  </div>
+</div>
+{% endblock %}

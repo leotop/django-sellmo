@@ -37,7 +37,16 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = (
     
     {% if not bare %}
+    
+    # Spices up the admin a bit
     'grappelli',
+    
+    # This comes in handy for rendering forms
+    'widget_tweaks',
+    
+    # Ofcourse we need thumbnails
+    'sorl.thumbnail',
+    
     {% endif %}
     
     'django.contrib.auth',
@@ -47,6 +56,10 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     {% if 'settings' in apps %}
     'django.contrib.sites',
+    {% endif %}
+    
+    {% if not bare %}
+    'django.contrib.humanize',
     {% endif %}
     
     'sellmo',
@@ -74,6 +87,10 @@ INSTALLED_APPS = (
     {% if 'attribute' in apps %}
     'sellmo.contrib.attribute',
     'attribute',
+    {% endif %}
+    
+    {% if 'brand' in apps %}
+    'brand',
     {% endif %}
     
     {% if 'variation' in apps %}
@@ -230,6 +247,12 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     {% if 'account' in apps %}
     'sellmo.core.context_processors.login_form_context',
     {% endif %}
+    {% if 'store' in apps and not bare %}
+    'sellmo.core.context_processors.contact_form_context',
+    {% endif %}
+    {% if 'brand' in apps %}
+    'sellmo.core.context_processors.brands_context',
+    {% endif %}
 )
 
 ROOT_URLCONF = '{{ project_name }}.urls'
@@ -269,6 +292,12 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, '{{ project_name }}', 'static'),
 )
+
+# Media files (User uploaded files)
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, '_media')
+
 
 # Template files (HTML)
 

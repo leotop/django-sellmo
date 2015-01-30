@@ -2,4 +2,5 @@ git+https://github.com/adaptivdesign/django-sellmo.git
 
 Pillow
 sorl-thumbnail
+django-widget-tweaks
 django-grappelli

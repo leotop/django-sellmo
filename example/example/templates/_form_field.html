@@ -1,0 +1,12 @@
+{% load widget_tweaks %}
+<div class="{{ field.name }} form-group{% if field.errors %} has-error{% endif %}">
+  <label class="control-label{% if inline %} sr-only{% endif %}" for="{{ field.id_for_label }}">{% if not label %}{{ field.label }}{% if field.field.required %}*{% endif %}{% else %}{{ label }}{% endif %}</label>
+  {% render_field field class+="form-control" class+=field.name %}
+  {% if field.errors %}
+  {% for error in field.errors %}
+  <ul class="list-unstyled help-block errors">
+    <li>{{ error }}</li>
+  </ul>
+  {% endfor %}
+  {% endif %}
+</div>

@@ -2,5 +2,6 @@ git+https://github.com/adaptivdesign/django-sellmo.git
 {% if not bare %}
 Pillow
 sorl-thumbnail
+django-widget-tweaks
 django-grappelli
 {% endif %}

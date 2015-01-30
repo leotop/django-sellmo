@@ -26,6 +26,7 @@ DEFAULT_APPS = [
     'tax',
     'discount',
     'availability',
+    'brand',
 ]
 
 

@@ -1,2 +1,10 @@
-
 {% extends "base.html" %}
+
+{% block page %}
+  <!-- Featured products
+  ================================================== -->
+  <!-- Wrap the rest of the page in another container to center all the content. -->
+  <div class="container">
+    {% include "product/_product_list.html" with products=featured index=featured.index classes="col-sm-4 col-xs-6 col-md-3" %}
+  </div><!-- /.container -->
+{% endblock %}

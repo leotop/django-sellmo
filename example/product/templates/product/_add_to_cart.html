@@ -1,0 +1,19 @@
+{% load sellmo_cart sellmo_pricing tax %}
+<div class="add-to-cart">
+  <h4 class="product-price">
+    {% price product=product index=index %}
+    {{ price }} <small>incl. {{ price.context.tax }}</small>
+    {% endprice %}
+  </h4>
+  <div class="product-availability">
+  </div>
+  <div class="add-to-cart-form">
+    <div class="row">
+      {% if variations %}
+        {% add_to_cart_formset product=product variations=variations %}
+      {% else %}
+        {% add_to_cart_formset product=product %}
+      {% endif %}
+    </div>
+  </div>
+</div>

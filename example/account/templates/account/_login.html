@@ -1,0 +1,15 @@
+{% load widget_tweaks %}
+<form method="post" action="{% url 'account.login' %}" role="form">{% csrf_token %}
+  {% include "_form_field.html" with field=form.username %}
+  {% include "_form_field.html" with field=form.password %}
+  {{ form.non_field_errors }}
+  <div class="clearfix">
+    <hr/>
+    <div class="pull-left">
+      <a href="{% url 'account.registration' %}" class="btn btn-default">Account aanmaken</a>
+    </div>
+    <div class="pull-right">
+      <input type="submit" value="Login" class="btn btn-primary"/>
+    </div>
+  </div>
+</form>

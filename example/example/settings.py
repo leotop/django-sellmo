@@ -22,7 +22,7 @@ SITE_ID = 1
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '!d=)ml$-i+%vpl4#*))$c4#h+oznn$^vna_f4%!w)5m58$u3!o'
+SECRET_KEY = 'o&b#9arrf7(0b7d4xngb0s&^l%6#b9&dh5^@0%n%d*1c0gi%%4'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -37,7 +37,16 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = (
     
     
+    
+    # Spices up the admin a bit
     'grappelli',
+    
+    # This comes in handy for rendering forms
+    'widget_tweaks',
+    
+    # Ofcourse we need thumbnails
+    'sorl.thumbnail',
+    
     
     
     'django.contrib.auth',
@@ -47,6 +56,10 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     
     'django.contrib.sites',
+    
+    
+    
+    'django.contrib.humanize',
     
     
     'sellmo',
@@ -74,6 +87,10 @@ INSTALLED_APPS = (
     
     'sellmo.contrib.attribute',
     'attribute',
+    
+    
+    
+    'brand',
     
     
     
@@ -224,6 +241,12 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     
     'sellmo.core.context_processors.login_form_context',
     
+    
+    'sellmo.core.context_processors.contact_form_context',
+    
+    
+    'sellmo.core.context_processors.brands_context',
+    
 )
 
 ROOT_URLCONF = 'example.urls'
@@ -263,6 +286,12 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'example', 'static'),
 )
+
+# Media files (User uploaded files)
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, '_media')
+
 
 # Template files (HTML)
 
