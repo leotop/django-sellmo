@@ -32,7 +32,7 @@ from sellmo.core.modularization import modules, Module
 
 
 class Params(object):
-    links = ['views', 'links']
+    loadable_modules = ['views', 'links']
 
 params = Params()
 

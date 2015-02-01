@@ -96,8 +96,8 @@ class DefaultConfig(AppConfig):
         # instanciated.
         modules.init_modules()
     
-        # 6. Load link modules
-        for module_name in params.links:
+        # 6. Load aditional modules like views.py and links.py
+        for module_name in params.loadable_modules:
             self._load_app_modules(apps, module_name)
     
         # 7. Hookup links
