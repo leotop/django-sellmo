@@ -172,4 +172,5 @@ class Module(object):
         value.__module__ = cls.registry.__name__
         setattr(cls.registry, name, value)
 
+
 modules = MountPoint()

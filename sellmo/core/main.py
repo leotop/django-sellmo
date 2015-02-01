@@ -27,8 +27,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-
-from django.db.models.loading import get_apps
 from django.conf import settings
 from django.utils.importlib import import_module
 from django.utils.module_loading import module_has_submodule
@@ -60,15 +58,15 @@ class Sellmo(object):
         pre_init.send(self)
         logger.info("Sellmo initializing...")
 
-        # 1. First init & collect each django app which defines a __sellmo__
+        # 1. First load each django app which defines a __sellmo__
         # python module.
-        apps = list(self._init_apps())
+        apps = self._load_apps()
 
         # 2. Find additional modules in each app
-        self._load_apps(apps, 'modules')
+        self._load_app_modules(apps, 'modules')
 
         # 3. Allow every app to configure modules
-        self._load_apps(apps, 'configure')
+        self._load_app_modules(apps, 'configure')
 
         # 4. Begin the loading process as declared in all of the sellmo apps.
         loading.loader.load()
@@ -79,7 +77,7 @@ class Sellmo(object):
 
         # 6. Load link modules
         for module_name in self.links:
-            self._load_apps(apps, module_name)
+            self._load_app_modules(apps, module_name)
 
         # 7. Hookup links
         chaining.chainer.hookup()
@@ -87,21 +85,16 @@ class Sellmo(object):
         logger.info("Sellmo initialized")
         post_init.send(self)
 
-    def _init_apps(self):
+    def _load_apps(self):
+        apps = []
+        for app in reversed(settings.INSTALLED_APPS):
+            module = self._load_app_module(app, '__sellmo__')
+            apps.append(app)
+        return apps
 
-        # We need to make sure every app's models in INSTALLED_APPS is loaded.
-        get_apps()
-
-        #
-        for app in settings.INSTALLED_APPS:
-            sellmo_module = self._load_app_module(app, '__sellmo__')
-            if sellmo_module:
-                sellmo_module.path = app
-                yield sellmo_module
-
-    def _load_apps(self, apps, module_name):
+    def _load_app_modules(self, apps, module_name):
         for app in apps:
-            self._load_app_module(app.path, module_name)
+            self._load_app_module(app, module_name)
 
     def _load_app_module(self, app, module_name):
         app_module = import_module(app)

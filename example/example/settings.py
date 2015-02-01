@@ -22,7 +22,7 @@ SITE_ID = 1
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'o&b#9arrf7(0b7d4xngb0s&^l%6#b9&dh5^@0%n%d*1c0gi%%4'
+SECRET_KEY = 'zf%s_z(48sm2fgt8ti=6_zgc3%@k&#yc$ws*_p)2ob0)e=7l&%'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -61,6 +61,19 @@ INSTALLED_APPS = (
     
     'django.contrib.humanize',
     
+    
+)
+
+INSTALLED_APPS += tuple(reversed((
+    
+    # Django loads templates from the first
+    # app that provides them. We want to allow
+    # your apps to override any default Sellmo templates.
+    # However Sellmo apps need to be carefully
+    # ordered to ensure correct chaining of functions.
+    # Therefor Sellmo detects apps in a reversed
+    # order. To maintain clean ordering in this
+    # file we reverse Sellmo apps with this construct.
     
     'sellmo',
     
@@ -194,18 +207,21 @@ INSTALLED_APPS = (
     'store',
     
     
+)))
+
+INSTALLED_APPS += (
+    
     # By including this, some admin templates
     # for polymorphism are overridden.
     'sellmo.contrib.polymorphism',
     
     
-    
+
     # Place admin after sellmo apps.
     # This way sellmo apps can load dependencies
     # first, after which ModelAdmin's can
     # be loaded by the Django Admin.
     'django.contrib.admin',
-
 )
 
 MIDDLEWARE_CLASSES = (

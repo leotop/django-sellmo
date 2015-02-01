@@ -1,0 +1,32 @@
+{% load widget_tweaks %}
+<form role='form' method="post" action="{% url 'cart.add_to_cart' product.slug %}{% if query %}?{{ query }}{% endif %}">{% csrf_token %}
+  {% for form in formset %}
+    {% if form.variation %}
+    <div class="{{ form.variation.name }} form-group{% if form.variation.errors %} has-error{% endif %} col-sm-6">
+      <div class="row">
+        <label class="control-label col-sm-6" for="{{ form.variation.id_for_label }}">Maat</label>
+        <div class="col-sm-6">
+          {% render_field form.variation class+="form-control" class+=form.variation.name %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    <div class="{{ form.qty.name }} form-group{% if form.qty.errors %} has-error{% endif %} col-sm-6">
+      <div class="row">
+        <label class="control-label col-sm-6" for="{{ form.qty.id_for_label }}">Aantal</label>
+        <div class="col-sm-6">
+          {% render_field form.qty class+="form-control" class+=form.qty.name %}
+        </div>
+      </div>
+    </div>
+    {% for field in form %}
+      {% if field.is_hidden %}
+      {{ field }}
+      {% endif %}
+    {% endfor %}
+  {% endfor %}
+  {{ formset.management_form }}
+  <div class="add-to-cart-button-wrap">
+    <input type="submit" value="Toevoegen aan winkelwagen" class="btn btn-default btn-lg btn-block"/>
+  </div>
+</form>

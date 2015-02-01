@@ -30,8 +30,6 @@
 
 from collections import deque
 
-from sellmo.magic import singleton
-
 
 class Loadable(object):
 
@@ -69,7 +67,6 @@ class Loadable(object):
             .format(self.func.__module__, self.func.__name__))
 
 
-@singleton
 class Loader(object):
 
     def __init__(self):
@@ -96,7 +93,6 @@ class Loader(object):
         if directly:
             if before:
                 loadable.directly_before = before
-
             if after:
                 loadable.directly_after = after
 

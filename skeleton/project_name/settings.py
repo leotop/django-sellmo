@@ -62,6 +62,19 @@ INSTALLED_APPS = (
     'django.contrib.humanize',
     {% endif %}
     
+)
+
+# Django loads templates from the first
+# app that provides them. We want to allow
+# your apps to override any default Sellmo templates.
+# However Sellmo apps need to be carefully
+# ordered to ensure correct chaining of functions.
+# Therefor Sellmo detects and loads apps in a reversed
+# order. To maintain clean ordering in this
+# file we reverse Sellmo apps with this construct.
+
+INSTALLED_APPS += tuple(reversed((
+    
     'sellmo',
     
     {% if 'settings' in apps %}
@@ -197,6 +210,10 @@ INSTALLED_APPS = (
     'store',
     {% endif %}
     
+)))
+
+INSTALLED_APPS += (
+    
     # By including this, some admin templates
     # for polymorphism are overridden.
     'sellmo.contrib.polymorphism',
@@ -205,13 +222,12 @@ INSTALLED_APPS = (
     # Overrides dumpdata and loaddata commands
     'sellmo.contrib.data',
     {% endif %}
-    
+
     # Place admin after sellmo apps.
     # This way sellmo apps can load dependencies
     # first, after which ModelAdmin's can
     # be loaded by the Django Admin.
     'django.contrib.admin',
-
 )
 
 MIDDLEWARE_CLASSES = (

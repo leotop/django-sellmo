@@ -32,7 +32,6 @@ import inspect
 import functools
 import logging
 
-from sellmo.magic import singleton
 from sellmo.signals.core import module_created, module_init
 
 from django.http import HttpResponse
@@ -61,7 +60,6 @@ def validate_func(func):
                 .format(func.__module__, func.__name__))
 
 
-@singleton
 class Chainer(object):
 
     def __init__(self):
@@ -99,9 +97,9 @@ class Chainer(object):
                 chain.hookup(link['func'], capture=link['capture'])
 
         # Cleanup
-        self._links = None
-        self._chains = None
-        self._modules = None
+        del self._links
+        del self._chains
+        del self._modules
 
     def link(self, func, name=None, namespace=None, capture=False):
         if namespace is None:
@@ -128,7 +126,7 @@ class Chainer(object):
         })
 
         # Flag this function so we can find it again and see if't a module's
-        # instancemethod
+        # boundmethod
         if inspect.isfunction(func):
             func._linked = True
             func._link_path = path

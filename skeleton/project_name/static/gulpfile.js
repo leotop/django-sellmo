@@ -1,6 +1,7 @@
 var gulp = require('gulp');
 var less = require('gulp-less');
 var coffee = require('gulp-coffee');
+var sourcemaps = require('gulp-sourcemaps');
 var util = require('gulp-util');
 
 
@@ -25,7 +26,9 @@ var onError = function(err) {
 
 gulp.task('less', function() {
   var src = gulp.src(paths.less.entries)
+    .pipe(sourcemaps.init())
     .pipe(less())
+    .pipe(sourcemaps.write())
     .on('error', onError)
     .pipe(gulp.dest('./build/css'))
 });
@@ -33,7 +36,9 @@ gulp.task('less', function() {
 
 gulp.task('coffee', function() {
   var src = gulp.src(paths.coffee.entries)
+    .pipe(sourcemaps.init())
     .pipe(coffee())
+    .pipe(sourcemaps.write())
     .on('error', onError)
     .pipe(gulp.dest('./build/js'))
 });
