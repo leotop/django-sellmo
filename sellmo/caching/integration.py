@@ -28,8 +28,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sellmo.core.main import Sellmo
+from sellmo import params
 
 
 def setup():
-    Sellmo.links += ['caches']
+    params.links += ['caches']

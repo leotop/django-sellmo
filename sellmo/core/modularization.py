@@ -32,14 +32,12 @@ import sys
 import imp
 import inspect
 
-from sellmo.magic import singleton, SingletonMeta
 from sellmo.signals.core import module_created, module_init
 
 
 _registry_module = 'sellmo.registry'
 
 
-@singleton
 class MountPoint(object):
 
     def __init__(self):
@@ -103,7 +101,7 @@ class MountPoint(object):
             yield module
 
 
-class _ModuleMeta(SingletonMeta):
+class _ModuleMeta(type):
 
     def __new__(cls, name, bases, attrs):
         out = super(_ModuleMeta, cls).__new__(cls, name, bases, attrs)

@@ -27,13 +27,22 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import sys
+import logging
 
 from django.apps import AppConfig
-from django.utils.module_loading import import_by_path
+from django.conf import settings
+from django.utils.importlib import import_module
+from django.utils.module_loading import import_by_path, module_has_submodule
 
+from sellmo import modules, params
 from sellmo import celery, caching
-from sellmo.core.main import Sellmo
+from sellmo.core import chaining, loading
+from sellmo.signals.core import pre_init, post_init
 from sellmo.api.configuration import define_setting
+
+
+logger = logging.getLogger('sellmo')
 
 
 class DefaultConfig(AppConfig):
@@ -66,4 +75,54 @@ class DefaultConfig(AppConfig):
             sellmo.caching.integration.setup()
     
     def ready(self):
-        sellmo = Sellmo()
+        
+        pre_init.send(self)
+        logger.info("Sellmo initializing...")
+    
+        # 1. First load each django app which defines a __sellmo__
+        # python module.
+        apps = self._load_apps()
+    
+        # 2. Find additional modules in each app
+        self._load_app_modules(apps, 'modules')
+    
+        # 3. Allow every app to configure modules
+        self._load_app_modules(apps, 'configure')
+    
+        # 4. Begin the loading process as declared in all of the sellmo apps.
+        loading.loader.load()
+        
+        # 5. Make sure every sellmo module registered to the mountpoint is
+        # instanciated.
+        modules.init_modules()
+    
+        # 6. Load link modules
+        for module_name in params.links:
+            self._load_app_modules(apps, module_name)
+    
+        # 7. Hookup links
+        chaining.chainer.hookup()
+    
+        logger.info("Sellmo initialized")
+        post_init.send(self)
+    
+    def _load_apps(self):
+        apps = []
+        for app in reversed(settings.INSTALLED_APPS):
+            self._load_app_module(app, '__sellmo__')
+            apps.append(app)
+        return apps
+    
+    def _load_app_modules(self, apps, module_name):
+        for app in apps:
+            self._load_app_module(app, module_name)
+    
+    def _load_app_module(self, app, module_name):
+        app_module = import_module(app)
+        try:
+            module = import_module('{0}.{1}'.format(app, module_name))
+        except Exception as exception:
+            if module_has_submodule(app_module, module_name):
+                raise Exception(str(exception)), None, sys.exc_info()[2]
+        else:
+            return module

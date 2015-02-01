@@ -29,12 +29,10 @@
 
 
 from sellmo.core.modularization import modules, Module
-from sellmo.magic import singleton
 
 
-@singleton
 class Params(object):
-    pass
+    links = ['views', 'links']
 
 params = Params()
 

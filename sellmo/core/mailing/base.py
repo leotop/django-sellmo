@@ -32,12 +32,10 @@ import uuid
 
 from django.utils.module_loading import import_by_path
 
-from sellmo.magic import singleton
 from sellmo.api.configuration import define_import
 from sellmo.signals.mailing import mail_init
 
 
-@singleton
 class Mailer(object):
 
     handler = define_import(

@@ -28,5 +28,4 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sellmo.magic.singleton import SingletonMeta, singleton
 from sellmo.magic.mixin import ModelMixin
