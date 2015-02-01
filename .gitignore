@@ -7,7 +7,6 @@ example/example/static/npm-debug.log
 example/example/static/node_modules
 example/example/static/bower_components
 example/example/static/build
-example/example/static/src
 example/*/migrations
 
 # PyLint generated files #

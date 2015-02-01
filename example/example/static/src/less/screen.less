@@ -1,0 +1,376 @@
+// Core variables and mixins
+@import "base.less";
+
+// Includes
+@import "layouts/_layouts.less";
+
+
+/* GLOBAL STYLES
+-------------------------------------------------- */
+
+@footer-bg : @body-bg;
+
+body {
+  padding-bottom: 60px;
+  background: @footer-bg;
+}
+
+#site {
+  background: @body-bg;
+}
+
+#page {
+  padding-bottom: 60px;
+}
+
+.divider-lg {
+  margin: 80px 0; /* Space out the Bootstrap <hr> more */
+}
+
+.divider-lg-top {
+  margin-top: 80px;
+}
+
+
+/* CUSTOMIZE THE NAVBAR
+-------------------------------------------------- */
+
+/* Special class on .container surrounding .navbar, used for positioning it into place. */
+.navbar-wrapper {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 20;
+
+  /* Flip around the padding for proper display in narrow viewports */
+  .container {
+    padding-right: 0;
+    padding-left: 0;
+  }
+
+  .navbar {
+    padding-right: 15px;
+    padding-left: 15px;
+  }
+}
+
+.navbar-default {
+  border: none;
+  border-bottom: 4px @brand-success solid;
+}
+
+
+/* CUSTOMIZE THE CAROUSEL
+-------------------------------------------------- */
+
+/* Carousel base class */
+.carousel {
+  height: 500px;
+  margin-bottom: 60px;
+}
+/* Since positioning the image, we need to help out the caption */
+.carousel-caption {
+  z-index: 10;
+}
+
+/* Declare heights because of positioning of img element */
+.carousel .item {
+  height: 500px;
+  background-color: @brand-primary;
+}
+
+.carousel-inner > .item > .bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  min-width: 100%;
+  height: 496px;
+  background-size: cover;
+  background-position: center center;
+}
+
+/* Outline button for use within the docs */
+.btn-outline {
+  color: #fff;
+  background-color: #fff;
+  border-color: #fff;
+}
+.btn-outline:hover,
+.btn-outline:focus,
+.btn-outline:active {
+  color: #000;
+  background-color: #fff;
+  border-color: #fff;
+}
+
+/* Inverted outline button (white on dark) */
+.btn-outline-inverse {
+  color: #fff;
+  background-color: transparent;
+  border-color: #fff;
+}
+
+.btn-outline-inverse:hover,
+.btn-outline-inverse:focus,
+.btn-outline-inverse:active {
+  color: #000;
+  text-shadow: none;
+  background-color: #fff;
+  border-color: #fff;
+}
+
+.header {
+    height: 120px;
+    //border-bottom: 2px @brand-primary solid;
+    background: @brand-primary;
+    .logo {
+      display: block;
+      background: url('../img/logo.svg') no-repeat;
+      background-size: 100px 100px;
+      width: 100px;
+      height: 100px;
+
+      // position on top of any underlay
+      position: relative;
+      z-index: 1;
+
+      // offset to match brand
+      left: 0px;
+      top: 10px;
+    }
+}
+
+#navigation {
+  
+  // From https://raw.githubusercontent.com/geedmo/yamm3/master/yamm/yamm.less
+  // reset positions 
+  
+  .nav, .collapse {
+    position: static;
+    
+  }
+  
+  .dropdown, .dropup {
+    &.flexible {
+      position: static;
+      
+      &.full-width {
+        // Full width menu
+        .dropdown-menu {
+          left: 0; right: 0;
+        }
+      }
+      
+      // by default aligns menu to left
+      .dropdown-menu {
+        left: auto;
+      }
+      
+      // Content with padding 
+      .dropdown-content {
+        padding: 20px 30px;
+      }  
+    }
+  }  
+  
+  // propagate menu position under container for fw navbars
+  .container {
+    position: relative;
+  }
+  
+  .cart-dropdown {
+    min-width: 320px;
+  }
+
+  .login-dropdown {
+    min-width: 300px;
+  }
+
+  ul.category-list {
+    .list-unstyled;
+
+    a {
+      text-decoration: none;
+      display: block;
+    }
+
+    ul {
+      .list-unstyled;
+    }
+
+    > li {
+      .make-sm-column(3);
+
+      > a:extend(.h4) {
+        color: @brand-primary;
+      }
+
+      > ul {
+        margin-top: 8px;
+        border-top: 1px @gray-lighter solid;
+        > li {
+          > a:extend(.h5) {
+            color: @gray;
+
+            // Switch up margins with paddings
+            margin: 0 !important;
+            padding-top: (@line-height-computed / 2);
+            padding-bottom: (@line-height-computed / 2);
+
+            &:hover {
+              background: @gray-lighter;
+            }
+          }
+          + li {
+            border-top: 1px @gray-lighter solid;
+          }
+        }
+      }
+    }
+  }
+}
+
+#map {
+  .map-canvas:extend(.h3) {
+    width: 100%;
+    height: 400px;
+  }
+}
+
+footer {
+  background: @footer-bg;
+
+  hr {
+    border-color: @gray-light;
+  }
+
+  ul.brands {
+    .list-unstyled;
+    margin-bottom: 40px;
+    li {
+      display: inline-block;
+      margin-right: 20px;
+    }
+  }
+
+  ul.social {
+    .list-unstyled;
+    .list-inline;
+  }
+
+  ul.category-list {
+    .list-unstyled;
+    margin-bottom: 40px;
+
+    a {
+      text-decoration: none;
+      display: block;
+    }
+
+    ul {
+      .list-unstyled;
+    }
+
+    > li {
+      .make-sm-column(3);
+
+      > a:extend(.h4) {
+        color: @gray;
+      }
+
+      > ul {
+        border-top: 1px @gray-light dotted;
+        > li {
+          > a:extend(.h5) {
+            color: @gray;
+          }
+
+          li {
+            a {
+              color: @gray-light;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .footer-top {
+    background: @brand-primary;
+    color: #fff;
+    margin-bottom: 40px;
+    border-bottom: 2px @brand-success solid;
+    padding: 4px;
+
+    strong {
+      color: @brand-success;
+    }
+
+    ul {
+      .list-unstyled;
+      > li:extend(.h5) {
+        .make-sm-column(4);
+
+        @media (min-width: 768px) {
+          text-align: center;
+
+          &:first-child {
+            text-align: left;
+          }
+
+          &:last-child {
+            text-align: right;
+          }
+        }
+      }
+    }
+  }
+}
+
+/* RESPONSIVE CSS
+-------------------------------------------------- */
+
+@media (max-width: 768px){
+  .carousel, .carousel-inner, .carousel .item {
+     height: 300px;
+   }
+}
+
+@media (min-width: 768px) {
+
+  /* Remove the edge padding needed for mobile */
+  .marketing {
+    padding-right: 0;
+    padding-left: 0;
+  }
+
+  /* Navbar positioning foo */
+  .navbar-wrapper {
+    margin-top: 20px;
+  }
+  .navbar-wrapper .container {
+    padding-right: 15px;
+    padding-left:  15px;
+  }
+  .navbar-wrapper .navbar {
+    padding-right: 0;
+    padding-left:  0;
+  }
+
+  /* The navbar becomes detached from the top, so we round the corners */
+  .navbar-wrapper .navbar {
+    border-radius: @border-radius-base;
+  }
+
+  /* Bump up size of carousel content */
+  .carousel-caption p {
+    margin-bottom: 20px;
+    font-size: 21px;
+    line-height: 1.4;
+  }
+
+  .featurette-heading {
+    font-size: 50px;
+  }
+}
