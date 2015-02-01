@@ -1,6 +1,7 @@
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable, link, context_processor
 
+from django.db import models
 from django.http import Http404
 from django.utils.translation import ugettext_lazy as _
 

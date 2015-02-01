@@ -145,8 +145,8 @@ def finalize_model():
             app_label = 'discount'
 
     modules.discount.Discount = Discount
-    modules.discount.register('DiscountQuerySet', DiscountManager)
-    modules.discount.register('DiscountManager', DiscountManager)
+    modules.discount.DiscountQuerySet = DiscountQuerySet
+    modules.discount.DiscountManager = DiscountManager
 
 
 class Discount(PolymorphicModel):

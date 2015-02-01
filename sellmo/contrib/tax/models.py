@@ -121,8 +121,8 @@ def finalize_model():
             app_label = 'tax'
 
     modules.tax.Tax = Tax
-    modules.tax.register('TaxQuerySet', TaxQuerySet)
-    modules.tax.register('TaxManager', TaxManager)
+    modules.tax.TaxQuerySet = TaxQuerySet
+    modules.tax.TaxManager = TaxManager
 
 
 class Tax(PolymorphicModel):

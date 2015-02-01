@@ -123,26 +123,25 @@ class _ModuleMeta(type):
                 "No namespace defined for module '{0}'".format(out))
 
         # Create the registry (python)module for this module
-        out.registry = modules._create_registry(
+        out._registry = modules._create_registry(
             '{0}.{1}'.format(_registry_module, out.namespace))
-        setattr(sys.modules[_registry_module], out.namespace, out.registry)
+        setattr(sys.modules[_registry_module], out.namespace, out._registry)
 
         # Register attributes
         for name, value in attrs.iteritems():
-            out._handle_attribute(name, value)
+            setattr(out, name, value)
 
         modules._on_module_class(out)
         return out
-
-    def _handle_attribute(cls, name, value):
-        if (isinstance(value, type) and 
-                (not value.__module__ or 
-                 not value.__module__.startswith('django.'))):
-            cls.register(name, value)
-
+    
     def __setattr__(cls, name, value):
-        cls._handle_attribute(name, value)
         super(_ModuleMeta, cls).__setattr__(name, value)
+        if not name.startswith('_'):
+            if (isinstance(value, type) and
+                    not (value.__module__ or
+                        not value.__module__.startswith('django.'))):
+                value.__module__ = cls._registry.__name__
+            setattr(cls._registry, name, value)
 
 
 class Module(object):
@@ -154,21 +153,6 @@ class Module(object):
 
     enabled = True
     namespace = None
-
-    @classmethod
-    def register(cls, name, value):
-        # Safety checks
-        if not isinstance(value, type):
-            raise Exception(
-                "Cannot register '{0}', "
-                "only types can be registered."
-                .format(value))
-        if value.__module__ and value.__module__.startswith('django.'):
-            raise Exception(
-                "Cannot register '{0}', "
-                "this is a django type.".format(value))
-        value.__module__ = cls.registry.__name__
-        setattr(cls.registry, name, value)
 
 
 modules = MountPoint()

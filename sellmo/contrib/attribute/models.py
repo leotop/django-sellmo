@@ -537,5 +537,5 @@ def load_manager():
         objects = ProductManager()
 
     # Register
-    modules.product.register('ProductQuerySet', ProductQuerySet)
-    modules.product.register('ProductManager', ProductManager)
+    modules.product.ProductQuerySet = ProductQuerySet
+    modules.product.ProductManager = ProductManager

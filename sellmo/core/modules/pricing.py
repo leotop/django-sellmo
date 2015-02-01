@@ -102,7 +102,8 @@ class PricingModule(sellmo.Module):
                 default=self.currencies.values()
             )
             index._build()
-            self.register(index.model.__name__, index.model)
+            # Register
+            setattr(self, index.model.__name__, index.model)
 
     @classmethod
     def construct_decimal_field(self, **kwargs):

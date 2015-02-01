@@ -129,8 +129,8 @@ def load_manager():
         model = modules.product.Product
         objects = ProductManager()
 
-    modules.product.register('ProductQuerySet', ProductQuerySet)
-    modules.product.register('ProductManager', ProductManager)
+    modules.product.ProductQuerySet = ProductQuerySet
+    modules.product.ProductManager = ProductManager
 
 
 @load(after='load_variants')
@@ -284,8 +284,8 @@ def load_manager():
         model = modules.attribute.Attribute
         objects = AttributeManager()
 
-    modules.attribute.register('AttributeQuerySet', AttributeQuerySet)
-    modules.attribute.register('AttributeManager', AttributeManager)
+    modules.attribute.AttributeQuerySet = AttributeQuerySet
+    modules.attribute.AttributeManager = AttributeManager
 
 
 @load(before='finalize_attribute_Attribute')
@@ -355,8 +355,8 @@ def load_manager():
         model = modules.attribute.Value
         objects = ValueManager()
 
-    modules.attribute.register('ValueQuerySet', ValueQuerySet)
-    modules.attribute.register('ValueManager', ValueManager)
+    modules.attribute.ValueQuerySet = ValueQuerySet
+    modules.attribute.ValueManager = ValueManager
 
 
 @load(before='finalize_attribute_Value')
@@ -841,7 +841,5 @@ def finalize_model():
             app_label = 'store'
 
     modules.variation.VariationPurchase = VariationPurchase
-    modules.variation.register(
-        'VariationPurchaseQuerySet', VariationPurchaseQuerySet)
-    modules.variation.register(
-        'VariationPurchaseManager', VariationPurchaseManager)
+    modules.variation.VariationPurchaseQuerySet = VariationPurchaseQuerySet
+    modules.variation.VariationPurchaseManager = VariationPurchaseManager

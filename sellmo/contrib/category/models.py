@@ -140,8 +140,8 @@ def load_manager():
         objects = ProductManager()
 
     # Register
-    modules.product.register('ProductQuerySet', ProductQuerySet)
-    modules.product.register('ProductManager', ProductManager)
+    modules.product.ProductQuerySet = ProductQuerySet
+    modules.product.ProductManager = ProductManager
 
 
 @load(after='finalize_category_Category')
@@ -166,8 +166,8 @@ def load_manager():
             objects = CategoryManager()
 
         # Register
-        modules.category.register('CategoryQuerySet', CategoryQuerySet)
-        modules.category.register('CategoryManager', CategoryManager)
+        modules.category.CategoryQuerySet = CategoryQuerySet
+        modules.category.CategoryManager = CategoryManager
 
 
 def on_categories_changed(sender, instance, action, reverse, pk_set, **kwargs):
