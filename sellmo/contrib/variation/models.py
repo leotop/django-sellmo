@@ -127,32 +127,6 @@ def load_manager():
     modules.product.ProductManager = ProductManager
 
 
-@load(after='load_variants')
-def load_model():
-    for subtype in modules.variation.product_subtypes:
-        class Product(ModelMixin):
-            model = subtype
-            
-            def get_grouped_by(self):
-                try:
-                    return modules.attribute.Attribute.objects \
-                                  .which_variate(self).get(groups=True)
-                except modules.attribute.Attribute.DoesNotExist:
-                    return None
-            
-            def get_variated_by(self):
-                return modules.attribute.Attribute.objects.which_variate(self)
-
-            def get_variations(self, allow_build=True):
-                if getattr(self, '_is_variant', False):
-                    return modules.variation.Variation.objects \
-                                  .for_product(
-                                    self.product, allow_build=allow_build) \
-                                  .filter(variant=self)
-                return modules.variation.Variation.objects \
-                              .for_product(self, allow_build=allow_build)
-
-
 @load(action='finalize_variation_Variant')
 def finalize_model():
 
@@ -809,7 +783,7 @@ def finalize_model():
 
 
 @load(after='finalize_variation_Variant')
-@load(action='load_variants')
+@load(after='variation_subtypes_loaded')
 def load_variants():
     for subtype in modules.variation.product_subtypes:
         class Meta(subtype.Meta):
@@ -836,3 +810,29 @@ def load_variants():
         model.setup()
         modules.variation.subtypes.append(model)
         setattr(modules.variation, name, model)
+        
+        
+@load(after='variation_subtypes_loaded')
+def load_model():
+    for subtype in modules.variation.product_subtypes:
+        class Product(ModelMixin):
+            model = subtype
+
+            def get_grouped_by(self):
+                try:
+                    return modules.attribute.Attribute.objects \
+                                  .which_variate(self).get(groups=True)
+                except modules.attribute.Attribute.DoesNotExist:
+                    return None
+
+            def get_variated_by(self):
+                return modules.attribute.Attribute.objects.which_variate(self)
+
+            def get_variations(self, allow_build=True):
+                if getattr(self, '_is_variant', False):
+                    return modules.variation.Variation.objects \
+                                  .for_product(
+                                    self.product, allow_build=allow_build) \
+                                  .filter(variant=self)
+                return modules.variation.Variation.objects \
+                              .for_product(self, allow_build=allow_build)

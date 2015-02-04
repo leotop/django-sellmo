@@ -38,7 +38,8 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 
-@load(after='finalize_discount_Discount', before='finalize_discount')
+@load(after='finalize_discount_Discount')
+@load(before='discount_subtypes_registered')
 def load_subtypes():
 
     class PercentDiscount(modules.discount.Discount):

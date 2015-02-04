@@ -38,7 +38,8 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 
-@load(after='finalize_tax_Tax', before='finalize_tax')
+@load(after='finalize_tax_Tax')
+@load(before='tax_subtypes_registered')
 def load_subtypes():
     
     class PercentTax(modules.tax.Tax):
