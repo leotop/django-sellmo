@@ -28,7 +28,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from django.apps import AppConfig
+from sellmo.api.apps import SellmoAppConfig
 
     
 class _AppConfigMeta(type):
@@ -48,7 +48,7 @@ class _AppConfigMeta(type):
         return out
 
 
-class ContribAppConfig(AppConfig):
+class ContribAppConfig(SellmoAppConfig):
     
     __metaclass__ = _AppConfigMeta
     # __new__ will also be called for the ContribAppConfig class. 

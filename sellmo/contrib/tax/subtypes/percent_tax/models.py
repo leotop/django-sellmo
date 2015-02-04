@@ -38,10 +38,9 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 
-@load(action='load_tax_subtypes')
-@load(after='finalize_tax_Tax')
+@load(after='finalize_tax_Tax', before='finalize_tax')
 def load_subtypes():
-
+    
     class PercentTax(modules.tax.Tax):
 
         rate = modules.pricing.construct_decimal_field(

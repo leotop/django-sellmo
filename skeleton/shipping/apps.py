@@ -1,5 +1,5 @@
-from django.apps import AppConfig
+from sellmo.api.apps import SellmoAppConfig
 
 
-class DefaultConfig(AppConfig):
+class DefaultConfig(SellmoAppConfig):
     name = 'shipping'

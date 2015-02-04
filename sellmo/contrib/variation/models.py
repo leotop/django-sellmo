@@ -64,12 +64,6 @@ import itertools
 logger = logging.getLogger('sellmo')
 
 
-@load(action='setup_variants')
-@load(after='load_product_subtypes')
-def setup_variants():
-    pass
-
-
 @load(before='finalize_product_Product')
 def load_model():
     class Product(modules.product.Product):
@@ -157,37 +151,6 @@ def load_model():
                                   .filter(variant=self)
                 return modules.variation.Variation.objects \
                               .for_product(self, allow_build=allow_build)
-
-
-@load(action='load_variants')
-@load(after='setup_variants')
-@load(after='finalize_variation_Variant')
-def load_variants():
-    for subtype in modules.variation.product_subtypes:
-        class Meta(subtype.Meta):
-            app_label = 'product'
-            verbose_name = _("variant")
-            verbose_name_plural = _("variants")
-
-        name = '{0}Variant'.format(subtype.__name__)
-        attr_dict = {
-            'product': models.ForeignKey(
-                subtype,
-                related_name='variants',
-                editable=False
-            ),
-            'Meta': Meta,
-            '__module__': subtype.__module__
-        }
-
-        model = type(
-            name,
-            (VariantMixin, modules.variation.Variant, subtype,),
-            attr_dict)
-        
-        model.setup()
-        modules.variation.subtypes.append(model)
-        setattr(modules.variation, name, model)
 
 
 @load(action='finalize_variation_Variant')
@@ -843,3 +806,33 @@ def finalize_model():
     modules.variation.VariationPurchase = VariationPurchase
     modules.variation.VariationPurchaseQuerySet = VariationPurchaseQuerySet
     modules.variation.VariationPurchaseManager = VariationPurchaseManager
+
+
+@load(after='finalize_variation_Variant')
+@load(action='load_variants')
+def load_variants():
+    for subtype in modules.variation.product_subtypes:
+        class Meta(subtype.Meta):
+            app_label = 'product'
+            verbose_name = _("variant")
+            verbose_name_plural = _("variants")
+
+        name = '{0}Variant'.format(subtype.__name__)
+        attr_dict = {
+            'product': models.ForeignKey(
+                subtype,
+                related_name='variants',
+                editable=False
+            ),
+            'Meta': Meta,
+            '__module__': subtype.__module__
+        }
+
+        model = type(
+            name,
+            (VariantMixin, modules.variation.Variant, subtype,),
+            attr_dict)
+
+        model.setup()
+        modules.variation.subtypes.append(model)
+        setattr(modules.variation, name, model)

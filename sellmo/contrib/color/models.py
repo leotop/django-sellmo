@@ -91,8 +91,8 @@ class Color(models.Model):
         verbose_name_plural = _("colors")
 
 
+@load(after='finalize_attribute_ValueObject')
 @load(action='finalize_color_Color')
-@load(action='load_attribute_subtypes')
 def finalize_model():
     class Color(modules.color.Color, modules.attribute.ValueObject):
 

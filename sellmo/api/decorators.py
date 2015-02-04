@@ -28,41 +28,41 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sellmo.core.loading import loader
-from sellmo.core.chaining import (chainer, Chain, ViewChain, 
+from sellmo import params
+from sellmo.core.chaining import (Chain, ViewChain, 
                                   ContextProcessorChain)
 
 
-def load(action=None, after=None, before=None, directly=False):
+def load(action=None, after=None, before=None):
     def decorator(func):
-        loader.register(
-            func, action=action, after=after, before=before, directly=directly)
+        params.loader.register(
+            func, action=action, after=after, before=before)
         return func
     return decorator
 
 
 def link(name=None, namespace=None, capture=False):
     def decorator(func):
-        return chainer.link(func, name, namespace, capture)
+        return params.chainer.link(func, name, namespace, capture)
     return decorator
 
 
 def view(regex=None):
     def decorator(func):
         chain = ViewChain(func, regex)
-        return chainer.chain(chain)
+        return params.chainer.chain(chain)
     return decorator
     
 
 def context_processor():
     def decorator(func):
         chain = ContextProcessorChain(func)
-        return chainer.chain(chain)
+        return params.chainer.chain(chain)
     return decorator
 
 
 def chainable():
     def decorator(func):
         chain = Chain(func)
-        return chainer.chain(chain)
+        return params.chainer.chain(chain)
     return decorator

@@ -22,7 +22,7 @@ SITE_ID = 1
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'zf%s_z(48sm2fgt8ti=6_zgc3%@k&#yc$ws*_p)2ob0)e=7l&%'
+SECRET_KEY = '1%syr#4+x2&02ti8e&bzmt92))%$2p#i*@)9oibcndg_krb@)3'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -64,16 +64,16 @@ INSTALLED_APPS = (
     
 )
 
+# Django loads templates from the first
+# app that provides them. We want to allow
+# your apps to override any default Sellmo templates.
+# However Sellmo apps need to be carefully
+# ordered to ensure correct chaining of functions.
+# Therefor Sellmo detects and loads apps in a reversed
+# order. To maintain clean ordering in this
+# file we reverse Sellmo apps with this construct.
+
 INSTALLED_APPS += tuple(reversed((
-    
-    # Django loads templates from the first
-    # app that provides them. We want to allow
-    # your apps to override any default Sellmo templates.
-    # However Sellmo apps need to be carefully
-    # ordered to ensure correct chaining of functions.
-    # Therefor Sellmo detects apps in a reversed
-    # order. To maintain clean ordering in this
-    # file we reverse Sellmo apps with this construct.
     
     'sellmo',
     

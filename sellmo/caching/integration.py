@@ -32,4 +32,4 @@ from sellmo import params
 
 
 def setup():
-    params.loadable_modules += ['caches']
+    params.extra_imports += ['caches']

@@ -96,11 +96,6 @@ class Chainer(object):
                 validate_func(link['func'])
                 chain.hookup(link['func'], capture=link['capture'])
 
-        # Cleanup
-        del self._links
-        del self._chains
-        del self._modules
-
     def link(self, func, name=None, namespace=None, capture=False):
         if namespace is None:
             # Resolve namespace from func
@@ -150,9 +145,6 @@ class Chainer(object):
                 # Map chain
                 path = '{0}.{1}'.format(module.namespace, chain._func.__name__)
                 self._chains[path] = chain
-
-
-chainer = Chainer()
 
 
 class Chain(object):

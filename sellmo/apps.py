@@ -30,23 +30,34 @@
 import sys
 import logging
 
+
 from django.apps import AppConfig
 from django.conf import settings
+from django.utils import six
 from django.utils.importlib import import_module
 from django.utils.module_loading import import_by_path, module_has_submodule
 
 from sellmo import modules, params
 from sellmo import celery, caching
-from sellmo.core import chaining, loading
+from sellmo.core.loading import Loader
+from sellmo.core.chaining import Chainer
 from sellmo.signals.core import pre_init, post_init
 from sellmo.api.configuration import define_setting
 
 
 logger = logging.getLogger('sellmo')
 
+class DummyLoader(object):
+    
+    calls = []
+    
+    def register(self, *args, **kwargs):
+        self.calls.append((args, kwargs))
+
 
 class DefaultConfig(AppConfig):
     name = 'sellmo'
+    
     core_modules  = define_setting(
         'SELLMO_CORE_MODULES',
         default=[
@@ -62,10 +73,9 @@ class DefaultConfig(AppConfig):
     def __init__(self, *args, **kwargs):
         super(DefaultConfig, self).__init__(*args, **kwargs)
         
-        # Load core modules
-        for module in self.core_modules:
-            import_by_path(module)
-            
+        # At this point Sellmo will begin to load
+        pre_init.send(self)
+        
         if celery.enabled:
             import sellmo.celery.integration
             sellmo.celery.integration.setup()
@@ -73,56 +83,76 @@ class DefaultConfig(AppConfig):
         if caching.enabled:
             import sellmo.caching.integration
             sellmo.caching.integration.setup()
+        
+        # At this point Django models can begin to load
+        # by Sellmo's core modules.
+        params.loader = Loader()
+        
+        # Also at this point, chains can be registered
+        # by Sellmo's core modules.
+        params.chainer = Chainer()
+        
+        # Load core modules
+        for module in self.core_modules:
+            import_by_path(module)
+            
+        # Remaining models will now be imported by Django
+        # This does not happen in the desired order. Because
+        # we want to enable a correct Django Template order, Sellmo
+        # apps need to be configured in a reverse manner. As
+        # we don't control the loading of models.py modules, we need
+        # to adjust Sellmo's loading mechanism.
+        params._loader = params.loader
+        params.loader = DummyLoader()
+        
     
     def ready(self):
         
-        pre_init.send(self)
-        logger.info("Sellmo initializing...")
-    
-        # 1. First load each django app which defines a __sellmo__
-        # python module.
-        apps = self._load_apps()
-    
-        # 2. Find additional modules in each app
-        self._load_app_modules(apps, 'modules')
-    
-        # 3. Allow every app to configure modules
-        self._load_app_modules(apps, 'configure')
-    
-        # 4. Begin the loading process as declared in all of the sellmo apps.
-        loading.loader.load()
+        # Models have been imported (these are imported
+        # reverse order, due to Django loading them. 
+        # We correctly register these calls now.
+        dummy = params.loader
+        params.loader = params._loader
+        del params._loader
+        # Apply calls in reversed order
+        for args in reversed(dummy.calls):
+            params.loader.register(*args[0], **args[1])
         
-        # 5. Make sure every sellmo module registered to the mountpoint is
-        # instanciated.
+        # Import .modules and .configure submodules for 
+        # each Sellmo App
+        imports = ['modules', 'configure']
+        apps = list(six.itervalues(params.sellmo_apps))
+        for module_name in imports:
+            for app in reversed(apps):
+                app.import_module(module_name)
+                
+        # At this point Sellmo's loading functionality
+        # should no longer be used.
+        loader = params.loader
+        del params.loader
+        
+        # Delayed loading is now done. We can now call all
+        # delayed functions in correct order.
+        loader.load()
+        
+        # Initialize Sellmo modules now
         modules.init_modules()
-    
-        # 6. Load aditional modules like views.py and links.py
-        for module_name in params.loadable_modules:
-            self._load_app_modules(apps, module_name)
-    
-        # 7. Hookup links
-        chaining.chainer.hookup()
-    
-        logger.info("Sellmo initialized")
+        
+        # Import extra modules for 
+        # each Sellmo App. Like:
+        # .views and .links.
+        apps = list(six.itervalues(params.sellmo_apps))
+        for module_name in params.extra_imports:
+            for app in reversed(apps):
+                app.import_module(module_name)
+        
+        # Everything has been imported and all chains 
+        # should have been created and linked to by now.
+        chainer = params.chainer
+        del params.chainer
+        
+        # Hookup all chains
+        chainer.hookup()
+        
+        # We are done
         post_init.send(self)
-    
-    def _load_apps(self):
-        apps = []
-        for app in reversed(settings.INSTALLED_APPS):
-            self._load_app_module(app, '__sellmo__')
-            apps.append(app)
-        return apps
-    
-    def _load_app_modules(self, apps, module_name):
-        for app in apps:
-            self._load_app_module(app, module_name)
-    
-    def _load_app_module(self, app, module_name):
-        app_module = import_module(app)
-        try:
-            module = import_module('{0}.{1}'.format(app, module_name))
-        except Exception as exception:
-            if module_has_submodule(app_module, module_name):
-                raise Exception(str(exception)), None, sys.exc_info()[2]
-        else:
-            return module

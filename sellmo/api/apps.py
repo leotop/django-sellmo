@@ -28,5 +28,22 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-default_app_config = ('sellmo.contrib.checkout.multistep_checkout.'
-                      'apps.DefaultConfig')
+from importlib import import_module
+
+
+from django.apps import AppConfig
+from django.utils.module_loading import module_has_submodule
+
+from sellmo import params
+
+
+class SellmoAppConfig(AppConfig):
+    
+    def __init__(self, *args, **kwargs):
+        super(SellmoAppConfig, self).__init__(*args, **kwargs)
+        params.sellmo_apps[self.name] = self
+        
+    def import_module(self, module_name):
+        if module_has_submodule(self.module, module_name):
+            models_module_name = '{0}.{1}'.format(self.name, module_name)
+            self.models_module = import_module(models_module_name)

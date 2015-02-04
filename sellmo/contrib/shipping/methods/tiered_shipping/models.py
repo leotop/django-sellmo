@@ -45,7 +45,6 @@ from django.utils.translation import ugettext_lazy as _
 
 
 @load(after='finalize_shipping_ShippingMethod')
-@load(action='load_shipping_subtypes')
 def load_subtypes():
 
     class TieredShippingMethod(modules.shipping.ShippingMethod):
@@ -68,7 +67,6 @@ def load_subtypes():
 
 
 @load(action='finalize_shipping_TieredShippingTier')
-@load(after='load_shipping_subtypes')
 def finalize_model():
 
     class TieredShippingTier(modules.shipping.TieredShippingTier):

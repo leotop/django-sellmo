@@ -46,13 +46,6 @@ from django.db.models import Q
 from django.contrib.sites.models import Site
 from django.utils.translation import ugettext_lazy as _
 
-#
-
-
-@load(action='load_discount_subtypes', after='finalize_discount_Discount')
-def load_discount_subtypes():
-    pass
-
 
 def on_discount_pre_save(sender, instance, **kwargs):
     if instance.pk is not None:
@@ -92,25 +85,6 @@ def invalidate_indexes(discount=None, group=None):
     elif group:
         modules.pricing.get_index('product_price').update(
             discount_group=[group])
-
-
-@load(after='load_discount_subtypes')
-@load(after='finalize_discount_DiscountGroup')
-def hookup_invalidation():
-    for relation in modules.discount.Discount.m2m_invalidations:
-        field = getattr(modules.discount.Discount, relation)
-        m2m_changed.connect(on_discount_m2m_changed, sender=field.through)
-    for subtype in modules.discount.subtypes:
-        pre_save.connect(on_discount_pre_save, sender=subtype)
-        post_save.connect(on_discount_post_save, sender=subtype)
-        pre_delete.connect(on_discount_pre_delete, sender=subtype)
-        
-    if modules.discount.user_discount_enabled:
-        m2m_changed.connect(
-            on_discount_groups_changed,
-            sender=modules.discount.Discount.groups.through)
-        post_save.connect(
-            on_group_post_save, sender=modules.discount.DiscountGroup)
 
 
 @load(after='finalize_product_ProductRelatable')
@@ -266,3 +240,23 @@ def setup_indexes():
             required=False,
             default=get_discount_groups,
         )
+
+
+@load(action='finalize_discount')
+@load(after='finalize_discount_Discount')
+@load(after='finalize_discount_DiscountGroup')
+def finalize():
+    for relation in modules.discount.Discount.m2m_invalidations:
+        field = getattr(modules.discount.Discount, relation)
+        m2m_changed.connect(on_discount_m2m_changed, sender=field.through)
+    for subtype in modules.discount.subtypes:
+        pre_save.connect(on_discount_pre_save, sender=subtype)
+        post_save.connect(on_discount_post_save, sender=subtype)
+        pre_delete.connect(on_discount_pre_delete, sender=subtype)
+
+    if modules.discount.user_discount_enabled:
+        m2m_changed.connect(
+            on_discount_groups_changed,
+            sender=modules.discount.Discount.groups.through)
+        post_save.connect(
+            on_group_post_save, sender=modules.discount.DiscountGroup)

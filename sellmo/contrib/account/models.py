@@ -49,6 +49,7 @@ def finalize_model():
 
     modules.account.User = User
 
+
 class UserManager(BaseUserManager):
 
     def create_user(self, email, password=None, **extra_fields):

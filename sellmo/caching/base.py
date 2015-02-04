@@ -30,7 +30,7 @@
 
 from django.core.cache import cache
 
-from sellmo.core.chaining import chainer
+from sellmo import params
 from sellmo.signals.core import post_init
 from sellmo.api.configuration import define_setting
 
@@ -48,9 +48,12 @@ class Cache(object):
 
     def __init__(self, name, namespace, timeout=True):
         post_init.connect(self._on_post_init)
-        chainer.link(
+        # At this point we want to to link our
+        # capture and finalize methods to the given
+        # chain.
+        params.chainer.link(
             self.capture, name=name, namespace=namespace, capture=True),
-        chainer.link(self.finalize, name=name, namespace=namespace)
+        params.chainer.link(self.finalize, name=name, namespace=namespace)
         self.timeout = timeout
 
     def resolve_key(self, key):

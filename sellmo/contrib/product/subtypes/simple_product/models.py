@@ -35,8 +35,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 
-@load(action='load_product_subtypes')
-@load(after='finalize_product_Product')
+@load(before='finalize_product', after='finalize_product_Product')
 def load_product_subtypes():
     class SimpleProduct(modules.product.Product):
 

@@ -28,182 +28,90 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from collections import deque
+from collections import OrderedDict
+
+from sellmo.utils.sorting import topological_sort
 
 
 class Loadable(object):
-
-    def __init__(self, func):
+    
+    def __init__(self, func=None, action=None):
         self.func = func
-        self.action = []
-        self.after = []
-        self.before = []
-        self._directly_before = None
-        self._directly_after = None
-
-    def get_directly_before(self):
-        return self._directly_before
-
-    def set_directly_before(self, value):
-        if self._directly_before:
-            raise Exception("Directly before was already given.")
-        self._directly_before = value
-
-    directly_before = property(get_directly_before, set_directly_before)
-
-    def get_directly_after(self):
-        return self._directly_after
-
-    def set_directly_after(self, value):
-        if self._directly_after:
-            raise Exception("Directly after was already given.")
-        self._directly_after = value
-
-    directly_after = property(get_directly_after, set_directly_after)
-
+        self.action = action
+        
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+        
+    def __hash__(self):
+        if self.func:
+            return hash(self.func)
+        return hash(self.action)
+        
     def __repr__(self):
-        return (
-            "{0}.{1}"
-            .format(self.func.__module__, self.func.__name__))
-
+        if self.func and self.action:
+            return ("{0}.{1} ({2})"
+                    .format(self.func.__module__,
+                            self.func.__name__,
+                            self.action))
+        if self.func:
+            return ("{0}.{1}"
+                    .format(self.func.__module__,
+                            self.func.__name__))
+        return self.action
+        
 
 class Loader(object):
-
+    
     def __init__(self):
-        self._queue = deque()
-        self._mapping = {}
+        self._graph = OrderedDict()
+        self._actions = dict() # Maps actions to loadables
 
-    def register(self, func, action=None, after=None, before=None, 
-                 directly=False):
+    def _register_placeholder(self, action):
+        loadable = Loadable(action=action)
+        self._graph[loadable] = []
+        self._actions[action] = loadable
+        return loadable
 
-        if self._mapping.has_key(str(func)):
-            loadable = self._mapping[str(func)]
-        else:
-            loadable = Loadable(func)
-            self._mapping[str(func)] = loadable
-            self._queue.append(loadable)
-
-        if action:
-            loadable.action.append(action)
-        if after:
-            loadable.after.append(after)
-        if before:
-            loadable.before.append(before)
-
-        if directly:
-            if before:
-                loadable.directly_before = before
-            if after:
-                loadable.directly_after = after
+    def register(self, func, action=None, after=None, before=None):
+        loadable = Loadable(func, action)
+        if func not in self._graph and action not in self._graph:
+            # No existing entry, create dependency list
+            self._graph[loadable] = []
+        
+        if action is not None:
+            # Make sure this action is not
+            # yet registered.
+            if (action in self._actions):
+                # A loadable is already present for this
+                # action. Make sure loadable has no function
+                # assigned.
+                if self._actions[action].func:
+                    raise Exception("A function is already registered"
+                                    " as action '{0}".format(action))
+                # We can now assign the actual function to 
+                # the placeholder loadable. This can occur
+                # if dependencies are registered before this
+                # loadable was defined.
+                self._graph[loadable] = self._graph.pop(action)
+                self._actions[action].func = func
+            else:
+                # Map loadable to action now that it's given
+                self._actions[action] = loadable
+            
+        # Handle after and before, first make sure a loadable is 
+        # present. If not create a placeholder loadable.  
+        if after is not None:
+            after = (self._register_placeholder(after) if 
+                     after not in self._actions else self._actions[after])
+            self._graph[loadable].append(after)
+            
+        if before is not None:
+            before = (self._register_placeholder(before) if 
+                      before not in self._actions else self._actions[before])
+            self._graph[before].append(loadable)
 
     def load(self):
-
-        # Remove references
-        self._mapping = {}
-
-        #
-        actions = {}
-        delays = {}
-        executions = deque()
-        delayed = deque()
-
-        #
-        loadables = self._queue
-
-        # Map actions
-        for loadable in loadables:
-
-            if not loadable.action:
-                loadable.action.append(str(loadable.func))
-
-            for action in loadable.action:
-                if not actions.has_key(action):
-                    actions[action] = []
-                actions[action].append(loadable)
-
-        # Convert before's to after's
-        for loadable in loadables:
-            for before in loadable.before:
-                directly = loadable.directly_before == before
-                if actions.has_key(before):
-                    for action in actions[before]:
-                        action.after.extend(loadable.action)
-                        if directly:
-                            action.directly_after = loadable.action[0]
-
-        # Seperate non delayed loadables from delayed loadables
-        while loadables:
-            loadable = loadables.popleft()
-            for delay in loadable.after:
-                if not delays.has_key(delay):
-                    delays[delay] = []
-                delays[delay].append(loadable)
-
-            if not loadable.after:
-                # loadable has no delays, append to execution queue
-                executions.append(loadable)
-            else:
-                delayed.append(loadable)
-
-        # Seperate unnecessarily delayed loadables from valid delayed loadables
-        loadables = delayed
-        delayed = deque()
-
-        while loadables:
-            loadable = loadables.popleft()
-            for delay in loadable.after:
-                if actions.has_key(delay):
-                    delayed.append(loadable)
-                    break
-            else:
-                executions.append(loadable)
-
-        # Begin execution
-        while executions:
-            execution = executions.popleft()
-
-            # Execute
-            execution.func()
-
-            # Remove from actions
-            for action in execution.action:
-                actions[action].remove(execution)
-                if not actions[action]:
-                    del actions[action]
-
-            # Find loadables for (re)evaluation
-            evaluations = deque()
-            for action in execution.action:
-                if delays.has_key(action):
-                    for loadable in delays[action]:
-                        if loadable in delayed and not loadable in evaluations:
-                            evaluations.append(loadable)
-
-            # (Re-)evaluate loadables
-            while evaluations:
-                loadable = evaluations.popleft()
-                for delay in loadable.after:
-                    if actions.has_key(delay):
-                        if (loadable.directly_after and
-                                loadable.directly_after != delay):
-                            raise Exception(
-                                "Will fail to execute '{0}' "
-                                "directly after '{1}' due to '{2}'."
-                                .format(
-                                    loadable, loadable.directly_after, delay))
-
-                        # Still another delay > DO NOTHING
-                        break
-                else:
-                    # No more valid delays > EXECUTE
-                    delayed.remove(loadable)
-                    if loadable.directly_after:
-                        executions.appendleft(loadable)
-                    else:
-                        executions.append(loadable)
-
-        # Verify for remaining delays
-        if delayed:
-            raise Exception("Failed to load.")
-
-loader = Loader()
+        for loadable in topological_sort(self._graph):
+            if loadable.func:
+                loadable.func()
+            

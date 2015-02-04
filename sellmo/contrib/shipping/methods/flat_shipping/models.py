@@ -38,7 +38,6 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 
-@load(action='load_shipping_subtypes')
 @load(after='finalize_shipping_ShippingMethod')
 def load_subtypes():
 

@@ -41,12 +41,6 @@ from sellmo.core.polymorphism import (PolymorphicModel, PolymorphicManager,
                                       PolymorphicQuerySet)
 
 
-@load(action='load_product_subtypes')
-@load(after='finalize_product_Product')
-def load_product_subtypes():
-    pass
-
-
 def get_indexable_products():
     return modules.product.Product.objects.all()
 
