@@ -139,7 +139,7 @@ class Tax(PolymorphicModel):
         
 
 @load(after='finalize_tax_Tax')
-@load(after='tax_subtypes_registered')
+@load(after='tax_subtypes_loaded')
 def finalize():
     for relation in modules.tax.Tax.m2m_invalidations:
         field = getattr(modules.tax.Tax, relation)

@@ -244,7 +244,7 @@ def setup_indexes():
 
 @load(after='finalize_discount_Discount')
 @load(after='finalize_discount_DiscountGroup')
-@load(after='discount_subtypes_registered')
+@load(after='discount_subtypes_loaded')
 def setup_discounts():
     for relation in modules.discount.Discount.m2m_invalidations:
         field = getattr(modules.discount.Discount, relation)
