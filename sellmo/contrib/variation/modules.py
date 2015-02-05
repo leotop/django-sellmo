@@ -186,7 +186,7 @@ class VariationModule(Module):
                         result += [{
                             'attribute': group,
                             'value': value,
-                            'variations': variations,
+                            'variations': variations.prefetch_related('values'),
                             'variant': variations[0].group_variant.downcast(),
                         }]
                     variations = result
@@ -201,19 +201,34 @@ class VariationModule(Module):
                 variations = out['variations']
 
         return variations
-
+    
+        
     @chainable()
-    def get_variation_choice(self, chain, variation, choice=None, **kwargs):
-        if choice is None:
-            choice = self.generate_variation_choice(
-                variation=variation, choice=choice)
-
+    def generate_variation_label(self, chain, variations, label=None, 
+                                 attributes=None, **kwargs):
+                                 
+        if attributes is None:
+            # Get non grouping attributes used across all variations
+            attributes = (modules.attribute.Attribute.objects
+                            .filter(groups=False,
+                                 values__variations=variations)
+                            .distinct())
+        
+        if label is None:
+            # See if a single attribute is used across all variations
+            if attributes.count() == 1:
+                # Label equals attribute name
+                label = unicode(attributes[0])
+            else:
+                # Can't make up a specific label
+                label = _("Variation")
+        
         if chain:
-            out = chain.execute(variation=variation, choice=choice, **kwargs)
-            if out.has_key('choice'):
-                choice = out['choice']
-
-        return choice
+            out = chain.execute(variations=variations, label=label, attributes=attributes, **kwargs)
+            if out.has_key('label'):
+                label = out['label']
+        
+        return label
 
     @chainable()
     def generate_variation_choice(self, chain, variation, choice=None,

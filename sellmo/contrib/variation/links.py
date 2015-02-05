@@ -145,14 +145,14 @@ def get_purchase_args(form, product, args, **kwargs):
 def get_add_to_cart_formset(formset, cls, product, variations=None,
                             initial=None, data=None, **kwargs):
     
-    if variations is None:
-        variations = getattr(product, 'variations', None)
-
+    if variations is None and hasattr(product, 'get_variations'):
+        variations = product.get_variations()
+    
     # Before proceeding to custom form creation, check if we're dealing with a
     # variation product
     if not variations:
         return
-
+    
     # Create the custom form
     dict = {
         'variations_key': forms.CharField(widget=forms.HiddenInput)
@@ -161,9 +161,10 @@ def get_add_to_cart_formset(formset, cls, product, variations=None,
     # Add variation field as either a choice or as a hidden integer
     if not modules.variation.batch_buy_enabled:
         dict['variation'] = forms.ChoiceField(
+            label=modules.variation.generate_variation_label(variations=variations),
             choices=[(el.id,
-                      modules.variation.get_variation_choice(variation=el))
-                     for el in variations]
+                      modules.variation.generate_variation_choice(variation=el))
+                      for el in variations]
         )
     else:
         dict['variation'] = forms.CharField(widget=forms.HiddenInput)

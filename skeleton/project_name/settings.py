@@ -37,16 +37,12 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = (
     
     {% if not bare %}
-    
     # Spices up the admin a bit
     'grappelli',
-    
     # This comes in handy for rendering forms
     'widget_tweaks',
-    
     # Ofcourse we need thumbnails
     'sorl.thumbnail',
-    
     {% endif %}
     
     'django.contrib.auth',
@@ -228,6 +224,11 @@ INSTALLED_APPS += (
     # first, after which ModelAdmin's can
     # be loaded by the Django Admin.
     'django.contrib.admin',
+    
+    {% if not bare %}
+    # Comes in handy for debugging queries
+    'debug_toolbar',
+    {% endif %}
 )
 
 MIDDLEWARE_CLASSES = (
@@ -402,4 +403,14 @@ SELLMO_CACHING_ENABLED = True
 
 {% if not bare %}
 GRAPPELLI_ADMIN_TITLE = '{{ project_name|capfirst }}'
+{% endif %}
+
+{% if not bare %}
+SHOW_DEBUG_TOOLBAR = False
+def show_toolbar_callback(request):
+    return DEBUG and SHOW_DEBUG_TOOLBAR
+    
+DEBUG_TOOLBAR_CONFIG = {
+    'SHOW_TOOLBAR_CALLBACK': '{{ project_name }}.settings.show_toolbar_callback'
+}
 {% endif %}

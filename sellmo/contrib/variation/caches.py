@@ -180,5 +180,5 @@ class VariationChoiceCache(Cache):
 
 get_variations = cached(
     ProductVariationsCache, 'get_variations', 'variation', timeout=None)
-get_variation_choice = cached(
-    VariationChoiceCache, 'get_variation_choice', 'variation', timeout=None)
+generate_variation_choice = cached(
+    VariationChoiceCache, 'generate_variation_choice', 'variation', timeout=None)

@@ -640,7 +640,7 @@ class Variation(models.Model):
     values = models.ManyToManyField(
         'attribute.Value',
         editable=False,
-        related_name='+',
+        related_name='variations',
         verbose_name=_("values"),
     )
 

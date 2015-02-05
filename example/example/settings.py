@@ -22,7 +22,7 @@ SITE_ID = 1
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '67vdobs@ot!!h2k^e#jsbl=o_qewji@1&awom09u0trbt*)4f+'
+SECRET_KEY = '$)_1=4&%214lxt%j+eqjfs0nd#f1bo9u3yh5e)cpj3q-p@ca4_'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -37,16 +37,12 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = (
     
     
-    
     # Spices up the admin a bit
     'grappelli',
-    
     # This comes in handy for rendering forms
     'widget_tweaks',
-    
     # Ofcourse we need thumbnails
     'sorl.thumbnail',
-    
     
     
     'django.contrib.auth',
@@ -222,6 +218,11 @@ INSTALLED_APPS += (
     # first, after which ModelAdmin's can
     # be loaded by the Django Admin.
     'django.contrib.admin',
+    
+    
+    # Comes in handy for debugging queries
+    'debug_toolbar',
+    
 )
 
 MIDDLEWARE_CLASSES = (
@@ -388,3 +389,13 @@ SELLMO_REPORTING_PARAMS = {
 
 
 GRAPPELLI_ADMIN_TITLE = 'Example'
+
+
+
+SHOW_DEBUG_TOOLBAR = False
+def show_toolbar_callback(request):
+    return DEBUG and SHOW_DEBUG_TOOLBAR
+    
+DEBUG_TOOLBAR_CONFIG = {
+    'SHOW_TOOLBAR_CALLBACK': 'example.settings.show_toolbar_callback'
+}

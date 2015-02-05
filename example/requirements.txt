@@ -4,3 +4,4 @@ Pillow
 sorl-thumbnail
 django-widget-tweaks
 django-grappelli
+django-debug-toolbar
