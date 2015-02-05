@@ -22,7 +22,7 @@ SITE_ID = 1
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '$)_1=4&%214lxt%j+eqjfs0nd#f1bo9u3yh5e)cpj3q-p@ca4_'
+SECRET_KEY = 'e-eo979(gqud1+v89^70pzj)-8=5v=l^x87cwl5#u%hi-^=-_)'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -100,6 +100,11 @@ INSTALLED_APPS += tuple(reversed((
     
     
     'brand',
+    
+    
+    
+    'sellmo.contrib.color',
+    'color',
     
     
     

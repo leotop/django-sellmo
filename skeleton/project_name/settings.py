@@ -102,6 +102,11 @@ INSTALLED_APPS += tuple(reversed((
     'brand',
     {% endif %}
     
+    {% if 'color' in apps %}
+    'sellmo.contrib.color',
+    'color',
+    {% endif %}
+    
     {% if 'variation' in apps %}
     'sellmo.contrib.variation',
     'variation',

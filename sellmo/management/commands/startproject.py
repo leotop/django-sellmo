@@ -27,6 +27,7 @@ DEFAULT_APPS = [
     'discount',
     'availability',
     'brand',
+    'color',
 ]
 
 

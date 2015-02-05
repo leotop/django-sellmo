@@ -28,59 +28,20 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sellmo import modules
-from sellmo.api.decorators import load
-from sellmo.api.pricing import PriceType
-from sellmo.contrib.settings.signals import setting_changed
-
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+from sellmo import modules
+from sellmo.api.pricing import PriceType
+
+
 # Configure pricing module
 
-tax = PriceType('tax',_("tax"),
-    tax=(models.ForeignKey, ('tax.Tax',), {
+discount = PriceType('discount',_("discount"),
+    discount=(models.ForeignKey, ('discount.Discount',), {
         'null': True,
         'related_name': '+',
         'editable': False,
     }))
 
-modules.pricing.types += [tax]
-
-
-# Configure settings module
-
-group = _("Taxes")
-
-
-modules.settings.add_setting('payment_costs_tax', models.ForeignKey(
-    'tax.Tax',
-    related_name='+',
-    null=True,
-    blank=True,
-    verbose_name=_("payment costs tax"),
-), group)
-
-modules.settings.add_setting('shipping_costs_tax', models.ForeignKey(
-    'tax.Tax',
-    related_name='+',
-    null=True,
-    blank=True,
-    verbose_name=_("shipping costs tax"),
-), group)
-
-
-modules.settings.add_setting('tax_inclusive', models.BooleanField(
-    default=False,
-    verbose_name=_("tax inclusive"),
-), group)
-
-
-def on_setting_changed(sender, setting, old, new, site, **kwargs):
-    if setting == 'tax_inclusive':
-        modules.pricing.get_index('product_price').update()
-
-setting_changed.connect(on_setting_changed)
-
-
-
+modules.pricing.types += [discount]
