@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load sellmo_cart tax %}
+
+{% block html_title %}Winkelwagen{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Winkelwagen</h1>
+</div>
+{% if cart %}
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th class="col-sm-6">Aankoop</th>
+      <th class="col-sm-3">Totaalprijs</th>
+      <th class="col-sm-3"></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for purchase in cart %}
+    <tr>
+      <td>
+        <div class="h4"><a href="{{ purchase.product.get_absolute_url }}">{{ purchase }}</a></div>
+      </td>
+      <td>
+          <div class="h4">{{ purchase.total }}</div>
+      </td> 
+      <td>
+          {% edit_purchase_form purchase %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr>
+      <td><div class="h4 text-right">Totaalprijs</div></td>
+      <td><div class="h4"><strong>{{ cart.total }}</strong></div></td>
+      <td><div class="h4"><small>incl. {{ cart.total.context.tax }}</small></div></td>
+    </tr>
+
+  </tfoot>
+</table>
+
+<div class="well clearfix">
+  <div class="pull-right">
+    <a href="{% url 'store.index' %}" class="btn btn-default" role="button">Verder winkelen</a>
+    <a href="{% url 'checkout.checkout' %}" class="btn btn-primary" role="button">Bestellen</a>
+  </div>
+</div>
+
+{% else %}
+
+{% endif %}
+{% endblock %}

@@ -34,7 +34,7 @@
       $('option', @$variation).each (i, option) =>
           $option = $(option)
           key = $option.val()
-          stock = @stocks[key]
+          stock = @options.stocks[key]
           if stock > 0
               @$variation.val(key)
               @updateAvailability()
@@ -47,7 +47,7 @@
     updateAvailability: () ->
       
       if @options.stocks != null
-          select = $('select.variation', target)
+          select = $('select.variation', @$el)
           key = select.val()
           stock = @options.stocks[key]
           delay = @options.delays[key]

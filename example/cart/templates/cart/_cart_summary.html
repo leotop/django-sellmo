@@ -1,0 +1,34 @@
+{% if cart %}
+<h3>{{ cart|length }} product{% if cart|length > 1 %}en{% endif %}</h3>
+<table class="table">
+  <tbody>
+    {% for purchase in cart %}
+    <tr>
+      <td class="col-sm-8">
+        <div class="h5"><a href="{{ purchase.product.get_absolute_url }}">{{ purchase }}</a></div>
+      </td>
+      <td class="col-sm-4">
+          <div class="h5">{{ purchase.total }}</div>
+      </td> 
+    </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr>
+      <td><div class="h5">Totaalprijs</div></td>
+      <td><div class="h5"><strong>{{ cart.total }}</strong></div></td>
+    </tr>
+  </tfoot>
+</table>
+<hr/>
+<div class="clearfix">
+  <hr/>
+  <div class="pull-left">
+    <a class="btn btn-default" href="{% url 'cart.cart' %}">Naar winkelwagen</a>
+  </div>
+  <div class="pull-right">
+    <a class="btn btn-primary" href="{% url 'checkout.checkout' %}">Nu bestellen</a>
+  </div>
+</div>
+{% else %}
+{% endif %}
