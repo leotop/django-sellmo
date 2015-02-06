@@ -41,19 +41,6 @@ class ProductVariationsCache(Cache):
 
     @staticmethod
     def materialize(cache, grouped=False):
-        
-        # Collect all variations so we can perform one big query.
-        if not grouped:
-            all_variations = list(cache)
-        else:
-            all_variations = []
-            for el in cache:
-                all_variations += el['variations']
-
-        # Query them all
-        all_variations = list(PKIterator(modules.variation.Variation,
-                                         all_variations))
-        
         # Reconstruct
         if grouped:
             product_qs = modules.product.Product.objects.all().polymorphic()
@@ -72,10 +59,12 @@ class ProductVariationsCache(Cache):
                     all_values = list(PKIterator(value_object_qs, all_values))
             
             for variation in cache:
-
+                
+                # Construct variations query
+                variations = modules.variation.Variations.objects.all()
+                variations.query = variation['variations']
+                
                 # Get our slice
-                variations = all_variations[:len(variation['variations'])]
-                all_variations = all_variations[len(variations):]
                 value = all_values[0]
                 all_values = all_values[1:]
                 variant = all_variants[0]
@@ -139,8 +128,7 @@ class ProductVariationsCache(Cache):
                     cache.append({
                         'attribute': attribute.pk,
                         'value': value,
-                        'variations': [el.pk for el in 
-                            variation['variations']],
+                        'variations': variation['variations'].query,
                         'variant': variation['variant'].pk,
                     })
 

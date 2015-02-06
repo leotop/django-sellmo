@@ -138,8 +138,8 @@ class _ModuleMeta(type):
         super(_ModuleMeta, cls).__setattr__(name, value)
         if not name.startswith('_'):
             if (isinstance(value, type) and
-                    not (value.__module__ or
-                        not value.__module__.startswith('django.'))):
+                    (not value.__module__ or
+                     not value.__module__.startswith('django.'))):
                 value.__module__ = cls._registry.__name__
             setattr(cls._registry, name, value)
 
