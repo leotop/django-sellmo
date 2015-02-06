@@ -152,6 +152,9 @@ def get_add_to_cart_formset(formset, cls, product, variations=None,
     # variation product
     if not variations:
         return
+        
+    # Get attributes which variate the current variations from eachother
+    attributes = modules.variation.get_variating_attributes(variations=variations)
     
     # Create the custom form
     dict = {
@@ -161,9 +164,9 @@ def get_add_to_cart_formset(formset, cls, product, variations=None,
     # Add variation field as either a choice or as a hidden integer
     if not modules.variation.batch_buy_enabled:
         dict['variation'] = forms.ChoiceField(
-            label=modules.variation.generate_variation_label(variations=variations),
-            choices=[(el.id,
-                      modules.variation.generate_variation_choice(variation=el))
+            label=modules.variation.generate_variation_label(attributes=attributes),
+            choices=[(el.id, modules.variation.generate_variation_choice(
+                        variation=el, attributes=attributes))
                       for el in variations]
         )
     else:

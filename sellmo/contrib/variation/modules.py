@@ -42,7 +42,7 @@ from sellmo.contrib.attribute.query import product_q
 from django.http import Http404
 from django.utils.translation import ugettext_lazy as _
 
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.db.models.signals import post_save, m2m_changed
 
 
@@ -157,11 +157,13 @@ class VariationModule(Module):
                 if group:
                     result = []
                     
-                    values = (modules.attribute.Value.objects
+                    values = [row['value'] for row in modules.attribute.Value.objects
                                 .which_variate(product)
                                 .for_attribute(group)
-                                .attribute_values()
-                                .distinct())
+                                .smart_values('value')
+                                .distinct()
+                                .order_by()]
+                    
                     values = (modules.attribute
                                 .get_sorted_values(values=values,
                                                     attribute=group,
@@ -201,22 +203,48 @@ class VariationModule(Module):
                 variations = out['variations']
 
         return variations
+        
+        
+    @chainable()
+    def get_variating_attributes(self, chain, variations, 
+                                 attributes=None, **kwargs):
+        if attributes is None:
+            # Query values which occur less times than
+            # the amount of variations. We can use this
+            # result to query a distinct list of variating
+            # attributes.
+            values = (modules.attribute.Value.objects
+                            .filter(variations=variations)
+                            .smart_values('attribute', 'value')
+                            .annotate(num=Count('attribute'))
+                            .filter(num__lt=variations.count())
+                            .order_by())
+                            
+            # Now query the attributes
+            attributes = (modules.attribute.Attribute.objects
+                .filter(pk__in=set([value['attribute'].pk 
+                    for value in values])))
+                        
+        if chain:
+            out = chain.execute(variations=variations, 
+                                attributes=attributes
+                                **kwargs)
+            if out.has_key('attributes'):
+                attributes = out['attributes']
+        
+        return attributes
     
         
     @chainable()
-    def generate_variation_label(self, chain, variations, label=None, 
-                                 attributes=None, **kwargs):
+    def generate_variation_label(self, chain, variations=None, 
+                                attributes=None, label=None, **kwargs):
                                  
-        if attributes is None:
-            # Get non grouping attributes used across all variations
-            attributes = (modules.attribute.Attribute.objects
-                            .filter(groups=False,
-                                 values__variations=variations)
-                            .distinct())
+        if attributes is None and variations is not None:
+            attributes = self.get_variating_attributes(variations=variations)
         
         if label is None:
             # See if a single attribute is used across all variations
-            if attributes.count() == 1:
+            if attributes is not None and attributes.count() == 1:
                 # Label equals attribute name
                 label = unicode(attributes[0])
             else:
@@ -224,15 +252,22 @@ class VariationModule(Module):
                 label = _("Variation")
         
         if chain:
-            out = chain.execute(variations=variations, label=label, attributes=attributes, **kwargs)
+            out = chain.execute(variations=variations, 
+                                label=label, 
+                                attributes=attributes, 
+                                **kwargs)
             if out.has_key('label'):
                 label = out['label']
         
         return label
 
     @chainable()
-    def generate_variation_choice(self, chain, variation, choice=None,
-                                  **kwargs):
+    def generate_variation_choice(self, chain, variation, variations=None,
+                                  attributes=None, choice=None, **kwargs):
+                                  
+        if attributes is None and variations is not None:
+            attributes = self.get_variating_attributes(variations=variations)
+                                  
         if choice is None:
             variant = variation.variant.downcast()
             price_adjustment = None
@@ -244,9 +279,12 @@ class VariationModule(Module):
                     - modules.pricing.get_price(product=variant.product, 
                                                 raw=True))
 
+            values = variation.values.all().order_by('attribute')
+            if attributes is not None:
+                values = values.filter(attribute__in=attributes)
             values = self.variation_value_seperator.join(
                 [unicode(value)
-                 for value in variation.values.all().order_by('attribute')]
+                 for value in values]
             )
 
             choice = call_or_format(

@@ -358,11 +358,12 @@ class VariationManager(models.Manager):
             # Create all possible variation combinations
             combinations = itertools.product(*[
                 (modules.attribute.get_sorted_values(
-                    values=(modules.attribute.Value.objects
+                    values=[row['value'] for row in (modules.attribute.Value.objects
                         .which_variate(product)
                         .for_attribute(attribute)
-                        .attribute_values()
-                        .distinct()),
+                        .smart_values('value')
+                        .distinct()
+                        .order_by())],
                     attribute=attribute,
                     product=product))
                 for attribute in attributes])
@@ -507,11 +508,12 @@ class VariationManager(models.Manager):
         if group:
             # We need to find a single variant which is common across all
             # variations in this group
-            for value in modules.attribute.Value.objects \
-                                .which_variate(product) \
-                                .for_attribute(attribute=group) \
-                                .attribute_values() \
-                                .distinct():
+            for value in [row['value'] for row in modules.attribute.Value.objects
+                                .which_variate(product)
+                                .for_attribute(attribute=group)
+                                .smart_values('value')
+                                .distinct()
+                                .order_by()]:
                 
                 # Get variations for this grouped attribute / value combination
                 qargs = {

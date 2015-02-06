@@ -35,10 +35,11 @@ from django.utils.translation import ugettext_lazy as _
 from sellmo import modules
 from sellmo.magic import ModelMixin
 from sellmo.api.decorators import load
+from sellmo.core.query import PKIterator
 from sellmo.core.polymorphism import PolymorphicModel, PolymorphicManager
 from sellmo.utils.formatting import call_or_format
 from sellmo.contrib.attribute.fields import (AttributeKeyField, 
-                                                     AttributeTypeField)
+                                             AttributeTypeField)
 from sellmo.contrib.attribute.helpers import AttributeHelper
 
 
@@ -90,48 +91,45 @@ def finalize_model():
     modules.attribute.Value = Value
 
 
-class AttributeValuesQuerySet(ValuesQuerySet):
-    
-    def __is_assigned__(self, row, field):
-        value = row[field]
-        if field == 'value_string':
-            return value is not None and len(value) > 0
-        return value is not None
+class SmartValueValuesQuerySet(ValuesQuerySet):
     
     def iterator(self):
-        last_field = None
-        fields = []
-        out = []
-        for row in super(AttributeValuesQuerySet, self).iterator():
-            # Try last used value field and yield
-            if last_field and self.__is_assigned__(row, last_field):
-                out.append((last_field, row[last_field]))
-                continue
+        rows = []
+        
+        attributes = set()
+        value_objects = set()
+        for row in super(SmartValueValuesQuerySet, self).iterator():
+            if 'attribute' in row:
+                attributes.add(row['attribute'])
+            if row.get('value_object', None) is not None:
+                value_objects.add(row['value_object'])
+            rows.append(row)
             
-            # Find (new) used value field and yield
-            for field in VALUE_FIELDS:
-                if self.__is_assigned__(row, field):
-                    # Keep track of this field
-                    last_field = field
-                    # Keep track of used fields
-                    if field not in fields:
-                        fields.append(field)
-                    out.append((field, row[field]))
-                    break
-                    
-        # Lookup ValueObjects
-        value_objects = {}
-        if 'value_object' in fields:
-            for obj in (modules.attribute.ValueObject.objects
-                    .polymorphic().filter(pk__in=self.values('value_object'))):
-                value_objects[obj.pk] = obj
+        # Lookup Attributes
+        if attributes:
+            attributes = {
+                obj.pk: obj
+                for obj in PKIterator(
+                    modules.attribute.Attribute,
+                    attributes)}
+        # Lookup ValueObjects           
+        if value_objects:
+            value_objects = {
+                obj.pk: obj
+                for obj in PKIterator(
+                    modules.attribute.ValueObject.objects.polymorphic(),
+                    value_objects)}
             
-        for field, value in out:
-            if field == 'value_object':
-                yield value_objects[value]
-            else:
-                yield value
-                
+        for row in rows:
+            attribute = None
+            if 'attribute' in row:
+                attribute = attributes[row['attribute']]
+                row['attribute'] = attribute
+            if row.get('value_object', None) is not None:
+                row['value_object'] = value_objects[row['value_object']]
+            if attribute is not None:
+                row['value'] = row.get(attribute.value_field, None)
+            yield row
     
 
 class ValueQuerySet(QuerySet):
@@ -145,9 +143,20 @@ class ValueQuerySet(QuerySet):
     def for_attribute(self, attribute):
         return self.filter(attribute=attribute)
         
-    def attribute_values(self, attribute=None):
-        values = self.values(*VALUE_FIELDS)
-        return values._clone(klass=AttributeValuesQuerySet)
+    def smart_values(self, *fields):
+        fields = list(fields)
+        if 'value' in fields:
+            fields.remove('value')
+            fields.extend(VALUE_FIELDS)
+            if 'attribute' not in fields:
+                # This is required if we
+                # want to return the find actual value
+                # for each row.
+                fields.append('attribute')
+        
+        values = self.values(*fields)
+        values = values._clone(klass=SmartValueValuesQuerySet)
+        return values
         
     def _clone(self, *args, **kwargs):
         clone = super(ValueQuerySet, self)._clone(*args, **kwargs)

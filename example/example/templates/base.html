@@ -1,7 +1,9 @@
 {% load staticfiles thumbnail category %}
 <!DOCTYPE html>
 <html lang="en">
+{% block html %}
   <head>
+    {% block head %}
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -22,11 +24,11 @@
     <!-- Development stylesheets -->
     <link rel="stylesheet" href="{% static "build/css/screen.css" %}">
     {% endblock %}
-    
+  {% endblock %}
   </head>
 
   <body>
-
+    {% block body %}
     <div id="site">
       {% block navbar %}
         <div class="header">
@@ -181,6 +183,7 @@
     <script type="text/javascript" src="{% static "bower_components/handlebars/handlebars.js" %}"></script>
     <script type="text/javascript" src="{% static "bower_components/bootstrap/dist/js/bootstrap.js" %}"></script>
     {% endblock %}
-    
+  {% endblock %}
   </body>
+{% endblock %}
 </html>
