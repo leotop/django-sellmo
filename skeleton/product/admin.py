@@ -1,7 +1,6 @@
 from sellmo import modules
 from sellmo.utils.forms import FormFactory
-from sellmo.contrib.product.admin import (ProductParentAdminBase, 
-                                                  ProductAdminBase)
+
 from sellmo.contrib.category.admin import (ProductCategoryListFilter,
                                                    ProductCategoriesMixin)
 from sellmo.contrib.variation.admin import (VariantAttributeMixin,
@@ -11,9 +10,12 @@ from sellmo.contrib.tax.forms import ProductTaxesForm
 
 from django.contrib import admin
 from django.db import models
+from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy as _
 
 from sorl.thumbnail import get_thumbnail
+
+from extras.admin.polymorphism import PolymorphicParentModelAdmin, PolymorphicChildModelAdmin
 
 
 class ProductQtyPriceInline(admin.TabularInline):
@@ -30,7 +32,7 @@ class ProductFormFactory(FormFactory):
         return ProductForm
 
 
-class ProductAdmin(ProductCategoriesMixin, ProductAttributeMixin, ProductVariationMixin, ProductAdminBase):
+class ProductAdminBase(ProductCategoriesMixin, ProductAttributeMixin, ProductVariationMixin, PolymorphicChildModelAdmin):
 
     form = ProductFormFactory()
 
@@ -77,22 +79,17 @@ class VariantInline(VariantAttributeMixin, admin.StackedInline):
     )
 
 
-class SimpleVariantInline(VariantInline):
-    model = modules.variation.SimpleProductVariant
-    fk_name = 'product'
-
-
-class SimpleProductAdmin(ProductAdmin):
-    inlines = ProductAdmin.inlines + [SimpleVariantInline]
-
-
-class ProductParentAdmin(ProductParentAdminBase):
-    child_models = [
-        (modules.product.SimpleProduct, SimpleProductAdmin),
-
-    ]
+class ProductParentAdmin(PolymorphicParentModelAdmin):
+    
+    base_model = modules.product.Product
     
     polymorphic_list = False
+    list_display = ['slug']
+    list_display_links = ['slug']
+    search_fields = ['slug']
+    
+    child_models = []
+    
 
     list_display = ['thumbnail', 'name', 'active', 'featured', 'slug', 'sku', 'stock']
     list_display_links = ['name', 'slug']
@@ -118,3 +115,19 @@ class ProductParentAdmin(ProductParentAdminBase):
 
 
 admin.site.register(modules.product.Product, ProductParentAdmin)
+
+
+# Simple product
+
+class SimpleVariantInline(VariantInline):
+    model = modules.variation.SimpleProductVariant
+    fk_name = 'product'
+
+
+class SimpleProductAdmin(ProductAdminBase):
+    base_model = modules.product.SimpleProduct
+    inlines = ProductAdminBase.inlines + [SimpleVariantInline]
+    
+    
+ProductParentAdmin.child_models += [
+    (modules.product.SimpleProduct, SimpleProductAdmin)]

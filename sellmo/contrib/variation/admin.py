@@ -72,10 +72,3 @@ class ProductVariationMixin(object):
         ]
         fieldsets += ((_("Variations"), {'fields': fields}),)
         return fieldsets
-
-
-class VariationAdmin(admin.ModelAdmin):
-    pass
-
-
-admin.site.register(modules.variation.Variation, VariationAdmin)

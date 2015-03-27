@@ -40,7 +40,7 @@ for model, cls in modules.settings._inline_settings:
         model = model
     inlines.append(InlineModelAdmin)
 
-class SettingsAdmin(admin.ModelAdmin):
+class SettingsAdminBase(admin.ModelAdmin):
     fieldsets = (
         (None, {
             'fields': ['site'],
@@ -48,5 +48,3 @@ class SettingsAdmin(admin.ModelAdmin):
     ) + modules.settings.fieldsets
     
     inlines = inlines
-
-admin.site.register(modules.settings.SiteSettings, SettingsAdmin)

@@ -217,7 +217,7 @@ INSTALLED_APPS += (
     
     # By including this, some admin templates
     # for polymorphism are overridden.
-    'sellmo.contrib.polymorphism',
+    'extras',
     
     {% if 'data' in apps %}
     # Overrides dumpdata and loaddata commands

@@ -22,7 +22,7 @@ SITE_ID = 1
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'e-eo979(gqud1+v89^70pzj)-8=5v=l^x87cwl5#u%hi-^=-_)'
+SECRET_KEY = 'r6s8_z)6_ts!k79%$b9cvy3ozerl4b#@0ay^p*vss6pg5*i=_a'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -214,7 +214,7 @@ INSTALLED_APPS += (
     
     # By including this, some admin templates
     # for polymorphism are overridden.
-    'sellmo.contrib.polymorphism',
+    'extras',
     
     
 

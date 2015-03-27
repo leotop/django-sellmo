@@ -26,24 +26,3 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-
-
-from sellmo import modules
-from sellmo.contrib.attribute.forms import ProductAttributeFormFactory
-
-from django.utils.translation import ugettext_lazy as _
-
-
-class ProductAttributeMixin(object):
-
-    form = ProductAttributeFormFactory(prefix='attribute')
-
-    def get_fieldsets(self, request, obj=None):
-        fieldsets = super(
-            ProductAttributeMixin, self).get_fieldsets(request, obj)
-        fields = [
-            'attribute_{0}'.format(key) for key in 
-            modules.attribute.Attribute.objects.values_list('key', flat=True)
-        ]
-        fieldsets += ((_("Attributes"), {'fields': fields}),)
-        return fieldsets

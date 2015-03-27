@@ -32,10 +32,15 @@ import sys
 import imp
 import inspect
 
+from sellmo.api.configuration import get_setting
 from sellmo.signals.core import module_created, module_init
+from django.core.exceptions import ImproperlyConfigured
 
 
-_registry_module = 'sellmo.registry'
+try:
+    _registry_module = get_setting('REGISTRY_MODULE', default='sellmo.registry')
+except ImproperlyConfigured:
+    _registry_module = 'sellmo.registry'
 
 
 class MountPoint(object):
@@ -133,14 +138,23 @@ class _ModuleMeta(type):
 
         modules._on_module_class(out)
         return out
+        
+    def can_register_type(cls, value):
+        allowed = ['sellmo', cls.namespace]
+        if value.__module__ and not value.__module__.startswith(_registry_module):
+            root = value.__module__.split('.')[0]
+            if root not in allowed:
+                return False
+        return True
     
     def __setattr__(cls, name, value):
         super(_ModuleMeta, cls).__setattr__(name, value)
         if not name.startswith('_'):
-            if (isinstance(value, type) and
-                    (not value.__module__ or
-                     not value.__module__.startswith('django.'))):
-                value.__module__ = cls._registry.__name__
+            if isinstance(value, type):
+                if cls.can_register_type(value):
+                    value.__module__ = cls._registry.__name__
+                else:
+                    raise Exception("Cannot register {0} in module {1}".format(value, cls))
             setattr(cls._registry, name, value)
 
 

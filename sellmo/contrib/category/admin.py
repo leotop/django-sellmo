@@ -1,6 +1,6 @@
 # Copyright (c) 2014, Adaptiv Design
 # All rights reserved.
-#
+# 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 
@@ -29,11 +29,9 @@
 
 
 from sellmo import modules
-from sellmo.contrib.category.models import Category
 
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
-from django.contrib.admin.sites import NotRegistered
 
 
 class CategoryAdminBase(admin.ModelAdmin):
@@ -86,39 +84,3 @@ class CategoryParentListFilter(admin.SimpleListFilter):
             return queryset.in_parent(category)
         else:
             return queryset.all()
-
-
-#
-
-class CategoryAdmin(CategoryAdminBase):
-
-    list_display = ['full_name', 'active', 'name', 'parent', 'slug']
-    list_display_links = ['full_name', 'name']
-
-    list_filter = [CategoryParentListFilter, 'active']
-    search_fields = ['name']
-
-    fieldsets = (
-        (None, {
-            'fields': ('name', 'parent', 'slug')
-        }),
-        (_("Display"), {
-            'fields': ('active', 'sort_order')
-        }),
-    )
-
-    def full_name(self, instance):
-        return instance.full_name
-    full_name.short_description = _("full name")
-
-    def full_slug(self, instance):
-        return instance.full_slug
-    full_slug.short_description = _("full slug")
-
-    raw_id_fields = ['parent']
-
-    prepopulated_fields = {
-        'slug': ('name',),
-    }
-
-admin.site.register(modules.category.Category, CategoryAdmin)
