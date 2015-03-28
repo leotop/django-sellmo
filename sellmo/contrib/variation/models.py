@@ -615,7 +615,7 @@ class Variation(models.Model):
         'product.Product',
         db_index=True,
         editable=False,
-        related_name='+',
+        related_name='variations',
         verbose_name=_("product"),
     )
     
@@ -829,12 +829,3 @@ def load_model():
 
             def get_variated_by(self):
                 return modules.attribute.Attribute.objects.which_variate(self)
-
-            def get_variations(self, allow_build=True):
-                if getattr(self, '_is_variant', False):
-                    return modules.variation.Variation.objects \
-                                  .for_product(
-                                    self.product, allow_build=allow_build) \
-                                  .filter(variant=self)
-                return modules.variation.Variation.objects \
-                              .for_product(self, allow_build=allow_build)

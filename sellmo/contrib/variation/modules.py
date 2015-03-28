@@ -148,11 +148,16 @@ class VariationModule(Module):
     def get_variations(self, chain, product, grouped=False, variations=None,
                        **kwargs):
         if variations is None:
-            variations = modules.variation.Variation \
-                                .objects.for_product(product)
+            if getattr(product, '_is_variant', False):
+                variations = (modules.variation.Variation
+                                .objects.for_product(product.product)
+                                .filter(variant=product))
+            else:
+                variations = (modules.variation.Variation
+                                    .objects.for_product(product))
             if grouped:
-                attributes = modules.attribute.Attribute.objects \
-                                    .which_variate(product=product)
+                attributes = (modules.attribute.Attribute.objects
+                                    .which_variate(product=product))
                 group = attributes.filter(groups=True).first()
                 if group:
                     result = []
@@ -179,8 +184,8 @@ class VariationModule(Module):
                             'product': product,
                         }
 
-                        variations = modules.variation.Variation.objects \
-                                            .filter(**qargs)
+                        variations = (modules.variation.Variation.objects
+                                            .filter(**qargs))
                         if not variations:
                             continue
 
@@ -201,7 +206,7 @@ class VariationModule(Module):
                 variations=variations, **kwargs)
             if out.has_key('variations'):
                 variations = out['variations']
-
+        
         return variations
         
         

@@ -146,7 +146,7 @@ def get_add_to_cart_formset(formset, cls, product, variations=None,
                             initial=None, data=None, **kwargs):
     
     if variations is None and hasattr(product, 'get_variations'):
-        variations = product.get_variations()
+        variations = modules.variations.get_variations(product=product)
     
     # Before proceeding to custom form creation, check if we're dealing with a
     # variation product

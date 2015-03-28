@@ -58,7 +58,7 @@
       {% else %}
         {% if variations %}
         {% for variation in variations %}
-          delays['{{ variation.pk }}'] = {{ variation.stock }};
+          stocks['{{ variation.pk }}'] = {{ variation.stock }};
           delays['{{ variation.pk }}'] = {% include 'product/_delay.html' with date=variation|shipping_date %};
         {% endfor %}
         {% else %}
@@ -66,7 +66,6 @@
           delay = {% include 'product/_delay.html' with date=product|shipping_date %};
         {% endif %}
       {% endif %}
-      
       var options = {}
       if (stock != null) {
         options['stock'] = stock;
