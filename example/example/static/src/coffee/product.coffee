@@ -34,7 +34,6 @@
       $('option', @$variation).each (i, option) =>
           $option = $(option)
           key = $option.val()
-          console.log(key)
           stock = @options.stocks[key]
           if stock > 0
               @$variation.val(key)
@@ -55,15 +54,17 @@
       else
           stock = @options.stock
           delay = @options.delay
-    
-      if stock > 0
+      
+      available = stock > 0 or delay != false
+      
+      if available
           # Enable add to cart button
           $('input[type=submit]', @$el).removeAttr('disabled', 'disabled')
       else
           # Disable
           $('input[type=submit]', @$el).attr('disabled', 'disabled')
     
-      context = {stock: stock, delay: delay}
+      context = {stock: stock, delay: delay, available: available}
       $(@options.availabilitySelector, @$el).html(@template(context))
        
 

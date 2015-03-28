@@ -22,21 +22,20 @@
   
   {% verbatim %}
   <script id="product-availability-template" type="text/x-handlebars-template">
-    {{#if stock}}
+    {{#if available}}
     <div class="alert alert-success">
-      <strong>{{stock}} op voorraad.</strong>
+      {{#if stock}}
+        <strong>{{stock}} in stock.</strong>
+      {{else}}
+        <strong>Not in stock.</strong>
+      {{/if}}
       {{#if delay}}
-      Verzending {{ delay }}.
+      Shipping {{ delay }}.
       {{/if}}
     </div>
     {{else}}
     <div class="alert alert-danger">
-      <strong>Niet op voorraad.</strong>
-      {{#if delay}}
-      Dit product is leverbaar vanaf {{ delay }}.
-      {{else}}
-      Helaas is dit product niet leverbaar.
-      {{/if}}
+      <strong>This product is not available.</strong>
     </div>
     {{/if}}
   </script>
@@ -74,7 +73,8 @@
         options['stocks'] = stocks;
         options['delays'] = delays;
       }
-      
+      console.log(stocks);
+      console.log(delays);
       $('.add-to-cart').productAvailability(options);
       
     });

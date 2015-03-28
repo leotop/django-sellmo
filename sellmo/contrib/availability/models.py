@@ -117,30 +117,30 @@ def load_model():
             try:
                 nearest = settings.availability.get_nearest_availability()
             except ObjectDoesNotExist:
-                return None
+                pass
+            else:
+                # Get offset based of store availability
+                offset = nearest.day - now.isoweekday()
+                # Check against current time
+                if (offset == 0 and nearest.available_from and
+                        nearest.available_until and
+                        nearest.available_until < now.time()):
+                    offset = 7
+                elif offset < 0:
+                    offset = 7 + offset
+                    
+                # Apply store availablity offset
+                min_delay += timedelta(days=offset)
+                max_delay += timedelta(days=offset)
             
-            # Get offset based of store availability
-            offset = nearest.day - now.isoweekday()
-            # Check against current time
-            if (offset == 0 and nearest.available_from and
-                    nearest.available_until and
-                    nearest.available_until < now.time()):
-                offset = 7
-            elif offset < 0:
-                offset = 7 + offset
-                
-            # Apply store availablity offset
-            min_delay += timedelta(days=offset)
-            max_delay += timedelta(days=offset)
-            
-            if nearest.available_from:
-                dt = datetime.combine(now.date(), nearest.available_from)
-                dt = timezone.make_aware(dt, tz)
-                min_delay += dt - now
-            if nearest.available_until:
-                dt = datetime.combine(now.date(), nearest.available_until)
-                dt = timezone.make_aware(dt, tz)
-                max_delay += dt - now
+                if nearest.available_from:
+                    dt = datetime.combine(now.date(), nearest.available_from)
+                    dt = timezone.make_aware(dt, tz)
+                    min_delay += dt - now
+                if nearest.available_until:
+                    dt = datetime.combine(now.date(), nearest.available_until)
+                    dt = timezone.make_aware(dt, tz)
+                    max_delay += dt - now
             
             return min_delay, max_delay
         

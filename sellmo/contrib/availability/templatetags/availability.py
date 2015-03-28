@@ -42,6 +42,7 @@ def shipping_date(value, method='avg'):
     """
     
     delay = value.get_shipping_delay()
+    
     if delay is None:
         return None
         
