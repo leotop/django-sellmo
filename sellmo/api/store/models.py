@@ -108,7 +108,7 @@ class Purchase(PolymorphicModel, Cloneable):
         null=True,
         blank=True,
     )
-    
+            
     def get_subtotal_kwargs(self):
         return {}
         

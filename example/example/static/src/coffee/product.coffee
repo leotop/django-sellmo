@@ -28,12 +28,13 @@
       @updateAvailability()
     
       # Find variation select
-      @$variation = $('select.variation', @el)
+      @$variation = $('select.variation', @$el)
       
       # Try to find first option to be in stock
       $('option', @$variation).each (i, option) =>
           $option = $(option)
           key = $option.val()
+          console.log(key)
           stock = @options.stocks[key]
           if stock > 0
               @$variation.val(key)

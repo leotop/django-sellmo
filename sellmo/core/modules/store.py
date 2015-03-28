@@ -114,6 +114,9 @@ class StoreModule(sellmo.Module):
     @chainable()
     def validate_purchase(self, chain, request, purchase, **kwargs):
         
+        if purchase.product is None:
+            raise PurchaseInvalid(_("Product is no longer available.")) 
+        
         if purchase.qty > self.qty_limit:
             raise PurchaseInvalid(_("Qty over limit."))
             

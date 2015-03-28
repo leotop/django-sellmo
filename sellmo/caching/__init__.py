@@ -32,4 +32,4 @@ from sellmo.api.configuration import get_setting
 from sellmo.caching.base import Cache, cached
 
 
-enabled = get_setting('CACHING_ENABLED', default=True)
+enabled = get_setting('CACHING_ENABLED', default=False)

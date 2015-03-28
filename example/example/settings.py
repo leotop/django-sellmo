@@ -22,7 +22,7 @@ SITE_ID = 1
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'r6s8_z)6_ts!k79%$b9cvy3ozerl4b#@0ay^p*vss6pg5*i=_a'
+SECRET_KEY = 'lsqo%6f0n0w6^^m_az_ibhm-#qne+2%lsvx$hhhs2m!c(rm)vk'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True

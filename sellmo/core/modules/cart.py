@@ -203,11 +203,6 @@ class CartModule(sellmo.Module):
         # Perform a sanity check on cart (and fix if needed)
         removals = []
         for purchase in cart:
-            
-            # Make sure no products have been deleted
-            if purchase.product is None:
-                removals.append(purchase)
-            
             # Make sure this purchase is still valid
             try:
                 modules.store.validate_purchase(request=request,
@@ -456,7 +451,7 @@ class CartModule(sellmo.Module):
             cart = self.get_cart(request=request)
 
         # Remove from cart
-        if purchase in cart:
+        if False and purchase in cart:
             cart.remove(purchase)
 
         if chain:
