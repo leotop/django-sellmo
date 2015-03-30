@@ -1,0 +1,13 @@
+<div class="{{ field.name }} form-group{% if field.errors %} has-error{% endif %}">
+  <div class="checkbox">
+    <label>
+      {{ field }} {{ field.label }}
+  </div>
+  {% if field.errors %}
+  {% for error in field.errors %}
+  <ul class="list-unstyled help-block errors">
+    <li>{{ error }}</li>
+  </ul>
+  {% endfor %}
+  {% endif %}
+</div>

@@ -1,0 +1,42 @@
+{% extends "checkout/base.html" %}
+{% load widget_tweaks i18n %}
+
+{% block step_name %}{% trans "Your information" %}{% endblock %}
+
+{% block checkout %}
+<div class="row">
+  <div class="col-sm-7">
+    <div class="row">
+      <div class="col-sm-10">
+        <div class="row">
+          <div class="col-sm-9 col-sm-offset-1">
+            <h3>{% trans "Returning customers"%}</h3>
+            <hr/>
+            <form method="post" action="" role="form">{% csrf_token %}
+              {% include "_form_field.html" with field=login_form.username %}
+              {% include "_form_field.html" with field=login_form.password %}
+              {{ form.non_field_errors }}
+              <hr/>
+              <input type="submit" value="{% trans "Login"%}" class="btn btn-primary"/>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-5">
+    <div class="row">
+      <div class="col-sm-10">
+        <div class="row">
+          <div class="col-sm-12">
+            <h3>{% trans "Guest checkout"%}</h3>
+            <hr/>
+            <p>Proceed to checkout, and you can create a new account at the end.</p>
+            <a class="btn btn-primary" href="{{ process.next_step.url }}" class="button">{% trans "Continue as guest"%}</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

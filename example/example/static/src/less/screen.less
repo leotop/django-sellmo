@@ -11,7 +11,7 @@
 @footer-bg : @body-bg;
 
 body {
-  padding-bottom: 60px;
+  padding: 60px 0;
   background: @footer-bg;
 }
 
@@ -35,29 +35,38 @@ body {
 /* CUSTOMIZE THE NAVBAR
 -------------------------------------------------- */
 
-/* Special class on .container surrounding .navbar, used for positioning it into place. */
-.navbar-wrapper {
-  position: absolute;
-  top: 0;
-  right: 0;
-  left: 0;
-  z-index: 20;
-
-  /* Flip around the padding for proper display in narrow viewports */
-  .container {
-    padding-right: 0;
-    padding-left: 0;
-  }
-
-  .navbar {
-    padding-right: 15px;
-    padding-left: 15px;
-  }
-}
-
-.navbar-default {
+.navbar {
   border: none;
-  border-bottom: 4px @brand-success solid;
+  padding: 5px 0;
+  border-radius: 0;
+  
+  @media (min-width: 768px) {
+    
+    .navbar-collapse {
+      padding: 0;
+    }
+    
+    .navbar-right {
+      margin-right: 0;
+    }
+    
+    .navbar-nav {
+      > li {
+        > a {
+          padding-top: 15px;
+          padding-bottom: 15px;
+          border-right: 1px @gray-light solid;
+          font-size: @font-size-h4;
+        }
+        
+        &:first-child {
+          > a {
+            border-left: 1px @gray-light solid;
+          }
+        }
+      }
+    }
+  }
 }
 
 
@@ -121,23 +130,12 @@ body {
 }
 
 .header {
-    height: 120px;
-    //border-bottom: 2px @brand-primary solid;
+    height: 60px;
+    padding: 10px 0;
     background: @brand-primary;
-    .logo {
-      display: block;
-      background: url('../img/logo.svg') no-repeat;
-      background-size: 100px 100px;
-      width: 100px;
-      height: 100px;
-
-      // position on top of any underlay
-      position: relative;
-      z-index: 1;
-
-      // offset to match brand
-      left: 0px;
-      top: 10px;
+    .header-brand {
+      font-size: @font-size-h3;
+      color: #fff;
     }
 }
 

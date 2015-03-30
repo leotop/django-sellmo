@@ -1,0 +1,8 @@
+<address>
+  <strong>{{ address }}</strong><br>
+  {{ address.street1 }}<br>
+  {% if address.street2 %}
+  {{ address.street2 }}<br>
+  {% endif %}
+  {{ address.postal_code }}, {{ address.city }}<br>
+</address>

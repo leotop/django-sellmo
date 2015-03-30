@@ -1,0 +1,27 @@
+{% load widget_tweaks %}
+<div class='row'>
+  <div class="col-md-6">
+    {% include "_form_field.html" with field=form.first_name %}
+  </div>
+  <div class="col-md-6">
+    {% include "_form_field.html" with field=form.last_name %}
+  </div>
+</div>
+<div class='row'>
+  <div class="col-md-12">
+    {% include "_form_field.html" with field=form.street1 %}
+  </div>
+</div>
+<div class='row'>
+  <div class="col-md-12">
+    {% include "_form_field.html" with field=form.street2 %}
+  </div>
+</div>
+<div class='row'>
+  <div class="col-md-5">
+    {% include "_form_field.html" with field=form.postal_code %}
+  </div>
+  <div class="col-md-7">
+    {% include "_form_field.html" with field=form.city %}
+  </div>
+</div>

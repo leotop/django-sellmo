@@ -1,8 +1,13 @@
-{% load sellmo_cart sellmo_pricing tax %}
+{% load i18n sellmo_cart sellmo_pricing tax %}
 <div class="add-to-cart">
   <h4 class="product-price">
     {% price product=product index=index %}
-    {{ price }} <small>incl. {{ price.context.tax }}</small>
+    {% if settings.tax_inclusive %}
+    {{ price }} <small>{% blocktrans with tax=price.context.tax %}incl. {{ tax }}{% endblocktrans %}</small>
+    {% else %}
+    {{ price|taxless }} <small>{% blocktrans with tax=price.context.tax %}excl. {{ tax }}{% endblocktrans %}</small>
+    <div class="with-tax">{{ price }}  <small>{% blocktrans with tax=price.context.tax %}incl. {{ tax }}{% endblocktrans %}</small></div>
+    {% endif %}
     {% endprice %}
   </h4>
   <div class="product-availability"></div>

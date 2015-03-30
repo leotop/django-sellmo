@@ -1,0 +1,46 @@
+{% extends "checkout/base.html" %}
+{% load widget_tweaks i18n %}
+
+{% block checkout_title %}{{ block.super }} <small>{% block step_name %}{% endblock %}</small>{% endblock %}
+
+{% block checkout %}
+<form method="post" action="" role="form">{% csrf_token %}
+  <div class="row">
+    <div class="col-sm-7">
+      {% block step %}
+      <div class="row">
+        <div class="col-sm-10">
+          {% block form %}
+          {% endblock %}
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-sm-12">
+          <hr/>
+          <div class="clearfix">
+            {% if process.previous_step %}
+            <div class="pull-left">
+              <a href="{{ process.previous_step.url }}" class="btn btn-default">{% trans "Previous step" %}</a>
+            </div>
+            {% endif %}
+            <div class="pull-right">
+              <input type="submit" value="{% trans "Continue" %}" class="btn btn-primary"/>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endblock %}
+    </div>
+    <div class="col-sm-5">
+      <div id="order-info" class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">{% trans "Your order" %}</h3>
+        </div>
+        <div class="panel-body">
+          {% include "checkout/_order_summary.html" %}
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}

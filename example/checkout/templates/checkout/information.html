@@ -1,0 +1,52 @@
+{% extends "checkout/step.html" %}
+{% load static i18n widget_tweaks %}
+
+{% block step_name %}{% trans "Your information" %}{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script type="text/javascript" src="{% static "build/js/address.js" %}"></script>
+<script type="text/javascript">
+  $('#same-as-shipping').copyAddress();
+</script>
+{% endblock %}
+
+{% block form %}
+<div class="row">
+  <div class="col-sm-11 col-sm-offset-1">
+    <h3>Contactgegevens</h3>
+    <hr/>
+    {% include "customer/_contactable_form.html" with form=contactable_form %}
+  </div>
+</div>
+<div class="row">
+  <div class="col-sm-11 col-sm-offset-1">
+    <h3>Afleveradres</h3>
+    <hr/>
+    <div id="shipping-address">
+      {% include "customer/_address_form.html" with form=shipping_address_form %}
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="col-sm-11 col-sm-offset-1">
+    <h3>Factuuradres</h3>
+    <hr/>
+    <div class="checkbox">
+      <label>
+        <input name="same_as_shipping" id="same-as-shipping" type="checkbox" value="yes" {% if same_as_shipping %}checked="checked"{% endif %}> {% trans "Same as shipping" %}
+      </label>
+    </div>
+    <div id="billing-address">
+      {% include "customer/_address_form.html" with form=billing_address_form %}
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="col-sm-11 col-sm-offset-1">
+    <h3>Verzending</h3>
+    <hr/>
+    {% include "_form_radio_field.html" with field=shipping_method_form.method %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block html_title %}{% trans "Checkout" %}{% endblock %}
+
+{% block page %}
+<div id="checkout">
+  {{ block.super }}
+</div>
+{% endblock %}
+
+{% block content %}
+ <div class="page-header">
+   <h1>{% block checkout_title %}{% trans "Checkout" %}{% endblock %}</h1>
+ </div>
+ {% block checkout %}
+ {% endblock %}
+{% endblock %}

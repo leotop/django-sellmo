@@ -41,7 +41,7 @@
   }
 
   .product-price:extend(.h3) {
-    color: @brand-primary;
+    .product-price;
     margin-top: 0;
     margin-bottom: 40px;
   }
@@ -73,8 +73,17 @@
     height: 40px;
     line-height: 1.3em;
   }
+}
 
-  .product-price {
-    color: @brand-primary;
+.product-price {
+  color: @brand-primary;
+  
+  small {
+    color: inherit;
+  }
+  
+  .with-tax:extend(.small) {
+    margin-top: 0.25em;
+    color: @brand-info;
   }
 }

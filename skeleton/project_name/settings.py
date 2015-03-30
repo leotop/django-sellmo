@@ -127,6 +127,7 @@ INSTALLED_APPS += tuple(reversed((
     {% if 'checkout' in apps %}
     {% if not bare %}
     'sellmo.contrib.checkout',
+    'sellmo.contrib.checkout.multistep_checkout',
     {% endif %}
     'checkout',
     {% endif %}
