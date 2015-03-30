@@ -5,7 +5,7 @@ module.exports =
     dist: './dist/'
   browserify:
     bundles: [
-      {entries: ['coffee/app/index.coffee'], output: 'app.js'}
+      {entries: ['coffee/plugins/index.coffee'], output: 'plugins.js'}
     ]
   less: 
     sources: ['less/screen.less']
@@ -13,14 +13,10 @@ module.exports =
     entries: [
       'screen.css' 
     ]
-    output: 'adaptmin/css/adaptmin.css'
+    output: 'shop/css/shop.css'
   javascripts:
     entries: [
       'bower_components/jquery/dist/jquery.js',
-      'bower_components/ember/ember-template-compiler.js',
-      'bower_components/ember/ember.debug.js',
-      'bower_components/ember-data/ember-data.prod.js',
-      'ember-templates.js',
-      'app.js',
+      'plugins.js',
     ]
-    output: 'adaptmin/js/adaptmin.js'
+    output: 'shop/js/shop.js'

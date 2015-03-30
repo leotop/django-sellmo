@@ -18,8 +18,6 @@
 {% block scripts %}
   {{ block.super }}
   
-  <script type="text/javascript" src="{% static "build/js/product.js" %}"></script>
-  
   {% verbatim %}
   <script id="product-availability-template" type="text/x-handlebars-template">
     {{#if available}}

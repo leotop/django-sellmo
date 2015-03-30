@@ -22,7 +22,7 @@ SITE_ID = 1
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'lpkb#+f)+s028)j5r^ni1$%ibe1tc4+b9*u%59gqp!x+7$^+we'
+SECRET_KEY = '@m)a!m7cn=@5%tg$c+2b9!94f$z&i763-&=6=3v*72!)1iiwzd'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -304,7 +304,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_URL = 'http://localhost:8000/'
 
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'example', 'static'),

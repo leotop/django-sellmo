@@ -14,20 +14,11 @@ browserify = require "browserify"
 watchify = require "watchify"
 es = require "event-stream"
 del = require "del"
-minimist = require "minimist"
 path = require "path"
 
 
 # Load config
 config = require "./config"
-
-
-# Load command line parameters
-knownOptions = 
-  string: ['lib']
-
-
-options = minimist(process.argv.slice(2), knownOptions)
 
 
 _handleError = (err) ->
@@ -62,7 +53,6 @@ _browserify = (cb, onBundle=null) ->
       debug: _watch
       extensions: ['.coffee']
       paths: [
-        path.join(options.lib, 'src/coffee'),
         path.join(process.cwd(), config.paths.src, 'bower_components')
       ]
     )
@@ -101,14 +91,12 @@ gulp.task "browserify", ["clean"], (cb) ->
 gulp.task "less", ["clean"], ->
   match = [
       path.join(config.paths.src, '**/*.less')
-      path.join(options.lib, 'src/**/*.less')
   ]
 
   update = (update=false) ->
     src = gulp.src(config.less.sources, cwd: config.paths.src)
       .pipe less {
         paths: [
-          path.join(options.lib, 'src/less'),
           path.join(process.cwd(), config.paths.src, 'bower_components')
         ]
       }
