@@ -6,6 +6,7 @@ example/migrations
 example/example/static/npm-debug.log
 example/example/static/node_modules
 example/example/static/src/bower_components
+example/example/static/dist
 example/example/static/build
 example/*/migrations
 

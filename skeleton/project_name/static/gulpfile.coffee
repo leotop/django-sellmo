@@ -3,6 +3,7 @@ util = require "gulp-util"
 filter = require "gulp-filter"
 order = require "gulp-order"
 concat = require "gulp-concat"
+concatCss = require "gulp-concat-css"
 less = require "gulp-less"
 batch = require "gulp-batch"
 wrap = require "gulp-wrap"
@@ -124,7 +125,7 @@ gulp.task "stylesheets", ["clean", "less"], ->
       .pipe _eachFilename es, (filename) ->
         if not update
           util.log "Using", util.colors.magenta(filename)
-      .pipe concat(config.stylesheets.output)
+      .pipe concatCss(config.stylesheets.output)
       .pipe gulp.dest('.', cwd: config.paths.dist)
       .pipe _eachFilename es, (filename) ->
         if not update
@@ -171,6 +172,13 @@ gulp.task "javascripts", ["clean", "browserify"], ->
   update()
 
 
+gulp.task "collect", ["clean"], ->
+  src = gulp.src(config.collect.sources, cwd: config.paths.src)
+    .pipe _eachFilename es, (filename) ->
+      util.log "Collecting", util.colors.magenta(filename)
+    .pipe gulp.dest('.', cwd: config.paths.dist)
+
+
 gulp.task "clean", (cb) ->
   del([
     path.join(config.paths.build, '**')
@@ -178,7 +186,7 @@ gulp.task "clean", (cb) ->
   ], cb)
 
 
-gulp.task "build", ["stylesheets", "javascripts"]
+gulp.task "build", ["collect", "stylesheets", "javascripts"]
 
 
 gulp.task "watch", ["configure_watch", "build"]

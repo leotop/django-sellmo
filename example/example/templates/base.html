@@ -50,7 +50,7 @@
                 
                 <ul class="nav navbar-nav navbar-right">
                   <li class="hidden-sm dropdown">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-align-left"></span></a>
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="fa fa-info"></span></a>
                     <ul class="dropdown-menu">
                         <li>
                             <a href="a">a</a>
@@ -59,7 +59,7 @@
                   </li>
                   {% if not customer.is_authenticated %}
                   <li class="hidden-xs dropdown">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Inloggen</a>
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="fa fa-user"></span></a>
                     <ul class="dropdown-menu">
                       <li>
                         <div class="dropdown-content login-dropdown">
@@ -82,7 +82,7 @@
                   {% endif %}
                   {% if cart %}
                   <li class="hidden-xs dropdown flexible">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="fa fa-lg fa-shopping-cart"></span> <span class="badge">{{ cart|length }}</span></a>
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="fa fa-shopping-cart"></span> <span class="badge">{{ cart|length }}</span></a>
                     <ul class="dropdown-menu">
                       <li>
                         <div class="dropdown-content cart-dropdown">
@@ -91,7 +91,7 @@
                       </li>
                   </li>
                   {% else %}
-                  <li class="disabled"><a href="{% url 'cart.cart' %}"><span class="fa fa-lg fa-shopping-cart"></span> <span class="badge">{{ cart|length }}</span></a></li>
+                  <li class="disabled"><a href="{% url 'cart.cart' %}"><span class="fa fa-shopping-cart"></span></a></li>
                   {% endif %}
                 </ul>
               </div><!--/.navbar-collapse -->
