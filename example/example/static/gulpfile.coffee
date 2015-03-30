@@ -207,3 +207,6 @@ gulp.task "serve", ["watch"], ->
           next()
       ]
     }
+    
+    
+gulp.task "default", ["serve"]

@@ -17,8 +17,6 @@ module.exports =
   javascripts:
     entries: [
       'bower_components/jquery/dist/jquery.js',
-      'bower_components/bootstrap/js/tooltip.js',
-      'bower_components/bootstrap/js/*.js',
       'plugins.js',
     ]
     output: 'shop/js/shop.js'
