@@ -220,6 +220,10 @@ INSTALLED_APPS += (
     # for polymorphism are overridden.
     'extras',
     
+    {% if 'pages' in apps %}
+    'pages',
+    {% endif %}
+    
     {% if 'data' in apps %}
     # Overrides dumpdata and loaddata commands
     'sellmo.contrib.data',
@@ -310,10 +314,14 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
 
-STATIC_URL = 'http://localhost:8000/'
+STATIC_URL = '/static/'
+
+# Remove this to serve no staticfiles from gulp during 
+# development
+GULP_URL = 'http://localhost:8000/'
 
 STATICFILES_DIRS = (
-    os.path.join(BASE_DIR, '{{ project_name }}', 'static'),
+    os.path.join(BASE_DIR, '{{ project_name }}', 'static/dist'),
 )
 
 # Media files (User uploaded files)

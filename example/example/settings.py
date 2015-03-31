@@ -22,7 +22,7 @@ SITE_ID = 1
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '%mc*j!odth64qhdbeh!t64p3wj^@g!i=$f5u_3#8prf=j(s3ht'
+SECRET_KEY = '_x^h()e!2m)+mq_vdygy=zkbob))scs4kske$!83g!^fj5o0rn'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -218,6 +218,10 @@ INSTALLED_APPS += (
     'extras',
     
     
+    'pages',
+    
+    
+    
 
     # Place admin after sellmo apps.
     # This way sellmo apps can load dependencies
@@ -304,10 +308,14 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
 
-STATIC_URL = 'http://localhost:8000/'
+STATIC_URL = '/static/'
+
+# Remove this to serve no staticfiles from gulp during 
+# development
+GULP_URL = 'http://localhost:8000/'
 
 STATICFILES_DIRS = (
-    os.path.join(BASE_DIR, 'example', 'static'),
+    os.path.join(BASE_DIR, 'example', 'static/dist'),
 )
 
 # Media files (User uploaded files)

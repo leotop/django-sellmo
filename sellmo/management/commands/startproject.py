@@ -28,6 +28,7 @@ DEFAULT_APPS = [
     'availability',
     'brand',
     'color',
+    'pages',
 ]
 
 

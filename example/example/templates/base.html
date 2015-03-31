@@ -1,4 +1,4 @@
-{% load i18n staticfiles thumbnail category sellmo_http %}
+{% load i18n gulp staticfiles thumbnail category sellmo_http %}
 <!DOCTYPE html>
 <html lang="en">
 {% block html %}
@@ -22,7 +22,7 @@
     -->
     
     <!-- Development stylesheets -->
-    <link rel="stylesheet" href="{% static "shop/css/shop.css" %}">
+    <link rel="stylesheet" href="{% gulp_or_static "shop/css/shop.css" %}">
     {% endblock %}
   {% endblock %}
   </head>
@@ -31,7 +31,7 @@
     {% block body %}
     <div id="site">
       {% block navbar %}
-        <div class="navbar navbar-inverse navbar-fixed-top">
+        <div id="site-navigation" class="navbar navbar-inverse navbar-fixed-top">
           <div class="container">
             
             <div class="navbar-header">
@@ -50,7 +50,7 @@
                 
                 <ul class="nav navbar-nav navbar-right">
                   <li class="hidden-sm dropdown">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="fa fa-info"></span></a>
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">{% trans "About" %}</a>
                     <ul class="dropdown-menu">
                         <li>
                             <a href="a">a</a>
@@ -58,7 +58,7 @@
                     </ul>
                   </li>
                   {% if not customer.is_authenticated %}
-                  <li class="hidden-xs dropdown">
+                  <li class="hidden-xs dropdown flexible">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="fa fa-user"></span></a>
                     <ul class="dropdown-menu">
                       <li>
@@ -72,7 +72,7 @@
                     <a href="{% url 'account.login' %}">Inloggen</a>
                   </li>
                   {% else %}
-                  <li class="dropdown">
+                  <li class="dropdown flexible">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{ customer }} <span class="caret"></span></a>
                     <ul class="dropdown-menu">
                       <li><a href="{% url 'account.profile' %}">Profiel</a></li>
@@ -82,7 +82,7 @@
                   {% endif %}
                   {% if cart %}
                   <li class="hidden-xs dropdown flexible">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="fa fa-shopping-cart"></span> <span class="badge">{{ cart|length }}</span></a>
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="fa fa-shopping-cart"></span> ({{ cart|length }})</a>
                     <ul class="dropdown-menu">
                       <li>
                         <div class="dropdown-content cart-dropdown">
@@ -97,7 +97,7 @@
               </div><!--/.navbar-collapse -->
           </div>
         </div>
-        <div id="navigation" role="navigation" class="navbar navbar-default hidden-xs">
+        <div id="categories-navigation" class="navbar navbar-default hidden-xs">
           <div class="container">
             {% block nav %}
             <div class="navbar-collapse collapse">
@@ -169,72 +169,12 @@
       {% endblock %}
     
       <!-- FOOTER -->
-      <footer>
-        <div class="footer-top">
-          <div class="container">
-            <div class="row">
-              <ul>
-                <li><span class="fa fa-lg fa-truck"></span> Gratis verzending *</li>
-                <li><span class="fa fa-lg fa-phone"></span> Klantenservice <strong>{{ settings.contact_phone_number }}</strong></li>
-                <li><span class="fa fa-lg fa-reply"></span> Gratis retourneren **</li>
-              </ul>
-            </div>
-          </div><!-- /container -->
-        </div>
+      <footer id="footer">
+        
         <div class="container">
-          {% categories nested cached 3600 %}
-          <ul class="row category-list">
-            {% node %}
-            <li>
-              <a href="{{ absolute_url }}">{{ node.name }}</a>
-              {% if not node.is_leaf_node %}
-              <ul>
-                {{ children }}
-              </ul>
-              {% endif %}
-            </li>
-            {% endnode %}
-          </ul>
-          {% endcategories %}
-          <ul class="rw brands">
-            {% for brand in brands %}
-              {% if brand.logo %}
-              {% thumbnail brand.logo "x50" format="PNG" as img %}
-              <li><a href="#"><img src="{{ img.url }}" width="{{ img.width }}" height="{{ img.height }}" alt="{{ brand }}"></a></li>
-              {% endthumbnail %}
-              {% endif %}
-            {% endfor %}
-          </ul>
-          <hr/>
-          <div class="clearfix">
-            <div class="pull-left">
-              <p><small>&copy; {% now "Y" %} {{ settings.store_name }}</small></p>
-            </div>
-            <ul class="pull-right social">
-              {% if settings.facebook_url %}
-              <li>
-                <a href="{{ settings.facebook_url }}" class="btn btn-social-icon btn-facebook">
-                  <i class="fa fa-facebook"></i>
-                </a>
-              </li>
-              {% endif %}
-              {% if settings.twitter_url %}
-              <li>
-                <a href="{{ settings.twitter_url }}" class="btn btn-social-icon btn-twitter">
-                  <i class="fa fa-twitter"></i>
-                </a>
-              </li>
-              {% endif %}
-              {% if settings.googleplus_url %}
-              <li>
-                <a href="{{ settings.googleplus_url }}" class="btn btn-social-icon btn-google-plus">
-                  <i class="fa fa-google-plus"></i>
-                </a>
-              </li>
-              {% endif %}
-            </ul>
-          </div>
-        </div><!-- /container -->
+          
+        </div>
+        
       </footer>
     </div>
     
@@ -244,7 +184,7 @@
     <!-- Placed at the end of the document so the pages load faster -->
     
     <!-- Development javascript -->
-    <script type="text/javascript" src="{% static "shop/js/shop.js" %}"></script>
+    <script type="text/javascript" src="{% gulp_or_static "shop/js/shop.js" %}"></script>
     {% endblock %}
   {% endblock %}
   </body>

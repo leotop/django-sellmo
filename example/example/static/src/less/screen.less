@@ -32,7 +32,7 @@ body {
 }
 
 
-/* CUSTOMIZE THE NAVBAR
+/* Custom navigation bars
 -------------------------------------------------- */
 
 .navbar {
@@ -67,79 +67,6 @@ body {
       }
     }
   }
-}
-
-
-/* CUSTOMIZE THE CAROUSEL
--------------------------------------------------- */
-
-/* Carousel base class */
-.carousel {
-  height: 500px;
-  margin-bottom: 60px;
-}
-/* Since positioning the image, we need to help out the caption */
-.carousel-caption {
-  z-index: 10;
-}
-
-/* Declare heights because of positioning of img element */
-.carousel .item {
-  height: 500px;
-  background-color: @brand-primary;
-}
-
-.carousel-inner > .item > .bg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  min-width: 100%;
-  height: 496px;
-  background-size: cover;
-  background-position: center center;
-}
-
-/* Outline button for use within the docs */
-.btn-outline {
-  color: #fff;
-  background-color: #fff;
-  border-color: #fff;
-}
-.btn-outline:hover,
-.btn-outline:focus,
-.btn-outline:active {
-  color: #000;
-  background-color: #fff;
-  border-color: #fff;
-}
-
-/* Inverted outline button (white on dark) */
-.btn-outline-inverse {
-  color: #fff;
-  background-color: transparent;
-  border-color: #fff;
-}
-
-.btn-outline-inverse:hover,
-.btn-outline-inverse:focus,
-.btn-outline-inverse:active {
-  color: #000;
-  text-shadow: none;
-  background-color: #fff;
-  border-color: #fff;
-}
-
-.header {
-    height: 60px;
-    padding: 10px 0;
-    background: @brand-primary;
-    .header-brand {
-      font-size: @font-size-h3;
-      color: #fff;
-    }
-}
-
-#navigation {
   
   // From https://raw.githubusercontent.com/geedmo/yamm3/master/yamm/yamm.less
   // reset positions 
@@ -150,6 +77,7 @@ body {
   }
   
   .dropdown, .dropup {
+    
     &.flexible {
       position: static;
       
@@ -157,65 +85,62 @@ body {
         // Full width menu
         .dropdown-menu {
           left: 0; right: 0;
+          .box-shadow(0 3px 6px rgba(0,0,0,.175));
+          border: none;
+          border-top: 1px @gray-light solid;
+          border-bottom: 1px @gray-light solid;
+        }
+        
+        .dropdown-content {
+          .container;
         }
       }
       
       // by default aligns menu to left
       .dropdown-menu {
         left: auto;
+        border-radius: 0;
       }
       
       // Content with padding 
       .dropdown-content {
         padding: 20px 30px;
-      }  
+      }
     }
-  }  
-  
-  // propagate menu position under container for fw navbars
-  .container {
-    position: relative;
   }
   
-  .cart-dropdown {
-    min-width: 320px;
-  }
-
-  .login-dropdown {
-    min-width: 300px;
-  }
-
+  
   ul.category-list {
     .list-unstyled;
-
+  
     a {
       text-decoration: none;
       display: block;
     }
-
+  
     ul {
       .list-unstyled;
     }
-
+  
     > li {
       .make-sm-column(3);
-
+  
       > a:extend(.h4) {
         color: @brand-primary;
       }
-
+  
       > ul {
         margin-top: 8px;
         border-top: 1px @gray-lighter solid;
         > li {
           > a:extend(.h5) {
             color: @gray;
-
+  
             // Switch up margins with paddings
             margin: 0 !important;
             padding-top: (@line-height-computed / 2);
             padding-bottom: (@line-height-computed / 2);
-
+  
             &:hover {
               background: @gray-lighter;
             }
@@ -229,14 +154,123 @@ body {
   }
 }
 
-#map {
-  .map-canvas:extend(.h3) {
-    width: 100%;
-    height: 400px;
+.navbar-default {
+  .navbar-nav {
+    > li {
+      > a {
+        border-color: @navbar-default-border !important;
+      }
+    }
   }
 }
 
-footer {
+.navbar-inverse{
+  .navbar-nav {
+    > li {
+      > a {
+        border-color: @navbar-inverse-border !important;
+      }
+    }
+  }
+}
+
+#site-navigation {
+  .cart-dropdown {
+    min-width: 320px;
+  }
+  
+  .login-dropdown {
+    min-width: 300px;
+  }
+  
+  .dropdown-menu {
+    top: ~"calc(100% + 5px)";
+  }
+  
+  .container {
+    position: relative;
+  }
+}
+
+#categories-navigation {
+  border-bottom: 1px @navbar-default-border solid;
+  
+  .dropdown-menu {
+    border-color: @navbar-default-border !important;
+    background: darken(@navbar-default-bg, 2.5%);
+  }
+  
+  .categories-dropdown {
+    
+  }
+}
+
+
+/* Custom carousel
+-------------------------------------------------- */
+
+#carousel {
+  
+  height: 460px;
+  margin-bottom: 30px;
+  
+  /* Since positioning the image, we need to help out the caption */
+  .carousel-caption {
+    z-index: 10;
+  }
+  
+  /* Declare heights because of positioning of img element */
+  .item {
+    height: 460px;
+    background-color: @gray-light;
+  }
+  
+  .carousel-inner > .item > .bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    min-width: 100%;
+    height: 460px;
+    background-size: cover;
+    background-position: center center;
+  }
+  
+  /* Outline button for use within the docs */
+  .btn-outline {
+    color: #fff;
+    background-color: #fff;
+    border-color: #fff;
+  }
+  .btn-outline:hover,
+  .btn-outline:focus,
+  .btn-outline:active {
+    color: #000;
+    background-color: #fff;
+    border-color: #fff;
+  }
+  
+  /* Inverted outline button (white on dark) */
+  .btn-outline-inverse {
+    color: #fff;
+    background-color: transparent;
+    border-color: #fff;
+  }
+  
+  .btn-outline-inverse:hover,
+  .btn-outline-inverse:focus,
+  .btn-outline-inverse:active {
+    color: #000;
+    text-shadow: none;
+    background-color: #fff;
+    border-color: #fff;
+  }  
+  
+}
+
+/* Site footer
+-------------------------------------------------- */
+
+#footer {
   background: @footer-bg;
 
   hr {
@@ -326,7 +360,7 @@ footer {
   }
 }
 
-/* RESPONSIVE CSS
+/* Responsive css
 -------------------------------------------------- */
 
 @media (max-width: 768px){

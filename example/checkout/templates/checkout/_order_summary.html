@@ -1,14 +1,16 @@
 {% load i18n %}
 <table class="table">
   <tbody>
+    {% for purchase in order %}
     <tr>
       <td class="col-sm-8">
-        <div class="h5">{{ order|length }} product{% if order|length > 1 %}en{% endif %}</div>
+        <div class="h5"><a href="{{ purchase.product.get_absolute_url }}">{{ purchase }}</a></div>
       </td>
       <td class="col-sm-4">
-          <div class="h5">{{ order.subtotal }}</div>
+          <div class="h5">{{ purchase.total }}</div>
       </td> 
     </tr>
+    {% endfor %}
     {% if order.shipment %}
     <tr>
       <td>

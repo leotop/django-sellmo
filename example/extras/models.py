@@ -1,10 +1,16 @@
-from sellmo.magic.mixin import ModelMixin
-
 from django.db import models
+from django.db.models import Q
+from django.conf import settings
 from django.contrib.admin.util import quote
 from django.contrib.admin.models import LogEntry
-from django.contrib.contenttypes.models import ContentType
+from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
+
+
+from sellmo.magic.mixin import ModelMixin
+from sellmo.core.polymorphism import (PolymorphicQuerySet,
+                                      PolymorphicManager,
+                                      PolymorphicModel)
 
 
 class LogEntryMixin(ModelMixin):

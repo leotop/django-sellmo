@@ -8,9 +8,14 @@ from sellmo.core.mailing import mailer
 from django.shortcuts import render, redirect
 
 
+from store.models import IndexPage, GenericPage
+
+
+
 class StoreModule(modules.store):
     
     prefix = ''
+    
     
     ContactForm = define_import(
         'CONTACT_FORM',
@@ -22,6 +27,7 @@ class StoreModule(modules.store):
             context['contact_form'] = self.ContactForm()
         return chain.execute(request=request, context=context, **kwargs)
     
+    
     @view(r'^$')
     def index(self, chain, request, context=None, **kwargs):
         if context is None:
@@ -30,13 +36,44 @@ class StoreModule(modules.store):
         qs = QueryString(request)
         featured = modules.product.Product.objects.filter(featured=True)
         featured = modules.product.list(request=request, products=featured, query=qs).polymorphic()
-
+        
         context.update({
             'featured': featured[:8],
             'qs': qs
         })
+        
+        
+        try:
+            page = IndexPage.objects.all().latest_published()
+        except IndexPage.DoesNotExist:
+            page = None
+        context.update({
+            'page': page
+        })
+        
 
         return render(request, 'store/index.html', context)
+        
+    
+    @view(r'^page/(?P<path>[-\w/]+)/$')
+    def generic_page(self, chain, request, path, context=None, **kwargs):
+        if context is None:
+            context = {}
+        
+        try:
+            page = GenericPage.objects.filter(path=path).latest_published()
+        except GenericPage.DoesNotExist:
+            raise Http404
+        
+        template = 'store/generic_page.html'
+        if page.template:
+            template = page.template
+        
+        context.update({
+            'page': page,
+        })
+        
+        return render(request, template, context)
     
     @view(r'^contact/$')
     def contact(self, chain, request, context=None, next=None, 
@@ -80,4 +117,4 @@ class StoreModule(modules.store):
         else:
             messages.clear()
             return render(request, 'store/contact.html', context)
-        
+    
