@@ -36,7 +36,7 @@ admin.site.register(modules.discount.Discount, DiscountParentAdmin)
 # Percent discount
 
 class PercentDiscountAdmin(DiscountAdminBase):
-    base_model = modules.discount.PercentDiscount
+    base_model = modules.discount.Discount
 
 
 DiscountParentAdmin.child_models += [(modules.discount.PercentDiscount, PercentDiscountAdmin)]

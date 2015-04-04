@@ -32,7 +32,7 @@ admin.site.register(modules.shipping.ShippingCarrier, ShippingCarrierAdmin)
 # Flat shipping
 
 class FlatShippingMethodAdmin(ShippingMethodAdminBase):
-    base_model = modules.shipping.FlatShippingMethod
+    base_model = modules.shipping.ShippingMethod
 
 
 ShippingMethodParentAdmin.child_models += [
@@ -47,7 +47,7 @@ class TieredShippingTierInline(admin.TabularInline):
 
 
 class TieredShippingMethodAdmin(ShippingMethodAdminBase):
-    base_model = modules.shipping.TieredShippingMethod
+    base_model = modules.shipping.ShippingMethod
     inlines = ShippingMethodAdminBase.inlines + [TieredShippingTierInline]
 
 

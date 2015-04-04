@@ -125,7 +125,7 @@ class SimpleVariantInline(VariantInline):
 
 
 class SimpleProductAdmin(ProductAdminBase):
-    base_model = modules.product.SimpleProduct
+    base_model = modules.product.Product
     inlines = ProductAdminBase.inlines + [SimpleVariantInline]
     
     

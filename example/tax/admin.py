@@ -30,7 +30,7 @@ admin.site.register(modules.tax.Tax, TaxParentAdmin)
 # Percent tax
 
 class PercentTaxAdmin(TaxAdminBase):
-    base_model = modules.tax.PercentTax
+    base_model = modules.tax.Tax
 
 
 TaxParentAdmin.child_models += [(modules.tax.PercentTax, PercentTaxAdmin)]
