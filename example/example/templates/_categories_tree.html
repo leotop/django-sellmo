@@ -1,0 +1,15 @@
+{% load i18n category sellmo_http %}
+{% categories nested current=category cached 3600 %}
+<ul class="categories-tree">
+  {% node %}
+  <li>
+    <a href="{{ absolute_url }}">{{ node.name }}</a>
+    {% if not node.is_leaf_node %}
+      <ul class="hidden-xs">
+        {{ children }}
+      </ul>
+    {% endif %}
+  </li>
+  {% endnode %}
+</ul>
+{% endcategories %}

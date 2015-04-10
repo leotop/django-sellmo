@@ -28,23 +28,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sellmo import modules
-from sellmo.api.decorators import link
+from django.db.models.query import QuerySet
 
 
-@link(namespace=modules.product.namespace)
-def list(request, products, **kwargs):
-    # Filter out active products
-    products = products.filter(active=True)
-    return {
-        'products': products
-    }
+class FacetedProductQuerySet(QuerySet):
 
-
-@link(namespace=modules.product.namespace)
-def single(request, products, **kwargs):
-    # Filter out active products
-    products = products.filter(active=True)
-    return {
-        'products': products
-    }
+    def iterator(self):
+        for product in super(FacetedProductQuerySet, self).iterator():
+            yield product

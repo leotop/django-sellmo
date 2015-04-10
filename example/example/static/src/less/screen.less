@@ -270,89 +270,49 @@ body {
 /* Site footer
 -------------------------------------------------- */
 
+#extra {
+  border-top: 1px @footer-border solid;
+  padding: 20px 0;
+  margin-top: 30px;
+}
+
 #footer {
-  background: @footer-bg;
+  border-top: 1px @footer-border solid;
+  padding: 20px 0;
+}
 
-  hr {
-    border-color: @gray-light;
-  }
-
-  ul.brands {
+.categories-tree {
+  .list-unstyled;
+  
+  ul {
     .list-unstyled;
-    margin-bottom: 40px;
-    li {
-      display: inline-block;
-      margin-right: 20px;
-    }
   }
-
-  ul.social {
-    .list-unstyled;
-    .list-inline;
-  }
-
-  ul.category-list {
-    .list-unstyled;
-    margin-bottom: 40px;
-
-    a {
-      text-decoration: none;
+  
+  // First level
+  > li {
+    
+    > a:extend(.h5) {
       display: block;
+      font-weight: bold;
+      color: @brand-primary;
+      text-transform: uppercase;
     }
-
-    ul {
-      .list-unstyled;
-    }
-
-    > li {
-      .make-sm-column(3);
-
-      > a:extend(.h4) {
-        color: @gray;
-      }
-
-      > ul {
-        border-top: 1px @gray-light dotted;
-        > li {
-          > a:extend(.h5) {
-            color: @gray;
-          }
-
-          li {
-            a {
-              color: @gray-light;
-            }
-          }
+    
+    // Second level
+    > ul {
+      .row;
+      > li {
+        .make-md-column(4);
+        > a:extend(.h4) {
+          display: block;
         }
-      }
-    }
-  }
-
-  .footer-top {
-    background: @brand-primary;
-    color: #fff;
-    margin-bottom: 40px;
-    border-bottom: 2px @brand-success solid;
-    padding: 4px;
-
-    strong {
-      color: @brand-success;
-    }
-
-    ul {
-      .list-unstyled;
-      > li:extend(.h5) {
-        .make-sm-column(4);
-
-        @media (min-width: 768px) {
-          text-align: center;
-
-          &:first-child {
-            text-align: left;
-          }
-
-          &:last-child {
-            text-align: right;
+        
+        // Third level
+        > ul {
+          > li {
+            > a:extend(.h5) {
+              display: block;
+            }
           }
         }
       }

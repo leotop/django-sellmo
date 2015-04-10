@@ -171,4 +171,5 @@ class CategoriesTag(Tag):
 
         return output
 
+
 register.tag(CategoriesTag)

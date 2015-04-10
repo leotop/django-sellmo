@@ -34,6 +34,7 @@ import sellmo
 from sellmo import modules
 from sellmo.api.decorators import view, chainable
 from sellmo.api.exceptions import ViewNotImplemented
+from sellmo.api.configuration import define_setting
 from sellmo.api.product.models import Product, ProductRelatable
 from sellmo.api.http.query import QueryString
 
@@ -45,6 +46,10 @@ class ProductModule(sellmo.Module):
     ProductRelatable = ProductRelatable
     subtypes = []
     reserved_url_params = ['sort']
+    
+    faceting_enabled = define_setting(
+        'FACETING_ENABLED',
+        default=True)
 
     @classmethod
     def register_subtype(self, subtype):
@@ -64,6 +69,10 @@ class ProductModule(sellmo.Module):
                 request=request, products=products, query=query, **kwargs)
             if out.has_key('products'):
                 products = out['products']
+                
+        if self.faceting_enabled:
+            pass
+                
         return products
 
     @chainable()

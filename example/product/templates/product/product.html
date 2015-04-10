@@ -147,15 +147,3 @@
   </div>
 {% endwith %}
 {% endblock %}
-
-{% block extra %}
-<div class="container">
-  <div class="divider-lg-top">
-    <h3 class="h4">Ook interessant</h3>
-    <hr/>
-  </div>
-  {% include "product/_product_list.html" with products=featured index=featured.index classes="col-sm-4 col-xs-6 col-md-3" %}
-</div>
-{{ block.super }}
-{% endblock %}
-

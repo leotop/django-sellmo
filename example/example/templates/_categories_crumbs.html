@@ -1,0 +1,13 @@
+<ol class="breadcrumb categories-breadcrumb">
+  {% for node in category.nodes %}
+  <li{% if node == category %} class="active"{% endif %}>
+    {% if node != category %}
+    <a href="{{ node.get_absolute_url }}">
+    {% endif %}
+    {{ node.name }}
+    {% if node != category %}
+    </a>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ol>

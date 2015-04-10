@@ -69,8 +69,8 @@ class AttributeModule(Module):
             attributes = out.get('attributes', attributes)
         return attributes
     
-    @link(namespace=modules.product.namespace)
-    def list(self, request, products, **kwargs):
+    @link(namespace=modules.product.namespace, name='list')
+    def list_products(self, request, products, **kwargs):
         keys = modules.attribute.Attribute.objects.all() \
                 .values_list('key', flat=True)
         
@@ -95,7 +95,7 @@ class AttributeModule(Module):
             products = self.filter(
                 request=request, products=products, key=key, 
                 value=value, operator=operator)
-    
+        
         return {
             'products': products
         }
@@ -123,7 +123,7 @@ class AttributeModule(Module):
             }
             q = product_q(attribute, **qargs)
         
-        products = products.filter(q) 
+        products = products.filter(q)
          
         if chain:
             out = chain.execute(

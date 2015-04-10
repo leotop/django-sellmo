@@ -40,7 +40,7 @@ from sellmo import modules
 from sellmo.api.decorators import view, chainable, link
 from sellmo.api.configuration import define_setting, define_import
 from sellmo.api.pricing import Currency, Price, PriceType, StampableProperty
-from sellmo.api.pricing.index import PriceIndex, PrefetchedPriceIndex
+from sellmo.api.pricing.indexing import PriceIndex, PrefetchedPriceIndex
 from sellmo.api.pricing.models import PriceIndexBase
 
 

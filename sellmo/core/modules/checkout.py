@@ -56,6 +56,7 @@ def method_choice_format(method, costs, **kwargs):
         return u"{method} +{costs}".format(method=method, costs=costs)
     return u"{method}".format(method=method)
 
+
 class CheckoutModule(sellmo.Module):
 
     namespace = 'checkout'

@@ -11,7 +11,8 @@ module.exports =
     sources: ['less/screen.less']
   stylesheets: 
     entries: [
-      'screen.css' 
+      'bower_components/select2/select2.css',
+      'screen.css'
     ]
     output: 'shop/css/shop.css'
   javascripts:
@@ -20,6 +21,7 @@ module.exports =
       'bower_components/bootstrap/js/tooltip.js',
       'bower_components/bootstrap/js/*.js',
       'bower_components/handlebars/handlebars.js',
+      'bower_components/select2/select2.js',
       'plugins.js',
     ]
     output: 'shop/js/shop.js'

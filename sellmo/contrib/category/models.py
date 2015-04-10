@@ -327,22 +327,25 @@ class Category(MPTTModel):
         qs = modules.category.Category.objects.get_queryset()
         return super(Category, self).get_ancestors(*args, **kwargs) \
                                     ._clone(klass=qs.__class__)
-
-    def get_full_name(self, ancestors=None):
+                                    
+    def get_nodes(self, ancestors=None):
         if ancestors is None:
             ancestors = self.get_ancestors(include_self=True)
         else:
             ancestors = ancestors + [self]
-        return " | ".join(category.name for category in ancestors)
+        return ancestors
+        
+    nodes = property(get_nodes)
+
+    def get_full_name(self, ancestors=None):
+        return " | ".join(category.name for category 
+                           in self.get_nodes(ancestors))
 
     full_name = property(get_full_name)
 
     def get_full_slug(self, ancestors=None):
-        if ancestors is None:
-            ancestors = self.get_ancestors(include_self=True)
-        else:
-            ancestors = ancestors + [self]
-        return "/".join(category.slug for category in ancestors)
+        return "/".join(category.slug for category
+                        in self.get_nodes(ancestors))
 
     full_slug = property(get_full_slug)
 
