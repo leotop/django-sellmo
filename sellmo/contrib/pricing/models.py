@@ -60,12 +60,6 @@ class QtyPriceManager(models.Manager):
         return self.get_queryset().for_qty(*args, **kwargs)
 
 
-@load(action='finalize_qty_pricing_QtyPriceBase')
-def finalize_model():
-    # No need to do anything, QtyPriceBase needs to remain abstract, we do
-    # need this action
-    pass
-
 
 class QtyPriceBase(models.Model):
 
@@ -108,12 +102,6 @@ def load_model():
     modules.qty_pricing.QtyPrice = QtyPrice
 
 
-@load(action='finalize_qty_pricing_QtyPrice')
-def finalize_model():
-    # No need to do anything, QtyPrice needs to remain abstract, we do need
-    # this action
-    pass
-
 
 class QtyPrice(models.Model):
 
@@ -142,13 +130,6 @@ def load_model():
             abstract = True
 
     modules.qty_pricing.QtyPriceRatio = QtyPriceRatio
-
-
-@load(action='finalize_qty_pricing_QtyPriceRatio')
-def finalize_model():
-    # No need to do anything, QtyPriceBase needs to remain abstract, we do
-    # need this action
-    pass
 
 
 class QtyPriceRatio(models.Model):
@@ -189,54 +170,3 @@ class ProductQtyPrice(models.Model):
         abstract = True
         verbose_name = _("qty price")
         verbose_name_plural = _("qty prices")
-
-# Setup indexes
-
-
-@load(after='finalize_product_Product')
-def setup_indexes():
-    index = modules.pricing.get_index('product_price')
-    index.add_kwarg(
-        'qty',
-        models.PositiveIntegerField(null=True),
-        required=False,
-        default=modules.qty_pricing.indexable_qtys
-    )
-
-
-class PriceIndexHandle(models.Model):
-
-    index = models.CharField(
-        editable=False,
-        max_length=255,
-        unique=True,
-        verbose_name=_("index"),
-    )
-
-    updates = PickledObjectField(
-        editable=False,
-        null=True
-    )
-
-    updated = models.DateTimeField(
-        editable=False,
-        null=True
-    )
-
-    def __unicode__(self):
-        return self.index
-
-    class Meta:
-        abstract = True
-        verbose_name = _("price index")
-        verbose_name_plural = _("price indexes")
-
-
-@load(action='finalize_price_indexing_PriceIndexHandle')
-def finalize_model():
-    class PriceIndexHandle(modules.price_indexing.PriceIndexHandle):
-
-        class Meta(modules.price_indexing.PriceIndexHandle.Meta):
-            app_label = 'pricing'
-
-    modules.price_indexing.PriceIndexHandle = PriceIndexHandle

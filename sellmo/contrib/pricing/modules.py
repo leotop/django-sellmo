@@ -36,8 +36,7 @@ from sellmo.api.configuration import define_setting
 from sellmo.contrib.pricing.models import (QtyPriceBase,
                                                    QtyPrice,
                                                    QtyPriceRatio,
-                                                   ProductQtyPrice,
-                                                   PriceIndexHandle)
+                                                   ProductQtyPrice)
 from sellmo.core.query import PKIterator
 
 from django.db import transaction
@@ -84,8 +83,6 @@ class QtyPricingModule(Module):
 
 class PriceIndexingModule(Module):
     namespace = 'price_indexing'
-
-    PriceIndexHandle = PriceIndexHandle
 
     def _get_handle(self, index):
         if self.PriceIndexHandle.objects.filter(index=index).count() == 0:

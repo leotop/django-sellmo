@@ -9,7 +9,7 @@ from django.utils.translation import ugettext_lazy as _
 from sellmo import modules
 from sellmo.api.decorators import load
 from sellmo.contrib.attribute.query import value_q
-from sellmo.contrib.attribute.adapters import AttributeTypeAdapter
+from sellmo.contrib.attribute.adapter import AttributeTypeAdapter
 from sellmo.magic import ModelMixin
 
 

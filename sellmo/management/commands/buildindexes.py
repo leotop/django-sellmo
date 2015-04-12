@@ -26,3 +26,18 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+
+
+from optparse import make_option
+
+from django.core.management.base import BaseCommand, CommandError
+
+from sellmo import modules, params
+params.building_indexes = True
+
+
+class Command(BaseCommand):
+    
+    def handle(self, *args, **options):
+        for name, index in modules.indexing.get_indexes():
+            pass

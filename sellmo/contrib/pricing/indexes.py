@@ -26,3 +26,18 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+
+
+from sellmo import modules
+from sellmo.api.decorators import load
+from sellmo.api import indexing
+
+
+@load(before='finalize_product_ProductIndex')
+def load_index():
+    class ProductIndex(modules.product.ProductIndex):
+        qty = indexing.IntegerField(
+            default=modules.qty_pricing.indexable_qtys
+        )
+    
+    modules.product.ProductIndex = ProductIndex

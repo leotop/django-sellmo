@@ -40,8 +40,6 @@ from sellmo import modules
 from sellmo.api.decorators import view, chainable, link
 from sellmo.api.configuration import define_setting, define_import
 from sellmo.api.pricing import Currency, Price, PriceType, StampableProperty
-from sellmo.api.pricing.indexing import PriceIndex, PrefetchedPriceIndex
-from sellmo.api.pricing.models import PriceIndexBase
 
 
 logger = logging.getLogger('sellmo')
@@ -59,9 +57,6 @@ class PricingModule(sellmo.Module):
     namespace = 'pricing'
     
     types = []
-    indexes = {}
-    
-    PriceIndexBase = PriceIndexBase
     
     currency = define_setting(
         'CURRENCY',
@@ -92,18 +87,6 @@ class PricingModule(sellmo.Module):
             self.currencies = {
                 self.currency.code: self.currency
             }
-
-        # Initialize indexes
-        for index in self.indexes.values():
-            index.add_kwarg(
-                'currency',
-                field_name='price_currency',
-                transform=lambda value: value.code,
-                default=self.currencies.values()
-            )
-            index._build()
-            # Register
-            setattr(self, index.model.__name__, index.model)
 
     @classmethod
     def construct_decimal_field(self, **kwargs):
@@ -198,61 +181,6 @@ class PricingModule(sellmo.Module):
         out = type(name, (model,), attr_dict)
         return out
 
-    @classmethod
-    def create_index(self, identifier):
-        if identifier in self.indexes:
-            raise Exception("Index '{0}' already exists.".format(identifier))
-        index = PriceIndex(identifier)
-        self.indexes[identifier] = index
-        return index
-
-    @classmethod
-    def get_index(self, identifier):
-        if identifier not in self.indexes:
-            raise Exception("Index '{0}' not found.".format(identifier))
-        return self.indexes[identifier]
-
-    @chainable()
-    def update_index(self, chain, identifier, delay=False, **kwargs):
-        
-        # Collect index kwargs
-        out = {}
-        out.update(kwargs)
-        if chain:
-            out.update(chain.execute(identifier=identifier, **kwargs))
-
-        # Get actual index
-        index = self.get_index(identifier)
-
-        # Filter out kwargs
-        iargs = {
-            key: value for key, value in out.iteritems() 
-            if index.is_kwarg(key)
-        }
-
-        # Create all possible combinations
-        combinations = []
-
-        def combine(remaining, combination=None):
-            if combination is None:
-                combination = {}
-            if remaining:
-                key, values = remaining.popitem()
-                for value in values:
-                    merged = {key: value}
-                    merged.update(combination)
-                    combine(dict(remaining), merged)
-            else:
-                combinations.append(combination)
-        combine(iargs)
-
-        if not delay:
-            # Create indexes
-            for combination in combinations:
-                index.index(self.get_price(**combination), **combination)
-        else:
-            return combinations
-
     @chainable()
     def retrieve(self, chain, stampable, prop, price=None, **kwargs):
         if price is None:
@@ -298,26 +226,12 @@ class PricingModule(sellmo.Module):
         if currency is None:
             currency = self.get_currency()
 
-        # Price indexing
-        if index:
-            if isinstance(index, PrefetchedPriceIndex):
-                price = index.lookup(currency=currency.code, **kwargs)
-            else:
-                price = self.get_index(index).lookup(
-                    currency=currency, **kwargs)
-            if price is not None:
-                return price
-
         if price is None:
             price = Price(0, currency=currency)
         if chain:
             out = chain.execute(price=price, currency=currency, **kwargs)
             if out.has_key('price'):
                 price = out['price']
-
-        # Price indexing
-        if index and not isinstance(index, PrefetchedPriceIndex):
-            self.get_index(index).index(price, currency=currency, **kwargs)
 
         return price
 
@@ -326,18 +240,13 @@ class PricingModule(sellmo.Module):
                       index_relation='product', **kwargs):
         if currency is None:
             currency = self.get_currency()
-        if index is not None:
-            products = self.get_index(index).mixin(products, index_relation, 
-                                                   currency=currency, **kwargs)
+        
         if query is not None and index is not None:
             # See if we need to sort on price
             if ('sort', 'price') in query:
-                products = products.indexes(
-                    lambda qs: qs.order_by('price_amount'))
+                pass
             elif ('sort', '-price') in query:
-                products = products.indexes(
-                    lambda qs: qs.order_by('-price_amount'))
-
+                pass
         return {
             'products': products
         }

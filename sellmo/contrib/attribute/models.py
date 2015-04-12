@@ -55,7 +55,6 @@ class ValueObject(PolymorphicModel):
 
 @load(action='finalize_attribute_ValueObject')
 def finalize_model():
-    
     class ValueObject(modules.attribute.ValueObject):
         class Meta(modules.attribute.ValueObject.Meta):
             app_label = 'attribute'
@@ -83,7 +82,6 @@ def load_model():
 
 @load(action='finalize_attribute_Value')
 def finalize_model():
-
     class Value(modules.attribute.Value):
         class Meta(modules.attribute.Value.Meta):
             app_label = 'attribute'

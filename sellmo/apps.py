@@ -61,6 +61,7 @@ class DefaultConfig(AppConfig):
     core_modules  = define_setting(
         'SELLMO_CORE_MODULES',
         default=[
+            'sellmo.core.modules.indexing.IndexingModule',
             'sellmo.core.modules.pricing.PricingModule',
             'sellmo.core.modules.product.ProductModule',
             'sellmo.core.modules.store.StoreModule',
@@ -120,7 +121,7 @@ class DefaultConfig(AppConfig):
         
         # Import .modules and .configure submodules for 
         # each Sellmo App
-        imports = ['modules', 'configure']
+        imports = ['modules', 'indexes', 'configure']
         apps = list(six.itervalues(params.sellmo_apps))
         for module_name in imports:
             for app in reversed(apps):

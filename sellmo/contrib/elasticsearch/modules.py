@@ -26,3 +26,14 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+
+
+from sellmo import modules
+from sellmo.api.configuration import define_import
+
+
+class IndexingModule(modules.indexing):
+    
+    DefaultIndexAadapter = define_import(
+        'DEFAULT_INDEX_ADAPTER',
+        default='sellmo.contrib.elasticsearch.adapter.ElasticSearchIndexAdapter')

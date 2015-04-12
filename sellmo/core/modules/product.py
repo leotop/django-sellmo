@@ -32,12 +32,33 @@ from django.http import Http404
 
 import sellmo
 from sellmo import modules
-from sellmo.api.decorators import view, chainable
+from sellmo.api.decorators import view, chainable, load
 from sellmo.api.exceptions import ViewNotImplemented
-from sellmo.api.configuration import define_setting
 from sellmo.api.product.models import Product, ProductRelatable
+from sellmo.api.product.indexes import ProductIndex
 from sellmo.api.http.query import QueryString
 
+
+@load(action='finalize_product_Product')
+def finalize_model():
+    class Product(modules.product.Product):
+
+        class Meta(modules.product.Product.Meta):
+            app_label = 'product'
+
+    modules.product.Product = Product
+
+
+@load(action='finalize_product_ProductIndex')
+@load(after='finalize_product_Product')
+def register_index():
+    
+    class ProductIndex(modules.product.ProductIndex):
+        model = modules.product.Product
+        
+    modules.product.ProductIndex = ProductIndex
+    modules.indexing.register_index('product', ProductIndex)
+     
 
 class ProductModule(sellmo.Module):
 
@@ -47,9 +68,7 @@ class ProductModule(sellmo.Module):
     subtypes = []
     reserved_url_params = ['sort']
     
-    faceting_enabled = define_setting(
-        'FACETING_ENABLED',
-        default=True)
+    ProductIndex = ProductIndex
 
     @classmethod
     def register_subtype(self, subtype):
@@ -64,15 +83,15 @@ class ProductModule(sellmo.Module):
             products = self.Product.objects.all()
         if query is None:
             query = QueryString(request)
+        
+        index = modules.indexing.get_index('product')
+        products = index.get_indexed_queryset(products)
+        
         if chain:
             out = chain.execute(
                 request=request, products=products, query=query, **kwargs)
             if out.has_key('products'):
                 products = out['products']
-                
-        if self.faceting_enabled:
-            pass
-                
         return products
 
     @chainable()

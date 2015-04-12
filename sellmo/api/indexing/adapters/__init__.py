@@ -26,3 +26,54 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+
+
+class IndexAdapter(object):
+    
+    def supports_runtime_build(self):
+        return False
+    
+    def initialize_index(self, index):
+        """
+        Called for each new index. Allows
+        for intialization purposes.
+        """
+        pass
+    
+    def introspect_index(self, index):
+        """
+        The adapter needs introspect it's existing index
+        structure and return a dictionary of index fields.
+        If the index does not exist it should return False.
+        """
+        raise NotImplementedError()
+    
+    def build_index(self, index):
+        """
+        Build internal index structure.
+        """
+        raise NotImplementedError()
+        
+    def rebuild_index(self, index, added_fields=None, deleted_fields=None):
+        """
+        Rebuild internal index structure.
+        """
+        raise NotImplementedError()
+
+    def update_index(self, index, documents):
+        """
+        (Re)indexes each document from the given iterable.
+        """
+        raise NotImplementedError()
+
+    def clear_index(self, index, documents):
+        """
+        Clears the index for each document from the given iterable.
+        """
+        raise NotImplementedError()
+
+    def search_index(self, index, query):
+        """
+        Searches the index
+        """
+        raise NotImplementedError()

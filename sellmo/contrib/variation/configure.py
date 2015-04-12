@@ -41,4 +41,5 @@ def on_variations_invalidated(sender, product, **kwargs):
 if celery.enabled:
     variations_invalidated.connect(on_variations_invalidated)
 
+
 modules.product.reserved_url_params += ['variants']

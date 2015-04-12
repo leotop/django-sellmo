@@ -36,30 +36,8 @@ from django.db.models.signals import (pre_save, pre_delete, post_save,
 from django.utils.translation import ugettext_lazy as _
 
 from sellmo import modules
-from sellmo.api.decorators import load
 from sellmo.core.polymorphism import (PolymorphicModel, PolymorphicManager, 
                                       PolymorphicQuerySet)
-
-
-def get_indexable_products():
-    return modules.product.Product.objects.all()
-
-
-@load(action='finalize_product_Product')
-def finalize_model():
-    class Product(modules.product.Product):
-
-        class Meta(modules.product.Product.Meta):
-            app_label = 'product'
-
-    modules.product.Product = Product
-    index = modules.pricing.create_index('product_price')
-    index.add_kwarg(
-        'product',
-        models.ForeignKey(Product),
-        default=get_indexable_products,
-        model=Product
-    )
 
 
 class ProductQuerySet(PolymorphicQuerySet):

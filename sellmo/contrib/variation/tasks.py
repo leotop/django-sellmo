@@ -47,6 +47,7 @@ def build_variations(product):
                     " for product '{0}'".format(product))
         modules.variation.Variation.objects.build(product)
 
+
 @shared_task
 def invalidate_variations(products):
     logger.info("Invalidating variations")

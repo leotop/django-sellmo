@@ -28,11 +28,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from django.db.models.query import QuerySet
+from sellmo import modules
+from sellmo.api import indexing
 
 
-class FacetedProductQuerySet(QuerySet):
+class ProductIndex(modules.product.ProductIndex):
 
-    def iterator(self):
-        for product in super(FacetedProductQuerySet, self).iterator():
-            yield product
+    categories = indexing.MultiValueField()
+
+
+modules.product.ProductIndex = ProductIndex

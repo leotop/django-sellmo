@@ -26,3 +26,11 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+
+
+from sellmo.api.indexing.index import Index
+from sellmo.api.indexing.query import indexed_queryset_factory
+from sellmo.api.indexing.fields import (BooleanField,
+                                        IntegerField,
+                                        CharField,
+                                        MultiValueField)

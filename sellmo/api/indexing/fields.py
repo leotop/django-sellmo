@@ -27,28 +27,43 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from django.db import models
-from django.db.models.query import QuerySet
-from django.utils.translation import ugettext_lazy as _
 
-from sellmo import modules
-from sellmo.api.decorators import load
-
-
-@load(action='finalize_pricing_PriceIndexBase')
-def finalize_model():
-    class PriceIndexBase(modules.pricing.PriceIndexBase):
-
-        class Meta(modules.pricing.PriceIndexBase.Meta):
-            abstract = True
-            app_label = 'pricing'
+class IndexField(object):
     
-    modules.pricing.PriceIndexBase = PriceIndexBase
-
-
-class PriceIndexBase(models.Model):
+    creation_counter = 0
     
-    class Meta:
-        abstract = True
+    def __init__(self, get_value_cb=None, required=False, default=None):
+        self.get_value_cb = get_value_cb
+        self.required = required
+        self.default = default
+        
+    def get_value(self, document):
+        if self.get_value_cb is not None:
+            return self.get_value_cb(document)
+        elif self.default is not None:
+            return self.default
+        raise NotImplementedError()
+    
 
-
+class ModelField(IndexField):
+    
+    def __init__(self, model, *args, **kwargs):
+        super(ModelField, self).__init__(*args, **kwargs)
+        self.model = model
+    
+    
+class BooleanField(IndexField):
+    pass
+    
+    
+class CharField(IndexField):
+    pass
+    
+    
+class IntegerField(IndexField):
+    pass
+    
+    
+class MultiValueField(IndexField):
+    pass
+    

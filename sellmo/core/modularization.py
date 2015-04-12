@@ -86,7 +86,7 @@ class MountPoint(object):
             if not inspect.isclass(module):
                 raise Exception(
                     "Module '{0}' has already been init.".format(module))
-
+            
             # Initialize
             instance = module()
 

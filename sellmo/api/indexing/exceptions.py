@@ -28,4 +28,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sellmo.api.pricing.base import *
+class IndexExceptionBase(Exception):
+    pass
+    
+    
+class IndexMissingException(IndexExceptionBase):
+    pass
+    
+    
+class IndexInvalidatedException(IndexExceptionBase):
+    pass
