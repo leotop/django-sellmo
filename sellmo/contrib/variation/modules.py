@@ -179,7 +179,7 @@ class VariationModule(Module):
                         # combination
                         qargs = {
                             'values__attribute': group,
-                            'values__{0}'.format(group.value_field): 
+                            'values__{0}'.format(group.get_type().get_value_field_name()): 
                                 value,
                             'product': product,
                         }

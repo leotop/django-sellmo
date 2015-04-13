@@ -26,3 +26,39 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+
+
+from django import forms
+from django.db import models
+
+from sellmo import modules
+from sellmo.contrib.attribute.types import AttributeType
+
+
+class ColorAttributeType(AttributeType):
+
+    def __init__(self, key='color'):
+        super(ColorAttributeType, self).__init__(key)
+
+    def get_value_field(self):
+        return models.ForeignKey(
+            'color.Color',
+            null=True,
+            blank=True,
+            related_name='+'
+        )
+        
+    def get_model(self):
+        return modules.color.Color
+        
+    def get_formfield_type(self):
+        return forms.ModelChoiceField
+        
+    def get_choices(self):
+        return modules.color.Color.objects.all()
+        
+    def parse(self, string):
+        try:
+            return modules.color.Color.objects.get(name__iexact=string)
+        except modules.color.Color.DoesNotExist:
+            raise ValueError(string)

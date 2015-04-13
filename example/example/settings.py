@@ -22,7 +22,7 @@ SITE_ID = 1
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '_x^h()e!2m)+mq_vdygy=zkbob))scs4kske$!83g!^fj5o0rn'
+SECRET_KEY = '!q(ff=i$%lq!1^2_xd3vu%u=(yge$kwg585wki#*p@gpr13caq'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -374,6 +374,20 @@ SELLMO_ORDER_STATUSES = {
         'on_closed' : True,
     }),
 }
+
+
+
+SELLMO_ATTRIBUTE_TYPES = [
+    'sellmo.contrib.attribute.types.StringAttributeType',
+    'sellmo.contrib.attribute.types.IntegerAttributeType',
+    'sellmo.contrib.attribute.types.FloatAttributeType',
+    
+    'sellmo.contrib.color.types.ColorAttributeType',
+    
+    
+    'brand.types.BrandAttributeType',
+    
+]
 
 
 

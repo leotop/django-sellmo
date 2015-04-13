@@ -1,32 +1,15 @@
 import os.path
 
 from django.db import models
-from django.db.models import Q
-from django.db.models.query import QuerySet
-from django.db.models.signals import pre_save, post_save, pre_delete
 from django.utils.translation import ugettext_lazy as _
 
 from sellmo import modules
 from sellmo.api.decorators import load
-from sellmo.contrib.attribute.query import value_q
-from sellmo.contrib.attribute.adapter import AttributeTypeAdapter
-from sellmo.magic import ModelMixin
 
 
-# Media
 def upload_image_to(instance, filename):
     return os.path.join('brand', instance.slug, filename)
 
-
-class BrandAdapter(AttributeTypeAdapter):
-    def get_choices(self):
-        return modules.brand.Brand.objects.all()
-        
-    def parse(self, string):
-        try:
-            return modules.brand.Brand.objects.get(name__iexact=string)
-        except modules.brand.Brand.DoesNotExist:
-            raise ValueError()
     
 class Brand(models.Model):
 
@@ -65,9 +48,6 @@ class Brand(models.Model):
         verbose_name=_("short description")
     )
 
-    def polymorphic_natural_key(self):
-        return (self.name,)
-
     def __unicode__(self):
         return self.name
 
@@ -77,37 +57,9 @@ class Brand(models.Model):
 
 
 @load(action='finalize_brand_Brand')
-@load(after='finalize_attribute_ValueObject')
 def finalize_model():
-    class Brand(modules.brand.Brand, modules.attribute.ValueObject):
-
-        class Meta(modules.brand.Brand.Meta,
-                   modules.attribute.ValueObject.Meta):
-            app_label = 'attribute'
-            verbose_name = _("brand")
-            verbose_name_plural = _("brands")
+    class Brand(modules.brand.Brand):
+        class Meta(modules.brand.Brand.Meta):
+            app_label = 'brand'
 
     modules.brand.Brand = Brand
-    
-    
-@load(before='finalize_attribute_Attribute')
-def register_attribute_types():
-    modules.attribute.register_attribute_type(
-        'brand',
-        BrandAdapter(),
-        verbose_name=_("brand"))
-
-
-@load(after='finalize_brand_Brand')
-def load_manager():
-
-    class BrandManager(modules.brand.Brand.objects.__class__):
-
-        def get_by_polymorphic_natural_key(self, name):
-            return self.get(name=name)
-
-    class Brand(ModelMixin):
-        model = modules.brand.Brand
-        objects = BrandManager()
-
-

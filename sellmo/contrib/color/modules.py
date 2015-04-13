@@ -30,9 +30,8 @@
 
 from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable, link
-from sellmo.contrib.color.models import Color, MultiColor, ColorMapping
+from sellmo.contrib.color.models import Color
 
-from django.http import Http404
 from django.utils.translation import ugettext_lazy as _
 
 
@@ -40,26 +39,3 @@ class ColorModule(Module):
 
     namespace = 'color'
     Color = Color
-    MultiColor = MultiColor
-    ColorMapping = ColorMapping
-
-    @chainable()
-    def get_colors(self, chain, product=None, attribute=None, colors=None,
-                   **kwargs):
-        if colors is None:
-            if product:
-                mappings = self.ColorMapping.objects.for_product(product)
-            else:
-                mappings = self.ColorMapping.objects.none()
-            if attribute:
-                mappings = mappings.for_attribute(attribute)
-            colors = self.Color.objects.filter(
-                pk__in=mappings.values_list('color', flat=True))
-
-        if chain:
-            out = chain.execute(
-                product=product, attribute=attribute, colors=colors, **kwargs)
-            if out.has_key('colors'):
-                colors = out['colors']
-
-        return colors

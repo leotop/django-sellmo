@@ -1,10 +1,11 @@
 
 from pages.admin import PageParentAdmin, PageAdminBase
+from pages.models import Page
 from store.models import IndexPage, GenericPage
 
 
 class IndexPageAdmin(PageAdminBase):
-    base_model = IndexPage
+    base_model = Page
     
 
 PageParentAdmin.child_models += [
@@ -13,7 +14,7 @@ PageParentAdmin.child_models += [
 
 
 class GenericPageAdmin(PageAdminBase):
-    base_model = GenericPage
+    base_model = Page
 
 
 PageParentAdmin.child_models += [

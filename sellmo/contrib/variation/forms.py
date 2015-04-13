@@ -33,14 +33,7 @@ from sellmo import modules
 from django.db.models import Q
 from django import forms
 from django.forms import ValidationError
-from django.forms.models import ModelForm, BaseInlineFormSet
-from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
-from django.utils.text import capfirst
-from django.utils import six
-from django.contrib.admin.sites import NotRegistered
-from django.contrib.admin.widgets import ForeignKeyRawIdWidget
-from django.contrib.contenttypes.models import ContentType
 from django.core.validators import EMPTY_VALUES
 
 from sellmo.contrib.attribute.forms import ProductAttributeFormFactory
@@ -50,7 +43,7 @@ from sellmo.contrib.variation.utils import generate_slug
 class SaveFieldMixin(object):
 
     def get_invalidated_values(self, product, attribute, values):
-        field = '{0}__in'.format(attribute.value_field)
+        field = '{0}__in'.format(attribute.get_type().get_value_field_name())
         kwargs = {
             field: values
         }
@@ -61,7 +54,7 @@ class SaveFieldMixin(object):
             attribute=attribute, product=product, variates=True).filter(q)
 
     def get_existing_values(self, product, attribute, values):
-        field = '{0}__in'.format(attribute.value_field)
+        field = '{0}__in'.format(attribute.get_type().get_value_field_name())
         kwargs = {
             field: values
         }
@@ -85,7 +78,7 @@ class SaveFieldMixin(object):
                 obj.save()
 
 
-class SeperatedInputField(forms.Field):
+class SeperatedInputField(forms.Field, SaveFieldMixin):
 
     def __init__(self, field, seperator=u'|', **kwargs):
         super(SeperatedInputField, self).__init__(**kwargs)
@@ -108,63 +101,35 @@ class SeperatedInputField(forms.Field):
         return result
 
 
-class SeperatedCharField(SeperatedInputField, SaveFieldMixin):
-
-    def __init__(self, **kwargs):
-        super(SeperatedCharField, self).__init__(
-            field=forms.CharField, **kwargs)
-
-
-class SeperatedIntegerField(SeperatedInputField, SaveFieldMixin):
-
-    def __init__(self, **kwargs):
-        super(SeperatedIntegerField, self).__init__(
-            field=forms.IntegerField, **kwargs)
-
-
-class SeperatedFloatField(SeperatedInputField, SaveFieldMixin):
-
-    def __init__(self, **kwargs):
-        super(SeperatedFloatField, self).__init__(
-            field=forms.FloatField, **kwargs)
-
-
-class ObjectField(forms.ModelMultipleChoiceField, SaveFieldMixin):
+class ModelMultipleChoiceField(forms.ModelMultipleChoiceField, SaveFieldMixin):
 
     def from_values(self, values):
-        return modules.attribute.ValueObject.objects.filter(
+        return self.queryset.filter(
             pk__in=[value.get_value().pk for value in values])
 
 
 class ProductVariationFormFactory(ProductAttributeFormFactory):
 
-    FIELD_CLASSES = {
-        modules.attribute.Attribute.TYPE_STRING: SeperatedCharField,
-        modules.attribute.Attribute.TYPE_INT: SeperatedIntegerField,
-        modules.attribute.Attribute.TYPE_FLOAT: SeperatedFloatField,
-    }
-
     def get_attributes(self):
-        return modules.attribute.Attribute.objects.filter(variates=True)
+        attributes = super(ProductVariationFormFactory, self).get_attributes()
+        return attributes.filter(variates=True)
         
-    def get_attribute_field(self, attribute):
-        if attribute.type in self.FIELD_CLASSES:
-            field = self.FIELD_CLASSES[attribute.type]
-        else:
-            field = ObjectField
-        field = field(
-            *self.get_attribute_field_args(attribute, field),
-            **self.get_attribute_field_kwargs(attribute, field)
-        )
-    
-        return field
-
-    def get_attribute_field_args(self, attribute, field):
+    def get_attribute_formfield(self, attribute):
         args = []
-        if field is ObjectField:
-            args.append(attribute.choices)
-
-        return args
+        kwargs = {
+            'label': attribute.name,
+            'required': False
+        }
+        
+        formfield = attribute.get_type().get_formfield_type()
+        if formfield is forms.ModelChoiceField:
+            formfield = ModelMultipleChoiceField
+            args = [attribute.get_type().get_model().objects.all()]
+        else:
+            args = [formfield]
+            formfield = SeperatedInputField
+        
+        return formfield(*args, **kwargs)
 
 
 class ProductVariationFormMixin(object):
@@ -260,7 +225,7 @@ class VariantAttributeFormMixin(object):
             value = modules.attribute.Value(attribute=attribute)
             value.value = self.cleaned_data.get(
                 self.__attribute_field_names[attribute.key])
-            if value.is_assigned:
+            if not value.is_empty():
                 values.append(value)
 
         # Enforce at least one variated value

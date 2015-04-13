@@ -71,7 +71,7 @@ class VariantAttributeHelper(AttributeHelper):
 
     def get_value_value(self, key):
         value = self.get_value(key)
-        if not value.is_assigned:
+        if value.is_empty():
             value = self._product.product.attributes.get_value(key)
         return value.value
 
@@ -92,7 +92,7 @@ class VariantAttributeHelper(AttributeHelper):
             if value.attribute.key not in values:
                 values[value.attribute.key] = value
         for value in values.values():
-            if value.is_assigned:
+            if not value.is_empty():
                 yield value
 
 
@@ -118,5 +118,5 @@ class VariationAttributeHelper(object):
     def __iter__(self):
         self.populate()
         for value in self._values.values():
-            if value.is_assigned:
+            if not value.is_empty():
                 yield value

@@ -518,7 +518,7 @@ class VariationManager(models.Manager):
                 # Get variations for this grouped attribute / value combination
                 qargs = {
                     'values__attribute': group,
-                    'values__{0}'.format(group.value_field): value,
+                    'values__{0}'.format(group.get_type().get_value_field_name()): value,
                 }
                 variations = modules.variation.Variation.objects.filter(
                     product=product).filter(**qargs)

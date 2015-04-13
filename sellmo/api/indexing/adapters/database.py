@@ -98,8 +98,8 @@ class DatabaseIndexAdapter(IndexAdapter):
             for row in connection.introspection.get_table_description(cursor, db_table):
                 exists = True
                 column_name = row[0]
-                if column_name not in ['id', 'document']:
-                    pass
+                if column_name not in ['id', 'document_id']:
+                    print row
         if exists:
             return fields
         return False

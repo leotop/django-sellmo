@@ -29,6 +29,7 @@
 
 
 from sellmo import modules
+from sellmo.contrib.attribute.types import AttributeType
 
 import re
 
@@ -77,4 +78,3 @@ class AttributeTypeField(models.CharField):
             raise ValidationError(
                 _("Cannot change attribute type "
                   "of an attribute that is already in use."))
-

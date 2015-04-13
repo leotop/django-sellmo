@@ -26,3 +26,38 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+
+
+from django import forms
+from django.db import models
+
+from sellmo import modules
+from sellmo.contrib.attribute.types import AttributeType
+
+
+class BrandAttributeType(AttributeType):
+
+    def __init__(self, key='brand'):
+        super(BrandAttributeType, self).__init__(key)
+
+    def get_value_field(self):
+        return models.ForeignKey(
+            'brand.Brand',
+            null=True,
+            blank=True,
+        )
+        
+    def get_model(self):
+        return modules.brand.Brand
+        
+    def get_formfield_type(self):
+        return forms.ModelChoiceField
+
+    def get_choices(self):
+        return modules.brand.Brand.objects.all()
+
+    def parse(self, string):
+        try:
+            return modules.brand.Brand.objects.get(slug__iexact=string)
+        except modules.brand.Brand.DoesNotExist:
+            raise ValueError(string)

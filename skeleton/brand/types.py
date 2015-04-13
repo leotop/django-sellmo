@@ -28,15 +28,36 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from django.core.management.base import BaseCommand, CommandError
+from django import forms
+from django.db import models
 
 from sellmo import modules
+from sellmo.contrib.attribute.types import AttributeType
 
 
-class Command(BaseCommand):
+class BrandAttributeType(AttributeType):
 
-    def handle(self, *args, **options):
-        options = []
-        modules.color.ColorMapping.objects.all().delete()
-        for value in modules.attribute.Value.objects.all():
-            modules.color.ColorMapping.objects.map_or_unmap(value)
+    def __init__(self, key='brand'):
+        super(BrandAttributeType, self).__init__(key)
+
+    def get_value_field(self):
+        return models.ForeignKey(
+            'brand.Brand',
+            null=True,
+            blank=True,
+        )
+        
+    def get_model(self):
+        return modules.brand.Brand
+        
+    def get_formfield_type(self):
+        return forms.ModelChoiceField
+
+    def get_choices(self):
+        return modules.brand.Brand.objects.all()
+
+    def parse(self, string):
+        try:
+            return modules.brand.Brand.objects.get(slug__iexact=string)
+        except modules.brand.Brand.DoesNotExist:
+            raise ValueError(string)

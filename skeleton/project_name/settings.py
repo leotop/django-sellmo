@@ -382,6 +382,20 @@ SELLMO_ORDER_STATUSES = {
 }
 {% endif %}
 
+{% if 'attribute' in apps %}
+SELLMO_ATTRIBUTE_TYPES = [
+    'sellmo.contrib.attribute.types.StringAttributeType',
+    'sellmo.contrib.attribute.types.IntegerAttributeType',
+    'sellmo.contrib.attribute.types.FloatAttributeType',
+    {% if 'color' in apps %}
+    'sellmo.contrib.color.types.ColorAttributeType',
+    {% endif %}
+    {% if 'brand' in apps %}
+    'brand.types.BrandAttributeType',
+    {% endif %}
+]
+{% endif %}
+
 {% if not bare %}
 SELLMO_REPORT_GENERATORS = [
     'sellmo.contrib.reporting.generators.weasyprint_reporting.WeasyPrintReportGenerator'

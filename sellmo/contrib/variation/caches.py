@@ -44,8 +44,6 @@ class ProductVariationsCache(Cache):
         # Reconstruct
         if grouped:
             product_qs = modules.product.Product.objects.all().polymorphic()
-            value_object_qs = modules.attribute.ValueObject.objects \
-                                     .all().polymorphic()
             grouped_variations = []
             
             if len(cache) > 0:
@@ -55,8 +53,9 @@ class ProductVariationsCache(Cache):
                 attribute = modules.attribute.Attribute.objects \
                                    .get(pk=cache[0]['attribute'])
                 
-                if attribute.value_field == 'value_object':
-                    all_values = list(PKIterator(value_object_qs, all_values))
+                model = attribute.get_type().get_model()
+                if model:
+                    all_values = list(PKIterator(model, all_values))
             
             for variation in cache:
                 
@@ -79,7 +78,8 @@ class ProductVariationsCache(Cache):
 
             variations = grouped_variations
         else:
-            variations = all_variations
+            variations = modules.variation.Variations.objects.all()
+            variations.query = cache
 
         return variations
 
@@ -116,14 +116,12 @@ class ProductVariationsCache(Cache):
     def finalize(self, product, variations, variations_hit, grouped=False,
                  **kwargs):
         if not variations_hit:
-            cache = []
-            for variation in variations:
-                if not grouped:
-                    cache.append(variation.pk)
-                else:
+            if grouped:
+                cache = []
+                for variation in variations:
                     attribute = variation['attribute']
                     value = variation['value']
-                    if attribute.value_field == 'value_object':
+                    if attribute.get_type().get_model():
                         value = value.pk
                     cache.append({
                         'attribute': attribute.pk,
@@ -131,6 +129,8 @@ class ProductVariationsCache(Cache):
                         'variations': variation['variations'].query,
                         'variant': variation['variant'].pk,
                     })
+            else:
+                cache = variations.query
 
             self.set(self.get_variations_key(product.pk, grouped), cache)
 

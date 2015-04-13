@@ -45,11 +45,11 @@ def value_q(attribute, *args, **kwargs):
 
     for operator, value in kwargs.iteritems():
         # Apply operator
-        lookup = '{0}__{1}'.format(attribute.value_field, operator)
+        lookup = '{0}__{1}'.format(attribute.get_type().get_value_field_name(), operator)
         qargs[lookup] = value
         
     for value in args:
-        lookup = attribute.value_field
+        lookup = attribute.get_type().get_value_field_name()
         qargs[lookup] = value
     
     return Q(**qargs)

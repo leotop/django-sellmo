@@ -42,8 +42,7 @@ def load_index():
         def get_fields(self):
             fields = super(ProductIndex, self).get_fields()
             for attribute in modules.attribute.Attribute.objects.all():
-                #fields['%s_attr' % attribute.key] = None
-                pass
+                fields['%s_attr' % attribute.key] = None
             return fields
     
     modules.product.ProductIndex = ProductIndex

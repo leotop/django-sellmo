@@ -30,36 +30,18 @@
 
 from django.db import models
 from django.db.models.query import QuerySet, ValuesQuerySet
+from django.utils import six
 from django.utils.translation import ugettext_lazy as _
 
 from sellmo import modules
 from sellmo.magic import ModelMixin
 from sellmo.api.decorators import load
 from sellmo.core.query import PKIterator
-from sellmo.core.polymorphism import PolymorphicModel, PolymorphicManager
 from sellmo.utils.formatting import call_or_format
 from sellmo.contrib.attribute.fields import (AttributeKeyField, 
                                              AttributeTypeField)
 from sellmo.contrib.attribute.helpers import AttributeHelper
 
-
-VALUE_FIELDS = ['value_string', 'value_int', 'value_float', 'value_object']
-
-
-class ValueObject(PolymorphicModel):
-    class Meta:
-        abstract = True
-        verbose_name = _("value object")
-        verbose_name_plural = _("value objects")
-
-
-@load(action='finalize_attribute_ValueObject')
-def finalize_model():
-    class ValueObject(modules.attribute.ValueObject):
-        class Meta(modules.attribute.ValueObject.Meta):
-            app_label = 'attribute'
-
-    modules.attribute.ValueObject = ValueObject
     
 
 @load(before='finalize_product_Product')
@@ -78,6 +60,33 @@ def load_model():
             abstract = True
 
     modules.product.Product = Product
+    
+
+@load(after='finalize_attribute_Attribute')
+@load(before='finalize_attribute_Value')
+def load_model():
+    
+    Value = modules.attribute.Value
+    
+    value_fields = [
+        typ.get_value_field_name()
+        for typ in six.itervalues(modules.attribute.attribute_types)]
+    
+    class Meta(Value.Meta):
+        abstract = True
+        ordering = ['attribute'] + value_fields
+
+    
+    attr_dict = {
+        'Meta': Meta,
+        '__module__': Value.__module__
+    }
+    
+    for typ in six.itervalues(modules.attribute.attribute_types):
+        attr_dict[typ.get_value_field_name()] = typ.get_value_field()
+    
+    Value = type('Value', (Value,), attr_dict)
+    modules.attribute.Value = Value
 
 
 @load(action='finalize_attribute_Value')
@@ -94,46 +103,76 @@ class SmartValueValuesQuerySet(ValuesQuerySet):
     def iterator(self):
         rows = []
         
+        last_col = None
+        def get_used_value_type(row):
+            if last_col:
+                typ = value_types.get(last_col, None)
+                if typ and not typ.is_empty(row[last_col]):
+                    return typ
+            for col in row:
+                typ = value_types.get(col, None)
+                if typ and not typ.is_empty(row[col]):
+                    # Keep track of last col to speed
+                    # up large querysets
+                    last_col = col
+                    return typ
+            return None
+        
+        value_types = {
+            typ.get_value_field_name(): typ
+            for typ in six.itervalues(modules.attribute.attribute_types)
+        }
+        
+        # Keeps track of pk's for each model to prefetch
+        value_models = {
+            typ.get_model(): set()
+            for typ in six.itervalues(modules.attribute.attribute_types)
+            if typ.get_model()
+        }
+        
+        # Keeps track of pk's for attribute to prefetch     
         attributes = set()
-        value_objects = set()
+        
         for row in super(SmartValueValuesQuerySet, self).iterator():
             if 'attribute' in row:
                 attributes.add(row['attribute'])
-            if row.get('value_object', None) is not None:
-                value_objects.add(row['value_object'])
+            
+            typ = get_used_value_type(row)
+            if typ:
+                value = row[typ.get_value_field_name()]
+                row['value'] = value
+                model = typ.get_model()
+                if model:
+                    value_models[model].add(value)
+                
             rows.append(row)
             
         # Lookup Attributes
-        if attributes:
-            attributes = {
-                obj.pk: obj
-                for obj in PKIterator(
-                    modules.attribute.Attribute,
-                    attributes)}
-        # Lookup ValueObjects           
-        if value_objects:
-            value_objects = {
-                obj.pk: obj
-                for obj in PKIterator(
-                    modules.attribute.ValueObject.objects.polymorphic(),
-                    value_objects)}
-            
+        attributes = ({
+            obj.pk: obj for obj in PKIterator(
+                modules.attribute.Attribute,
+                attributes)}
+            if attributes else {})
+                    
+        # Lookup value models
+        value_models = {
+            model: ({
+                obj.pk: obj for obj in PKIterator(model, pks)
+            } if pks else {})
+            for model, pks in six.iteritems(value_models)}
+        
         for row in rows:
-            attribute = None
             if 'attribute' in row:
-                attribute = attributes[row['attribute']]
-                row['attribute'] = attribute
-            if row.get('value_object', None) is not None:
-                row['value_object'] = value_objects[row['value_object']]
-            if attribute is not None:
-                row['value'] = row.get(attribute.value_field, None)
+                row['attribute'] = attributes[row['attribute']]
+            typ = get_used_value_type(row)
+            if typ:
+                model = typ.get_model()
+                if model:
+                    row['value'] = value_models[model][row['value']]
             yield row
     
 
 class ValueQuerySet(QuerySet):
-
-    _prefetch_value_objects = False
-    _prefetched_value_objects = None
 
     def for_product(self, product):
         return self.filter(product=product)
@@ -143,55 +182,18 @@ class ValueQuerySet(QuerySet):
         
     def smart_values(self, *fields):
         fields = list(fields)
+        value_field_names = [
+            typ.get_value_field_name()
+            for typ in six.itervalues(modules.attribute.attribute_types)
+        ]
+        
         if 'value' in fields:
             fields.remove('value')
-            fields.extend(VALUE_FIELDS)
-            if 'attribute' not in fields:
-                # This is required if we
-                # want to return the find actual value
-                # for each row.
-                fields.append('attribute')
+            fields.extend(value_field_names)
         
         values = self.values(*fields)
         values = values._clone(klass=SmartValueValuesQuerySet)
         return values
-        
-    def _clone(self, *args, **kwargs):
-        clone = super(ValueQuerySet, self)._clone(*args, **kwargs)
-        clone._prefetch_value_objects = self._prefetch_value_objects
-        return clone
-    
-    def prefetch_value_objects(self):
-        clone = self._clone()
-        clone._prefetch_value_objects = True
-        return clone
-    
-    def __iter__(self):
-        out = []
-        for obj in super(ValueQuerySet, self).__iter__():
-            out.append(obj)
-        
-        if self._prefetch_value_objects:
-            if self._prefetched_value_objects is None:
-                self._prefetched_value_objects = modules.attribute \
-                    .ValueObject.objects \
-                    .polymorphic() \
-                    .filter(values__in=self) \
-                    .distinct()
-                
-            # Map value objects to pk
-            value_objects = {}
-            for value_object in self._prefetched_value_objects:
-                value_objects[value_object.pk] = value_object
-            
-            # Assign value objects
-            for value in out:
-                if (value.value_object_id is not None and
-                        value.value_object_id in value_objects):
-                    value.value_object = value_objects[value.value_object_id]
-            
-        for obj in out:
-            yield obj
     
 
 class ValueManager(models.Manager):
@@ -216,31 +218,6 @@ class ValueManager(models.Manager):
 class Value(models.Model):
 
     objects = ValueManager()
-
-    value_int = models.IntegerField(
-        null=True,
-        blank=True,
-    )
-
-    value_float = models.FloatField(
-        null=True,
-        blank=True,
-    )
-
-    value_string = models.CharField(
-        max_length=255,
-        blank=True,
-        default='',
-    )
-    
-    value_object = models.ForeignKey(
-        'attribute.ValueObject',
-        null=True,
-        blank=True,
-        db_index=True,
-        on_delete=models.PROTECT,
-        related_name='values'
-    )
     
     # E(A)V
     attribute = models.ForeignKey(
@@ -259,17 +236,15 @@ class Value(models.Model):
     )
 
     def get_value(self):
-        field = self.attribute.value_field
-        value = getattr(self, field)
-        if field == 'value_object' and value:
-            value = value.downcast()
+        field_name = self.attribute.get_type().get_value_field_name()
+        value = getattr(self, field_name)
         return value
 
     def set_value(self, value):
         if value != self.get_value():
             self._old_value = self.get_value()
-        field = self.attribute.value_field
-        setattr(self, field, value)
+        field_name = self.attribute.get_type().get_value_field_name()
+        setattr(self, field_name, value)
 
     value = property(get_value, set_value)
 
@@ -281,19 +256,14 @@ class Value(models.Model):
         return self._old_value
 
     old_value = property(get_old_value)
-
-    @property
-    def is_assigned(self):
-        value = self.get_value()
-        field = self.attribute.value_field
-        if field == 'value_string':
-            return value is not None and len(value) > 0
-        return value is not None
+    
+    def is_empty(self):
+        return self.attribute.get_type().is_empty(self.get_value())
 
     def save_value(self):
         # Re-assign product
         self.product = self.product
-        if self.is_assigned:
+        if not self.is_empty():
             self.save()
         elif not self.pk is None:
             self.delete()
@@ -309,7 +279,6 @@ class Value(models.Model):
 
     class Meta:
         abstract = True
-        ordering = ['attribute'] + VALUE_FIELDS
         verbose_name = _("value")
         verbose_name_plural = _("values")
     
@@ -317,9 +286,9 @@ class Value(models.Model):
 @load(action='finalize_attribute_Attribute')
 def finalize_model():
 
-    choices = list(modules.attribute.Attribute.TYPE_CHOICES)
-    for key, typ in modules.attribute.attribute_types.iteritems():
-        choices.append((key, typ['verbose_name']))
+    choices = []
+    for typ in six.itervalues(modules.attribute.attribute_types):
+        choices.append((typ.key, typ.get_verbose_name()))
 
     class Attribute(modules.attribute.Attribute):
         
@@ -327,7 +296,7 @@ def finalize_model():
             max_length=255,
             db_index=True,
             choices=choices,
-            default=modules.attribute.Attribute.TYPE_STRING
+            default=choices[0][0] if choices else None
         )
         
         class Meta(modules.attribute.Attribute.Meta):
@@ -357,18 +326,6 @@ class AttributeManager(models.Manager):
 class Attribute(models.Model):
 
     objects = AttributeManager()
-
-    TYPE_STRING = 'string'
-    TYPE_INT = 'int'
-    TYPE_FLOAT = 'float'
-    
-    TYPES = [TYPE_STRING, TYPE_INT, TYPE_FLOAT]
-
-    TYPE_CHOICES = (
-        (TYPE_STRING, _("string")),
-        (TYPE_INT, _("integer")),
-        (TYPE_FLOAT, _("float")),
-    )
 
     name = models.CharField(
         max_length=100
@@ -410,48 +367,10 @@ class Attribute(models.Model):
         super(Attribute, self).save(*args, **kwargs)
 
     def parse(self, string):
-        if self.type == self.TYPE_STRING:
-            return string
-        elif self.type == self.TYPE_INT:
-            try:
-                return int(string)
-            except ValueError:
-                pass
-        elif self.type == self.TYPE_FLOAT:
-            return float(string)
-        else:
-            return self._get_adapter().parse(string) 
-        raise ValueError("Could not parse '{0}' for "
-                         "attribute '{1}'.".format(string, self))
-
-    @property
-    def value_field(self):
-        if self.type in self.TYPES:
-            return 'value_{0}'.format(self.type)
-        return 'value_object'
-
-    @property
-    def help_text(self):
-        return ''
-
-    @property
-    def label(self):
-        return self.name.capitalize()
-
-    @property
-    def validators(self):
-        return []
-    
-    def _get_adapter(self):
-        if self.type in modules.attribute.attribute_types:
-            return modules.attribute.attribute_types[self.type]['adapter']
-        else:
-            raise Exception("Attribute '{0}' with type '{1}' "
-                            "has no adapter".format(self.key, self.type))
-
-    @property
-    def choices(self):
-        return self._get_adapter().get_choices()
+        return self.get_type().parse(string)
+        
+    def get_type(self):
+        return modules.attribute.attribute_types[self.type]
 
     def natural_key(self):
         return (self.key,)
@@ -515,8 +434,7 @@ def load_manager():
         def _get_prefetched_values(self):
             prefetched = modules.attribute \
                 .Value.objects.filter(product__in=self) \
-                .select_related('product__id', 'attribute') \
-                .prefetch_value_objects()
+                .select_related('product__id', 'attribute')
             if len(self._prefetch_attributes) > 0:
                 prefetched = prefetched.filter(
                     attribute__key__in=self._prefetch_attributes)

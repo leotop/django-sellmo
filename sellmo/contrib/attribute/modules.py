@@ -32,12 +32,25 @@ from sellmo import modules, Module
 from sellmo.api.decorators import view, chainable, link
 from sellmo.api.configuration import define_setting
 from sellmo.contrib.attribute.models import (Attribute,
-                                                    Value,
-                                                    ValueObject)
+                                             Value)
+                                            
 from sellmo.contrib.attribute.query import product_q
+from sellmo.contrib.attribute.types import (IntegerAttributeType,
+                                            FloatAttributeType,
+                                            StringAttributeType)
 
 from django.http import Http404
+from django.utils.module_loading import import_by_path
 from django.utils.translation import ugettext_lazy as _
+
+
+def attribute_types_transform(value):
+    types = {}
+    for typ in value:
+        if isinstance(typ, basestring):
+            typ = import_by_path(typ)()
+        types[typ.key] = typ
+    return types
 
 
 class AttributeModule(Module):
@@ -45,13 +58,22 @@ class AttributeModule(Module):
     namespace = 'attribute'
     Attribute = Attribute
     Value = Value
-    ValueObject = ValueObject
     
     attribute_types = {}
     
     value_format = define_setting(
         'VALUE_FORMAT',
-        default=u"{value}")
+        default = u"{value}")
+        
+    attribute_types = define_setting(
+        'ATTRIBUTE_TYPES',
+        default = [
+            StringAttributeType(),
+            IntegerAttributeType(),
+            FloatAttributeType()
+        ],
+        transform = attribute_types_transform
+    )
 
     @chainable()
     def get_sorted_values(self, chain, values, attribute=None,
@@ -132,12 +154,3 @@ class AttributeModule(Module):
             products = out.get('products', products)
         
         return products
-        
-    @classmethod
-    def register_attribute_type(self, type, adapter, verbose_name=None):
-        if verbose_name is None:
-            verbose_name = unicode(type)
-        self.attribute_types[type] = {
-            'adapter': adapter,
-            'verbose_name': verbose_name
-        }

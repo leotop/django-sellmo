@@ -32,15 +32,7 @@ from sellmo import modules
 from sellmo.utils.forms import FormFactory
 
 from django import forms
-from django.forms import ValidationError
-from django.forms.models import ModelForm, BaseInlineFormSet
-from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
-from django.utils.text import capfirst
-from django.utils import six
-from django.contrib.admin.sites import NotRegistered
-from django.contrib.admin.widgets import ForeignKeyRawIdWidget
-from django.contrib.contenttypes.models import ContentType
 
 
 class ProductAttributeFormMixin(object):
@@ -74,13 +66,7 @@ class ProductAttributeFormMixin(object):
 
 
 class ProductAttributeFormFactory(FormFactory):
-
-    FIELD_CLASSES = {
-        modules.attribute.Attribute.TYPE_STRING: forms.CharField,
-        modules.attribute.Attribute.TYPE_INT: forms.IntegerField,
-        modules.attribute.Attribute.TYPE_FLOAT: forms.FloatField
-    }
-
+        
     def __init__(self, form=forms.ModelForm, mixin=ProductAttributeFormMixin, 
                  prefix=None):
         self.form = form
@@ -90,34 +76,18 @@ class ProductAttributeFormFactory(FormFactory):
     def get_attributes(self):
         return modules.attribute.Attribute.objects.all()
 
-    def get_attribute_field(self, attribute):
-        if attribute.type in self.FIELD_CLASSES:
-            field = self.FIELD_CLASSES[attribute.type]
-        else:
-            field = forms.ModelChoiceField
-        field = field(
-            *self.get_attribute_field_args(attribute, field),
-            **self.get_attribute_field_kwargs(attribute, field)
-        )
-
-        return field
-
-    def get_attribute_field_kwargs(self, attribute, field):
-        kwargs = {
-            'label': attribute.label,
-            'required': attribute.required,
-            'help_text': attribute.help_text,
-            'validators': attribute.validators,
-        }
-
-        return kwargs
-
-    def get_attribute_field_args(self, attribute, field):
+    def get_attribute_formfield(self, attribute):
         args = []
-        if field is forms.ModelChoiceField:
-            args.append(attribute.choices)
-
-        return args
+        kwargs = {
+            'label': attribute.name,
+            'required': attribute.required
+        }
+        
+        formfield = attribute.get_type().get_formfield_type()
+        if formfield is forms.ModelChoiceField:
+            args = [attribute.get_type().get_model().objects.all()]
+        
+        return formfield(*args, **kwargs)
 
     def factory(self):
         attributes = self.get_attributes()
@@ -129,7 +99,7 @@ class ProductAttributeFormFactory(FormFactory):
             '_{0}__attribute_fields'.format(self.mixin.__name__): fields,
         }
         for attribute in attributes:
-            field = self.get_attribute_field(attribute)
+            field = self.get_attribute_formfield(attribute)
             name = attribute.key
             if self.prefix:
                 name = '{0}_{1}'.format(self.prefix, name)

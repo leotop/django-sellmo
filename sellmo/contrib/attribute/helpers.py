@@ -107,7 +107,7 @@ class AttributeHelper(object):
     def __iter__(self):
         self.populate()
         for value in self._values.values():
-            if value.is_assigned:
+            if not value.is_empty():
                 yield value
 
     def __len__(self):

@@ -28,12 +28,84 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-class AttributeTypeAdapter(object):
+from django import forms
+from django.db import models
 
+
+class AttributeType(object):
+    
+    def __init__(self, key):
+        self.key = key
+        
+    def get_value_field_name(self):
+        return 'value_%s' % self.key
+        
+    def get_value_field(self):
+        raise NotImplementedError()
+    
     def parse(self, string):
         raise NotImplementedError()
 
     def get_choices(self):
+        return None
+        
+    def get_model(self):
+        return None
+        
+    def get_formfield_type(self):
         raise NotImplementedError()
         
+    def is_empty(self, value):
+        return value is None
     
+    def get_verbose_name(self):
+        return unicode(self.key)
+        
+
+class IntegerAttributeType(AttributeType):
+    
+    def __init__(self, key='int'):
+        super(IntegerAttributeType, self).__init__(key)
+    
+    def get_value_field(self):
+        return models.IntegerField(
+            null=True,
+            blank=True,
+        )
+        
+    def get_formfield_type(self):
+        return forms.IntegerField
+        
+
+class FloatAttributeType(AttributeType):
+    
+    def __init__(self, key='float'):
+        super(FloatAttributeType, self).__init__(key)
+    
+    def get_value_field(self):
+        return models.FloatField(
+            null=True,
+            blank=True,
+        )
+        
+    def get_formfield_type(self):
+        return forms.FloatField
+
+
+class StringAttributeType(AttributeType):
+
+    def __init__(self, key='string'):
+        super(StringAttributeType, self).__init__(key)
+
+    def get_value_field(self):
+        return models.CharField(
+            max_length=255,
+            blank=True,
+            default='',
+        )
+        
+    def get_formfield_type(self):
+        return forms.CharField
+        
+    def is_empty(self, value):
+        return value is ''
