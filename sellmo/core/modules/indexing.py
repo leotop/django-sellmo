@@ -113,8 +113,7 @@ class IndexingModule(sellmo.Module):
                 if (building or adapter.supports_runtime_build()):
                     adapter.rebuild_index(index, added, deleted)
                 else:
-                    logger.warning('Missing index fields')
-                    print intersection
+                    logger.warning('Index %s not in sync' % index)
                     index.fields = intersection
         
         adapter.initialize_index(index)

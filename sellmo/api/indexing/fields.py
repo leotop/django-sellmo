@@ -48,7 +48,8 @@ class IndexField(object):
         return (False, None)
         
     def __eq__(self, other):
-        return type(self) is type(other)
+        return (type(self) is type(other)
+                and self.required == other.required)
     
 
 class ModelField(IndexField):
@@ -60,14 +61,7 @@ class ModelField(IndexField):
     def __eq__(self, other):
         return (super(ModelField, self).__eq__(other)
                 and self.model is other.model)
-        
-class DocumentField(ModelField):
-    
-    def __init__(self, model):
-        super(DocumentField, self).__init__(model, required=True)
-        
-    def populate_field(self, document, **variety):
-        return True, document
+
     
     
 class BooleanField(IndexField):
@@ -79,6 +73,10 @@ class CharField(IndexField):
     def __init__(self, max_length, *args, **kwargs):
         super(CharField, self).__init__(*args, **kwargs)
         self.max_length = max_length
+        
+    def __eq__(self, other):
+        return (super(ModelField, self).__eq__(other)
+                and self.max_length == other.max_length)
     
     
 class IntegerField(IndexField):
@@ -95,3 +93,8 @@ class DecimalField(IndexField):
         super(DecimalField, self).__init__(*args, **kwargs)
         self.max_digits = max_digits
         self.decimal_places = decimal_places
+        
+    def __eq__(self, other):
+        return (super(ModelField, self).__eq__(other)
+                and self.max_digits == other.max_digits
+                and self.decimal_places == other.decimal_places)

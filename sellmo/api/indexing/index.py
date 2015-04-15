@@ -36,9 +36,18 @@ from django.utils import six
 from django.db import models
 
 from sellmo import modules
-from sellmo.api.indexing.fields import IndexField, DocumentField
+from sellmo.api.indexing.fields import IndexField, ModelField
 from sellmo.api.indexing.exceptions import IndexInvalidatedException, IndexFieldException
 from sellmo.api.indexing.query import indexed_queryset_factory
+
+
+class DocumentField(ModelField):
+
+    def __init__(self, model):
+        super(DocumentField, self).__init__(model, required=True)
+
+    def populate_field(self, document, **variety):
+        return True, document
 
 
 class IndexMetaClass(type):
