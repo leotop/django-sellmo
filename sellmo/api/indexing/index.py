@@ -29,14 +29,15 @@
 
 
 import copy
+import itertools
 from collections import OrderedDict
 
 from django.utils import six
 from django.db import models
 
 from sellmo import modules
-from sellmo.api.indexing.fields import IndexField, ModelField
-from sellmo.api.indexing.exceptions import IndexInvalidatedException
+from sellmo.api.indexing.fields import IndexField, DocumentField
+from sellmo.api.indexing.exceptions import IndexInvalidatedException, IndexFieldException
 from sellmo.api.indexing.query import indexed_queryset_factory
 
 
@@ -76,7 +77,7 @@ class IndexMetaClass(type):
             if not issubclass(model, models.Model):
                 raise ValueError('Index model %s is not a model.' % model)
             # Create document field
-            declared_fields['document'] = ModelField(model, required=True)
+            declared_fields['document'] = DocumentField(model)
         
         new_class.base_fields = declared_fields
         new_class.declared_fields = declared_fields
@@ -100,6 +101,46 @@ class Index(six.with_metaclass(IndexMetaClass, object)):
     def get_fields(self):
         return copy.deepcopy(self.base_fields)
         
+    def populate(self, document, values, **variety):
+        return values
+        
+    def get_indexes(self, document):
+        
+        # Create all possible varieties
+        varieties = itertools.product(*[
+            [(field_name, variety) for variety in field.varieties] 
+            for field_name, field in six.iteritems(self.fields)
+            if field.varieties
+        ])
+        
+        for variety in  varieties:
+            pass
+        
+        values = {}
+        missing = {}
+        
+        # First get values from each seperate field
+        for field_name, field in six.iteritems(self.fields):
+            has_value, value = field.populate_field(document)
+            if has_value:
+                values[field_name] = value
+            else:
+                missing[field_name] = field
+        
+        # Now allow index to provide additonal values
+        result = {}
+        for field_name, value in six.iteritems(self.populate(document, values)):
+            if field_name not in self.fields:
+                raise IndexFieldException("%s is not an index field" % field_name) 
+            missing.pop(field_name, None)
+            result[field_name] = value
+        
+        for field_name, field in six.iteritems(missing):
+            if field.required:
+                raise IndexFieldException("%s is required" % field_name)
+        
+        return result
+        
     def _not_invalidated(self):
         if self._invalidated:
             raise IndexInvalidatedException()
@@ -113,7 +154,7 @@ class Index(six.with_metaclass(IndexMetaClass, object)):
         return queryset
         
     def invalidate(self):
-        modules.indexing._reinitialize_index(self)
+        modules.indexing._invalidate_index(self)
         self._invalidated = True
         
     def search(self, query):
@@ -122,11 +163,11 @@ class Index(six.with_metaclass(IndexMetaClass, object)):
         
     def update(self, queryset=None):
         self._not_invalidated()
-        self.adapter.update_index(self._get_queryset(queryset))
+        self.adapter.update_index(self, self._get_queryset(queryset))
         
     def clear(self, queryset=None):
         self._not_invalidated()
-        self.adapter.clear_index(self._get_queryset(queryset))
+        self.adapter.clear_index(self, self._get_queryset(queryset))
         
     def get_indexed_queryset(self, queryset=None):
         self._not_invalidated()

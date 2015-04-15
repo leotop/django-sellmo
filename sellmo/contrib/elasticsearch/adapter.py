@@ -28,8 +28,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sellmo.api.indexing.adapters import IndexAdapter
+from sellmo.api import indexing
 
 
-class ElasticSearchIndexAdapter(IndexAdapter):
+class ElasticSearchIndexAdapter(indexing.IndexAdapter):
     pass

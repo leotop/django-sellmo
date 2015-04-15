@@ -34,4 +34,9 @@ from sellmo.api.pricing.indexes import PriceIndex
 
 
 class ProductIndex(PriceIndex):
-    pass
+    
+    price_fields = ['price']
+    
+    def populate_price_field(self, price_field, currency_code, currency, 
+                                document, values):
+        pass

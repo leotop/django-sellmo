@@ -31,6 +31,40 @@
 from sellmo import modules
 from sellmo.api import indexing
 
+from django.utils import six
+
 
 class PriceIndex(indexing.Index):
-    pass
+    
+    price_prefixes = []
+    
+    def populate_fields(self, document, values):
+        values = super(PriceIndex, self).populate_fields(document, values)
+        
+        currencies = modules.pricing.currencies
+        types = modules.pricing.types
+        
+        for prefix in self.price_prefixes:
+            for currency_code, currency in six.iteritems(currencies):
+                pass
+        return values
+        
+    def get_price(self, document, prefix, currency_code, currency, **kwargs):
+        raise NotImplementedError()
+    
+    def get_fields(self):
+        fields = super(PriceIndex, self).get_fields()
+        currencies = modules.pricing.currencies
+        types = modules.pricing.types
+        
+        for prefix in self.price_prefixes:
+            for currency_code, currency in six.iteritems(currencies):
+                for key in types + ['amount']:
+                    field_name = '%s_%s_%s' % (prefix, currency_code, key)
+                    fields[field_name] = indexing.DecimalField()
+                    
+                    extra_fields = getattr(key, 'extra_fields', {})
+                    for extra_field_name, extra_field in extra_fields.iteritems():
+                        name = '%s_%s'.format(field_name, extra_field_name)
+                
+        return fields

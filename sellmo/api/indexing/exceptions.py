@@ -38,3 +38,7 @@ class IndexMissingException(IndexExceptionBase):
     
 class IndexInvalidatedException(IndexExceptionBase):
     pass
+
+
+class IndexFieldException(IndexExceptionBase):
+    pass

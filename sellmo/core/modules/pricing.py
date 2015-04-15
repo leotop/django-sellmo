@@ -58,8 +58,8 @@ class PricingModule(sellmo.Module):
     
     types = []
     
-    currency = define_setting(
-        'CURRENCY',
+    default_currency = define_setting(
+        'DEFAULT_CURRENCY',
         default=('eur', _(u"euro"), _(u"\u20ac {amount:\u00a0>{align}.2f}")),
         transform=lambda value : Currency(*value)
     )
@@ -85,7 +85,7 @@ class PricingModule(sellmo.Module):
         # Configure
         if not self.currencies:
             self.currencies = {
-                self.currency.code: self.currency
+                self.default_currency.code: self.default_currency
             }
 
     @classmethod
@@ -213,7 +213,7 @@ class PricingModule(sellmo.Module):
     @chainable()
     def get_currency(self, chain, request=None, currency=None, **kwargs):
         if currency is None:
-            currency = self.currency
+            currency = self.default_currency
         if chain:
             out = chain.execute(request=request, currency=currency, **kwargs)
             if out.has_key('currency'):

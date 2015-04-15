@@ -32,9 +32,6 @@ from sellmo import modules, celery, params
 from sellmo.api.decorators import link
 from sellmo.api.pricing import Price
 
-if celery.enabled:
-    from sellmo.contrib.pricing import tasks
-
 
 namespace = modules.pricing.namespace
 
@@ -53,12 +50,3 @@ def get_price(price, product=None, currency=None, qty=1, **kwargs):
         'qty': qty,
         'price': price
     }
-
-if celery.enabled and not getattr(params, 'worker_mode', False):
-    @link(capture=True)
-    def update_index(identifier, **kwargs):
-        yield override_update_index
-
-
-def override_update_index(module, chain, identifier, **kwargs):
-    tasks.queue_update.apply_async((identifier,), kwargs)

@@ -54,7 +54,7 @@ def on_discount_pre_save(sender, instance, **kwargs):
 
 
 def on_discount_post_save(sender, instance, **kwargs):
-    invalidate_indexes(discount=instance)
+    update_indexes(discount=instance)
 
 
 def on_discount_m2m_changed(sender, instance, action, reverse, **kwargs):
@@ -67,25 +67,27 @@ def on_discount_m2m_changed(sender, instance, action, reverse, **kwargs):
 
 
 def on_discount_pre_delete(sender, instance, **kwargs):
-    invalidate_indexes(discount=instance)
+    update_indexes(discount=instance)
         
         
 def on_group_post_save(sender, instance, **kwargs):
-    invalidate_indexes(group=instance)
+    update_indexes(group=instance)
     
 
 def on_discount_groups_changed(sender, instance, **kwargs):
-    invalidate_indexes(discount=instance)
+    update_indexes(discount=instance)
     
 
-def invalidate_indexes(discount=None, group=None):
+def update_indexes(discount=None, group=None):
+    """
     if discount:
-        modules.pricing.get_index('product_price').update(
-            product=modules.product.Product.objects.for_relatable(discount))
+        products = modules.product.Product.objects.for_relatable(discount)
     elif group:
-        modules.pricing.get_index('product_price').update(
-            discount_group=[group])
-
+        modules.pricing.get_index('product_price').update(discount_group=[group])
+    """
+    print 'update discount'
+    pass
+    
 
 @load(after='finalize_product_ProductRelatable')
 @load(action='finalize_discount_Discount')
@@ -197,10 +199,6 @@ class DiscountGroup(models.Model):
         abstract = True
         verbose_name = _("discount group")
         verbose_name_plural = _("discount groups")
-    
-
-def get_discount_groups():
-    return [None] + list(modules.discount.DiscountGroup.objects.all())
    
      
 @load(before='finalize_store_Purchase')
@@ -226,20 +224,6 @@ def load_model():
                 abstract = True
                 
         modules.store.Purchase = Purchase
-        
-
-@load(after='finalize_product_Product')
-def setup_indexes():
-    if modules.discount.user_discount_enabled:
-        index = modules.pricing.get_index('product_price')
-        index.add_kwarg(
-            'discount_group',
-            models.ForeignKey(
-                'discount.DiscountGroup',
-                null=True),
-            required=False,
-            default=get_discount_groups,
-        )
 
 
 @load(after='finalize_discount_Discount')

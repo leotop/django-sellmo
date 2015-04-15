@@ -77,8 +77,9 @@ modules.settings.add_setting('tax_inclusive', models.BooleanField(
 
 
 def on_setting_changed(sender, setting, old, new, site, **kwargs):
-    if setting == 'tax_inclusive':
-        modules.pricing.get_index('product_price').update()
+    #modules.pricing.get_index('product_price').update()
+    print 'tax settings changed'
+        
 
 setting_changed.connect(on_setting_changed)
 

@@ -31,6 +31,8 @@
 from django import forms
 from django.db import models
 
+from sellmo.api import indexing
+
 
 class AttributeType(object):
     
@@ -41,6 +43,9 @@ class AttributeType(object):
         return 'value_%s' % self.key
         
     def get_value_field(self):
+        raise NotImplementedError()
+        
+    def get_index_field(self, attribute):
         raise NotImplementedError()
     
     def parse(self, string):
@@ -73,6 +78,9 @@ class IntegerAttributeType(AttributeType):
             blank=True,
         )
         
+    def get_index_field(self, attribute):
+        return indexing.IntegerField()
+        
     def get_formfield_type(self):
         return forms.IntegerField
         
@@ -87,6 +95,9 @@ class FloatAttributeType(AttributeType):
             null=True,
             blank=True,
         )
+        
+    def get_index_field(self, attribute):
+        return indexing.FloatField()
         
     def get_formfield_type(self):
         return forms.FloatField
@@ -104,8 +115,26 @@ class StringAttributeType(AttributeType):
             default='',
         )
         
+    def get_index_field(self, attribute):
+        return indexing.CharField(max_length=255)
+        
     def get_formfield_type(self):
         return forms.CharField
         
     def is_empty(self, value):
         return value is ''
+        
+        
+class ModelAttributeTypeBase(AttributeType):
+    
+    def get_model(self):
+        raise NotImplementedError()
+        
+    def get_index_field(self, attribute):
+        return indexing.ModelField(self.get_model())
+        
+    def get_formfield_type(self):
+        return forms.ModelChoiceField
+        
+    def get_choices(self):
+        return self.get_model().objects.all()

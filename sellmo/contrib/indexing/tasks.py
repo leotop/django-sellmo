@@ -28,15 +28,16 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from django.core.management.base import BaseCommand, CommandError
+from celery import shared_task
 
 from sellmo import modules
-from sellmo import params
-params.worker_mode = True
 
 
-class Command(BaseCommand):
+@shared_task
+def queue_update(identifier, **kwargs):
+    modules.indexing.queue_update(identifier=identifier, **kwargs)
+    
 
-    def handle(self, *args, **options):
-        options = []
-        modules.price_indexing.PriceIndexHandle.objects.update(updates=None)
+@shared_task
+def handle_updates():
+    modules.indexing.handle_updates()

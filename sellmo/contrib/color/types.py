@@ -28,14 +28,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from django import forms
 from django.db import models
 
 from sellmo import modules
-from sellmo.contrib.attribute.types import AttributeType
+from sellmo.contrib.attribute.types import ModelAttributeTypeBase
 
 
-class ColorAttributeType(AttributeType):
+class ColorAttributeType(ModelAttributeTypeBase):
 
     def __init__(self, key='color'):
         super(ColorAttributeType, self).__init__(key)
@@ -51,14 +50,8 @@ class ColorAttributeType(AttributeType):
     def get_model(self):
         return modules.color.Color
         
-    def get_formfield_type(self):
-        return forms.ModelChoiceField
-        
-    def get_choices(self):
-        return modules.color.Color.objects.all()
-        
     def parse(self, string):
         try:
-            return modules.color.Color.objects.get(name__iexact=string)
-        except modules.color.Color.DoesNotExist:
+            return self.get_model().objects.get(name__iexact=string)
+        except self.get_model().DoesNotExist:
             raise ValueError(string)

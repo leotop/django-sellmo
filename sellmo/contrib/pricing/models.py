@@ -39,8 +39,6 @@ from django.db.models.signals import post_save, pre_delete
 from django.db.models.query import QuerySet
 from django.utils.translation import ugettext_lazy as _
 
-from picklefield.fields import PickledObjectField
-
 
 class QtyPriceQuerySet(QuerySet):
 
@@ -138,9 +136,9 @@ class QtyPriceRatio(models.Model):
         abstract = True
 
 
-def on_invalidate_index(sender, instance, **kwargs):
-    modules.pricing.get_index('product_price').update(
-        product=[instance.product])
+def on_invalidate_qty_price(sender, instance, **kwargs):
+    #modules.pricing.get_index('product_price').update(product=[instance.product])
+    print 'update qty price'
 
 
 @load(action='finalize_qty_pricing_ProductQtyPrice')
@@ -154,8 +152,8 @@ def load_model():
             app_label = 'pricing'
 
     modules.qty_pricing.ProductQtyPrice = ProductQtyPrice
-    post_save.connect(on_invalidate_index, sender=ProductQtyPrice)
-    pre_delete.connect(on_invalidate_index, sender=ProductQtyPrice)
+    post_save.connect(on_invalidate_qty_price, sender=ProductQtyPrice)
+    pre_delete.connect(on_invalidate_qty_price, sender=ProductQtyPrice)
 
 
 class ProductQtyPrice(models.Model):

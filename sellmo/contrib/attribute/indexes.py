@@ -42,7 +42,7 @@ def load_index():
         def get_fields(self):
             fields = super(ProductIndex, self).get_fields()
             for attribute in modules.attribute.Attribute.objects.all():
-                fields['%s_attr' % attribute.key] = None
+                fields['%s_attr' % attribute.key] = attribute.get_type().get_index_field(attribute)
             return fields
     
     modules.product.ProductIndex = ProductIndex
@@ -51,27 +51,29 @@ def load_index():
 def on_value_post_save(sender, instance, raw=False, update_fields=None,
                        **kwargs):
     if not raw:
-        index = modules.indexing.get_index('product')
+        index = modules.indexing.get_index(name='product')
         index.update(product=instance.product)
 
 
 def on_value_post_delete(sender, instance, raw=False, update_fields=None,
                        **kwargs):
     if not raw:
-        index = modules.indexing.get_index('product')
+        index = modules.indexing.get_index(name='product')
         index.update(product=instance.product)
 
 
 def on_attribute_post_save(sender, instance, raw=False, update_fields=None,
                        **kwargs):
     if not raw:
-        modules.indexing.invalidate_index('product')
+        index = modules.indexing.get_index(name='product')
+        index.invalidate()
 
 
 def on_attribute_post_delete(sender, instance, raw=False, update_fields=None,
                        **kwargs):
     if not raw:
-        modules.indexing.invalidate_index('product')
+        index = modules.indexing.get_index(name='product')
+        index.invalidate()
 
 
 post_save.connect(on_value_post_save, sender=modules.attribute.Value)    

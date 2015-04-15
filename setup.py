@@ -56,7 +56,6 @@ setup(
         'django>=1.7.0,<1.8',
         'django-mptt>=0.6.1',
         'django-classy-tags',
-        'django-picklefield',
     ],
     zip_safe=False,
     classifiers=[

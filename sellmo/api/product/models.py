@@ -43,7 +43,8 @@ from sellmo.core.polymorphism import (PolymorphicModel, PolymorphicManager,
 class ProductQuerySet(PolymorphicQuerySet):
     
     def indexed(self):
-        return modules.pricing.get_index('product_price').make_indexable(self, 'product')
+        index = modules.indexing.get_index(name='product')
+        return index.get_indexed_queryset(self)
     
     def for_relatable(self, relatable):
         return self.filter(pk__in=relatable.get_related_products())

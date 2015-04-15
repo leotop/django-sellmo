@@ -33,8 +33,7 @@ from sellmo.api import indexing
 
 
 class ProductIndex(modules.product.ProductIndex):
-
-    categories = indexing.MultiValueField()
+    pass
 
 
 modules.product.ProductIndex = ProductIndex

@@ -26,3 +26,20 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+
+
+import datetime
+
+from sellmo import modules, celery, params
+
+
+if celery.enabled and getattr(params, 'worker_mode', False):
+    from sellmo.celery.integration import app
+    app.conf.update(
+        CELERYBEAT_SCHEDULE=dict({
+            'handle-index-updates-every-5-minutes': {
+                'task': 'sellmo.contrib.indexing.tasks.handle_updates',
+                'schedule': datetime.timedelta(minutes=5),
+            },
+        }, **app.conf.get('CELERYBEAT_SCHEDULE', {}))
+    )

@@ -28,16 +28,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from django.core.management.base import BaseCommand, CommandError
-
-from sellmo import modules
-from sellmo import params
-params.worker_mode = True
+from sellmo.contrib.apps import ContribAppConfig
 
 
-class Command(BaseCommand):
-
-    def handle(self, *args, **options):
-        options = []
-        modules.pricing.get_index('product_price').update(
-            product=modules.product.Product.objects.all())
+class DefaultConfig(ContribAppConfig):
+    name = 'sellmo.contrib.indexing'

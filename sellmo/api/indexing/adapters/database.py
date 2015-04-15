@@ -28,87 +28,180 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
+from collections import OrderedDict
+
+from django.apps import apps
 from django.db import models
 from django.db import DEFAULT_DB_ALIAS, connections
 from django.core.management import call_command
 from django.utils import six
 
-from sellmo.api.indexing.adapters import IndexAdapter
-from sellmo.api.indexing.fields import (BooleanField, CharField,
-                                        IntegerField, ModelField)
+from sellmo.api import indexing
 
-
-_models = {}
-
-
-INDEX_TO_DB_FIELDS = {
-    BooleanField: lambda field: (models.BooleanField, [], {}),
-    CharField: lambda field: (models.CharField, [], {'max_length': 255}),
-    IntegerField: lambda field: (models.IntegerField, [], {}),
-    ModelField: lambda field: (models.ForeignKey, [field.model], {})
-}
-
-
-def get_index_db_table(index):
-    info = (index.model._meta.app_label, index.name)
-    return "%s_%s_index" % info
+class DatabaseIndexAdapter(indexing.IndexAdapter):
     
+    # Shared among adapters
+    _models = {}
     
-def db_field_for_index_field(index_field):
-    if index_field.__class__ in INDEX_TO_DB_FIELDS:
-        field_cls, args, kwargs = INDEX_TO_DB_FIELDS[index_field.__class__](index_field)
-        return field_cls(*args, **dict({
-            'null': not index_field.required
-        }, **kwargs))
-    return None
-
-
-def index_model_factory(index):
-    if index.name not in _models:
-        class Meta:
-            app_label = index.model._meta.app_label
-            db_table = get_index_db_table(index)
-        attrs = {
-            'Meta': Meta,
-            '__module__': index.__module__
-        }
-        
-        for field_name, index_field in six.iteritems(index.fields):
-            db_field = db_field_for_index_field(index_field)
-            if db_field:
-                attrs[field_name] = db_field
-        
-        model = type('%sIndex' % index.name, (models.Model,), attrs)
-        _models[index.name] = model
-    return _models[index.name]
-
-
-class DatabaseIndexAdapter(IndexAdapter):
+    INDEX_TO_DB_FIELDS = {
+        indexing.BooleanField: lambda field: (models.BooleanField, [], {}),
+        indexing.CharField: lambda field: (models.CharField, [], {
+            'max_length': field.max_length
+        }),
+        indexing.IntegerField: lambda field: (models.IntegerField, [], {}),
+        indexing.DecimalField: lambda field: (models.DecimalField, [], {}),
+        indexing.ModelField: lambda field: (models.ForeignKey, [field.model], {})
+    }
+    
+    DB_TO_INDEX_FIELDS = {
+        'BooleanField': lambda field_params: (indexing.BooleanField, [], {}),
+        'CharField': lambda field_params: (indexing.CharField, [], {
+            'max_length': field_params['max_length']
+        }),
+        'IntegerField': lambda field_params: (indexing.IntegerField, [], {}),
+        'DecimalField': lambda field_params: (indexing.DecimalField, [], {
+            'max_digits': field_params['max_digits'],
+            'decimal_places': field_params['decimal_places']
+        }),
+        'ForeignKey': lambda field_params: (indexing.ModelField, [field_params['model']], {}),
+    }
     
     def supports_runtime_build(self):
         return False
         
+    def db_field_for_index_field(self, index_field):
+        if index_field.__class__ in self.INDEX_TO_DB_FIELDS:
+            field_cls, args, kwargs = self.INDEX_TO_DB_FIELDS[index_field.__class__](index_field)
+            return field_cls(*args, **dict({
+                'null': not index_field.required
+            }, **kwargs))
+        return None
+        
+    def index_field_for_db_field(self, field_type, field_params):
+        if field_type in self.DB_TO_INDEX_FIELDS:
+            field_cls, args, kwargs = self.DB_TO_INDEX_FIELDS[field_type](field_params)
+            return field_cls(*args, **dict({
+                # kwargs here
+            }, **kwargs))
+        return None
+        
+    def index_model_factory(self, index):
+        if index.name not in self._models:
+            class Meta:
+                app_label = index.model._meta.app_label
+                db_table = self.get_index_db_table(index)
+            attrs = {
+                'Meta': Meta,
+                '__module__': index.__module__
+            }
+    
+            for field_name, index_field in six.iteritems(index.fields):
+                db_field = self.db_field_for_index_field(index_field)
+                if db_field:
+                    attrs[field_name] = db_field
+    
+            model = type('%sIndex' % index.name, (models.Model,), attrs)
+            self._models[index.name] = model
+        return self._models[index.name]    
+    
+    def get_index_db_table(self, index):
+        info = (index.model._meta.app_label, index.name)
+        return "%s_%s_index" % info
+        
+    def get_db_connection(self):
+        return connections[DEFAULT_DB_ALIAS]
+        
+    def get_db_models(self):
+        db_models = {}
+        for model in apps.get_models():
+            db_models[model._meta.db_table] = model
+        return db_models
+        
     def introspect_index(self, index):
-        connection = connections[DEFAULT_DB_ALIAS]
-        db_table = get_index_db_table(index)
+        
+        connection = self.get_db_connection()
+        db_table = self.get_index_db_table(index)
+        db_models = self.get_db_models()
+        
         exists = False
         
-        fields = []
+        # Map models to db_name
+        fields = {}
         with connection.cursor() as cursor:
-            for row in connection.introspection.get_table_description(cursor, db_table):
+            
+            try:
+                relations = connection.introspection.get_relations(cursor, db_table)
+            except NotImplementedError:
+                raise Exception("")
+            try:
+                indexes = connection.introspection.get_indexes(cursor, db_table)
+            except NotImplementedError:
+                raise Exception("")
+            try:
+                constraints = connection.introspection.get_constraints(cursor, db_table)
+            except NotImplementedError:
+                raise Exception("")
+            
+            for i, row in enumerate(connection.introspection.get_table_description(cursor, db_table)):
+                
+                # We got a result, index exists
                 exists = True
+                
                 column_name = row[0]
-                if column_name not in ['id', 'document_id']:
-                    print row
+                
+                # Ignore fixed fields
+                if column_name in ['id', 'document_id']:
+                    continue
+                
+                field_type = None
+                field_params = OrderedDict()
+                
+                if i in relations:
+                    field_type = 'ForeignKey'
+                    model = db_models.get(relations[i][1], None)
+                    if not model:
+                        raise Exception("")
+                    if not column_name.endswith('_id'):
+                        raise Exception("")
+                    column_name = column_name[:-3]
+                    field_params['model'] = model
+                else:
+                    try:
+                        field_type = connection.introspection.get_field_type(row[1], row)
+                    except KeyError:
+                        raise Exception("")
+                    
+                    # This is a hook for data_types_reverse to return a tuple of
+                    # (field_type, field_params_dict).
+                    if type(field_type) is tuple:
+                        field_type, new_params = field_type
+                        field_params.update(new_params)
+                    
+                    # Add max_length for all CharFields.
+                    if field_type == 'CharField' and row[3]:
+                        field_params['max_length'] = int(row[3])
+                    
+                    if field_type == 'DecimalField':
+                        if row[4] is None or row[5] is None:
+                            field_params['max_digits'] = row[4] if row[4] is not None else 10
+                            field_params['decimal_places'] = row[5] if row[5] is not None else 5
+                        else:
+                            field_params['max_digits'] = row[4]
+                            field_params['decimal_places'] = row[5]
+                            
+                index_field = self.index_field_for_db_field(field_type, field_params)
+                if index_field:
+                    fields[column_name] = index_field
+        
         if exists:
             return fields
         return False
         
     def initialize_index(self, index):
-        model = index_model_factory(index)
+        model = self.index_model_factory(index)
 
     def build_index(self, index):
-        model = index_model_factory(index)
+        model = self.index_model_factory(index)
         call_command('makemigrations', index.model._meta.app_label)
         call_command('migrate', index.model._meta.app_label)
         
@@ -116,10 +209,8 @@ class DatabaseIndexAdapter(IndexAdapter):
         self.build_index(index)
 
     def update_index(self, index, documents):
-        """
-        (Re)indexes each document from the given iterable.
-        """
-        raise NotImplementedError()
+        for document in documents:
+            values = index.get_indexes(document)
 
     def clear_index(self, index, documents):
         """

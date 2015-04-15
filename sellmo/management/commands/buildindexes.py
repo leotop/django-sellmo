@@ -31,6 +31,7 @@
 from optparse import make_option
 
 from django.core.management.base import BaseCommand, CommandError
+from django.utils import six
 
 from sellmo import modules, params
 params.building_indexes = True
@@ -39,5 +40,5 @@ params.building_indexes = True
 class Command(BaseCommand):
     
     def handle(self, *args, **options):
-        for name, index in modules.indexing.get_indexes():
+        for name, index in six.iteritems(modules.indexing.get_indexes()):
             pass

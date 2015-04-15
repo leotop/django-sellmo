@@ -37,7 +37,7 @@ from sellmo.api import indexing
 def load_index():
     class ProductIndex(modules.product.ProductIndex):
         qty = indexing.IntegerField(
-            default=modules.qty_pricing.indexable_qtys
+            varieties=modules.qty_pricing.indexable_qtys
         )
     
     modules.product.ProductIndex = ProductIndex

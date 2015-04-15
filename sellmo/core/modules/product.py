@@ -84,7 +84,7 @@ class ProductModule(sellmo.Module):
         if query is None:
             query = QueryString(request)
         
-        index = modules.indexing.get_index('product')
+        index = modules.indexing.get_index(name='product')
         products = index.get_indexed_queryset(products)
         
         if chain:

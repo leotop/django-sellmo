@@ -30,7 +30,10 @@
 
 from sellmo.api.indexing.index import Index
 from sellmo.api.indexing.query import indexed_queryset_factory
+from sellmo.api.indexing.adapters import IndexAdapter
 from sellmo.api.indexing.fields import (BooleanField,
                                         IntegerField,
+                                        FloatField,
+                                        DecimalField,
                                         CharField,
-                                        MultiValueField)
+                                        ModelField)

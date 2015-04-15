@@ -28,14 +28,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from django import forms
 from django.db import models
 
 from sellmo import modules
-from sellmo.contrib.attribute.types import AttributeType
+from sellmo.contrib.attribute.types import ModelAttributeTypeBase
 
 
-class BrandAttributeType(AttributeType):
+class BrandAttributeType(ModelAttributeTypeBase):
 
     def __init__(self, key='brand'):
         super(BrandAttributeType, self).__init__(key)
@@ -49,15 +48,10 @@ class BrandAttributeType(AttributeType):
         
     def get_model(self):
         return modules.brand.Brand
-        
-    def get_formfield_type(self):
-        return forms.ModelChoiceField
-
-    def get_choices(self):
-        return modules.brand.Brand.objects.all()
 
     def parse(self, string):
         try:
-            return modules.brand.Brand.objects.get(slug__iexact=string)
-        except modules.brand.Brand.DoesNotExist:
+            return self.get_model().objects.get(slug__iexact=string)
+        except self.get_model().DoesNotExist:
             raise ValueError(string)
+            

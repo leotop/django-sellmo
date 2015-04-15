@@ -30,35 +30,52 @@
 
 import sellmo
 from sellmo import modules, params
+from sellmo.api.decorators import chainable
 from sellmo.api.configuration import define_setting, define_import
 from sellmo.api.indexing.exceptions import IndexMissingException
 
 from django.utils import six
 
+import logging
+
+logger = logging.getLogger('sellmo')
+
 
 class IndexingModule(sellmo.Module):
 
     _registry = {}
+    _indexes = {}
     namespace = 'indexing'
     
-    DefaultIndexAadapter = define_import(
+    DefaultIndexAdapter = define_import(
         'DEFAULT_INDEX_ADAPTER',
         default='sellmo.api.indexing.adapters.database.DatabaseIndexAdapter')
         
-    def __init__(self):
-        # Initialize indexes
-        self._indexes = {}
-            
-    def _initialize_index(self, index, name, adapter):
-        adapter = adapter()
+    @classmethod
+    def register_index(self, name, index_cls, adapter_cls=None):
+        if name in self._registry:
+            raise ValueError(name)
+        self._registry[name] = (index_cls, adapter_cls)
         
-        instance = index(name, adapter)
-        introspected_fields = adapter.introspect_index(instance)
+    def _invalidate_index(self, index):
+        index = self.create_index(index.__class__, index.name, index.adapter)
+        self._indexes[index.name] = index
+            
+    @chainable()
+    def create_index(self, chain, index_cls, name, adapter, index=None, **kwargs):
+        if index is None:
+            index = index_cls(name, adapter)
+        if chain:
+            out = chain.execute(index_cls=index_cls, name=name,
+                                index=index, adapter=adapter, **kwargs)
+            index = out.get('index', index)
+        
+        introspected_fields = adapter.introspect_index(index)
         
         building = getattr(params, 'building_indexes', False)
         if introspected_fields is False:
             if building or adapter.supports_runtime_build():
-                adapter.build_index(instance)
+                adapter.build_index(index)
             else:
                raise IndexMissingException() 
         else:
@@ -68,14 +85,24 @@ class IndexingModule(sellmo.Module):
             added = {}
             deleted = {}
             
-            all_fields = dict(introspected_fields, **instance.fields)
+            introspected_fields['document'] = index.fields['document']
+            all_fields = dict(introspected_fields, **index.fields)
+            
             for field_name, field in six.iteritems(all_fields):
                 if (field_name in introspected_fields and
-                        field_name in instance.fields):
-                    intersection[field_name] = field
-                elif field_name not in introspected_fields:
+                        field_name in index.fields):
+                        
+                    # Both fields exists, compare them
+                    a = introspected_fields[field_name]
+                    b = index.fields[field_name]
+                    if a == b:
+                        intersection[field_name] = field
+                        continue
+                
+                # Fields do not match
+                if field_name not in introspected_fields:
                     added[field_name] = field
-                elif field_name not in instance.fields:
+                elif field_name not in index.fields:
                     deleted[field_name] = field
                 else:
                     # Field has changed, delete and add it
@@ -84,36 +111,50 @@ class IndexingModule(sellmo.Module):
             
             if added or deleted:
                 if (building or adapter.supports_runtime_build()):
-                    adapter.rebuild_index(instance, added, deleted)
+                    adapter.rebuild_index(index, added, deleted)
                 else:
-                    instance.fields = intersection
+                    logger.warning('Missing index fields')
+                    print intersection
+                    index.fields = intersection
         
-        adapter.initialize_index(instance)
-        return instance
-      
-    def _reinitialize_index(self, index):
-        instance = self._initialize_index(index.__class__, index.name, index.adapter)
-        self._indexes[instance.name] = instance
-
-    @classmethod
-    def register_index(cls, name, index, adapter=None):
-        if name in cls._registry:
-            raise ValueError(name)
-        cls._registry[name] = (index, adapter)
+        adapter.initialize_index(index)
+        return index
     
-    def get_index(self, name):
-        if name not in self._registry:
-            raise KeyError(name)
-        if name not in self._indexes:
-            index, adapter = self._registry[name]
-            if adapter is None:
-                adapter = self.DefaultIndexAadapter
-            instance = self._initialize_index(index, name, adapter)
-            self._indexes[instance.name] = instance
-        return self._indexes[name]
-        
-    def get_indexes(self):
-        indexes = []
-        for name in six.iterkeys(self._registry):
-            indexes.append((name, self.get_index(name)))
+    @chainable()
+    def create_adapter(self, chain, adapter_cls, adapter=None, **kwargs):
+        if adapter is None:
+            adapter = adapter_cls()
+        if chain:
+            out = chain.execute(adapter_cls=adapter_cls, adapter=adapter, **kwargs)
+            adapter = out.get('adapter', adapter)
+        return adapter
+    
+    @chainable()
+    def get_index(self, chain, name, index=None, **kwargs):
+        if index is None:
+            if name not in self._registry:
+                raise KeyError(name)
+            if name not in self._indexes:
+                index_cls, adapter_cls = self._registry[name]
+                if adapter_cls is None:
+                    adapter_cls = self.DefaultIndexAdapter
+                adapter = self.create_adapter(adapter_cls=adapter_cls)
+                index = self.create_index(index_cls=index_cls, name=name, adapter=adapter)
+                self._indexes[index.name] = index
+            index = self._indexes[name]
+        if chain:
+            out = chain.execute(name=name, index=index, **kwargs)
+            index = out.get('index', index)    
+        return index
+    
+    @chainable()
+    def get_indexes(self, chain, indexes=None, **kwargs):
+        if indexes is None:
+            indexes = {
+                name: self.get_index(name=name)
+                for name in six.iterkeys(self._registry)
+            }
+        if chain:
+            out = chain.execute(indexes=indexes, **kwargs)
+            indexes = out.get('indexes', indexes)
         return indexes

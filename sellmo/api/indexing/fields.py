@@ -32,17 +32,23 @@ class IndexField(object):
     
     creation_counter = 0
     
-    def __init__(self, get_value_cb=None, required=False, default=None):
-        self.get_value_cb = get_value_cb
+    def __init__(self, populate_value_cb=None, required=False,
+                    varieties=None, **kwargs):
+        self.populate_value_cb = populate_value_cb
         self.required = required
-        self.default = default
+        self.varieties = varieties
+        if 'default' in kwargs:
+            self.default = kwargs['default']
         
-    def get_value(self, document):
-        if self.get_value_cb is not None:
-            return self.get_value_cb(document)
-        elif self.default is not None:
-            return self.default
-        raise NotImplementedError()
+    def populate_field(self, document, **variety):
+        if self.populate_value_cb is not None:
+            return (True, self.populate_value_cb(document, **variety))
+        elif hasattr(self, 'default'):
+            return (True, self.default)
+        return (False, None)
+        
+    def __eq__(self, other):
+        return type(self) is type(other)
     
 
 class ModelField(IndexField):
@@ -50,6 +56,18 @@ class ModelField(IndexField):
     def __init__(self, model, *args, **kwargs):
         super(ModelField, self).__init__(*args, **kwargs)
         self.model = model
+        
+    def __eq__(self, other):
+        return (super(ModelField, self).__eq__(other)
+                and self.model is other.model)
+        
+class DocumentField(ModelField):
+    
+    def __init__(self, model):
+        super(DocumentField, self).__init__(model, required=True)
+        
+    def populate_field(self, document, **variety):
+        return True, document
     
     
 class BooleanField(IndexField):
@@ -57,13 +75,23 @@ class BooleanField(IndexField):
     
     
 class CharField(IndexField):
-    pass
+    
+    def __init__(self, max_length, *args, **kwargs):
+        super(CharField, self).__init__(*args, **kwargs)
+        self.max_length = max_length
     
     
 class IntegerField(IndexField):
     pass
     
     
-class MultiValueField(IndexField):
+class FloatField(IndexField):
     pass
     
+    
+class DecimalField(IndexField):
+    
+    def __init__(self, max_digits, decimal_places, *args, **kwargs):
+        super(DecimalField, self).__init__(*args, **kwargs)
+        self.max_digits = max_digits
+        self.decimal_places = decimal_places
