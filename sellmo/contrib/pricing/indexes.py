@@ -39,5 +39,11 @@ def load_index():
         qty = indexing.IntegerField(
             varieties=modules.qty_pricing.indexable_qtys
         )
+        
+        def get_price_kwargs(self, document, **variety):
+            kwargs = super(ProductIndex, self).get_price_kwargs(document, **variety)
+            if 'qty' in variety:
+                kwargs['qty'] = variety['qty']
+            return kwargs
     
     modules.product.ProductIndex = ProductIndex

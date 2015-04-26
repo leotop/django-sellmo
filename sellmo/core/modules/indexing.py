@@ -71,50 +71,62 @@ class IndexingModule(sellmo.Module):
             index = out.get('index', index)
         
         introspected_fields = adapter.introspect_index(index)
-        
         building = getattr(params, 'building_indexes', False)
+        
         if introspected_fields is False:
+            # Index does not yet exist in backend
             if building or adapter.supports_runtime_build():
                 adapter.build_index(index)
             else:
-               raise IndexMissingException() 
+               raise IndexMissingException()
         else:
+            # Also add document field to introspected fields
+            # this will never change from the indexes field
+            introspected_fields['document'] = index.fields['document']
+            
             # Find simularies between introspected index
             # and current index
             intersection = {}
             added = {}
             deleted = {}
+            changed = {} # old, new tuple
             
-            introspected_fields['document'] = index.fields['document']
             all_fields = dict(introspected_fields, **index.fields)
             
             for field_name, field in six.iteritems(all_fields):
-                if (field_name in introspected_fields and
-                        field_name in index.fields):
-                        
-                    # Both fields exists, compare them
-                    a = introspected_fields[field_name]
-                    b = index.fields[field_name]
+                a = introspected_fields.get(field_name, None)
+                b = index.fields.get(field_name, None)
+                if not a:
+                    added[field_name] = b
+                elif not b:
+                    deleted[field_name] = a
+                else:
                     if a == b:
                         intersection[field_name] = field
-                        continue
-                
-                # Fields do not match
-                if field_name not in introspected_fields:
-                    added[field_name] = field
-                elif field_name not in index.fields:
-                    deleted[field_name] = field
-                else:
-                    # Field has changed, delete and add it
-                    deleted[field_name] = field
-                    added[field_name] = field
+                    else:
+                        changed[field_name] = (a, b)
             
-            if added or deleted:
+            if added or deleted or changed or building:
                 if (building or adapter.supports_runtime_build()):
-                    adapter.rebuild_index(index, added, deleted)
+                    # Rebuild index
+                    adapter.rebuild_index(index, added, deleted, changed)
                 else:
                     logger.warning('Index %s not in sync' % index)
-                    index.fields = intersection
+                    for field_name, field in six.iteritems(added):
+                        logger.info('Field %s %s is missing from backend' % (field_name, field))
+                    for field_name, field in six.iteritems(deleted):
+                        logger.info('Field %s %s is omitted from index' % (field_name, field))
+                    for field_name, field in six.iteritems(changed):
+                        logger.info('Field %s %s %s differs' % (field_name, field[0], field[1]))
+            
+            index.original_fields = index.fields
+            index.introspected_fields = introspected_fields
+            index.difference = {
+                'added': added,
+                'deleted': deleted,
+                'changed': changed
+            }
+            index.fields = intersection
         
         adapter.initialize_index(index)
         return index

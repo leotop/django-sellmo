@@ -44,6 +44,15 @@ def load_index():
             for attribute in modules.attribute.Attribute.objects.all():
                 fields['%s_attr' % attribute.key] = attribute.get_type().get_index_field(attribute)
             return fields
+            
+        def populate(self, document, values, **variety):
+            values = super(ProductIndex, self).populate(document, values, **variety)
+            for attribute in modules.attribute.Attribute.objects.all():
+               value = document.attributes[attribute.key]
+               value = attribute.get_type().prep_index_value(value)
+               values['%s_attr' % attribute.key] = value
+            return values 
+            
     
     modules.product.ProductIndex = ProductIndex
 

@@ -42,11 +42,11 @@ from sellmo.api.configuration import define_setting, define_import
 from sellmo.api.pricing import Currency, Price, PriceType, StampableProperty
 
 
-logger = logging.getLogger('sellmo')
-
-
 def get_default_currency():
     return str(modules.pricing.get_currency())
+
+
+RESERVED_NAMES = ['amount', 'currency']
 
 
 class PricingModule(sellmo.Module):
@@ -87,6 +87,8 @@ class PricingModule(sellmo.Module):
             self.currencies = {
                 self.default_currency.code: self.default_currency
             }
+        for name in RESERVED_NAMES:
+            assert name not in self.types, "%s is a reserved name" % name
 
     @classmethod
     def construct_decimal_field(self, **kwargs):

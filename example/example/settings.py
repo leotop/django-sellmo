@@ -427,3 +427,74 @@ def show_toolbar_callback(request):
 DEBUG_TOOLBAR_CONFIG = {
     'SHOW_TOOLBAR_CALLBACK': 'example.settings.show_toolbar_callback'
 }
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+    },
+    'formatters': {
+        'simple': {
+            'format': '%(asctime)s [%(levelname)s]: %(message)s'
+        },
+        'verbose': {
+            'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'null': {
+            'class': 'logging.NullHandler',
+        },
+    },
+    'loggers': {
+
+        '': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+        'py.warnings': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False,
+            'filters': ['require_debug_true']
+        },
+        'django': {
+            'handlers': ['null'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'django.request': {
+            'handlers': ['null'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+        'django.security': {
+            'handlers': ['null'],
+            'level': 'WARNING',
+            'propagate': True,
+        },
+        'django.security.DisallowedHost': {
+            'handlers': ['null'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'django.db.backends.schema': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+
+    },
+}

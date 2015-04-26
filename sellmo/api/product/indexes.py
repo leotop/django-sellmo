@@ -35,8 +35,13 @@ from sellmo.api.pricing.indexes import PriceIndex
 
 class ProductIndex(PriceIndex):
     
-    price_fields = ['price']
+    price_prefixes = ['price']
     
-    def populate_price_field(self, price_field, currency_code, currency, 
-                                document, values):
-        pass
+    def get_price(self, document, prefix, currency_code, currency, **kwargs):
+        assert prefix == 'price'
+        return modules.pricing.get_price(product=document, currency=currency, **kwargs)
+        
+    def get_queryset(self, queryset=None):
+        queryset = super(ProductIndex, self).get_queryset(queryset)
+        queryset = queryset.polymorphic()
+        return queryset

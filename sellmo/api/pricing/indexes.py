@@ -38,22 +38,36 @@ class PriceIndex(indexing.Index):
     
     price_prefixes = []
     
-    def populate_fields(self, document, values):
-        values = super(PriceIndex, self).populate_fields(document, values)
+    def populate(self, document, values, **variety):
+        values = super(PriceIndex, self).populate(document, values, **variety)
+        kwargs = self.get_price_kwargs(document, **variety)
         
         currencies = modules.pricing.currencies
         types = modules.pricing.types
         
         for prefix in self.price_prefixes:
             for currency_code, currency in six.iteritems(currencies):
-                pass
+                price = self.get_price(document, prefix, currency_code, currency, **kwargs)
+                if price:
+                    for key in types + ['amount']:
+                        field_name = '%s_%s_%s' % (prefix, currency_code, key)
+                        amount = None
+                        if key == 'amount':
+                            amount = price.amount
+                        elif key in price:
+                            amount = price[key].amount
+                        values[field_name] = amount
         return values
+        
+    def get_price_kwargs(self, document, **variety):
+        return {}
         
     def get_price(self, document, prefix, currency_code, currency, **kwargs):
         raise NotImplementedError()
     
     def get_fields(self):
         fields = super(PriceIndex, self).get_fields()
+        
         currencies = modules.pricing.currencies
         types = modules.pricing.types
         
@@ -61,7 +75,9 @@ class PriceIndex(indexing.Index):
             for currency_code, currency in six.iteritems(currencies):
                 for key in types + ['amount']:
                     field_name = '%s_%s_%s' % (prefix, currency_code, key)
-                    fields[field_name] = indexing.DecimalField()
+                    fields[field_name] = indexing.DecimalField(
+                        max_digits=modules.pricing.decimal_max_digits,
+                        decimal_places=modules.pricing.decimal_places)
                     
                     extra_fields = getattr(key, 'extra_fields', {})
                     for extra_field_name, extra_field in extra_fields.iteritems():

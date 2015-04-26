@@ -54,7 +54,7 @@ class IndexAdapter(object):
         """
         raise NotImplementedError()
         
-    def rebuild_index(self, index, added_fields=None, deleted_fields=None):
+    def rebuild_index(self, index, added_fields, deleted_fields, changed_fields):
         """
         Rebuild internal index structure.
         """

@@ -238,9 +238,10 @@ class Value(models.Model):
     def get_value(self):
         field_name = self.attribute.get_type().get_value_field_name()
         value = getattr(self, field_name)
-        return value
+        return self.attribute.get_type().to_python(value)
 
     def set_value(self, value):
+        value = self.attribute.get_type().prep_db_value(value)
         if value != self.get_value():
             self._old_value = self.get_value()
         field_name = self.attribute.get_type().get_value_field_name()

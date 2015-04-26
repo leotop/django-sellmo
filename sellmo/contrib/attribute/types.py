@@ -47,6 +47,15 @@ class AttributeType(object):
         
     def get_index_field(self, attribute):
         raise NotImplementedError()
+        
+    def prep_index_value(self, value):
+        return value
+        
+    def prep_db_value(self, value):
+        return value
+        
+    def to_python(self, value):
+        return value
     
     def parse(self, string):
         raise NotImplementedError()

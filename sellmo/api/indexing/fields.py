@@ -30,15 +30,22 @@
 
 class IndexField(object):
     
+    required = False
     creation_counter = 0
     
-    def __init__(self, populate_value_cb=None, required=False,
+    def __init__(self, populate_value_cb=None,
                     varieties=None, **kwargs):
         self.populate_value_cb = populate_value_cb
-        self.required = required
         self.varieties = varieties
+        self.required = varieties is not None
         if 'default' in kwargs:
             self.default = kwargs['default']
+        if 'required' in kwargs:
+            required = kwargs['required']
+            if varieties is not None and not required:
+                raise ValueError("Fields who provide varieties"
+                                 " are always required.")
+            self.required = required
         
     def populate_field(self, document, **variety):
         if self.populate_value_cb is not None:
@@ -49,7 +56,13 @@ class IndexField(object):
         
     def __eq__(self, other):
         return (type(self) is type(other)
-                and self.required == other.required)
+                and (self.required == other.required
+                        or self.required is None
+                        or other.required is None))
+                
+    def __repr__(self):
+        path = '%s.%s' % (self.__class__.__module__, self.__class__.__name__)
+        return '<%s>' % path
     
 
 class ModelField(IndexField):
@@ -61,7 +74,6 @@ class ModelField(IndexField):
     def __eq__(self, other):
         return (super(ModelField, self).__eq__(other)
                 and self.model is other.model)
-
     
     
 class BooleanField(IndexField):
@@ -95,6 +107,10 @@ class DecimalField(IndexField):
         self.decimal_places = decimal_places
         
     def __eq__(self, other):
-        return (super(ModelField, self).__eq__(other)
-                and self.max_digits == other.max_digits
-                and self.decimal_places == other.decimal_places)
+        return (super(DecimalField, self).__eq__(other)
+                and (self.max_digits == other.max_digits
+                        or self.max_digits is None
+                        or other.max_digits is None)
+                and (self.decimal_places == other.decimal_places
+                        or self.decimal_places is None
+                        or other.max_digits is None))

@@ -28,15 +28,22 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
+import logging
 from collections import OrderedDict
 
 from django.apps import apps
 from django.db import models
+from django.db.models import Q
+from django.db import transaction
 from django.db import DEFAULT_DB_ALIAS, connections
 from django.core.management import call_command
 from django.utils import six
 
 from sellmo.api import indexing
+
+
+logger = logging.getLogger('sellmo')
+
 
 class DatabaseIndexAdapter(indexing.IndexAdapter):
     
@@ -48,8 +55,14 @@ class DatabaseIndexAdapter(indexing.IndexAdapter):
         indexing.CharField: lambda field: (models.CharField, [], {
             'max_length': field.max_length
         }),
+        indexing.FloatField: lambda field: (models.FloatField, [], {}),
         indexing.IntegerField: lambda field: (models.IntegerField, [], {}),
-        indexing.DecimalField: lambda field: (models.DecimalField, [], {}),
+        indexing.DecimalField: lambda field: (models.DecimalField, [], {
+            # Introspection can't always resolve max_digits and decimal_places
+            # (sqllite for instance)
+            'max_digits': field.max_digits if field.max_digits is not None else 10,
+            'decimal_places': field.decimal_places if field.decimal_places is not None else 5,
+        }),
         indexing.ModelField: lambda field: (models.ForeignKey, [field.model], {})
     }
     
@@ -58,6 +71,7 @@ class DatabaseIndexAdapter(indexing.IndexAdapter):
         'CharField': lambda field_params: (indexing.CharField, [], {
             'max_length': field_params['max_length']
         }),
+        'FloatField': lambda field_params: (indexing.FloatField, [], {}),
         'IntegerField': lambda field_params: (indexing.IntegerField, [], {}),
         'DecimalField': lambda field_params: (indexing.DecimalField, [], {
             'max_digits': field_params['max_digits'],
@@ -70,22 +84,23 @@ class DatabaseIndexAdapter(indexing.IndexAdapter):
         return False
         
     def db_field_for_index_field(self, index_field):
-        if index_field.__class__ in self.INDEX_TO_DB_FIELDS:
+        if type(index_field) in self.INDEX_TO_DB_FIELDS:
             field_cls, args, kwargs = self.INDEX_TO_DB_FIELDS[index_field.__class__](index_field)
             return field_cls(*args, **dict({
-                'null': not index_field.required
+                'blank': not index_field.required,
+                'null': True
             }, **kwargs))
-        return None
+        raise TypeError(index_field)
         
     def index_field_for_db_field(self, field_type, field_params):
         if field_type in self.DB_TO_INDEX_FIELDS:
             field_cls, args, kwargs = self.DB_TO_INDEX_FIELDS[field_type](field_params)
             return field_cls(*args, **dict({
-                # kwargs here
+                'required': None
             }, **kwargs))
-        return None
+        raise TypeError(field_type)
         
-    def index_model_factory(self, index):
+    def index_model_factory(self, index, building=False):
         if index.name not in self._models:
             class Meta:
                 app_label = index.model._meta.app_label
@@ -94,8 +109,8 @@ class DatabaseIndexAdapter(indexing.IndexAdapter):
                 'Meta': Meta,
                 '__module__': index.__module__
             }
-    
-            for field_name, index_field in six.iteritems(index.fields):
+            
+            for field_name, index_field in six.iteritems(index.fields if building else index.introspected_fields):
                 db_field = self.db_field_for_index_field(index_field)
                 if db_field:
                     attrs[field_name] = db_field
@@ -183,11 +198,13 @@ class DatabaseIndexAdapter(indexing.IndexAdapter):
                     
                     if field_type == 'DecimalField':
                         if row[4] is None or row[5] is None:
-                            field_params['max_digits'] = row[4] if row[4] is not None else 10
-                            field_params['decimal_places'] = row[5] if row[5] is not None else 5
+                            field_params['max_digits'] = row[4] if row[4] is not None else None
+                            field_params['decimal_places'] = row[5] if row[5] is not None else None
                         else:
                             field_params['max_digits'] = row[4]
                             field_params['decimal_places'] = row[5]
+                    
+                field_params['null'] = row[6]
                             
                 index_field = self.index_field_for_db_field(field_type, field_params)
                 if index_field:
@@ -199,18 +216,65 @@ class DatabaseIndexAdapter(indexing.IndexAdapter):
         
     def initialize_index(self, index):
         model = self.index_model_factory(index)
+        
+        # Document field combined with all varieties field
+        # are unique, we can use them to query existing records
+        # WE EXPLICITLY DO NOT use this in our Model's Meta
+        # as we don't want to enforce any db's constraints and
+        # thus keep our table usage flexible.
+        unique_together = { 
+            field_name: field 
+            for field_name, field in six.iteritems(index.fields)
+            if field_name == 'document' or field.varieties
+        }
+        
+        # Find unused fields in our table.
+        unused_fields = {
+            field_name: field
+            for field_name, field in six.iteritems(index.introspected_fields)
+            if field_name not in index.fields
+        }
+        
+        index._unique_together = unique_together
+        index._unused_fields = unused_fields
+        
 
     def build_index(self, index):
-        model = self.index_model_factory(index)
+        model = self.index_model_factory(index, building=True)
         call_command('makemigrations', index.model._meta.app_label)
         call_command('migrate', index.model._meta.app_label)
         
-    def rebuild_index(self, index, added_fields=None, deleted_fields=None):
+    def rebuild_index(self, index, added_fields, deleted_fields, changed_fields):
         self.build_index(index)
 
     def update_index(self, index, documents):
-        for document in documents:
-            values = index.get_indexes(document)
+        model = self.index_model_factory(index)
+        with transaction.atomic():
+            
+            # We won't allow records who utilize unused fields
+            # Delete them so are always getting unique query results.
+            if index._unused_fields:
+                q = Q()
+                for field_name in six.iterkeys(index._unused_fields):
+                    q |= Q(**{'%s__isnull' % field_name: False})
+                invalid = model.objects.filter(q, document__in=documents)
+                invalid.delete()
+                
+            # We also won't allow records who have haven't all 
+            # _unique_together fields populated. Clean them up.
+            q = Q()
+            for field_name in six.iterkeys(index._unique_together):
+                q |= Q(**{'%s__isnull' % field_name: True})
+            stale = model.objects.filter(q, document__in=documents)
+            stale.delete()
+            
+            for document in documents:
+                records = index.build_records(document)
+                for record in records:
+                    model.objects.update_or_create(**dict(defaults=record, **{
+                        field_name: record[field_name]
+                        for field_name in six.iterkeys(index._unique_together)
+                    }))   
 
     def clear_index(self, index, documents):
         """
